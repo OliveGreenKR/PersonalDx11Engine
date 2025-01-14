@@ -13,6 +13,9 @@
     <Filter Include="D3D\Renderer">
       <UniqueIdentifier>{16351b72-ec26-4539-a003-314d4139c3af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSL">
+      <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FD3DRenderer.h">
@@ -21,5 +24,10 @@
     <ClInclude Include="myd3d.h">
       <Filter>D3D</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="ShaderW0.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
