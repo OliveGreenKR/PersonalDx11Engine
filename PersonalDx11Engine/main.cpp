@@ -1,5 +1,5 @@
 #include <windows.h>
-
+#include "FD3DRenderer.h"
 
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -33,13 +33,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RegisterClassW(&wndclass);
 
 	// 1024 x 1024 크기에 윈도우 생성
-	HWND hWnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+	HWND hwnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 								nullptr, nullptr, hInstance, nullptr);
-
 	bool bIsExit = false;
 #pragma region Construct 
-
+	FD3DRenderer Renderer;
+	Renderer.Intialize(hwnd);
 #pragma endregion
 
 #pragma region MainLoop
@@ -47,13 +47,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		MSG msg;
 
-		// 처리할 메시지가 더 이상 없을때 까지 수행
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			// 키 입력 메시지를 번역
 			TranslateMessage(&msg);
-
-			// 메시지를 적절한 윈도우 프로시저에 전달, 메시지가 위에서 등록한 WndProc 으로 전달됨
+			// 메시지를 적절한 윈도우 프로시저에 전달
 			DispatchMessage(&msg);
 
 			if (msg.message == WM_QUIT)
@@ -62,15 +60,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				break;
 			}
 		}
-#pragma region Tick
 
-#pragma endregion
+		//Tick
+		Renderer.Tick();
 
 	}
 #pragma endregion
 
 #pragma region Deconstruct
-
+	Renderer.Shutdown();
 #pragma endregion
 
 	return 0;
