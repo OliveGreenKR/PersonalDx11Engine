@@ -38,10 +38,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								nullptr, nullptr, hInstance, nullptr);
 
 	bool bIsExit = false;
+#pragma region Construct 
 
-	// 각종 생성하는 코드를 여기에 추가합니다.
+#pragma endregion
 
-	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
+#pragma region MainLoop
 	while (bIsExit == false)
 	{
 		MSG msg;
@@ -61,16 +62,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				break;
 			}
 		}
+#pragma region Tick
 
-		////////////////////////////////////////////
-		// 매번 실행되는 코드를 여기에 추가합니다.
+#pragma endregion
 
-
-
-		////////////////////////////////////////////
 	}
+#pragma endregion
 
-	// 소멸하는 코드를 여기에 추가합니다.
+#pragma region Deconstruct
+
+#pragma endregion
 
 	return 0;
 }
