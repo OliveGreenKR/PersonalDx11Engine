@@ -41,20 +41,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RegisterClassW(&wndclass);
 
 	// 1024 x 1024 크기에 윈도우 생성
-	HWND hwnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+	HWND hWnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
 	bool bIsExit = false;
 
 	URenderer Renderer;
-	Renderer.Intialize(hwnd);
+	Renderer.Intialize(hWnd);
 
 	// 여기에서 ImGui를 생성합니다.
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init((void*)hwnd);
+	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(Renderer.Device, Renderer.DeviceContext);
 
 
@@ -105,6 +105,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ImGui UI 컨트롤 추가
 		ImGui::Begin("Jungle Property Window");
 		ImGui::Text("Hello Jungle World!");
+
+		if (ImGui::Button("Quit this app"))
+		{
+			// 현재 윈도우에 Quit 메시지를 메시지 큐로 보냄
+			PostMessage(hWnd, WM_QUIT, 0, 0);
+		}
+
 		ImGui::End();
 
 		ImGui::Render();
