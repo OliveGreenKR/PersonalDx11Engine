@@ -46,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-	bool bIsExit = false;
+	
 
 	URenderer Renderer;
 	Renderer.Intialize(hWnd);
@@ -86,11 +86,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ETypePrimitive typePrimitive = EPT_Triangle;
 
+	bool bIsExit = false;
+	FVector offset = FVector::Zero;
+
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
 		MSG msg;
 
+		//window msg process
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			// 키 입력 메시지를 번역
@@ -103,12 +107,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
+
+			if (msg.message == WM_KEYDOWN) // 키보드 눌렸을 때
+			{
+				// 눌린 키가 방향키라면 해당 방향에 맞춰서
+				// offset 변수의 x, y 맴버 변수의 값을 조정합니다.
+				if (msg.wParam == VK_LEFT)
+				{
+					offset.x -= 0.01f;
+				}
+				if (msg.wParam == VK_RIGHT)
+				{
+					offset.x += 0.01f;
+				}
+				if (msg.wParam == VK_UP)
+				{
+					offset.y += 0.01f;
+				}
+				if (msg.wParam == VK_DOWN)
+				{
+					offset.y -= 0.01f;
+				}
+			}
 		}
 
 	
 		Renderer.PrepareRender();
 		Renderer.PrepareShader();
+
+		Renderer.UpdateConstant(offset);
 		
+		//render orimitive
 		switch (typePrimitive)
 		{
 			case EPT_Triangle:
@@ -131,6 +160,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Begin("Jungle Property Window");
 		ImGui::Text("Hello Jungle World!");
 
+		//UI : change primitive type 
 		if (ImGui::Button("Change primitive"))
 		{
 			switch (typePrimitive)

@@ -1,3 +1,9 @@
+cbuffer constants : register(b0)
+{
+    float3 Offset;
+    float Pad;
+}
+
 struct VS_INPUT
 {
     float4 position : POSITION; // Input position from vertex buffer
@@ -14,7 +20,8 @@ PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    output.position = input.position;
+    output.position = float4(Offset, 0) + input.position;
+    input.position;
    
     output.color = input.color;
     

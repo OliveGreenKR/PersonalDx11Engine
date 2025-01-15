@@ -4,10 +4,12 @@ void URenderer::Intialize(HWND hWindow)
 {
     Create(hWindow);
     CreateShader();
+    CreateConstantBuffer();
 }
 
 void URenderer::Shutdown()
 {
+
     ReleaseShader();
     Release();
 }
@@ -46,6 +48,11 @@ void URenderer::PrepareShader()
     DeviceContext->VSSetShader(SimpleVertexShader, nullptr, 0);
     DeviceContext->PSSetShader(SimplePixelShader, nullptr, 0);
     DeviceContext->IASetInputLayout(SimpleInputLayout);
+
+    if (ConstantBuffer)
+    {
+        DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
+    }
 }
 
 void URenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices)
@@ -174,10 +181,21 @@ void URenderer::ReleaseRasterizerState()
 
 void URenderer::Release()
 {
-    RasterizerState->Release();
+    if (ConstantBuffer)
+    {
+        ConstantBuffer->Release();
+    }
 
-    // ·»´õ Å¸°ÙÀ» ÃÊ±âÈ­
-    DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+    if (RasterizerState)
+    {
+        RasterizerState->Release();
+    }
+    
+    if (DeviceContext)
+    {
+        // ·»´õ Å¸°ÙÀ» ÃÊ±âÈ­
+        DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+    }
 
     ReleaseFrameBuffer();
     ReleaseDeviceAndSwapChain();
@@ -186,6 +204,32 @@ void URenderer::Release()
 void URenderer::SwapBuffer()
 {
     SwapChain->Present(bVSync, 0); 
+}
+
+void URenderer::UpdateConstant(FVector InOffset)
+{
+    if (ConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+
+        DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
+        FConstants* constants = (FConstants*)constantbufferMSR.pData;
+        {
+            constants->Offset = InOffset;
+        }
+        DeviceContext->Unmap(ConstantBuffer, 0);
+    }
+}
+
+void URenderer::CreateConstantBuffer()
+{
+    D3D11_BUFFER_DESC constantbufferdesc = {};
+    constantbufferdesc.ByteWidth = (sizeof(FConstants) + 0xf) & 0xfffffff0; // ensure constant buffer size is multiple of 16 bytes
+    constantbufferdesc.Usage = D3D11_USAGE_DYNAMIC; // will be updated from CPU every frame
+    constantbufferdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    constantbufferdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+    Device->CreateBuffer(&constantbufferdesc, nullptr, &ConstantBuffer);
 }
 
 void URenderer::CreateShader()

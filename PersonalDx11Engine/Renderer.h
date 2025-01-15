@@ -14,6 +14,8 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
+#include "Vector.h"
+
 
 struct FVertexSimple
 {
@@ -23,6 +25,12 @@ struct FVertexSimple
 
 class URenderer 
 {
+    struct FConstants
+    {
+        FVector Offset;
+        float pad;
+    };
+
 public:
     URenderer() = default;
     ~URenderer() = default;
@@ -39,6 +47,11 @@ public:
     void PrepareShader();
     void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
     void SwapBuffer();
+    void UpdateConstant(FVector InOffset);
+
+private:
+    void CreateConstantBuffer();
+
 
 private:
 #pragma region d3d
