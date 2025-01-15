@@ -31,6 +31,10 @@ public:
     void Intialize(HWND hWindow);
     void Shutdown();
 
+    ID3D11Buffer* CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth);
+    void ReleaseVertexBuffer(ID3D11Buffer* vertexBuffer) { vertexBuffer->Release(); }
+
+
     void PrepareRender();
     void PrepareShader();
     void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);

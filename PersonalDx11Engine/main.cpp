@@ -58,38 +58,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(Renderer.Device, Renderer.DeviceContext);
 
-
-	//FVertexSimple* vertices = triangle_vertices;
-	//UINT ByteWidth = sizeof(triangle_vertices);
-	//UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
-
-	//FVertexSimple* vertices = cube_vertices;
-	//UINT ByteWidth = sizeof(cube_vertices);
-	//UINT numVertices = sizeof(cube_vertices) / sizeof(FVertexSimple);
-
-	FVertexSimple* vertices = sphere_vertices;
-	UINT ByteWidth = sizeof(sphere_vertices);
-	UINT numVertices = sizeof(sphere_vertices) / sizeof(FVertexSimple);
+	UINT numVerticesTriangle = sizeof(triangle_vertices) / sizeof(FVertexSimple);
+	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
+	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
 	float scaleMod = 0.1f;
-	for (UINT i = 0; i < numVertices; ++i)
+
+	for (UINT i = 0; i < numVerticesSphere; ++i)
 	{
 		sphere_vertices[i].x *= scaleMod;
 		sphere_vertices[i].y *= scaleMod;
 		sphere_vertices[i].z *= scaleMod;
 	}
 
-	// 생성
-	D3D11_BUFFER_DESC vertexbufferdesc = {};
-	vertexbufferdesc.ByteWidth = ByteWidth;
-	vertexbufferdesc.Usage = D3D11_USAGE_IMMUTABLE;
-	vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	ID3D11Buffer* vertexBufferTriangle = Renderer.CreateVertexBuffer(triangle_vertices, sizeof(triangle_vertices));
+	ID3D11Buffer* vertexBufferCube = Renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
+	ID3D11Buffer* vertexBufferSphere = Renderer.CreateVertexBuffer(sphere_vertices, sizeof(sphere_vertices));
 
-	D3D11_SUBRESOURCE_DATA vertexbufferSRD = { vertices };
 
-	ID3D11Buffer* vertexBuffer;
+	enum ETypePrimitive
+	{
+		EPT_Triangle,
+		EPT_Cube,
+		EPT_Sphere,
+		EPT_Max,
+	};
 
-	Renderer.Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
+	ETypePrimitive typePrimitive = EPT_Triangle;
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -113,7 +108,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 		Renderer.PrepareRender();
 		Renderer.PrepareShader();
-		Renderer.RenderPrimitive(vertexBuffer, numVertices);
+		
+		switch (typePrimitive)
+		{
+			case EPT_Triangle:
+				Renderer.RenderPrimitive(vertexBufferTriangle, numVerticesTriangle);
+				break;
+			case EPT_Cube:
+				Renderer.RenderPrimitive(vertexBufferCube, numVerticesCube);
+				break;
+			case EPT_Sphere:
+				Renderer.RenderPrimitive(vertexBufferSphere, numVerticesSphere);
+				break;
+		}
+
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -123,10 +131,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Begin("Jungle Property Window");
 		ImGui::Text("Hello Jungle World!");
 
-		if (ImGui::Button("Quit this app"))
+		if (ImGui::Button("Change primitive"))
 		{
-			// 현재 윈도우에 Quit 메시지를 메시지 큐로 보냄
-			PostMessage(hWnd, WM_QUIT, 0, 0);
+			switch (typePrimitive)
+			{
+				case EPT_Triangle:
+					typePrimitive = EPT_Cube;
+					break;
+				case EPT_Cube:
+					typePrimitive = EPT_Sphere;
+					break;
+				case EPT_Sphere:
+					typePrimitive = EPT_Triangle;
+					break;
+			}
 		}
 
 		ImGui::End();
@@ -144,7 +162,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	vertexBuffer->Release();
+	Renderer.ReleaseVertexBuffer(vertexBufferTriangle);
+	Renderer.ReleaseVertexBuffer(vertexBufferCube);
+	Renderer.ReleaseVertexBuffer(vertexBufferSphere);
 	Renderer.Shutdown();
 	return 0;
 }
