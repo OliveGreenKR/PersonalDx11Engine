@@ -58,9 +58,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplDX11_Init(Renderer.Device, Renderer.DeviceContext);
 
 
-	FVertexSimple* vertices = triangle_vertices;
-	UINT ByteWidth = sizeof(triangle_vertices);
-	UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
+	//FVertexSimple* vertices = triangle_vertices;
+	//UINT ByteWidth = sizeof(triangle_vertices);
+	//UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
+
+	FVertexSimple* vertices = cube_vertices;
+	UINT ByteWidth = sizeof(cube_vertices);
+	UINT numVertices = sizeof(cube_vertices) / sizeof(FVertexSimple);
 
 	// »ý¼º
 	D3D11_BUFFER_DESC vertexbufferdesc = {};
