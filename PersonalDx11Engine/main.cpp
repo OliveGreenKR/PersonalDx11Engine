@@ -98,6 +98,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer.PrepareShader();
 		Renderer.RenderPrimitive(vertexBuffer, numVertices);
 
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		// ImGui UI 컨트롤 추가
+		ImGui::Begin("Jungle Property Window");
+		ImGui::Text("Hello Jungle World!");
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
 		Renderer.SwapBuffer();
 	}
 #pragma endregion
