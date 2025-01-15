@@ -1,9 +1,16 @@
 #include <windows.h>
 #include "Renderer.h"
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+	{
+		return true;
+	}
+
 	switch (message)
 	{
 		case WM_DESTROY:
@@ -37,12 +44,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hwnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 								nullptr, nullptr, hInstance, nullptr);
-
 #pragma endregion
 	bool bIsExit = false;
 
 	URenderer Renderer;
 	Renderer.Intialize(hwnd);
+
+	// 여기에서 ImGui를 생성합니다.
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui_ImplWin32_Init((void*)hwnd);
+	ImGui_ImplDX11_Init(Renderer.Device, Renderer.DeviceContext);
 
 
 	FVertexSimple* vertices = triangle_vertices;
@@ -88,6 +101,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer.SwapBuffer();
 	}
 #pragma endregion
+
+
+	// 여기에서 ImGui 소멸
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	vertexBuffer->Release();
 	Renderer.Shutdown();
