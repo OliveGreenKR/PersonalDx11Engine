@@ -1,23 +1,46 @@
-#include "D3DRenderer.h"
+#include "Renderer.h"
 
-void FD3DRenderer::Intialize(HWND hWindow)
+void URenderer::Intialize(HWND hWindow)
 {
     Create(hWindow);
     CreateShader();
 }
 
-void FD3DRenderer::Tick()
-{
-    SwapBuffer();
-}
-
-void FD3DRenderer::Shutdown()
+void URenderer::Shutdown()
 {
     ReleaseShader();
     Release();
 }
 
-void FD3DRenderer::Create(HWND hWindow)
+void URenderer::PrepareRender()
+{
+    DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);
+
+    DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    DeviceContext->RSSetViewports(1, &ViewportInfo);
+    DeviceContext->RSSetState(RasterizerState);
+
+    DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, nullptr);
+    DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+}
+
+void URenderer::PrepareShader()
+{
+    DeviceContext->VSSetShader(SimpleVertexShader, nullptr, 0);
+    DeviceContext->PSSetShader(SimplePixelShader, nullptr, 0);
+    DeviceContext->IASetInputLayout(SimpleInputLayout);
+}
+
+void URenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices)
+{
+    UINT offset = 0;
+    DeviceContext->IASetVertexBuffers(0, 1, &pBuffer, &Stride, &offset);
+
+    DeviceContext->Draw(numVertices, 0);
+}
+
+void URenderer::Create(HWND hWindow)
 {
     // Direct3D 장치 및 스왑 체인 생성
     CreateDeviceAndSwapChain(hWindow);
@@ -31,7 +54,7 @@ void FD3DRenderer::Create(HWND hWindow)
     //TODO: depth-stencill, blend
 }
 
-void FD3DRenderer::CreateDeviceAndSwapChain(HWND hWindow)
+void URenderer::CreateDeviceAndSwapChain(HWND hWindow)
 {
     // 지원하는 Direct3D 기능 레벨을 정의
     D3D_FEATURE_LEVEL featurelevels[] = { D3D_FEATURE_LEVEL_11_0 };
@@ -61,7 +84,7 @@ void FD3DRenderer::CreateDeviceAndSwapChain(HWND hWindow)
     ViewportInfo = { 0.0f, 0.0f, (float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height, 0.0f, 1.0f };
 }
 
-void FD3DRenderer::ReleaseDeviceAndSwapChain()
+void URenderer::ReleaseDeviceAndSwapChain()
 {
     if (DeviceContext)
     {
@@ -87,7 +110,7 @@ void FD3DRenderer::ReleaseDeviceAndSwapChain()
     }
 }
 
-void FD3DRenderer::CreateFrameBuffer()
+void URenderer::CreateFrameBuffer()
 {
     // 스왑 체인으로부터 백 버퍼 텍스처 가져오기
     SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&FrameBuffer);
@@ -100,7 +123,7 @@ void FD3DRenderer::CreateFrameBuffer()
     Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
 }
 
-void FD3DRenderer::ReleaseFrameBuffer()
+void URenderer::ReleaseFrameBuffer()
 {
     if (FrameBuffer)
     {
@@ -115,7 +138,7 @@ void FD3DRenderer::ReleaseFrameBuffer()
     }
 }
 
-void FD3DRenderer::CreateRasterizerState()
+void URenderer::CreateRasterizerState()
 {
     D3D11_RASTERIZER_DESC rasterizerdesc = {};
     rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
@@ -124,7 +147,7 @@ void FD3DRenderer::CreateRasterizerState()
     Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState);
 }
 
-void FD3DRenderer::ReleaseRasterizerState()
+void URenderer::ReleaseRasterizerState()
 {
     if (RasterizerState)
     {
@@ -133,7 +156,7 @@ void FD3DRenderer::ReleaseRasterizerState()
     }
 }
 
-void FD3DRenderer::Release()
+void URenderer::Release()
 {
     RasterizerState->Release();
 
@@ -144,12 +167,12 @@ void FD3DRenderer::Release()
     ReleaseDeviceAndSwapChain();
 }
 
-void FD3DRenderer::SwapBuffer()
+void URenderer::SwapBuffer()
 {
     SwapChain->Present(bVSync, 0); 
 }
 
-void FD3DRenderer::CreateShader()
+void URenderer::CreateShader()
 {
     ID3DBlob* vertexshaderCSO;
     ID3DBlob* pixelshaderCSO;
@@ -177,7 +200,7 @@ void FD3DRenderer::CreateShader()
     pixelshaderCSO->Release();
 }
 
-void FD3DRenderer::ReleaseShader()
+void URenderer::ReleaseShader()
 {
     if (SimpleInputLayout)
     {

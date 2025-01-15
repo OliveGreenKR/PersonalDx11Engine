@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "D3DRenderer.h"
+#include "Renderer.h"
 
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -39,12 +39,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								nullptr, nullptr, hInstance, nullptr);
 
 #pragma endregion
-
 	bool bIsExit = false;
 
-	FD3DRenderer Renderer;
+	URenderer Renderer;
 	Renderer.Intialize(hwnd);
 
+
+	FVertexSimple* vertices = triangle_vertices;
+	UINT ByteWidth = sizeof(triangle_vertices);
+	UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
+
+	// »ý¼º
+	D3D11_BUFFER_DESC vertexbufferdesc = {};
+	vertexbufferdesc.ByteWidth = ByteWidth;
+	vertexbufferdesc.Usage = D3D11_USAGE_IMMUTABLE;
+	vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA vertexbufferSRD = { vertices };
+
+	ID3D11Buffer* vertexBuffer;
+
+	Renderer.Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -65,13 +80,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		//Tick
-		Renderer.Tick();
+	
+		Renderer.PrepareRender();
+		Renderer.PrepareShader();
+		Renderer.RenderPrimitive(vertexBuffer, numVertices);
 
+		Renderer.SwapBuffer();
 	}
 #pragma endregion
 
-
+	vertexBuffer->Release();
 	Renderer.Shutdown();
 	return 0;
 }

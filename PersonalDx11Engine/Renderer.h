@@ -1,31 +1,34 @@
+#pragma once
 #include "myd3d.h"
 #include "Vector.h"
 
-// 1. Define the triangle vertices
 struct FVertexSimple
 {
     float x, y, z;    // Position
     float r, g, b, a; // Color
 };
 
-// 삼각형을 하드 코딩
-FVertexSimple triangle_vertices[] =
+static FVertexSimple triangle_vertices[] =
 {
     {  0.0f,  1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 1.0f }, // Top vertex (red)
     {  1.0f, -1.0f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f }, // Bottom-right vertex (green)
     { -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f }  // Bottom-left vertex (blue)
 };
 
-class FD3DRenderer 
+class URenderer 
 {
 public:
-    FD3DRenderer() = default;
-    ~FD3DRenderer() = default;
+    URenderer() = default;
+    ~URenderer() = default;
 
 public:
     void Intialize(HWND hWindow);
-    void Tick();
     void Shutdown();
+
+    void PrepareRender();
+    void PrepareShader();
+    void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
+    void SwapBuffer();
 
 private:
 #pragma region d3d
@@ -52,9 +55,6 @@ private:
 
     // 렌더러에 사용된 모든 리소스를 해제하는 함수
     void Release();
-
-    // 스왑 체인의 백 버퍼와 프론트 버퍼를 교체하여 화면에 출력
-    void SwapBuffer();
 #pragma endregion
 
 #pragma region shader
@@ -69,7 +69,7 @@ private:
     void ReleaseShader();
 #pragma endregion
 
-private:
+public:
     // Direct3D 11 장치(Device)와 장치 컨텍스트(Device Context) 및 스왑 체인(Swap Chain)을 관리하기 위한 포인터들
     ID3D11Device* Device = nullptr; // GPU와 통신하기 위한 Direct3D 장치
     ID3D11DeviceContext* DeviceContext = nullptr; // GPU 명령 실행을 담당하는 컨텍스트

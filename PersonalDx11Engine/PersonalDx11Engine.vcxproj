@@ -128,13 +128,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="D3DRenderer.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Mesh.h" />
     <ClInclude Include="myd3d.h" />
-    <ClInclude Include="D3DRenderer.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
