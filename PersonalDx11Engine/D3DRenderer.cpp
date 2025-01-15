@@ -1,8 +1,9 @@
-#include "FD3DRenderer.h"
+#include "D3DRenderer.h"
 
 void FD3DRenderer::Intialize(HWND hWindow)
 {
     Create(hWindow);
+    CreateShader();
 }
 
 void FD3DRenderer::Tick()
@@ -12,6 +13,7 @@ void FD3DRenderer::Tick()
 
 void FD3DRenderer::Shutdown()
 {
+    ReleaseShader();
     Release();
 }
 
@@ -145,5 +147,53 @@ void FD3DRenderer::Release()
 void FD3DRenderer::SwapBuffer()
 {
     SwapChain->Present(bVSync, 0); 
+}
+
+void FD3DRenderer::CreateShader()
+{
+    ID3DBlob* vertexshaderCSO;
+    ID3DBlob* pixelshaderCSO;
+
+    D3DCompileFromFile(L"ShaderW0.hlsl", nullptr, nullptr, "mainVS", "vs_5_0", 0, 0, &vertexshaderCSO, nullptr);
+
+    Device->CreateVertexShader(vertexshaderCSO->GetBufferPointer(), vertexshaderCSO->GetBufferSize(), nullptr, &SimpleVertexShader);
+
+    D3DCompileFromFile(L"ShaderW0.hlsl", nullptr, nullptr, "mainPS", "ps_5_0", 0, 0, &pixelshaderCSO, nullptr);
+
+    Device->CreatePixelShader(pixelshaderCSO->GetBufferPointer(), pixelshaderCSO->GetBufferSize(), nullptr, &SimplePixelShader);
+
+    D3D11_INPUT_ELEMENT_DESC layout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+
+    Device->CreateInputLayout(layout, ARRAYSIZE(layout), vertexshaderCSO->GetBufferPointer(), vertexshaderCSO->GetBufferSize(), &SimpleInputLayout);
+
+    Stride = sizeof(FVertexSimple);
+
+    vertexshaderCSO->Release();
+    pixelshaderCSO->Release();
+}
+
+void FD3DRenderer::ReleaseShader()
+{
+    if (SimpleInputLayout)
+    {
+        SimpleInputLayout->Release();
+        SimpleInputLayout = nullptr;
+    }
+
+    if (SimplePixelShader)
+    {
+        SimplePixelShader->Release();
+        SimplePixelShader = nullptr;
+    }
+
+    if (SimpleVertexShader)
+    {
+        SimpleVertexShader->Release();
+        SimpleVertexShader = nullptr;
+    }
 }
 

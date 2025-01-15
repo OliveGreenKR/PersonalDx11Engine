@@ -2,8 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="FD3DRenderer.cpp">
+    <ClCompile Include="D3DRenderer.cpp">
       <Filter>D3D\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -16,13 +19,31 @@
     <Filter Include="HLSL">
       <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mesh">
+      <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D\Shape">
+      <UniqueIdentifier>{d98e0e95-b838-4ecc-ae74-f83292b4e7e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FD3DRenderer.h">
+    <ClInclude Include="D3DRenderer.h">
       <Filter>D3D\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="myd3d.h">
       <Filter>D3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicShape.h">
+      <Filter>D3D\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>D3D\Shape</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

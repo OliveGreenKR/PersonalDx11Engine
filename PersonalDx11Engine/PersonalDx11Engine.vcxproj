@@ -128,11 +128,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="FD3DRenderer.cpp" />
+    <ClCompile Include="D3DRenderer.cpp" />
+    <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BasicShape.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="myd3d.h" />
-    <ClInclude Include="FD3DRenderer.h" />
+    <ClInclude Include="D3DRenderer.h" />
+    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">

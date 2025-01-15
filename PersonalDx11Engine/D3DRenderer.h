@@ -1,4 +1,5 @@
 #include "myd3d.h"
+#include "Vector.h"
 
 class FD3DRenderer 
 {
@@ -12,6 +13,7 @@ public:
     void Shutdown();
 
 private:
+#pragma region d3d
     // 렌더러 초기화 함수
     void Create(HWND hWindow);
 
@@ -38,6 +40,19 @@ private:
 
     // 스왑 체인의 백 버퍼와 프론트 버퍼를 교체하여 화면에 출력
     void SwapBuffer();
+#pragma endregion
+
+#pragma region shader
+private:
+    //todo: shader 인터페이스로 기능 분리?
+    ID3D11VertexShader* SimpleVertexShader;
+    ID3D11PixelShader* SimplePixelShader;
+    ID3D11InputLayout* SimpleInputLayout;
+    unsigned int Stride;
+
+    void CreateShader();
+    void ReleaseShader();
+#pragma endregion
 
 private:
     // Direct3D 11 장치(Device)와 장치 컨텍스트(Device Context) 및 스왑 체인(Swap Chain)을 관리하기 위한 포인터들
