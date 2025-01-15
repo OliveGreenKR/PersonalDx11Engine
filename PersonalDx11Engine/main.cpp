@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "FD3DRenderer.h"
+#include "D3DRenderer.h"
 
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -20,6 +20,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#pragma region window init
 	// 윈도우 클래스 이름
 	WCHAR WindowClass[] = L"JungleWindowClass";
 
@@ -36,11 +37,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hwnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
 								nullptr, nullptr, hInstance, nullptr);
+
+#pragma endregion
+
 	bool bIsExit = false;
-#pragma region Construct 
+
 	FD3DRenderer Renderer;
 	Renderer.Intialize(hwnd);
-#pragma endregion
+
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -67,9 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 #pragma endregion
 
-#pragma region Deconstruct
-	Renderer.Shutdown();
-#pragma endregion
 
+	Renderer.Shutdown();
 	return 0;
 }

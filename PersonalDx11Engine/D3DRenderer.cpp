@@ -170,6 +170,7 @@ void FD3DRenderer::CreateShader()
 
     Device->CreateInputLayout(layout, ARRAYSIZE(layout), vertexshaderCSO->GetBufferPointer(), vertexshaderCSO->GetBufferSize(), &SimpleInputLayout);
 
+
     Stride = sizeof(FVertexSimple);
 
     vertexshaderCSO->Release();

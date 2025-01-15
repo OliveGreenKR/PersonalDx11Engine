@@ -132,7 +132,6 @@
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BasicShape.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="myd3d.h" />
     <ClInclude Include="D3DRenderer.h" />
