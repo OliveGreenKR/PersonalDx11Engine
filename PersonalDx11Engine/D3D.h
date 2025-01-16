@@ -24,6 +24,7 @@ public:
 
     __forceinline ID3D11Device* GetDevice()                 { return Device; }
     __forceinline ID3D11DeviceContext* GetDeviceContext()   { return DeviceContext; }
+
     void GetProjectionMatrix(OUT XMMATRIX& OutMatrix)       { OutMatrix = MatirxProjection;  }
     void GetWorldMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixWorld; }
     void GetOrthoMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixOrtho; }
@@ -35,16 +36,13 @@ private:
 
     void PrepareRender();
    
-
     bool CreateDeviceAndSwapChain(HWND Hwnd);
     bool CreateFrameBuffer();
     bool CreateRasterizerStateAndMatricies();
 
-
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
-
 private:
 
     ID3D11Device* Device = nullptr;

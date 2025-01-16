@@ -61,6 +61,9 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{aaeca9b3-516e-4bf6-a486-f082b7831733}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Interface">
+      <UniqueIdentifier>{370944e7-eb8c-4096-a67a-ea04f06dbf48}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicShape.h">

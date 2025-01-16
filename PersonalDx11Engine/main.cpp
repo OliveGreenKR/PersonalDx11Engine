@@ -46,17 +46,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-	FD3D Renderer;
+	URenderer Renderer;
 	Renderer.Initialize(hWnd);
-	Renderer.bVSync = 0;
+	Renderer.SetVSync(false);
 	
 
 	// 여기에서 ImGui를 생성합니다.
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init((void*)hWnd);
-	ImGui_ImplDX11_Init(Renderer.GetDevice(), Renderer.GetDeviceContext());
+	//IMGUI_CHECKVERSION();
+	//ImGui::CreateContext();
+	//ImGuiIO& io = ImGui::GetIO();
+	//ImGui_ImplWin32_Init((void*)hWnd);
+	//ImGui_ImplDX11_Init(Renderer.GetDevice(), Renderer.GetDeviceContext());
 
 	
 
@@ -97,31 +97,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		}
 
-		Renderer.BeginScene();
+		Renderer.BeginRender();
 	
 
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+		//ImGui_ImplDX11_NewFrame();
+		//ImGui_ImplWin32_NewFrame();
+		//ImGui::NewFrame();
 
-		// ImGui UI 컨트롤 추가
-		ImGui::Begin("Jungle Property Window");
+		//// ImGui UI 컨트롤 추가
+		//ImGui::Begin("Jungle Property Window");
 
-		ImGui::Text("Hello Jungle World!");
-		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		//ImGui::Text("Hello Jungle World!");
+		//ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
 
-		ImGui::End();
+		//ImGui::End();
 
-		ImGui::Render();
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		//ImGui::Render();
+		//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-		Renderer.EndScene();
+		Renderer.EndRender();
 	}
 #pragma endregion
 	// 여기에서 ImGui 소멸
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	//ImGui_ImplDX11_Shutdown();
+	//ImGui_ImplWin32_Shutdown();
+	//ImGui::DestroyContext();
 
 	Renderer.Shutdown();
 	return 0;
