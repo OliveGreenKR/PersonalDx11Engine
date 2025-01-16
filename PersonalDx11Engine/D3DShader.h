@@ -11,23 +11,25 @@ public:
 	~FD3DShader();
 
 public:
-	bool Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, unsigned int layoutSize);
+	bool Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
 	void Shutdown();
 
 	void Bind(ID3D11DeviceContext* DeviceContext);
-
 
 	template<typename T>
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,const T& BufferData, unsigned int BufferIndex = 0);
 	void SetTexture(ID3D11DeviceContext* DeviceContext,ID3D11ShaderResourceView* TextureView);
 	void SetSamplerState(ID3D11DeviceContext* DeviceContext,ID3D11SamplerState* SamplerState);
-	
+
+private:
+	bool CreateShaders(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, OUT ID3DBlob* VSBlob, OUT ID3DBlob* PSBlob);
+	bool CreateInputLayout(ID3D11Device* Device, ID3DBlob* VSBlob, ID3DBlob* PSBlob, D3D11_INPUT_ELEMENT_DESC* layout, unsigned int layoutSize);
+	bool CreateConstantBuffers(ID3D11Device* Device, ID3DBlob* VSBlob, ID3DBlob* PSBlob);
 private:
 	ID3D11VertexShader* VertexShader = nullptr;
 	ID3D11PixelShader* PixelShader = nullptr;
 	ID3D11InputLayout* InputLayout = nullptr;
 	vector<ID3D11Buffer*> ConstantBuffers;
-
 };
 
 template<typename T>
@@ -45,6 +47,7 @@ inline void FD3DShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,
 
 	if (FAILED(result))
 		return;
+
 	//from CPU to GPU memory
 	memcpy(MappedResource.pData, &BufferData, sizeof(T));
 	DeviceContext->Unmap(ConstantBuffers[BufferIndex], 0);
