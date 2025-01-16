@@ -15,6 +15,16 @@ struct FVector
 		return FVector(x + V.x, y + V.y, z + V.z);
 	}
 
+	__forceinline void operator+= (const FVector & other)
+	{
+		x += other.x; y += other.y; z += other.z;
+	}
+	__forceinline void operator*= (const float val)
+	{
+		x *= val; y *= val; z *= val;
+	}
+
+
 	static const FVector Zero;
 	static const FVector Up;
 	static const FVector Forward;
@@ -38,6 +48,19 @@ struct FVector4
 		return FVector4(x + V.x, y + V.y, z + V.z, w +V.w);
 	}
 
+	__forceinline void operator+= (const FVector4& other)
+	{
+		x += other.x; y += other.y; z += other.z; w += other.w;
+	}
+
 	static const FVector4 Zero;
 };
 
+static FVector operator* (const FVector& a, const float b)
+{
+	return FVector(a.x * b, a.y * b, a.z * b);
+}
+static __forceinline FVector operator* (float a, const FVector& b)
+{
+	return b * a;
+}

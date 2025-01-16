@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "Renderer.h"
 #include "BasicShape.h"
-
+#include "Math.h"
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //struct for Processing Win Msgs
@@ -41,15 +41,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 윈도우 클래스 등록
 	RegisterClassW(&wndclass);
 
-	// 1024 x 1024 크기에 윈도우 생성
+	//윈도우 생성
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-								CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024,
+								CW_USEDEFAULT, CW_USEDEFAULT, 800, 800,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-	
-
 	URenderer Renderer;
 	Renderer.Intialize(hWnd);
+	Renderer.bVSync = 0;
+	
 
 	// 여기에서 ImGui를 생성합니다.
 	IMGUI_CHECKVERSION();
@@ -63,7 +63,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
 	float scaleMod = 0.1f;
-
 	for (UINT i = 0; i < numVerticesSphere; ++i)
 	{
 		sphere_vertices[i].x *= scaleMod;
@@ -71,28 +70,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		sphere_vertices[i].z *= scaleMod;
 	}
 
-	ID3D11Buffer* vertexBufferTriangle = Renderer.CreateVertexBuffer(triangle_vertices, sizeof(triangle_vertices));
-	ID3D11Buffer* vertexBufferCube = Renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
+	/*ID3D11Buffer* vertexBufferTriangle = Renderer.CreateVertexBuffer(triangle_vertices, sizeof(triangle_vertices));
+	ID3D11Buffer* vertexBufferCube = Renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));*/
 	ID3D11Buffer* vertexBufferSphere = Renderer.CreateVertexBuffer(sphere_vertices, sizeof(sphere_vertices));
 
-
-	enum ETypePrimitive
-	{
-		EPT_Triangle,
-		EPT_Cube,
-		EPT_Sphere,
-		EPT_Max,
-	};
-
-	ETypePrimitive typePrimitive = EPT_Triangle;
+	ETypePrimitive typePrimitive = ETypePrimitive::Sphere;
 
 	bool bIsExit = false;
-	FVector offset = FVector::Zero;
+	FVector offset;
+	FVector velocity;
+
+	const float leftBorder = -1.0f;
+	const float rightBorder = 1.0f;
+	const float topBorder = -1.0f;
+	const float bottomBorder = 1.0f;
+	const float sphereRadius = 1.0f;
+
+	bool bBoundBallToScreen = true;
+	bool bPinballMovement = true;
+
+	velocity.x = ((float)(rand() % 100 - 50)) * 0.05f;
+	velocity.y = ((float)(rand() % 100 - 50)) * 0.05f;
+
+
+	//delta frame time
+	LARGE_INTEGER frequency;
+	LARGE_INTEGER lastTime;
+	LARGE_INTEGER currentTime;
+
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&lastTime);
 
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
 		MSG msg;
+
+		QueryPerformanceCounter(&currentTime);
+		float deltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
+		lastTime = currentTime;
 
 		//window msg process
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -110,25 +126,72 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if (msg.message == WM_KEYDOWN) // 키보드 눌렸을 때
 			{
+				const float unitmove = 0.01f;
 				// 눌린 키가 방향키라면 해당 방향에 맞춰서
 				// offset 변수의 x, y 맴버 변수의 값을 조정합니다.
 				if (msg.wParam == VK_LEFT)
 				{
-					offset.x -= 0.01f;
+					offset.x -= unitmove;
 				}
 				if (msg.wParam == VK_RIGHT)
 				{
-					offset.x += 0.01f;
+					offset.x += unitmove;
 				}
 				if (msg.wParam == VK_UP)
 				{
-					offset.y += 0.01f;
+					offset.y += unitmove;
 				}
 				if (msg.wParam == VK_DOWN)
 				{
-					offset.y -= 0.01f;
+					offset.y -= unitmove;
 				}
+
+				if (bBoundBallToScreen)
+				{
+					if (msg.wParam == VK_LEFT)
+					{
+						offset.x = clamp<float>(offset.x, leftBorder, rightBorder);
+					}
+					if (msg.wParam == VK_RIGHT)
+					{
+						offset.x = clamp<float>(offset.x, leftBorder, rightBorder);
+					}
+					if (msg.wParam == VK_UP)
+					{
+						offset.y = clamp<float>(offset.y, leftBorder, rightBorder);
+					}
+					if (msg.wParam == VK_DOWN)
+					{
+						offset.y = clamp<float>(offset.y, leftBorder, rightBorder);
+					}
+				}
+				
 			}
+		}
+
+		if (bPinballMovement)
+		{
+			offset += velocity * deltaTime;
+
+			//경계면 충돌시 방향 전환
+			float renderRadius = sphereRadius * scaleMod;
+			if (offset.x < leftBorder + renderRadius)
+			{
+				velocity.x *= -1.0f;
+			}
+			if (offset.x > rightBorder - renderRadius)
+			{
+				velocity.x *= -1.0f;
+			}
+			if (offset.y < topBorder + renderRadius)
+			{
+				velocity.y *= -1.0f;
+			}
+			if (offset.y > bottomBorder - renderRadius)
+			{
+				velocity.y *= -1.0f;
+			}
+
 		}
 
 	
@@ -136,21 +199,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer.PrepareShader();
 
 		Renderer.UpdateConstant(offset);
-		
-		//render orimitive
-		switch (typePrimitive)
-		{
-			case EPT_Triangle:
-				Renderer.RenderPrimitive(vertexBufferTriangle, numVerticesTriangle);
-				break;
-			case EPT_Cube:
-				Renderer.RenderPrimitive(vertexBufferCube, numVerticesCube);
-				break;
-			case EPT_Sphere:
-				Renderer.RenderPrimitive(vertexBufferSphere, numVerticesSphere);
-				break;
-		}
 
+		Renderer.RenderPrimitive(vertexBufferSphere, numVerticesSphere);
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -159,23 +209,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ImGui UI 컨트롤 추가
 		ImGui::Begin("Jungle Property Window");
 		ImGui::Text("Hello Jungle World!");
+		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		ImGui::Text("radius : %.6f", sphereRadius * scaleMod);
+		ImGui::Text("velocity : %.2f ,  %0.2f", velocity.x, velocity.y);
+		ImGui::Text("position : %.2f ,  %0.2f", offset.x, offset.y);
 
-		//UI : change primitive type 
-		if (ImGui::Button("Change primitive"))
-		{
-			switch (typePrimitive)
-			{
-				case EPT_Triangle:
-					typePrimitive = EPT_Cube;
-					break;
-				case EPT_Cube:
-					typePrimitive = EPT_Sphere;
-					break;
-				case EPT_Sphere:
-					typePrimitive = EPT_Triangle;
-					break;
-			}
-		}
+
+		ImGui::Checkbox("Bound Ball To Screen", &bBoundBallToScreen);
+		ImGui::Checkbox("Pinball Movement", &bPinballMovement);
 
 		ImGui::End();
 
@@ -192,9 +233,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	Renderer.ReleaseVertexBuffer(vertexBufferTriangle);
-	Renderer.ReleaseVertexBuffer(vertexBufferCube);
 	Renderer.ReleaseVertexBuffer(vertexBufferSphere);
 	Renderer.Shutdown();
 	return 0;
 }
+

@@ -2,11 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="D3DRenderer.cpp">
-      <Filter>D3D\Renderer</Filter>
-    </ClCompile>
+    <ClCompile Include="ImGui\imgui.cpp" />
+    <ClCompile Include="ImGui\imgui_demo.cpp" />
+    <ClCompile Include="ImGui\imgui_draw.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="ImGui\imgui_tables.cpp" />
+    <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Vector.cpp">
-      <Filter>Math</Filter>
+      <Filter>Math\Vector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -28,22 +33,28 @@
     <Filter Include="D3D\Shape">
       <UniqueIdentifier>{d98e0e95-b838-4ecc-ae74-f83292b4e7e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Math\Vector">
+      <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3DRenderer.h">
-      <Filter>D3D\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="myd3d.h">
-      <Filter>D3D</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="BasicShape.h">
       <Filter>D3D\Shape</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>D3D\Shape</Filter>
+    <ClInclude Include="ImGui\imconfig.h" />
+    <ClInclude Include="ImGui\imgui.h" />
+    <ClInclude Include="ImGui\imgui_impl_dx11.h" />
+    <ClInclude Include="ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="ImGui\imgui_internal.h" />
+    <ClInclude Include="ImGui\imstb_rectpack.h" />
+    <ClInclude Include="ImGui\imstb_textedit.h" />
+    <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Math\Vector</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
