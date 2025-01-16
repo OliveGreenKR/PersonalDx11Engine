@@ -1,4 +1,5 @@
 #pragma once
+
 #include "D3D.h"
 #include <vector>
 
@@ -22,10 +23,6 @@ public:
 	void SetSamplerState(ID3D11DeviceContext* DeviceContext,ID3D11SamplerState* SamplerState);
 
 private:
-	bool CreateShaders(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, OUT ID3DBlob* VSBlob, OUT ID3DBlob* PSBlob);
-	bool CreateInputLayout(ID3D11Device* Device, ID3DBlob* VSBlob, ID3DBlob* PSBlob, D3D11_INPUT_ELEMENT_DESC* layout, unsigned int layoutSize);
-	bool CreateConstantBuffers(ID3D11Device* Device, ID3DBlob* VSBlob, ID3DBlob* PSBlob);
-private:
 	ID3D11VertexShader* VertexShader = nullptr;
 	ID3D11PixelShader* PixelShader = nullptr;
 	ID3D11InputLayout* InputLayout = nullptr;
@@ -37,13 +34,13 @@ inline void FD3DShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,
 {
 	static_assert(sizeof(T) % 16 == 0, "Constant buffer size must be 16-byte aligned");
 
-	if (BufferIndex >= ConstantBuffers.Num())
+	if (BufferIndex >= ConstantBuffers.size())
 	{
 		return;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
-	HRESULT result = DeviceContext->Map(ConstantVuffers[BufferIndx], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+	HRESULT result = DeviceContext->Map(ConstantBuffers[BufferIndex], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
 
 	if (FAILED(result))
 		return;
