@@ -1,2 +1,7 @@
-﻿  Renderer.cpp
+﻿  D3D.cpp
+  Renderer.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(3,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  (compiling source file 'Renderer.cpp')
+  
+  Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

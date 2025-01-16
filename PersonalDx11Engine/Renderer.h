@@ -1,13 +1,6 @@
 #pragma once
 //link for D3D
-#pragma comment(lib, "user32")
-#pragma comment(lib, "d3d11")
-#pragma comment(lib, "d3dcompiler")
-
-#include <d3d11.h>
-#include <d3dcompiler.h>
-
-#include <d3d11.h>
+#include "D3D.h";
 //ImGui
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
@@ -36,7 +29,7 @@ public:
     ~URenderer() = default;
 
 public:
-    void Intialize(HWND hWindow);
+    void Initialize(HWND hWindow);
     void Shutdown();
 
     ID3D11Buffer* CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth);

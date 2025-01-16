@@ -23,7 +23,6 @@ PS_INPUT mainVS(VS_INPUT input)
     output.position = float4(Offset, 0) + input.position;
     input.position;
    
-    output.color = input.color;
     
     return output;
 }

@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-void URenderer::Intialize(HWND hWindow)
+void URenderer::Initialize(HWND hWindow)
 {
     Create(hWindow);
     CreateShader();
@@ -143,7 +143,8 @@ void URenderer::CreateFrameBuffer()
     framebufferRTVdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; // 색상 포맷
     framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
 
-    Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
+    if(FrameBuffer)
+        Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
 }
 
 void URenderer::ReleaseFrameBuffer()

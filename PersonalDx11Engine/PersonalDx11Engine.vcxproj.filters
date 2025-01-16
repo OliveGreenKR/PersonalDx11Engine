@@ -2,24 +2,40 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ImGui\imgui.cpp" />
-    <ClCompile Include="ImGui\imgui_demo.cpp" />
-    <ClCompile Include="ImGui\imgui_draw.cpp" />
-    <ClCompile Include="ImGui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
-    <ClCompile Include="ImGui\imgui_tables.cpp" />
-    <ClCompile Include="ImGui\imgui_widgets.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Vector.cpp">
       <Filter>Math\Vector</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_impl_win32.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D.cpp">
+      <Filter>D3D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
       <UniqueIdentifier>{96ed34c5-c686-461c-bf81-b6e274ae5ec6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="D3D\Renderer">
-      <UniqueIdentifier>{16351b72-ec26-4539-a003-314d4139c3af}</UniqueIdentifier>
     </Filter>
     <Filter Include="HLSL">
       <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
@@ -30,31 +46,61 @@
     <Filter Include="Math">
       <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D\Shape">
-      <UniqueIdentifier>{d98e0e95-b838-4ecc-ae74-f83292b4e7e3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Math\Vector">
       <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{8c5127dc-5848-4663-a58a-b4f9641cc18f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer">
+      <UniqueIdentifier>{16351b72-ec26-4539-a003-314d4139c3af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Shape">
+      <UniqueIdentifier>{d98e0e95-b838-4ecc-ae74-f83292b4e7e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{aaeca9b3-516e-4bf6-a486-f082b7831733}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicShape.h">
-      <Filter>D3D\Shape</Filter>
+      <Filter>Engine\Shape</Filter>
     </ClInclude>
-    <ClInclude Include="ImGui\imconfig.h" />
-    <ClInclude Include="ImGui\imgui.h" />
-    <ClInclude Include="ImGui\imgui_impl_dx11.h" />
-    <ClInclude Include="ImGui\imgui_impl_win32.h" />
-    <ClInclude Include="ImGui\imgui_internal.h" />
-    <ClInclude Include="ImGui\imstb_rectpack.h" />
-    <ClInclude Include="ImGui\imstb_textedit.h" />
-    <ClInclude Include="ImGui\imstb_truetype.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Math.h">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector.h">
       <Filter>Math\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_impl_dx11.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_impl_win32.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D.h">
+      <Filter>D3D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
