@@ -2,6 +2,8 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
+#include "Model.h"
+
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
 
@@ -45,9 +47,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-	URenderer Renderer;
-	Renderer.Initialize(hWnd);
-	Renderer.SetVSync(false);
+	URenderer* Renderer = new URenderer();
+	Renderer->Initialize(hWnd);
+	Renderer->SetVSync(false);
 	
 
 	// 여기에서 ImGui를 생성합니다.
@@ -57,10 +59,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ImGui_ImplWin32_Init((void*)hWnd);
 	//ImGui_ImplDX11_Init(Renderer.GetDevice(), Renderer.GetDeviceContext());
 
-	
-
 	bool bIsExit = false;
 	
+	FModel model = FModel::GetDefaultTriangle(Renderer->GetDevice());
 
 	//delta frame time
 	LARGE_INTEGER frequency;
@@ -96,8 +97,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		}
 
-		Renderer.BeginRender();
+		Renderer->BeforeRender();
 	
+
+		//Render
+		UINT Stride;
+		UINT Offset = 0;
+		ID3D11Buffer* vertexBuffer = model.GetVertexBuffer();
+	
+		Renderer->GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &Stride, &Offset);
+		Renderer->GetDeviceContext()->Draw(model.GetNumVertices(), 0);
 
 		//ImGui_ImplDX11_NewFrame();
 		//ImGui_ImplWin32_NewFrame();
@@ -113,16 +122,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//ImGui::Render();
 		//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-		Renderer.EndRender();
+		Renderer->EndRender();
 	}
 #pragma endregion
 	// 여기에서 ImGui 소멸
 	//ImGui_ImplDX11_Shutdown();
 	//ImGui_ImplWin32_Shutdown();
 	//ImGui::DestroyContext();
-
-	Renderer.Shutdown();
+	model.Release();
+	Renderer->Release();
 	return 0;
 }
 

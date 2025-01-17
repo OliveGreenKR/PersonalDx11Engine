@@ -13,7 +13,7 @@ public:
 
 public:
 	bool Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
-	void Shutdown();
+	void Release();
 
 	void Bind(ID3D11DeviceContext* DeviceContext);
 

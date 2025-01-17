@@ -17,24 +17,20 @@ void URenderer::Initialize(HWND hWindow)
     result = Shader->Initialize(RenderHardware->GetDevice(), L"ShaderW0.hlsl", L"ShaderW0.hlsl", layout, ARRAYSIZE(layout));
 }
 
-void URenderer::BeginRender()
+void URenderer::BeforeRender()
 {
     RenderHardware->BeginScene();
-}
-
-void URenderer::Render()
-{
-    //Render Somthing..
     Shader->Bind(RenderHardware->GetDeviceContext());
 }
+
 
 void URenderer::EndRender()
 {
     RenderHardware->EndScene();
 }
 
-void URenderer::Shutdown()
+void URenderer::Release()
 {
-    Shader->Shutdown();
-    RenderHardware->Shutdown();
+    Shader->Release();
+    RenderHardware->Release();
 }

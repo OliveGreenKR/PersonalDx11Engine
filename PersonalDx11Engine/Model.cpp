@@ -9,7 +9,7 @@ FModel::FModel(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UI
 
 FModel::~FModel()
 {
-	Shutdown();
+	Release();
 }
 
 bool FModel::Initialize(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UINT InNumVertices)
@@ -20,7 +20,12 @@ bool FModel::Initialize(ID3D11Device* InDevice, const FVertexSimple* InVertices,
 
 const FModel FModel::GetDefaultTriangle(ID3D11Device* InDevice)
 {
-	return FModel(InDevice,FModel::triangle_vertices,sizeof(triangle_vertices)/sizeof(FVertexSimple));
+	const static FVertexSimple triangle_vertices[] = {
+	{ {  0.0f,  1.0f, 0.0f }, {  1.0f, 0.0f, 0.0f, 1.0f } }, // Top vertex (red)
+	{ {  1.0f, -1.0f, 0.0f }, {  0.0f, 1.0f, 0.0f, 1.0f } }, // Bottom-right vertex (green)
+	{ { -1.0f, -1.0f, 0.0f }, {  0.0f, 0.0f, 1.0f, 1.0f } }  // Bottom-left vertex (blue)
+	};
+	return FModel(InDevice,triangle_vertices,sizeof(triangle_vertices)/sizeof(FVertexSimple));
 }
 
 bool FModel::CreateVertexBuffer(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UINT InNumVertices)
@@ -49,7 +54,7 @@ bool FModel::CreateVertexBuffer(ID3D11Device* InDevice, const FVertexSimple* InV
 	return bInitialized = true;
 }
 
-void FModel::Shutdown()
+void FModel::Release()
 {
 	if (VertexBuffer)
 	{

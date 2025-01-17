@@ -2,7 +2,7 @@
 
 FD3D::~FD3D()
 {
-	Shutdown();
+	Release();
 }
 
 bool FD3D::Initialize(HWND Hwnd)
@@ -12,7 +12,7 @@ bool FD3D::Initialize(HWND Hwnd)
 		CreateRasterizerStateAndMatricies();
 }
 
-void FD3D::Shutdown()
+void FD3D::Release()
 {
 	if (RasterizerState)
 	{

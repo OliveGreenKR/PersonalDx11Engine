@@ -17,7 +17,7 @@ public:
     ~FD3D();
 
     bool Initialize(HWND Hwnd);
-    void Shutdown();
+    void Release();
 
     void BeginScene();
     void EndScene();

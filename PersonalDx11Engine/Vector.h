@@ -25,10 +25,27 @@ struct FVector
 	}
 
 
-	static const FVector Zero;
-	static const FVector Up;
-	static const FVector Forward;
-	static const FVector Right;
+	static const FVector Zero()
+	{
+		const static FVector zero(0.0f, 0.0f, 0.0f);
+		return zero;
+	}
+
+	static const FVector Up()
+	{
+		const static FVector up(0.0f, 1.0f, 0.0f);
+		return up;
+	}
+	static const FVector Forward()
+	{
+		const static FVector forward(0.0f, 0.0f, 1.0f);
+		return forward;
+	}
+	static const FVector Right()
+	{
+		const static FVector right(1.0f, 0.0f, 0.0f);
+		return right;
+	}
 
 };
 
@@ -42,7 +59,6 @@ struct FVector4
 	float y = 0.0f;
 	float z = 0.0f;
 	float w = 0.0f;
-
 	__forceinline FVector4 operator+ (const FVector4& V) const
 	{
 		return FVector4(x + V.x, y + V.y, z + V.z, w +V.w);
@@ -53,7 +69,11 @@ struct FVector4
 		x += other.x; y += other.y; z += other.z; w += other.w;
 	}
 
-	static const FVector4 Zero;
+	static const FVector4 Zero()
+	{
+		const static FVector4 zero(0.0f, 0.0f, 0.0f, 0.0f);
+		return zero;
+	}
 };
 
 static FVector operator* (const FVector& a, const float b)

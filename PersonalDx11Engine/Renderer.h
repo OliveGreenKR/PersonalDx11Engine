@@ -19,11 +19,16 @@ public:
 public:
     void Initialize(HWND hWindow);
 
-    void BeginRender();
-    void Render();
+    void BeforeRender();
+
     void EndRender();
 
-    void Shutdown();
+    void Release();
+
+public:
+    //tmp
+    __forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }
+    __forceinline ID3D11DeviceContext* GetDeviceContext() { return RenderHardware->GetDeviceContext(); }
 
 public:
     __forceinline void SetVSync(bool activation) { RenderHardware->bVSync = activation; }

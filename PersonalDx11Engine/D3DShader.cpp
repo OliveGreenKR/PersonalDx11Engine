@@ -4,7 +4,7 @@
 
 FD3DShader::~FD3DShader()
 {
-	Shutdown();
+	Release();
 }
 
 bool FD3DShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize)
@@ -98,7 +98,7 @@ bool FD3DShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPat
 	return true;
 }
 
-void FD3DShader::Shutdown()
+void FD3DShader::Release()
 {
 	for (ID3D11Buffer* Buffer : ConstantBuffers)
 	{
