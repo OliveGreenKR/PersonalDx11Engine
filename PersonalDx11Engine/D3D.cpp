@@ -142,7 +142,9 @@ bool FD3D::CreateFrameBuffer()
 	framebufferRTVdesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; //32bit
 	framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D Texture
 
-	return !FAILED(Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV));
+	HRESULT result = Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
+
+	return SUCCEEDED(result);
 }
 
 bool FD3D::CreateRasterizerStateAndMatricies()

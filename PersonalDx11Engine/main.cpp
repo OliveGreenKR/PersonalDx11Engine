@@ -2,10 +2,19 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
-#include "Model.h"
+//#include "Model.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
+
+
+FVertexSimple triangle_vertices[] =
+{
+	{  0.0f,  1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 1.0f }, // Top vertex (red)
+	{  1.0f, -1.0f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f }, // Bottom-right vertex (green)
+	{ -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 1.0f }  // Bottom-left vertex (blue)
+
+};
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -51,7 +60,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer->Initialize(hWnd);
 	Renderer->SetVSync(false);
 	
-
 	// 여기에서 ImGui를 생성합니다.
 	//IMGUI_CHECKVERSION();
 	//ImGui::CreateContext();
@@ -60,8 +68,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ImGui_ImplDX11_Init(Renderer.GetDevice(), Renderer.GetDeviceContext());
 
 	bool bIsExit = false;
-	
-	FModel model = FModel::GetDefaultTriangle(Renderer->GetDevice());
+
 
 	//delta frame time
 	LARGE_INTEGER frequency;
@@ -70,6 +77,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
+
+	FVertexSimple* vertices = triangle_vertices;
+	UINT ByteWidth = sizeof(triangle_vertices);
+	UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
+
+	// 생성
+	D3D11_BUFFER_DESC vertexbufferdesc = {};
+	vertexbufferdesc.ByteWidth = ByteWidth;
+	vertexbufferdesc.Usage = D3D11_USAGE_IMMUTABLE;
+	vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA vertexbufferSRD = { vertices };
+
+	ID3D11Buffer* vertexBuffer;
+	UINT Stride = sizeof(FVertexSimple);
+	HRESULT result = Renderer->GetDevice()->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
+	assert(SUCCEEDED(result));
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -96,17 +120,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 
 		}
-
 		Renderer->BeforeRender();
-	
+		Renderer->PrepareShader();
+		Renderer->RenderPrimitive(vertexBuffer, numVertices);
 
 		//Render
-		UINT Stride;
-		UINT Offset = 0;
-		ID3D11Buffer* vertexBuffer = model.GetVertexBuffer();
-	
-		Renderer->GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &Stride, &Offset);
-		Renderer->GetDeviceContext()->Draw(model.GetNumVertices(), 0);
+		UINT offset = 0;
+		Renderer->GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &Stride, &offset);
+		Renderer->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		Renderer->GetDeviceContext()->Draw(numVertices, 0);
+
 
 		//ImGui_ImplDX11_NewFrame();
 		//ImGui_ImplWin32_NewFrame();
@@ -122,6 +145,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//ImGui::Render();
 		//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
 		Renderer->EndRender();
 	}
 #pragma endregion
@@ -129,7 +153,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ImGui_ImplDX11_Shutdown();
 	//ImGui_ImplWin32_Shutdown();
 	//ImGui::DestroyContext();
-	model.Release();
+	vertexBuffer->Release();
 	Renderer->Release();
 	return 0;
 }

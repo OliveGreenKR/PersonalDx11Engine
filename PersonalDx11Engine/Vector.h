@@ -59,6 +59,7 @@ struct FVector4
 	float y = 0.0f;
 	float z = 0.0f;
 	float w = 0.0f;
+
 	__forceinline FVector4 operator+ (const FVector4& V) const
 	{
 		return FVector4(x + V.x, y + V.y, z + V.z, w +V.w);

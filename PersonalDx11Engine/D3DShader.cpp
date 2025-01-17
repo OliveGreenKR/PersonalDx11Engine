@@ -30,25 +30,20 @@ bool FD3DShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPat
 	result = Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), nullptr, &VertexShader);
 	if (FAILED(result))
 	{
-		VSBlob->Release();
-		PSBlob->Release();
 		return false;
 	}
 
 	result = Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &PixelShader);
 	if (FAILED(result))
 	{
-		VSBlob->Release();
-		PSBlob->Release();
 		return false;
 	}
 
+
 	//Creatr InputLayout
-	result = Device->CreateInputLayout(layout, layoutSize, VSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), &InputLayout);
+	result = Device->CreateInputLayout(layout, layoutSize, VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), &InputLayout);
 	if (FAILED(result))
 	{
-		VSBlob->Release();
-		PSBlob->Release();
 		return false;
 	}
 		
@@ -79,11 +74,10 @@ bool FD3DShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPat
 			ConstantBufferDesc.MiscFlags = 0;
 			ConstantBufferDesc.StructureByteStride = 0;
 
+
 			ID3D11Buffer* ConstantBuffer = nullptr;
 			result = Device->CreateBuffer(&ConstantBufferDesc, nullptr, &ConstantBuffer);
-			if (FAILED(result))
-				return false;
-			else
+			if(SUCCEEDED(result))
 			{
 				ConstantBuffers.push_back(ConstantBuffer);
 			}
@@ -134,14 +128,9 @@ void FD3DShader::Bind(ID3D11DeviceContext* DeviceContext)
 	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 	DeviceContext->IASetInputLayout(InputLayout);
-}
 
-void FD3DShader::SetTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* TextureView)
-{
-	return;
-}
-
-void FD3DShader::SetSamplerState(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* SamplerState)
-{
-	return;
+	for (auto constantBuffer : ConstantBuffers)
+	{
+		DeviceContext->VSSetConstantBuffers(0, 1, &constantBuffer);
+	}
 }

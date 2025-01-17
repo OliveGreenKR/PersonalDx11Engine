@@ -13,15 +13,14 @@ public:
 
 public:
 	bool Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
+
 	void Release();
 
 	void Bind(ID3D11DeviceContext* DeviceContext);
 
 	template<typename T>
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,const T& BufferData, unsigned int BufferIndex = 0);
-	void SetTexture(ID3D11DeviceContext* DeviceContext,ID3D11ShaderResourceView* TextureView);
-	void SetSamplerState(ID3D11DeviceContext* DeviceContext,ID3D11SamplerState* SamplerState);
-
+	
 private:
 	ID3D11VertexShader* VertexShader = nullptr;
 	ID3D11PixelShader* PixelShader = nullptr;
