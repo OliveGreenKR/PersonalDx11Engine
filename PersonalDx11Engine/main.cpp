@@ -1,6 +1,5 @@
 #include <windows.h>
 #include "Renderer.h"
-#include "BasicShape.h"
 #include "Math.h"
 #include "D3D.h"
 const int SCREEN_WIDTH = 800;

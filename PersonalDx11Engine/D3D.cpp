@@ -37,6 +37,50 @@ void FD3D::EndScene()
 	SwapChain->Present(bVSync, 0);
 }
 
+bool FD3D::CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer)
+{
+	if (!Device || !SrcBuffer || !DestBuffer || !DeviceContext)
+		return false;
+
+	D3D11_BUFFER_DESC bufferDesc;
+	SrcBuffer->GetDesc(&bufferDesc);
+
+	D3D11_SUBRESOURCE_DATA initData;
+	initData.pSysMem = nullptr;
+
+	// Create a staging buffer to copy the data
+	ID3D11Buffer* stagingBuffer = nullptr;
+	bufferDesc.Usage = D3D11_USAGE_STAGING;
+	bufferDesc.BindFlags = 0;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	HRESULT hr = Device->CreateBuffer(&bufferDesc, nullptr, &stagingBuffer);
+	if (FAILED(hr))
+		return false;
+
+	DeviceContext->CopyResource(stagingBuffer, SrcBuffer);
+
+	// Map the staging buffer to read the data
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	hr = DeviceContext->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mappedResource);
+	if (FAILED(hr))
+	{
+		stagingBuffer->Release();
+		return false;
+	}
+
+	// Create the destination buffer with the same description as the source buffer
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDesc.CPUAccessFlags = 0;
+	initData.pSysMem = mappedResource.pData;
+	hr = Device->CreateBuffer(&bufferDesc, &initData, DestBuffer);
+
+	// Unmap the staging buffer and release it
+	DeviceContext->Unmap(stagingBuffer, 0);
+	stagingBuffer->Release();
+
+	return SUCCEEDED(hr);
+}
+
 void FD3D::PrepareRender()
 {
 	DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);

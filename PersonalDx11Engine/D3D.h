@@ -30,6 +30,8 @@ public:
     void GetWorldMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixWorld; }
     void GetOrthoMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixOrtho; }
 
+    bool CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer);
+
 public:
     bool bVSync = true;
 

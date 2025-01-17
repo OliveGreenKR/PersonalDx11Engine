@@ -9,20 +9,8 @@
 
 #include "Vector.h"
 
-
-struct FVertexSimple
-{
-    float x, y, z;    // Position
-    float r, g, b, a; // Color
-};
-
 class URenderer 
 {
-    struct FConstants
-    {
-        FVector Offset;
-        float pad;
-    };
 
 public:
     URenderer() = default;
@@ -42,8 +30,8 @@ public:
 
 
 public:
-    void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
-    void UpdateConstant(FVector InOffset);
+    //void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
+    //void UpdateConstant(FVector InOffset);
 
 
 private:

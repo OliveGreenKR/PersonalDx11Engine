@@ -3,7 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Vector.cpp">
-      <Filter>Math\Vector</Filter>
+      <Filter>Engine\Math\Vector</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
       <Filter>Engine\Renderer</Filter>
@@ -32,6 +32,10 @@
     <ClCompile Include="D3D.cpp">
       <Filter>D3D</Filter>
     </ClCompile>
+    <ClCompile Include="D3DShader.cpp" />
+    <ClCompile Include="Model.cpp">
+      <Filter>Engine\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -40,23 +44,11 @@
     <Filter Include="HLSL">
       <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Mesh">
-      <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Math">
-      <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Math\Vector">
-      <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{8c5127dc-5848-4663-a58a-b4f9641cc18f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Renderer">
       <UniqueIdentifier>{16351b72-ec26-4539-a003-314d4139c3af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Shape">
-      <UniqueIdentifier>{d98e0e95-b838-4ecc-ae74-f83292b4e7e3}</UniqueIdentifier>
     </Filter>
     <Filter Include="ImGui">
       <UniqueIdentifier>{aaeca9b3-516e-4bf6-a486-f082b7831733}</UniqueIdentifier>
@@ -64,16 +56,22 @@
     <Filter Include="Engine\Interface">
       <UniqueIdentifier>{370944e7-eb8c-4096-a67a-ea04f06dbf48}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Model">
+      <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math">
+      <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Math\Vector">
+      <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BasicShape.h">
-      <Filter>Engine\Shape</Filter>
-    </ClInclude>
     <ClInclude Include="Math.h">
-      <Filter>Math</Filter>
+      <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector.h">
-      <Filter>Math\Vector</Filter>
+      <Filter>Engine\Math\Vector</Filter>
     </ClInclude>
     <ClInclude Include="Renderer.h">
       <Filter>Engine\Renderer</Filter>
@@ -104,6 +102,10 @@
     </ClInclude>
     <ClInclude Include="D3D.h">
       <Filter>D3D</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DShader.h" />
+    <ClInclude Include="Model.h">
+      <Filter>Engine\Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
