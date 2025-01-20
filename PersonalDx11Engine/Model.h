@@ -7,7 +7,7 @@ using namespace DirectX;
 /// <summary>
 /// load model and make VertexBuffer?
 /// </summary>
-class FModel
+class UModel
 {
 public:
 	//TODO : LoadModel by file, and make private VertexStuct
@@ -17,10 +17,24 @@ public:
 		XMFLOAT4 Color;       // Color
 	};
 
+	struct FStaticVertexData
+	{
+		DirectX::XMFLOAT3 Position;    // 12 bytes
+		//DirectX::XMFLOAT3 Normal;      // 12 bytes
+		//DirectX::XMFLOAT2 TexCoord;    // 8 bytes
+	};
+
+	struct FDynamicVertexData
+	{
+		DirectX::XMFLOAT4 Color;       // 16 bytes
+		DirectX::XMFLOAT4 BoneWeights; // 16 bytes
+		UINT BoneIndices[4];           // 16 bytes
+	};
+
 public:
-	FModel() = default;
-	FModel(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UINT InNumVertices);
-	~FModel();
+	UModel() = default;
+	UModel(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UINT InNumVertices);
+	~UModel();
 
 	void Release();
 
@@ -29,10 +43,12 @@ public:
 
 	__forceinline UINT GetNumVertices() const { return NumVertices; }
 	ID3D11Buffer* GetVertexBuffer() { return VertexBuffer; }
+	UINT GetVertexStride() { return sizeof(FVertexSimple); }
 
+	const bool IsIntialized() { return bInitialized; }
 
 public:
-	const static FModel GetDefaultTriangle(ID3D11Device* InDevice);
+	const static UModel GetDefaultTriangle(ID3D11Device* InDevice);
 
 private:
 	bool CreateVertexBuffer(ID3D11Device* InDevice, const FVertexSimple* InVertices, const UINT InNumVertices);

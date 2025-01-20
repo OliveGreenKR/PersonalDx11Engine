@@ -131,6 +131,15 @@ bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)
 		}
 	}
 
+	SwapChain->GetDesc(&swapchaindesc);
+
+	ViewportInfo.MinDepth = 0.0f;
+	ViewportInfo.MaxDepth = 1.0f;
+	ViewportInfo.TopLeftX = 0.0f;
+	ViewportInfo.TopLeftY = 0.0f;
+	ViewportInfo.Width = (float)swapchaindesc.BufferDesc.Width;
+	ViewportInfo.Height = (float)swapchaindesc.BufferDesc.Height;
+
 	return true;
 }
 

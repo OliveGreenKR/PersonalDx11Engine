@@ -1,6 +1,4 @@
-﻿  D3D.cpp
-  D3DShader.cpp
-  Model.cpp
+﻿  Model.cpp
   Renderer.cpp
   main.cpp
   Generating Code...

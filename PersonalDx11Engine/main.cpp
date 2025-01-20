@@ -2,7 +2,7 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
-//#include "Model.h"
+#include "Model.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
@@ -69,7 +69,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	bool bIsExit = false;
 
-
 	//delta frame time
 	LARGE_INTEGER frequency;
 	LARGE_INTEGER lastTime;
@@ -82,18 +81,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UINT ByteWidth = sizeof(triangle_vertices);
 	UINT numVertices = sizeof(triangle_vertices) / sizeof(FVertexSimple);
 
-	// »ı¼º
-	D3D11_BUFFER_DESC vertexbufferdesc = {};
-	vertexbufferdesc.ByteWidth = ByteWidth;
-	vertexbufferdesc.Usage = D3D11_USAGE_IMMUTABLE;
-	vertexbufferdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA vertexbufferSRD = { vertices };
-
-	ID3D11Buffer* vertexBuffer;
-	UINT Stride = sizeof(FVertexSimple);
-	HRESULT result = Renderer->GetDevice()->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
-	assert(SUCCEEDED(result));
+	UModel MSimpleTrianlgle = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -121,15 +109,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		}
 		Renderer->BeforeRender();
-		Renderer->PrepareShader();
-		Renderer->RenderPrimitive(vertexBuffer, numVertices);
+		//Renderer->RenderPrimitive(vertexBuffer, numVertices);
 
 		//Render
-		UINT offset = 0;
-		Renderer->GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &Stride, &offset);
-		Renderer->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		Renderer->GetDeviceContext()->Draw(numVertices, 0);
-
+		Renderer->RenderModel(MSimpleTrianlgle);
 
 		//ImGui_ImplDX11_NewFrame();
 		//ImGui_ImplWin32_NewFrame();
@@ -153,7 +136,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//ImGui_ImplDX11_Shutdown();
 	//ImGui_ImplWin32_Shutdown();
 	//ImGui::DestroyContext();
-	vertexBuffer->Release();
+
 	Renderer->Release();
 	return 0;
 }

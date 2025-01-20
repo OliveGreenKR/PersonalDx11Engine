@@ -7,6 +7,8 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
+class UModel;
+
 struct FVertexSimple
 {
 	float x, y, z;    // Position
@@ -41,8 +43,9 @@ public:
 public:
     //void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
     //void UpdateConstant(FVector InOffset);
+	void RenderModel(UModel& InModel);
 #pragma region shader test
-    ID3D11VertexShader* SimpleVertexShader;
+    /*ID3D11VertexShader* SimpleVertexShader;
     ID3D11PixelShader* SimplePixelShader;
     ID3D11InputLayout* SimpleInputLayout;
     unsigned int Stride;
@@ -109,7 +112,7 @@ public:
 		UINT offset = 0;
 		GetDeviceContext()->IASetVertexBuffers(0, 1, &pBuffer, &Stride, &offset);
 		GetDeviceContext()->Draw(numVertices, 0);
-	}
+	}*/
 
 #pragma endregion
 
