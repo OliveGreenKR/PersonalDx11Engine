@@ -5,6 +5,7 @@
 #include "D3D.h"
 #include "Model.h"
 #include "D3DShader.h"
+#include "RscUtil.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
@@ -59,6 +60,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer->Initialize(hWnd);
 	Renderer->SetVSync(false);
 
+	//LoadTexture
+	ID3D11ShaderResourceView* DefaultTexture;
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, &DefaultTexture),"Texture Load Failed");
+
 	//Shader
 	UShader* Shader = new UShader();
 	D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -73,13 +78,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	//};
 
-	ID3D11Device* Device = Renderer->GetDevice();
-	ID3D11DeviceContext* DeviceContext = Renderer->GetDeviceContext();
 	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
 
-	Shader->Initialize(Device, MYSHADER, MYSHADER,layout, ARRAYSIZE(layout));
+	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, layout, ARRAYSIZE(layout));
 	Shader->Bind(Renderer->GetDeviceContext(),SamplerState);
-	Shader->BindTexture(Renderer->GetDeviceContext(), , TextureSlot::Diffuset);
+	Shader->BindTexture(Renderer->GetDeviceContext(),DefaultTexture, TextureSlot::Diffuset);
 
 
 	// 여기에서 ImGui를 생성합니다.

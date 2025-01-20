@@ -112,7 +112,7 @@ void UShader::Release()
 	}
 }
 
-void UShader::Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr)
+void UShader::Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState)
 {
 	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
