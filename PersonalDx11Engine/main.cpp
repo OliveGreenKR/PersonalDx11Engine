@@ -79,7 +79,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
 
-	UModel MSimpleTrianlgle = UModel::GetDefaultTriangle(Renderer->GetDevice());
+	UModel SimpleTrianlgle = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -106,16 +106,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 
 		}
+
+		//before render
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderModel(MSimpleTrianlgle);
+		Renderer->RenderModel(SimpleTrianlgle);
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		// ImGui UI 컨트롤 추가
+		// ImGui UI 
 		ImGui::Begin("Property",nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
 
@@ -124,6 +126,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+		//end render
 		Renderer->EndRender();
 	}
 #pragma endregion

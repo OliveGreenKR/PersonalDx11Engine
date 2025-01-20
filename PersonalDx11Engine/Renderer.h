@@ -19,32 +19,32 @@ class URenderer
 {
 
 public:
-    URenderer() = default;
-    ~URenderer() = default;
+	URenderer() = default;
+	~URenderer() = default;
 
 public:
-    void Initialize(HWND hWindow);
+	void Initialize(HWND hWindow);
 
-    void BeforeRender();
+	void BeforeRender();
 
-    void EndRender();
+	void EndRender();
 
-    void Release();
-
-public:
-    __forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }
-    __forceinline ID3D11DeviceContext* GetDeviceContext() { return RenderHardware->GetDeviceContext(); }
+	void Release();
 
 public:
-    __forceinline void SetVSync(bool activation) { RenderHardware->bVSync = activation; }
+	__forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }
+	__forceinline ID3D11DeviceContext* GetDeviceContext() { return RenderHardware->GetDeviceContext(); }
+
+public:
+	__forceinline void SetVSync(bool activation) { RenderHardware->bVSync = activation; }
 
 
 public:
-	void RenderModel(UModel& InModel);
+	void RenderModel(const UModel& InModel);
 
 
 private:
-    FD3D* RenderHardware = new FD3D();
-    FD3DShader* Shader = new FD3DShader();
+	FD3D* RenderHardware = new FD3D();
+	FD3DShader* Shader = new FD3DShader();
 
 };
