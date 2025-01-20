@@ -1,6 +1,5 @@
 #pragma once
 #include "D3D.h"
-#include "D3DShader.h"
 //ImGui
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
@@ -8,6 +7,7 @@
 #include "imGui/imgui_impl_win32.h"
 
 class UModel;
+class UShader;
 
 struct FVertexSimple
 {
@@ -24,27 +24,26 @@ public:
 
 public:
 	void Initialize(HWND hWindow);
-
-	void BeforeRender();
-
-	void EndRender();
-
 	void Release();
+
+	void BindShader(UShader* InShader);
+	void BeforeRender();
+	void EndRender();
+	void RenderModel(const UModel& InModel, const UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
 
 public:
 	__forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }
 	__forceinline ID3D11DeviceContext* GetDeviceContext() { return RenderHardware->GetDeviceContext(); }
-
+	
+	__forceinline ID3D11SamplerState* GetDefaultSamplerState() {return DefaultSamplerState;	}
 public:
 	__forceinline void SetVSync(bool activation) { RenderHardware->bVSync = activation; }
 
-
-public:
-	void RenderModel(const UModel& InModel);
-
+private:
+	bool CreateDefaultSamplerState();
 
 private:
 	FD3D* RenderHardware = new FD3D();
-	FD3DShader* Shader = new FD3DShader();
+	ID3D11SamplerState* DefaultSamplerState = nullptr;
 
 };

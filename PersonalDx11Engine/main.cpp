@@ -1,8 +1,10 @@
 #include <windows.h>
+#include "define.h"
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
 #include "Model.h"
+#include "D3DShader.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
@@ -33,6 +35,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#pragma region COM
+	HRESULT hr = CoInitialize(nullptr);
+	if (FAILED(hr))
+		return false;
+#pragma endregion
 #pragma region window init
 
 	WCHAR WindowClass[] = L"JungleWindowClass";
@@ -47,10 +54,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
+	//Renderer
 	URenderer* Renderer = new URenderer();
 	Renderer->Initialize(hWnd);
 	Renderer->SetVSync(false);
-	
+
+	//Shader
+	UShader* Shader = new UShader();
+	D3D11_INPUT_ELEMENT_DESC layout[] =
+	{
+		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
+		// InputSlotClass,InstanceDataStepRate
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	//{
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
+
+	ID3D11Device* Device = Renderer->GetDevice();
+	ID3D11DeviceContext* DeviceContext = Renderer->GetDeviceContext();
+	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
+
+	Shader->Initialize(Device, MYSHADER, MYSHADER,layout, ARRAYSIZE(layout));
+	Shader->Bind(Renderer->GetDeviceContext(),SamplerState);
+	Shader->BindTexture(Renderer->GetDeviceContext(), , TextureSlot::Diffuset);
+
+
 	// 여기에서 ImGui를 생성합니다.
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -111,7 +142,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderModel(SimpleTrianlgle);
+		Renderer->RenderModel(SimpleTrianlgle,Shader);
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -136,6 +167,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui::DestroyContext();
 
 	Renderer->Release();
+
+#pragma region COM
+	CoUninitialize();
+#pragma endregion
 	return 0;
 }
 

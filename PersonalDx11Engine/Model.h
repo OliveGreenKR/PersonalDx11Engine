@@ -22,7 +22,7 @@ public:
 	struct FVertexData
 	{
 		XMFLOAT3 Position;
-		//XMFLOAT2 TexCoord;    
+		XMFLOAT2 TexCoord;    
 	};
 
 	struct FVertexSimple 
@@ -38,6 +38,7 @@ public:
 	void Release();
 
 public:
+	const static UModel GetSimpleTriangle(ID3D11Device* InDevice);
 	const static UModel GetDefaultTriangle(ID3D11Device* InDevice);
 
 

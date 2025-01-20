@@ -1,4 +1,50 @@
-﻿  Renderer.cpp
+﻿  D3DShader.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(19,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(21,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(24,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(27,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(31,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(64,4): warning C4002: too many arguments for function-like macro invocation 'assert'
   main.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(40,2): error C2760: syntax error: '__forceinline' was unexpected here; expected 'expression'
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(39,7): error C2433: 'URenderer::<alignment member>': '__forceinline' not permitted on data declarations
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(39,7): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(40,2): error C2062: type 'void' unexpected
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(54,12): error C2039: 'SetVSync': is not a member of 'URenderer'
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(18,7):
+      see declaration of 'URenderer'
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(70,36): error C2039: 'Get': is not a member of 'URenderer'
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(18,7):
+      see declaration of 'URenderer'
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(73,2): error C2143: syntax error: missing ';' before 'ImGui::DebugCheckVersionAndDataLayout'
+  Renderer.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(40,2): error C2760: syntax error: '__forceinline' was unexpected here; expected 'expression'
+  (compiling source file 'Renderer.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(39,7): error C2433: 'URenderer::<alignment member>': '__forceinline' not permitted on data declarations
+  (compiling source file 'Renderer.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(39,7): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'Renderer.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(40,2): error C2062: type 'void' unexpected
+  (compiling source file 'Renderer.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(10,11): error C3861: 'CreateDefaultSamplerState': identifier not found
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(42,17): error C2039: 'CreateDefaultSamplerState': is not a member of 'URenderer'
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.h(18,7):
+      see declaration of 'URenderer'
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(55,19): error C3861: 'GetDevice': identifier not found
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(55,66): error C2065: 'DefaultSamplerState': undeclared identifier
   Generating Code...
-  PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe
