@@ -61,11 +61,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer->SetVSync(false);
 	
 	// 여기에서 ImGui를 생성합니다.
-	//IMGUI_CHECKVERSION();
-	//ImGui::CreateContext();
-	//ImGuiIO& io = ImGui::GetIO();
-	//ImGui_ImplWin32_Init((void*)hWnd);
-	//ImGui_ImplDX11_Init(Renderer.GetDevice(), Renderer.GetDeviceContext());
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui_ImplWin32_Init((void*)hWnd);
+	ImGui_ImplDX11_Init(Renderer->GetDevice(), Renderer->GetDeviceContext());
+	//ImGui set
+	const float UIPaddingX = 10.0f / (float)SCREEN_WIDTH; //NDC Coordinates
+	const float UIPaddingY = 10.0f / (float)SCREEN_HEIGHT;
+
+	ImGui::SetNextWindowPos(ImVec2(UIPaddingX, UIPaddingY), ImGuiCond_FirstUseEver);//영구위치설정
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //자동조절
+
+	const ImGuiWindowFlags UIWindowFlags =
+		ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
+		ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
+
 
 	bool bIsExit = false;
 
@@ -109,33 +120,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		}
 		Renderer->BeforeRender();
-		//Renderer->RenderPrimitive(vertexBuffer, numVertices);
 
 		//Render
 		Renderer->RenderModel(MSimpleTrianlgle);
 
-		//ImGui_ImplDX11_NewFrame();
-		//ImGui_ImplWin32_NewFrame();
-		//ImGui::NewFrame();
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
-		//// ImGui UI 컨트롤 추가
-		//ImGui::Begin("Jungle Property Window");
+		// ImGui UI 컨트롤 추가
+		ImGui::Begin("Property",nullptr, UIWindowFlags);
+		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
 
-		//ImGui::Text("Hello Jungle World!");
-		//ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		ImGui::End();
 
-		//ImGui::End();
-
-		//ImGui::Render();
-		//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 		Renderer->EndRender();
 	}
 #pragma endregion
 	// 여기에서 ImGui 소멸
-	//ImGui_ImplDX11_Shutdown();
-	//ImGui_ImplWin32_Shutdown();
-	//ImGui::DestroyContext();
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	Renderer->Release();
 	return 0;
