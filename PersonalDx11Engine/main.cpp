@@ -173,7 +173,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui::DestroyContext();
 
 	Renderer->Release();
-
 #pragma region COM
 	CoUninitialize();
 #pragma endregion

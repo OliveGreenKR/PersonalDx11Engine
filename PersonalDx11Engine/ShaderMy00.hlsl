@@ -25,9 +25,10 @@ PS_INPUT mainVS(VS_INPUT input)
     PS_INPUT output;
     
     input.position.w = 1.0f;
-    output.position = mul(input.position, worldMatrix);
-    output.position = mul(output.position, viewMatrix);
-    output.position = mul(output.position, projectionMatrix);
+    //output.position = mul(input.position, worldMatrix);
+    //output.position = mul(output.position, viewMatrix);
+    //output.position = mul(output.position, projectionMatrix);
+    output.position = input.position;
     
     output.tex = input.tex;
     
