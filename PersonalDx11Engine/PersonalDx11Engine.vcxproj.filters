@@ -2,56 +2,52 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Vector.cpp">
-      <Filter>Engine\Math\Vector</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_demo.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_draw.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_impl_dx11.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_impl_win32.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_tables.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_widgets.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="D3D.cpp">
       <Filter>D3D</Filter>
     </ClCompile>
-    <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="Model.cpp">
       <Filter>Engine\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DShader.cpp">
+      <Filter>Engine\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
       <UniqueIdentifier>{96ed34c5-c686-461c-bf81-b6e274ae5ec6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HLSL">
-      <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{8c5127dc-5848-4663-a58a-b4f9641cc18f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Renderer">
       <UniqueIdentifier>{16351b72-ec26-4539-a003-314d4139c3af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui">
-      <UniqueIdentifier>{aaeca9b3-516e-4bf6-a486-f082b7831733}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Interface">
       <UniqueIdentifier>{370944e7-eb8c-4096-a67a-ea04f06dbf48}</UniqueIdentifier>
@@ -65,11 +61,23 @@
     <Filter Include="Engine\Math\Vector">
       <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Camera">
+      <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Shader">
+      <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\UI">
+      <UniqueIdentifier>{bbd1ef54-7752-42b6-b184-2bf9e9e65a21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\UI\ImGui">
+      <UniqueIdentifier>{aaeca9b3-516e-4bf6-a486-f082b7831733}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL">
+      <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Math.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
     <ClInclude Include="Vector.h">
       <Filter>Engine\Math\Vector</Filter>
     </ClInclude>
@@ -77,39 +85,52 @@
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imconfig.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui_impl_dx11.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui_impl_win32.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui_internal.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imstb_rectpack.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imstb_textedit.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imstb_truetype.h">
-      <Filter>ImGui</Filter>
+      <Filter>Engine\UI\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="D3D.h">
       <Filter>D3D</Filter>
     </ClInclude>
-    <ClInclude Include="D3DShader.h" />
     <ClInclude Include="Model.h">
       <Filter>Engine\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="define.h" />
+    <ClInclude Include="RscUtil.h" />
+    <ClInclude Include="Camera.h">
+      <Filter>Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DShader.h">
+      <Filter>Engine\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="ShaderMy00.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="PBRShader00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>
