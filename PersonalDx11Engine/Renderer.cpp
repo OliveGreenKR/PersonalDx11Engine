@@ -28,13 +28,13 @@ void URenderer::EndRender()
 	RenderHardware->EndScene();
 }
 
-void URenderer::RenderModel(const UModel& InModel, const UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderModel(const UModel* InModel, const UShader* InShader, ID3D11SamplerState* customSampler)
 {
 	UINT offset = 0;
 
-	assert(InModel.IsIntialized());
+	assert(InModel->IsIntialized());
 
-	VertexBufferInfo vertexBuffer = InModel.GetVertexBufferInfo();
+	VertexBufferInfo vertexBuffer = InModel->GetVertexBufferInfo();
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer.Buffer, &vertexBuffer.Stride, &offset);
 	GetDeviceContext()->Draw(vertexBuffer.NumVertices, 0);
 }

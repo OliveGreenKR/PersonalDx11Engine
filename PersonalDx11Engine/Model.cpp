@@ -17,15 +17,15 @@ const UModel UModel::GetSimpleTriangle(ID3D11Device* InDevice)
 	return model;
 }
 
-const UModel UModel::GetDefaultTriangle(ID3D11Device* InDevice)
+std::shared_ptr<UModel> UModel::GetDefaultTriangle(ID3D11Device* InDevice)
 {
 	const static FVertexData triangle_vertices[] = {
 	{ {  0.0f,  1.0f, 0.0f }, {  0.5f, 0.0f } }, // Top vertex (red)
 	{ {  1.0f, -1.0f, 0.0f }, {  1.0f, 1.0f } }, // Bottom-right vertex (green)
 	{ { -1.0f, -1.0f, 0.0f }, {  0.0f, 1.0f } }  // Bottom-left vertex (blue)
 	};
-	UModel model;
-	model.Initialize<FVertexData>(InDevice, triangle_vertices, 3);
+	auto model = std::make_shared<UModel>();
+	model->Initialize<FVertexData>(InDevice, triangle_vertices, 3);
 	return model;
 }
 

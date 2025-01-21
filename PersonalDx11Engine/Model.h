@@ -2,6 +2,7 @@
 #include "Math.h"
 #include "D3D.h"
 #include <type_traits>
+#include <memory>
 
 using namespace DirectX;
 
@@ -39,7 +40,7 @@ public:
 
 public:
 	const static UModel GetSimpleTriangle(ID3D11Device* InDevice);
-	const static UModel GetDefaultTriangle(ID3D11Device* InDevice);
+	static std::shared_ptr<UModel> GetDefaultTriangle(ID3D11Device* InDevice);
 
 
 public:

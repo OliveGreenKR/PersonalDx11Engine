@@ -1,6 +1,10 @@
-﻿  main.cpp
+﻿  Camera.cpp
+  main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(68,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(69,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+  GameObject.cpp
+  Transform.cpp
+  Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

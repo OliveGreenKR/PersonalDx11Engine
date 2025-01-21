@@ -29,7 +29,7 @@ public:
 	void BindShader(UShader* InShader);
 	void BeforeRender();
 	void EndRender();
-	void RenderModel(const UModel& InModel, const UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
+	void RenderModel(const UModel* InModel, const UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
 
 public:
 	__forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }

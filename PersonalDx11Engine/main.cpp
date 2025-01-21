@@ -7,6 +7,7 @@
 #include "Model.h"
 #include "D3DShader.h"
 #include "RscUtil.h"
+#include "GameObject.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
@@ -59,7 +60,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
 	//Renderer
-	URenderer* Renderer = new URenderer();
+	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);
 	Renderer->SetVSync(false);
 
@@ -68,7 +69,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, &DefaultTexture),"Texture Load Failed");
 
 	//Shader
-	UShader* Shader = new UShader();
+	auto Shader = make_unique<UShader>();
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
@@ -116,7 +117,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
 
-	UModel SimpleTrianlgle = UModel::GetDefaultTriangle(Renderer->GetDevice());
+	//Model Data
+	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
+
+	//MainObejct
+	auto Character = make_shared<UGameObject>(TriModel);
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -148,7 +153,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderModel(SimpleTrianlgle,Shader);
+		Renderer->RenderModel(TriModel.get(), Shader.get());
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();

@@ -1,11 +1,13 @@
 #include "GameObject.h"
 #include "Model.h"
 
-UGameObject::~UGameObject()
+
+UModel* UGameObject::GetModel() const
 {
-	if (Model)
+	if (auto ptr = Model.lock())
 	{
-		Model = nullptr;
+		return ptr.get();
 	}
+	return nullptr;
 }
 
