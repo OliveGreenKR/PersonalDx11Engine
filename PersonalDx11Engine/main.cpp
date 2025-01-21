@@ -153,7 +153,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderModel(TriModel.get(), Shader.get());
+		//Renderer->RenderModel(TriModel.get(), Shader.get());
+		Renderer->RenderGameObject(Character.get(), Shader.get());
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();

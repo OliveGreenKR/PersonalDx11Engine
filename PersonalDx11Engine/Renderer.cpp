@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Model.h"
 #include "D3DShader.h"
+#include "GameObject.h"
 
 void URenderer::Initialize(HWND hWindow)
 {
@@ -37,6 +38,15 @@ void URenderer::RenderModel(const UModel* InModel, const UShader* InShader, ID3D
 	VertexBufferInfo vertexBuffer = InModel->GetVertexBufferInfo();
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer.Buffer, &vertexBuffer.Stride, &offset);
 	GetDeviceContext()->Draw(vertexBuffer.NumVertices, 0);
+}
+
+void URenderer::RenderGameObject(const UGameObject* InObject, const UShader* InShader, ID3D11SamplerState* customSampler)
+{
+	UINT offset = 0;
+	
+	assert(InObject);
+
+	RenderModel(InObject->GetModel(), InShader, customSampler);
 }
 
 bool URenderer::CreateDefaultSamplerState()
