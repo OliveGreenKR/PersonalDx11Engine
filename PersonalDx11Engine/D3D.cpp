@@ -9,7 +9,7 @@ bool FD3D::Initialize(HWND Hwnd)
 {
 	return CreateDeviceAndSwapChain(Hwnd) && 
 		CreateFrameBuffer() &&
-		CreateRasterizerStateAndMatricies();
+		CreateRasterizerState();
 }
 
 void FD3D::Release()
@@ -156,13 +156,13 @@ bool FD3D::CreateFrameBuffer()
 	return SUCCEEDED(result);
 }
 
-bool FD3D::CreateRasterizerStateAndMatricies()
+bool FD3D::CreateRasterizerState()
 {
 	D3D11_RASTERIZER_DESC rasterizerdesc = {};
 	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
 	rasterizerdesc.CullMode = D3D11_CULL_BACK; // 백 페이스 컬링
 
-	return !FAILED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
+	return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
 }
 
 void FD3D::ReleaseDeviceAndSwapChain()

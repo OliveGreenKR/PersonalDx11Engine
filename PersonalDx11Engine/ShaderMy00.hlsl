@@ -1,6 +1,13 @@
 Texture2D shaderTexture : register(t0);
 SamplerState SampleType : register(s0);
 
+cbuffer MATRIX_BUFFER : register(b0)
+{
+    matrix worldMatrix;
+    matrix viewMatrix;
+    matrix projectionMatrix;
+};
+
 struct VS_INPUT
 {
     float4 position : POSITION; // Input position from vertex buffer
@@ -17,8 +24,10 @@ PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    output.position = input.position;
-    output.tex = input.tex;
+    input.position.w = 1.0f;
+    output.position = mul(input.position, worldMatrix);
+    output.position = mul(output.position, viewMatrix);
+    output.position = mul(output.position, projectionMatrix);
     
     return output;
 }

@@ -130,7 +130,6 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
-    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -140,15 +139,17 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
-    <ClInclude Include="GameObject.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
@@ -160,7 +161,7 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Transfrom.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PBRShader00.hlsl">

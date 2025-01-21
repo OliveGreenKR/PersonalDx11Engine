@@ -41,6 +41,7 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\GameObject</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -115,7 +116,6 @@
       <Filter>Engine\Model</Filter>
     </ClInclude>
     <ClInclude Include="define.h" />
-    <ClInclude Include="RscUtil.h" />
     <ClInclude Include="Camera.h">
       <Filter>Engine\Camera</Filter>
     </ClInclude>
@@ -125,12 +125,13 @@
     <ClInclude Include="Math.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Transfrom.h">
+    <ClInclude Include="Transform.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>Engine\GameObject</Filter>
     </ClInclude>
+    <ClInclude Include="RscUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">

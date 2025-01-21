@@ -26,10 +26,6 @@ public:
     __forceinline ID3D11Device* GetDevice()                 { return Device; }
     __forceinline ID3D11DeviceContext* GetDeviceContext()   { return DeviceContext; }
 
-    void GetProjectionMatrix(OUT XMMATRIX& OutMatrix)       { OutMatrix = MatirxProjection;  }
-    void GetWorldMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixWorld; }
-    void GetOrthoMatrix(OUT XMMATRIX& OutMatrix)            { OutMatrix = MatrixOrtho; }
-
     bool CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer);
 
 public:
@@ -41,7 +37,7 @@ private:
    
     bool CreateDeviceAndSwapChain(HWND Hwnd);
     bool CreateFrameBuffer();
-    bool CreateRasterizerStateAndMatricies();
+    bool CreateRasterizerState();
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
@@ -58,11 +54,6 @@ private:
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RasterizerState* RasterizerState = nullptr;
-
-
-    XMMATRIX MatirxProjection;
-    XMMATRIX MatrixWorld;
-    XMMATRIX MatrixOrtho;
 
     D3D11_VIEWPORT ViewportInfo;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
