@@ -1,8 +1,8 @@
 #vs
 .vs/
 
-# Resources
-Resources/
+# # Resources
+PersonalDx11Engine/Resources/
 
 # Prerequisites
 *.d
