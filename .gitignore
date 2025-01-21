@@ -2,7 +2,7 @@
 .vs/
 
 # Resources
-./PersonalDx11Engine/Resources
+Resources/
 
 # Prerequisites
 *.d
