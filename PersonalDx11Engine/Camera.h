@@ -1,12 +1,8 @@
 #pragma once
-#include <directxmath.h>
-
-using namespace DirectX;
+#include <Math.h>
 
 class UCamera
 {
-private:
-	XMFLOAT3 Position;
 
 };
 

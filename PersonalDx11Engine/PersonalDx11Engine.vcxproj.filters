@@ -38,6 +38,9 @@
     <ClCompile Include="D3DShader.cpp">
       <Filter>Engine\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Engine\GameObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -58,9 +61,6 @@
     <Filter Include="Engine\Math">
       <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Math\Vector">
-      <UniqueIdentifier>{ede71cdb-ed9b-4964-a85a-1ac6e3685f1a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Camera">
       <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
     </Filter>
@@ -76,11 +76,11 @@
     <Filter Include="HLSL">
       <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\GameObject">
+      <UniqueIdentifier>{676a394e-aa58-4da8-a083-26ce189609f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Vector.h">
-      <Filter>Engine\Math\Vector</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer.h">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
@@ -121,6 +121,15 @@
     </ClInclude>
     <ClInclude Include="D3DShader.h">
       <Filter>Engine\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Transfrom.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Engine\GameObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
