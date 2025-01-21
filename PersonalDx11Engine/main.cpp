@@ -82,7 +82,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, layout, ARRAYSIZE(layout));
 	Shader->Bind(Renderer->GetDeviceContext(),SamplerState);
-	Shader->BindTexture(Renderer->GetDeviceContext(),DefaultTexture, TextureSlot::Diffuset);
+	Shader->BindTexture(Renderer->GetDeviceContext(),DefaultTexture, ETextureSlot::Diffuset);
 
 
 	// 여기에서 ImGui를 생성합니다.

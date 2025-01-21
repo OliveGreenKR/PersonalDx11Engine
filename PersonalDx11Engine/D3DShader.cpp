@@ -129,7 +129,7 @@ void UShader::Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSam
 	}
 }
 
-void UShader::BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture, TextureSlot Slot)
+void UShader::BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture, ETextureSlot Slot)
 {
 	if (!DeviceContext || !Texture)
 	{

@@ -3,12 +3,18 @@
 #include "D3D.h"
 #include <vector>
 
-enum class TextureSlot
+enum class ETextureSlot
 {
 	Diffuset = 0,
 	Normal,
 	Specular,
 	Max,
+};
+
+enum class EBufferSlot
+{
+	ModelMatrix = 0,
+	Max
 };
 
 using namespace std;
@@ -26,10 +32,10 @@ public:
 	void Release();
 	//파이프라인 상태 설정, vs, ps, samplerstate
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
-	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture = nullptr, TextureSlot Slot = TextureSlot::Max);
+	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture = nullptr, ETextureSlot Slot = ETextureSlot::Max);
 
 	template<typename T>
-	void BindConstantBuffer(ID3D11DeviceContext* DeviceContext,const T& BufferData, UINT BufferIndex = 0);
+	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,const T& BufferData, const EBufferSlot BufferIndex = 0);
 
 	__forceinline const bool IsInitialized() const { return bIsInitialized; }
 
@@ -47,25 +53,26 @@ private:
 };
 
 template<typename T>
-inline void UShader::BindConstantBuffer(ID3D11DeviceContext* DeviceContext, const T& BufferData, UINT BufferIndex)
+inline void UShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, const T& BufferData, const EBufferSlot BufferIndex)
 {
 	static_assert(sizeof(T) % 16 == 0, "Constant buffer size must be 16-byte aligned");
 
-	if (!DeviceContext || BufferIndex >= ConstantBuffers.size())
+	UINT idx = static_cast<UINT>(BufferIndex);
+	if (!DeviceContext || idx >= ConstantBuffers.size())
 	{
 		return;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
-	HRESULT result = DeviceContext->Map(ConstantBuffers[BufferIndex], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+	HRESULT result = DeviceContext->Map(ConstantBuffers[idx], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
 
 	if (FAILED(result))
 		return;
 
 	//from CPU to GPU memory
 	memcpy(MappedResource.pData, &BufferData, sizeof(T));
-	DeviceContext->Unmap(ConstantBuffers[BufferIndex], 0);
+	DeviceContext->Unmap(ConstantBuffers[idx], 0);
 
 	//constant buffer bind
-	DeviceContext->VSSetConstantBuffers(BufferIndex, 1, &ConstantBuffers[BufferIndex]);
+	DeviceContext->VSSetConstantBuffers(idx, 1, &ConstantBuffers[idx]);
 }
