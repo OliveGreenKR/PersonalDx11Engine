@@ -1,11 +1,15 @@
 #pragma once
 #include "Transform.h"
+#include <memory>
 
 class UModel;
+
+using namespace std;
 
 class UGameObject
 {
 	UGameObject() = default;
+	UGameObject(shared_ptr<UModel> InModel) : Model(InModel) {}
 	virtual ~UGameObject();
 
 public:
@@ -13,8 +17,12 @@ public:
 	FTransform& GetTransform() { return Transform; }
 	Matrix GetWorldMatrix() { return Transform.GetModelingMatrix(); }
 
+	void SetModel(std::shared_ptr<UModel> InModel) { Model = InModel; }
+	std::shared_ptr<UModel> GetModel() const { return Model; }
+
 protected: 
 	FTransform Transform;
-	UModel* Model = nullptr;
+	std::shared_ptr<UModel> Model = nullptr; 
+
 };
 

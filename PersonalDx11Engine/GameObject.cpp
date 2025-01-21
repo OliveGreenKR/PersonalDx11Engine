@@ -5,7 +5,6 @@ UGameObject::~UGameObject()
 {
 	if (Model)
 	{
-		Model->Release();
 		Model = nullptr;
 	}
 }

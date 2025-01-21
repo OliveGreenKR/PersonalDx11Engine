@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <memory>
 #include "define.h"
 #include "Renderer.h"
 #include "Math.h"
@@ -9,6 +10,8 @@
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
+
+using namespace std;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

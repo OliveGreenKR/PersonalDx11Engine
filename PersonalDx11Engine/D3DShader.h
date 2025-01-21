@@ -2,6 +2,7 @@
 
 #include "D3D.h"
 #include <vector>
+#include <type_traits>
 
 enum class ETextureSlot
 {
@@ -16,6 +17,22 @@ enum class EBufferSlot
 	ModelMatrix = 0,
 	Max
 };
+
+struct alignas(16) FMatrixBuffer
+{
+	XMMATRIX World;      // 월드 변환 행렬
+	XMMATRIX View;       // 뷰 변환 행렬 
+	XMMATRIX Projection; // 투영 변환 행렬
+
+	FMatrixBuffer()
+		: World(XMMatrixIdentity())
+		, View(XMMatrixIdentity())
+		, Projection(XMMatrixIdentity())
+	{
+	}
+};
+
+
 
 using namespace std;
 /// <summary>
