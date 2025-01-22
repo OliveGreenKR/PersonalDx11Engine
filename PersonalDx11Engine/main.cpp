@@ -194,8 +194,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
+		//Character->GetTransform().Position.x = Math::Clamp(Character->GetTransform().Position.x, , );
 
-		/*Character->GetTransform().Position.x = Math::Clamp(Character->GetTransform().Position.x, 0, 1.0f);*/
+
 
 #pragma endregion
 
@@ -227,8 +228,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//end render
 		Renderer->EndRender();
 #pragma endregion
-	}
-
+	}//end main Loop
 #pragma endregion 
 
 	// 여기에서 ImGui 소멸
