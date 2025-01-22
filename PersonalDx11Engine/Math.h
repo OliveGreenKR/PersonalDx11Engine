@@ -29,10 +29,8 @@ using VectorRegister = DirectX::XMVECTOR;
 // Color type
 using Color = DirectX::XMFLOAT4;   // RGBA stored as XMFLOAT4
 
-// Plane type
-using Plane = DirectX::XMFLOAT4;   // Plane equation stored as XMFLOAT4 (ax + by + cz + d)
-
-
+// Plane type - normalized normal
+using Plane = DirectX::XMFLOAT4;   
 
 namespace V3
 {
@@ -70,6 +68,20 @@ namespace Math
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
+
+	static float GetDistanceFromPlane(const Vector3& Point, const Plane& Plane)
+	{
+		XMVECTOR planeNormal = XMLoadFloat4(&Plane);
+		XMVECTOR pointVec = XMVectorSet(Point.x, Point.y, Point.z, 1.0f);
+		return XMVectorGetX(XMVector4Dot(planeNormal, pointVec));
+	}
+
+	static bool IsFront(const Plane& Plane, const Vector3& Point)
+	{
+		float distance = GetDistanceFromPlane(Point, Plane);
+		return distance >= 0.0f;
+	}
+
 }
 
 

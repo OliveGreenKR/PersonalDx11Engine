@@ -132,6 +132,9 @@
       <Filter>Engine\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="RscUtil.h" />
+    <ClInclude Include="Frstum.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">

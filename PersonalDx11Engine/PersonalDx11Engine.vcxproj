@@ -148,6 +148,7 @@
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
+    <ClInclude Include="Frstum.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="RscUtil.h" />
