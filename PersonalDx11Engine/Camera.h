@@ -24,7 +24,7 @@ public:
 private :
 	//radian
 	float Fov = PI/2.0f; //90 degree
-	float AspectRatio = 16.0f / 9.0f;
+	float AspectRatio = 1.0f;
 	float NearZ = 0.1f;
 	float FarZ = 1.0f;
 
