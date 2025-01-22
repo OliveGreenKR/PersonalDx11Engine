@@ -143,6 +143,14 @@ void UShader::BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResour
 	}
 }
 
+void UShader::BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& BufferData)
+{
+	BufferData.World = XMMatrixTranspose(BufferData.World);
+	BufferData.View = XMMatrixTranspose(BufferData.View);
+	BufferData.Projection = XMMatrixTranspose(BufferData.Projection);
+	UpdateConstantBuffer<FMatrixBufferData>(DeviceContext, BufferData, EBufferSlot::Matrix);
+}
+
 void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
 {
 	// 새로운 샘플러 설정

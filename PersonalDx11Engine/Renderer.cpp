@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "D3DShader.h"
 #include "GameObject.h"
+#include "Camera.h"
 
 void URenderer::Initialize(HWND hWindow)
 {
@@ -29,7 +30,7 @@ void URenderer::EndRender()
 	RenderHardware->EndScene();
 }
 
-void URenderer::RenderModel(const UModel* InModel, const UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderModel(const UModel* InModel, UShader* InShader, ID3D11SamplerState* customSampler)
 {
 	UINT offset = 0;
 
@@ -40,11 +41,16 @@ void URenderer::RenderModel(const UModel* InModel, const UShader* InShader, ID3D
 	GetDeviceContext()->Draw(vertexBuffer.NumVertices, 0);
 }
 
-void URenderer::RenderGameObject(const UGameObject* InObject, const UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderGameObject(const UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
 {
-	UINT offset = 0;
-	
-	assert(InObject);
+	assert(InObject, InShader);
+
+	Matrix WorldMatrix = InObject->GetWorldMatrix();
+	Matrix ViewMatrix = InCamera->GetViewMatrix();
+	Matrix ProjectionMatrix = InCamera->GetProjectionMatrix();
+	auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
+
+	InShader->BindMatrix(GetDeviceContext(), BufferData);
 
 	RenderModel(InObject->GetModel(), InShader, customSampler);
 }

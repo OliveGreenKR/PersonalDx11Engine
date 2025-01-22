@@ -4,6 +4,23 @@
 #include <vector>
 #include <type_traits>
 
+using namespace std;
+
+struct alignas(16) FMatrixBufferData
+{
+	XMMATRIX World;      // 월드 변환 행렬
+	XMMATRIX View;       // 뷰 변환 행렬 
+	XMMATRIX Projection; // 투영 변환 행렬
+
+	FMatrixBufferData()
+		: World(XMMatrixIdentity())
+		, View(XMMatrixIdentity())
+		, Projection(XMMatrixIdentity())
+	{}
+	FMatrixBufferData(const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection) :
+		World(world), View(view), Projection(projection) {};
+};
+
 enum class ETextureSlot
 {
 	Diffuset = 0,
@@ -14,32 +31,17 @@ enum class ETextureSlot
 
 enum class EBufferSlot
 {
-	ModelMatrix = 0,
+	Matrix = 0,
 	Max
 };
-
-struct alignas(16) FMatrixBuffer
-{
-	XMMATRIX World;      // 월드 변환 행렬
-	XMMATRIX View;       // 뷰 변환 행렬 
-	XMMATRIX Projection; // 투영 변환 행렬
-
-	FMatrixBuffer()
-		: World(XMMatrixIdentity())
-		, View(XMMatrixIdentity())
-		, Projection(XMMatrixIdentity())
-	{
-	}
-};
-
-
-
-using namespace std;
 /// <summary>
 /// 단일 SamplerState, 복수의 cBuffer를 지원하는 쉐이더 파일 관리
 /// </summary>
 class UShader
 {
+private:
+
+
 public:
 	UShader() = default;
 	~UShader();
@@ -49,14 +51,14 @@ public:
 	void Release();
 	//파이프라인 상태 설정, vs, ps, samplerstate
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
-	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture = nullptr, ETextureSlot Slot = ETextureSlot::Max);
-
-	template<typename T>
-	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext,const T& BufferData, const EBufferSlot BufferIndex = 0);
-
+	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
+	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
 	__forceinline const bool IsInitialized() const { return bIsInitialized; }
 
 private:
+	template<typename T>
+	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
+
 	void SetSamplerState(ID3D11SamplerState* InSamplerState);
 private:
 	ID3D11VertexShader* VertexShader = nullptr;
@@ -70,7 +72,7 @@ private:
 };
 
 template<typename T>
-inline void UShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, const T& BufferData, const EBufferSlot BufferIndex)
+inline void UShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex)
 {
 	static_assert(sizeof(T) % 16 == 0, "Constant buffer size must be 16-byte aligned");
 

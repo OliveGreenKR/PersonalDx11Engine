@@ -16,7 +16,7 @@ public:
 public:
 	const FTransform& GetTransform() const { return Transform; }
 	FTransform& GetTransform() { return Transform; }
-	Matrix GetWorldMatrix() { return Transform.GetModelingMatrix(); }
+	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
 
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;

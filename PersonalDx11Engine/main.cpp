@@ -8,6 +8,7 @@
 #include "D3DShader.h"
 #include "RscUtil.h"
 #include "GameObject.h"
+#include "Camera.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
@@ -66,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//LoadTexture
 	ID3D11ShaderResourceView* DefaultTexture;
-	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, &DefaultTexture),"Texture Load Failed");
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, &DefaultTexture), "Texture Load Failed");
 
 	//Shader
 	auto Shader = make_unique<UShader>();
@@ -85,8 +86,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
 
 	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, layout, ARRAYSIZE(layout));
-	Shader->Bind(Renderer->GetDeviceContext(),SamplerState);
-	Shader->BindTexture(Renderer->GetDeviceContext(),DefaultTexture, ETextureSlot::Diffuset);
+	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
+	Shader->BindTexture(Renderer->GetDeviceContext(), DefaultTexture, ETextureSlot::Diffuset);
 
 
 	// 여기에서 ImGui를 생성합니다.
@@ -120,6 +121,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Model Data
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
+	auto Camera = make_unique<UCamera>();
+	FTransform& CameraTransform = Camera->GetTransform();
+	CameraTransform.Position.z = -5.0f;
 	//MainObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 
@@ -154,7 +158,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//Render
 		//Renderer->RenderModel(TriModel.get(), Shader.get());
-		Renderer->RenderGameObject(Character.get(), Shader.get());
+		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get());
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();

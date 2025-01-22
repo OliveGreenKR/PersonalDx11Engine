@@ -1,24 +1,29 @@
 #include "Camera.h"
 
-Matrix UCamera::GetViewMatrix()
+UCamera::UCamera()
 {
-	if (bUpdateNeeded)
-	{
-		ViewMatrix = XMMatrixInverse(nullptr, GetWorldMatrix());
-		bUpdateNeeded = false;
-	}
-	return ViewMatrix;
+	UpdateProjectionMatrix();
 }
 
-Matrix UCamera::GetProjectionMatrix()
+Matrix UCamera::GetViewMatrix() const
 {
-	if (bUpdateNeeded)
-	{
-		ProjectionMatrix =  XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearZ, FarZ);
-		bUpdateNeeded = false;
-	}
+	XMVECTOR up, right, position, lookat;
+	Vector3 Up = V3::Up();
+	Vector3 Forward = V3::Forward();
+	up = XMLoadFloat3(&Up);
+	lookat = XMLoadFloat3(&Forward);
 
-	return ProjectionMatrix;
+	position = XMLoadFloat3(&GetTransform().Position);
+
+	const Vector3 Rotation = GetTransform().Rotation;
+	Matrix RotateMatrix = XMMatrixRotationRollPitchYaw(Rotation.x,Rotation.y,Rotation.z);
+
+	lookat = XMVector3TransformCoord(lookat, RotateMatrix);
+	up = XMVector3TransformCoord(up, RotateMatrix);
+
+	lookat = XMVectorAdd(position, lookat);
+
+	return XMMatrixLookAtLH(position, lookat, up);
 }
 
 void UCamera::SetProjectionParameters(float InFov, float InAspectRatio, float InNearZ, float InFarZ)
@@ -27,6 +32,7 @@ void UCamera::SetProjectionParameters(float InFov, float InAspectRatio, float In
 	AspectRatio = InAspectRatio;
 	NearZ = InNearZ;
 	FarZ = InFarZ;
-	bUpdateNeeded = true;
-
+	ProjectionMatrix = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearZ, FarZ);
 }
+
+//ViewMatrix = XMMatrixInverse(nullptr, GetWorldMatrix());
