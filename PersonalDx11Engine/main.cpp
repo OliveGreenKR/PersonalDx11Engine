@@ -121,10 +121,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Model Data
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
-	auto Camera = make_unique<UCamera>();
-	Camera->SetProjectionParameters(PI / 2.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
+	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
 	FTransform& CameraTransform = Camera->GetTransform();
-	CameraTransform.Position.z = -3.0f;
+	CameraTransform.Position.z = -5.0f;
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
@@ -154,35 +153,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_KEYDOWN)//Key pushed
 			{
-				const float moveSpeed = 5.0f;
+				const float moveSpeed = 15.0f;
 				switch (msg.wParam)
 				{
-					case VK_UP:
+					case 'W':
 					{
 						Character->GetTransform().Position.y += deltaTime * moveSpeed;
 						break;
 					}
-					case VK_DOWN:
+					case 'S':
 					{
 						Character->GetTransform().Position.y -= deltaTime * moveSpeed;
 						break;
 					}
-					case VK_RIGHT:
+					case 'D':
 					{
 						Character->GetTransform().Position.x += deltaTime * moveSpeed;
 						break;
 					}
-					case VK_LEFT:
+					case 'A':
 					{
 						Character->GetTransform().Position.x -= deltaTime * moveSpeed;
 						break;
 					}
-					case 'W':
+					case VK_UP:
 					{
 						Character->GetTransform().Position.z += deltaTime * moveSpeed;
 						break;
 					}
-					case 'S':
+					case VK_DOWN:
 					{
 						Character->GetTransform().Position.z -= deltaTime * moveSpeed;
 						break;
