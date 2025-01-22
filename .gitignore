@@ -2,10 +2,14 @@
 .vs/
 
 # Resources
-PersonalDx11Engine/Resources/
+PersonalDx11Engine/Resources/*
+*.tif
+*.png
+*.tga
+*.jpeg
 
 #ImGui
-PersonalDx11Engine/ImGui/
+PersonalDx11Engine/ImGui/*
 
 # Prerequisites
 *.d
