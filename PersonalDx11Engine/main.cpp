@@ -125,7 +125,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Camera->SetProjectionParameters(PI / 2.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
 	FTransform& CameraTransform = Camera->GetTransform();
 	CameraTransform.Position.z = -3.0f;
-	//MainObejct
+
+	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 
 #pragma region MainLoop
@@ -137,7 +138,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		QueryPerformanceCounter(&currentTime);
 		float deltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 		lastTime = currentTime;
-
+#pragma region Input
 		//window msg process
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
@@ -151,9 +152,55 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
-
+			else if (msg.message == WM_KEYDOWN)//Key pushed
+			{
+				const float moveSpeed = 5.0f;
+				switch (msg.wParam)
+				{
+					case VK_UP:
+					{
+						Character->GetTransform().Position.y += deltaTime * moveSpeed;
+						break;
+					}
+					case VK_DOWN:
+					{
+						Character->GetTransform().Position.y -= deltaTime * moveSpeed;
+						break;
+					}
+					case VK_RIGHT:
+					{
+						Character->GetTransform().Position.x += deltaTime * moveSpeed;
+						break;
+					}
+					case VK_LEFT:
+					{
+						Character->GetTransform().Position.x -= deltaTime * moveSpeed;
+						break;
+					}
+					case 'W':
+					{
+						Character->GetTransform().Position.z += deltaTime * moveSpeed;
+						break;
+					}
+					case 'S':
+					{
+						Character->GetTransform().Position.z -= deltaTime * moveSpeed;
+						break;
+					}
+				}
+			}
 		}
 
+#pragma endregion
+
+#pragma region logic
+
+		/*Character->GetTransform().Position.x = Math::Clamp(Character->GetTransform().Position.x, 0, 1.0f);*/
+
+#pragma endregion
+
+
+#pragma region Rendering
 		//before render
 		Renderer->BeforeRender();
 
@@ -168,6 +215,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ImGui UI 
 		ImGui::Begin("Property",nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform().Position.x,
+					Character->GetTransform().Position.y,
+					Character->GetTransform().Position.z);
 
 		ImGui::End();
 
@@ -176,8 +226,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//end render
 		Renderer->EndRender();
-	}
 #pragma endregion
+	}
+
+#pragma endregion 
+
 	// 여기에서 ImGui 소멸
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();

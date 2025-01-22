@@ -5,6 +5,9 @@ using namespace DirectX;
 
 const float PI = XM_PI;
 
+const float KINDA_SMALL = 1e-4f; // 보통 용도
+const float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
+
 // Vector types
 using Vector2 = DirectX::XMVECTOR;
 using Vector3 = DirectX::XMFLOAT3;
@@ -60,4 +63,14 @@ namespace V3
 		return vec;
 	}
 }
+
+namespace Math
+{
+	static float Clamp(float val, float min, float max)
+	{
+		return val < min ? min : (val > max ? max : val);
+	}
+}
+
+
 
