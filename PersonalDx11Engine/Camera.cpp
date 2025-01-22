@@ -7,7 +7,7 @@ UCamera::UCamera()
 
 Matrix UCamera::GetViewMatrix() const
 {
-	XMVECTOR up, right, position, lookat;
+	XMVECTOR up, position, lookat;
 	Vector3 Up = V3::Up();
 	Vector3 Forward = V3::Forward();
 	up = XMLoadFloat3(&Up);

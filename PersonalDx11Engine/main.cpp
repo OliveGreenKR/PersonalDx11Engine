@@ -122,8 +122,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
 	auto Camera = make_unique<UCamera>();
+	Camera->SetProjectionParameters(PI / 2.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
 	FTransform& CameraTransform = Camera->GetTransform();
-	CameraTransform.Position.z = -5.0f;
+	CameraTransform.Position.z = -3.0f;
 	//MainObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 
