@@ -54,6 +54,7 @@ protected:
 public:
 	//movement test
 	bool bIsMoving = false;
+	bool bIsPhysicsBasedMove = true;
 
 	float MaxSpeed = 10.0f;
 

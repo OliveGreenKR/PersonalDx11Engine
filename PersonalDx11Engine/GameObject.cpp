@@ -51,16 +51,27 @@ void UGameObject::StartMove(const Vector3& InTarget)
 {
 	bIsMoving = true;
 	TargetVelocity = InTarget.GetNormalized() * MaxSpeed;
+	if (!bIsPhysicsBasedMove)
+	{
+		TargetPosition = InTarget;
+	}
 }
 
 void UGameObject::StopMove()
 {
+	TargetVelocity = Vector3::Zero;
+}
+
+void UGameObject::StopMoveImmediately()
+{
 	bIsMoving = false;
 	TargetVelocity = Vector3::Zero;
+	CurrentVelocity = TargetVelocity;
 }
 
 void UGameObject::UpdateMovement(const float DeltaTime)
 {
+
 	UpdateVelocity(DeltaTime);
 	UpdatePosition(DeltaTime);
 }
@@ -80,6 +91,7 @@ void UGameObject::UpdateVelocity(const float DeltaTime)
 	else if (!bIsMoving)
 	{
 		CurrentVelocity = Vector3::Zero;
+		bIsMoving = false;
 	}
 }
 
@@ -94,9 +106,5 @@ void UGameObject::UpdatePosition(const float DeltaTime)
 	}
 }
 
-void UGameObject::StopMoveImmediately()
-{
-	TargetVelocity = Vector3::Zero;
-	CurrentVelocity = TargetVelocity;
-}
+
 

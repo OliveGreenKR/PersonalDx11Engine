@@ -181,9 +181,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					case 'F':
 					{
-						TargetDirection = -Vector3::Zero;
-						Character->CurrentVelocity = Vector3::Zero;
-						Character->TargetVelocity = Vector3::Zero;
+						//Character->StopMoveImmediately();
+						Character->StopMove();
 						break;
 					}
 					//Camera
