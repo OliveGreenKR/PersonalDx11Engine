@@ -1,6 +1,6 @@
 #pragma once
 #include "GameObject.h"
-#include "Math.h"
+#include "Frustum.h"
 
 class UCamera : public UGameObject
 {
@@ -17,11 +17,19 @@ public:
 	void SetNearZ(float InZ) { NearZ = InZ; UpdateProjectionMatrix();  }
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
 
+	bool IsInView(const Vector3& Position);
 private:
-	/*FTransform& GetTransform() { return Transform; }*/
+	void OnTransformChanged() override;
+
 private:
 	void UpdateProjectionMatrix();
+
+private:
+	//logical const
+	void UpdatDirtyView() const;
 	void UpdateViewMatrix() const;
+	void UpdateFrustum() const;
+	void CalculateFrustum(Matrix& InViewProj) const;
 private :
 	//radian
 	float Fov = PI/4.0f;		//VerticalFOV
@@ -30,8 +38,8 @@ private :
 	float FarZ = 1.0f;
 
 	Matrix ProjectionMatrix;
+
+	mutable bool bIsViewDirty = false;
 	mutable Matrix ViewMatrix;
-	mutable bool bisViewDirty = false;
-
+	mutable FFrustum ViewFrustum;
 };
-

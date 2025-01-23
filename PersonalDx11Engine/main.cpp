@@ -122,8 +122,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
 	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
-	FTransform& CameraTransform = Camera->GetTransform();
-	CameraTransform.Position.z = -5.0f;
+	Camera->SetPosition({ 0,0,-5.0f });
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
@@ -154,36 +153,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if (msg.message == WM_KEYDOWN)//Key pushed
 			{
 				const float moveSpeed = 15.0f;
+				const float roateSpeed = 30.0f;
 				switch (msg.wParam)
 				{
+					//character
 					case 'W':
 					{
-						Character->GetTransform().Position.y += deltaTime * moveSpeed;
+						Character->AddPosition({ 0,deltaTime * moveSpeed ,0 });
 						break;
 					}
 					case 'S':
 					{
-						Character->GetTransform().Position.y -= deltaTime * moveSpeed;
+						Character->AddPosition({ 0,-deltaTime * moveSpeed ,0 });
 						break;
 					}
 					case 'D':
 					{
-						Character->GetTransform().Position.x += deltaTime * moveSpeed;
+						Character->AddPosition({ deltaTime * moveSpeed ,0,0 });
 						break;
 					}
 					case 'A':
 					{
-						Character->GetTransform().Position.x -= deltaTime * moveSpeed;
+						Character->AddPosition({ -deltaTime * moveSpeed ,0,0 });
 						break;
 					}
+					//Camera
 					case VK_UP:
 					{
-						Character->GetTransform().Position.z += deltaTime * moveSpeed;
+						//Pitch UP
+						Camera->AddRotation({ Math::DegreeToRad(deltaTime * roateSpeed),0,0 });
 						break;
 					}
 					case VK_DOWN:
 					{
-						Character->GetTransform().Position.z -= deltaTime * moveSpeed;
+						Camera->AddRotation({ Math::DegreeToRad(-deltaTime * roateSpeed),0,0 });
+						break;
+					}
+					case VK_RIGHT:
+					{
+						//Yaw Up
+						Camera->AddRotation({ 0,Math::DegreeToRad(deltaTime * roateSpeed),0 });
+						break;
+					}
+					case VK_LEFT:
+					{
+						Camera->AddRotation({ 0,Math::DegreeToRad(-deltaTime * moveSpeed),0 });
 						break;
 					}
 				}

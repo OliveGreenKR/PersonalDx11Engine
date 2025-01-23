@@ -7,11 +7,20 @@ using namespace DirectX;
 
 const float PI = XM_PI;
 
+
 const float KINDA_SMALL = 1e-4f; // 보통 용도
 const float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
 
 namespace Math
 {
+	static float DegreeToRad(float degree)
+	{
+		return degree * XM_PI / 180.0f;
+	}
+	static float RadToDegree(float rad)
+	{
+		return rad * 180.0f / XM_PI;
+	}
 	static float Clamp(float val, float min, float max)
 	{
 		return val < min ? min : (val > max ? max : val);
@@ -601,10 +610,14 @@ using Color = Vector4;   // RGBA stored as XMFLOAT4
 
 struct Plane : public Vector4
 {
-	explicit Plane(Vector4& plane)
+	Plane() = default;
+	Plane(Vector4& plane) : Vector4(plane) {}
+	Plane(float x, float y, float z, float w) : Vector4(x, y, z, w) {};
+
+	void NormalizePlane()
 	{
-		Vector3 noraml(plane);
-		float L =  Length();
+		Vector3 normal(*this);
+		float L = normal.Length();
 		if (L > 0)
 		{
 			float InvL = 1.0f / L;
