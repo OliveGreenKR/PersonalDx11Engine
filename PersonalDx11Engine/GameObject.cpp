@@ -4,8 +4,7 @@
 
 void UGameObject::Tick(const float DeltaTime)
 {
-	if(bIsMoving)
-		UpdateMovement(DeltaTime);
+	UpdateMovement(DeltaTime);
 }
 
 void UGameObject::SetPosition(const Vector3& InPosition)
@@ -57,8 +56,9 @@ void UGameObject::StartMove(const Vector3& InTarget)
 	}
 }
 
-void UGameObject::StopMove()
+void UGameObject::StopMoveSlowly()
 {
+	bIsMoving = false;
 	TargetVelocity = Vector3::Zero;
 }
 
@@ -71,7 +71,6 @@ void UGameObject::StopMoveImmediately()
 
 void UGameObject::UpdateMovement(const float DeltaTime)
 {
-
 	UpdateVelocity(DeltaTime);
 	UpdatePosition(DeltaTime);
 }
@@ -87,11 +86,14 @@ void UGameObject::UpdateVelocity(const float DeltaTime)
 		// 목표 속도를 향해 가속/감속
 		CurrentVelocity = CurrentVelocity +
 			VelocityDiff.GetNormalized() * CurrentAcceleration * DeltaTime;
-	}
-	else if (!bIsMoving)
-	{
-		CurrentVelocity = Vector3::Zero;
-		bIsMoving = false;
+
+		float Speed = CurrentVelocity.Length();
+		if (MaxSpeed < 0)
+			MaxSpeed *= -1;
+
+		if (Speed > MaxSpeed)
+			CurrentVelocity *= MaxSpeed / Speed;
+
 	}
 }
 

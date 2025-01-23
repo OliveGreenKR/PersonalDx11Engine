@@ -127,8 +127,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
-	Character->Acceleration = 1.0f;
-	Character->Deceleration = -100.0f;
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -182,7 +180,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					case 'F':
 					{
 						//Character->StopMoveImmediately();
-						Character->StopMove();
+						Character->StopMoveSlowly();
 						break;
 					}
 					//Camera

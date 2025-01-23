@@ -43,7 +43,7 @@ protected:
 public:
 
 	void StartMove(const Vector3& InTaget);
-	void StopMove();
+	void StopMoveSlowly();
 	void StopMoveImmediately();
 
 	void UpdateMovement(const float DeltaTime);
@@ -56,10 +56,9 @@ public:
 	bool bIsMoving = false;
 	bool bIsPhysicsBasedMove = true;
 
-	float MaxSpeed = 10.0f;
-
 	float Acceleration = 2.0f;
-	float Deceleration = -5.0f;
+	float Deceleration = 1000.0f;
+	float MaxSpeed = 100.0f;
 
 	Vector3 TargetVelocity;
 	Vector3 CurrentVelocity;
