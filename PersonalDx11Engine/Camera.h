@@ -8,7 +8,10 @@ public:
 	UCamera();
 	UCamera(float fov, float aspectRatio, float nearZ, float farZ);
 	~UCamera() override = default;
+public:
+	virtual void Tick(const float DeltaTime) override;
 
+public:
 	Matrix GetViewMatrix() const;
 	Matrix GetProjectionMatrix() const;
 
@@ -18,6 +21,11 @@ public:
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
 
 	bool IsInView(const Vector3& Position);
+
+	void SetLookAt(shared_ptr<UGameObject>& InTarget);
+
+public:
+	bool bLookAt = false;
 private:
 	void OnTransformChanged() override;
 
@@ -30,6 +38,8 @@ private:
 	void UpdateViewMatrix() const;
 	void UpdateFrustum() const;
 	void CalculateFrustum(Matrix& InViewProj) const;
+
+	void UpdateLookAt();
 private :
 	//radian
 	float Fov = PI/4.0f;		//VerticalFOV
@@ -38,6 +48,10 @@ private :
 	float FarZ = 1.0f;
 
 	Matrix ProjectionMatrix;
+	weak_ptr<UGameObject> LookAtObject;
+
+	Vector3 Up = Vector3::Up;
+	Vector3 LookAt = Vector3::Forward;
 
 	mutable bool bIsViewDirty = false;
 	mutable Matrix ViewMatrix;

@@ -122,11 +122,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
 	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
-	Camera->SetPosition({ 0,0,-5.0f });
+	Camera->SetPosition({ 0,0,-10.0f });
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
-
+	Character->SetScale({ 0.5f,0.5f,0.5f });
+	Character->Acceleration = 1.0f;
+	Character->Deceleration = -100.0f;
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -138,6 +140,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		lastTime = currentTime;
 #pragma region Input
 		//window msg process
+		Vector3 TargetDirection;
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			// 키 입력 메시지를 번역
@@ -152,29 +155,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_KEYDOWN)//Key pushed
 			{
-				const float moveSpeed = 15.0f;
 				const float roateSpeed = 30.0f;
 				switch (msg.wParam)
 				{
 					//character
 					case 'W':
 					{
-						Character->AddPosition({ 0,deltaTime * moveSpeed ,0 });
+						TargetDirection = Vector3::Forward;
 						break;
 					}
 					case 'S':
 					{
-						Character->AddPosition({ 0,-deltaTime * moveSpeed ,0 });
+						TargetDirection = -Vector3::Forward;
 						break;
 					}
 					case 'D':
 					{
-						Character->AddPosition({ deltaTime * moveSpeed ,0,0 });
+						TargetDirection = Vector3::Right;
 						break;
 					}
 					case 'A':
 					{
-						Character->AddPosition({ -deltaTime * moveSpeed ,0,0 });
+						TargetDirection = -Vector3::Right;
+						break;
+					}
+					case 'F':
+					{
+						TargetDirection = -Vector3::Zero;
+						Character->CurrentVelocity = Vector3::Zero;
+						Character->TargetVelocity = Vector3::Zero;
 						break;
 					}
 					//Camera
@@ -197,20 +206,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					case VK_LEFT:
 					{
-						Camera->AddRotation({ 0,Math::DegreeToRad(-deltaTime * moveSpeed),0 });
+						Camera->AddRotation({ 0,Math::DegreeToRad(-deltaTime * roateSpeed),0 });
 						break;
 					}
 				}
+
+
 			}
 		}
-
 #pragma endregion
 
 #pragma region logic
-		if (Camera->IsInView(Character->GetTransform().Position) == false)
-		{
-			Character->SetPosition({ 0,0,0 });
-		}
+		if(TargetDirection.Length() > 0)
+			Character->StartMove(TargetDirection);
+		Camera->bLookAt = false;
+		Character->Tick(deltaTime);
+		Camera->Tick(deltaTime);
+
+		//if (Camera->IsInView(Character->GetTransform().Position) == false)
+		//{
+		//	Character->TargetPosition(Camera->GetTransform().Position +;
+		//}
 #pragma endregion
 
 
@@ -227,8 +243,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::NewFrame();
 
 		// ImGui UI 
+		Vector3 CurrentVelo = Character->CurrentVelocity;
+		Vector3 TargetVelo = Character->TargetVelocity;
+
 		ImGui::Begin("Property",nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		ImGui::Text("bIsMove : %d", Character->bIsMoving);
+		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f",TargetVelo.x, 
+					TargetVelo.y,
+					TargetVelo.z);
+		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+					CurrentVelo.y,
+					CurrentVelo.z);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform().Position.x,
 					Character->GetTransform().Position.y,
 					Character->GetTransform().Position.z);

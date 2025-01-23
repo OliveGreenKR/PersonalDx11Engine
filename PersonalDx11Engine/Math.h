@@ -442,15 +442,39 @@ struct Vector3 : public DirectX::XMFLOAT3
 	float Length() const { return sqrt(x * x + y * y + z * z); }
 	float LengthSquared() const { return x * x + y * y + z * z; }
 
+	//When Vector is too Small, be Zero
 	void Normalize()
 	{
 		float L = Length();
-		if (L > 0)
+		if (L < KINDA_SMALL)
+		{
+			x = 0; y = 0; z = 0;
+			return;
+		}
+		if (std::abs(L-1) > KINDA_SMALL)
 		{
 			float InvL = 1.0f / L;
 			x *= InvL;
 			y *= InvL;
 			z *= InvL;
+		}
+	}
+
+	void SafeNormalize(Vector3& OutVec, const Vector3& ErrVec = Vector3::Zero)
+	{
+		float L = Length();
+		if (L < KINDA_SMALL)
+		{
+			OutVec = ErrVec;
+			return;
+		}
+
+		if (std::abs(L - 1) > KINDA_SMALL)
+		{
+			float InvL = 1.0f / L;
+			OutVec.x = x * InvL;
+			OutVec.y = y * InvL;
+			OutVec.z = z * InvL;
 		}
 	}
 
@@ -503,12 +527,12 @@ struct Vector3 : public DirectX::XMFLOAT3
 		);
 	}
 
-	static Vector3 Lerp(const Vector3& A, const Vector3& B, float Alpha)
+	static Vector3 Lerp(const Vector3& Current, const Vector3& Dest, float Alpha)
 	{
 		return Vector3(
-			A.x + (B.x - A.x) * Alpha,
-			A.y + (B.y - A.y) * Alpha,
-			A.z + (B.z - A.z) * Alpha
+			Current.x + (Dest.x - Current.x) * Alpha,
+			Current.y + (Dest.y - Current.y) * Alpha,
+			Current.z + (Dest.z - Current.z) * Alpha
 		);
 	}
 };
@@ -618,7 +642,7 @@ struct Plane : public Vector4
 	{
 		Vector3 normal(*this);
 		float L = normal.Length();
-		if (L > 0)
+		if (::abs(1-L) > KINDA_SMALL)
 		{
 			float InvL = 1.0f / L;
 			x *= InvL;

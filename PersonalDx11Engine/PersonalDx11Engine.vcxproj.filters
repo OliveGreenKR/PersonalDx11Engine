@@ -41,8 +41,10 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Math.cpp">
+      <Filter>Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
       <Filter>Engine\Math</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,6 +84,12 @@
     </Filter>
     <Filter Include="Engine\GameObject">
       <UniqueIdentifier>{676a394e-aa58-4da8-a083-26ce189609f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\GameObject\Component">
+      <UniqueIdentifier>{6a424d0a-299a-4e71-9c7e-519aeb8282fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\GameObject\Component\Movement">
+      <UniqueIdentifier>{c55e8ca9-95bb-4334-a690-53759ca2b953}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

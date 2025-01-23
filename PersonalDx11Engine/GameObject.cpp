@@ -2,6 +2,12 @@
 #include "Model.h"
 
 
+void UGameObject::Tick(const float DeltaTime)
+{
+	if(bIsMoving)
+		UpdateMovement(DeltaTime);
+}
+
 void UGameObject::SetPosition(const Vector3& InPosition)
 {
 	Transform.Position = InPosition;
@@ -39,5 +45,58 @@ UModel* UGameObject::GetModel() const
 		return ptr.get();
 	}
 	return nullptr;
+}
+
+void UGameObject::StartMove(const Vector3& InTarget)
+{
+	bIsMoving = true;
+	TargetVelocity = InTarget.GetNormalized() * MaxSpeed;
+}
+
+void UGameObject::StopMove()
+{
+	bIsMoving = false;
+	TargetVelocity = Vector3::Zero;
+}
+
+void UGameObject::UpdateMovement(const float DeltaTime)
+{
+	UpdateVelocity(DeltaTime);
+	UpdatePosition(DeltaTime);
+}
+
+//Update Velocity to TargetVelocity
+void UGameObject::UpdateVelocity(const float DeltaTime)
+{
+	const float CurrentAcceleration = bIsMoving ? Acceleration : Deceleration;
+	const Vector3 VelocityDiff = TargetVelocity - CurrentVelocity;
+
+	if (VelocityDiff.Length() > KINDA_SMALL)
+	{
+		// 목표 속도를 향해 가속/감속
+		CurrentVelocity = CurrentVelocity +
+			VelocityDiff.GetNormalized() * CurrentAcceleration * DeltaTime;
+	}
+	else if (!bIsMoving)
+	{
+		CurrentVelocity = Vector3::Zero;
+	}
+}
+
+//Update Positin with currentVelocity
+void UGameObject::UpdatePosition(const float DeltaTime)
+{
+	if (CurrentVelocity.Length() > KINDA_SMALL)
+	{
+		Vector3 NewPosition = Transform.Position +
+			CurrentVelocity * DeltaTime;
+		SetPosition(NewPosition);
+	}
+}
+
+void UGameObject::StopMoveImmediately()
+{
+	TargetVelocity = Vector3::Zero;
+	CurrentVelocity = TargetVelocity;
 }
 

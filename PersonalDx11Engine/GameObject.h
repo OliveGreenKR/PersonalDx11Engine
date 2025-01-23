@@ -14,6 +14,9 @@ public:
 	virtual ~UGameObject() = default;
 
 public:
+	virtual void Tick(const float DeltaTime);
+
+public:
 	void SetPosition(const Vector3& InPosition);
 	//{ Pitch, Yaw, Roll }
 	void SetRotation(const Vector3& InRotation);
@@ -37,5 +40,27 @@ protected:
 	FTransform Transform;
 	std::weak_ptr<UModel> Model;
 
-};
+public:
 
+	void StartMove(const Vector3& InTaget);
+	void StopMove();
+	void StopMoveImmediately();
+
+	void UpdateMovement(const float DeltaTime);
+protected:
+	void UpdateVelocity(const float DeltaTime);
+	void UpdatePosition(const float DeltaTime);
+
+public:
+	//movement test
+	bool bIsMoving = false;
+
+	float MaxSpeed = 10.0f;
+
+	float Acceleration = 2.0f;
+	float Deceleration = -5.0f;
+
+	Vector3 TargetVelocity;
+	Vector3 CurrentVelocity;
+	Vector3 TargetPosition;
+};

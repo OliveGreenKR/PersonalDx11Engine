@@ -12,6 +12,15 @@ UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
 	UpdateProjectionMatrix();
 }
 
+void UCamera::Tick(float DeltaTime)
+{
+	//TODO: LookAT
+	if (bLookAt)
+	{
+		UpdateLookAt();
+	}
+}
+
 Matrix UCamera::GetViewMatrix() const
 {
 	//TODO cache dirty check 
@@ -46,6 +55,13 @@ bool UCamera::IsInView(const Vector3& Position)
 	return true;
 }
 
+void UCamera::SetLookAt(shared_ptr<UGameObject>& InTarget)
+{
+	if (!InTarget)
+		return;
+	LookAtObject = InTarget;
+}
+
 void UCamera::OnTransformChanged()
 {
 	bIsViewDirty = true;
@@ -65,10 +81,9 @@ void UCamera::UpdateProjectionMatrix()
 void UCamera::UpdateViewMatrix() const
 {
 	XMVECTOR up, position, lookat;
-	Vector3 Up = Vector3::Up;
-	Vector3 Forward = Vector3::Forward;
+
 	up = XMLoadFloat3(&Up);
-	lookat = XMLoadFloat3(&Forward);
+	lookat = XMLoadFloat3(&LookAt);
 
 	position = XMLoadFloat3(&Transform.Position);
 
@@ -138,4 +153,11 @@ void UCamera::CalculateFrustum(Matrix& InViewProj) const
 		M._44 - M._43);
 
 	ViewFrustum.NormalizeAll();
+}
+
+void UCamera::UpdateLookAt()
+{
+	if (!LookAtObject.lock())
+		return;
+	LookAt = (LookAtObject.lock()->GetTransform().Position - Transform.Position).GetNormalized();
 }
