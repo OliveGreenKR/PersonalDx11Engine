@@ -207,10 +207,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		//Character->GetTransform().Position.x = Math::Clamp(Character->GetTransform().Position.x, , );
-
-
-
+		if (Camera->IsInView(Character->GetTransform().Position) == false)
+		{
+			Character->SetPosition({ 0,0,0 });
+		}
 #pragma endregion
 
 
