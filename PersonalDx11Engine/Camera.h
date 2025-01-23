@@ -2,8 +2,6 @@
 #include "GameObject.h"
 #include "Math.h"
 
-struct FTransform;
-
 class UCamera : public UGameObject
 {
 public:
@@ -19,6 +17,8 @@ public:
 	void SetNearZ(float InZ) { NearZ = InZ; UpdateProjectionMatrix();  }
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
 
+private:
+	/*FTransform& GetTransform() { return Transform; }*/
 private:
 	void UpdateProjectionMatrix();
 	void UpdateViewMatrix() const;

@@ -32,14 +32,14 @@ void UCamera::UpdateProjectionMatrix()
 void UCamera::UpdateViewMatrix() const 
 {
 	XMVECTOR up, position, lookat;
-	Vector3 Up = V3::Up();
-	Vector3 Forward = V3::Forward();
+	Vector3 Up = Vector3::Up;
+	Vector3 Forward = Vector3::Forward;
 	up = XMLoadFloat3(&Up);
 	lookat = XMLoadFloat3(&Forward);
 
-	position = XMLoadFloat3(&GetTransform().Position);
+	position = XMLoadFloat3(&Transform.Position);
 
-	const Vector3 Rotation = GetTransform().Rotation;
+	const Vector3 Rotation = Transform.Rotation;
 	Matrix RotateMatrix = XMMatrixRotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
 
 	lookat = XMVector3TransformCoord(lookat, RotateMatrix);

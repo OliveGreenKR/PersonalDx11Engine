@@ -14,14 +14,22 @@ public:
 	virtual ~UGameObject() = default;
 
 public:
-	const FTransform& GetTransform() const { return Transform; }
-	FTransform& GetTransform() { return Transform; }
+	void SetPosition(const Vector3& InPosition);
+	void SetRotation(const Vector3& InRotation);
+	void SetScale(const Vector3& InScale);
+
+	void AddPosition(const Vector3& InDelta);
+	void AddRotation(const Vector3& InDelta);
+
+	__forceinline const FTransform& GetTransform() const { return Transform; }
+	__forceinline FTransform& GetTransform() { return Transform; }
+
 	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
 
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
 
-protected: 
+protected:
 	FTransform Transform;
 	std::weak_ptr<UModel> Model;
 
