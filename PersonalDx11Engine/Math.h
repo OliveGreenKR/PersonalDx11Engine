@@ -16,19 +16,6 @@ namespace Math
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
-
-	//static float GetDistanceFromPlane(const Vector3& Point, const Plane& Plane)
-	//{
-	//	XMVECTOR planeNormal = XMLoadFloat4(&Plane);
-	//	XMVECTOR pointVec = XMVectorSet(Point.x, Point.y, Point.z, 1.0f);
-	//	return XMVectorGetX(XMVector4Dot(planeNormal, pointVec));
-	//}
-
-	//static bool IsFront(const Plane& Plane, const Vector3& Point)
-	//{
-	//	float distance = GetDistanceFromPlane(Point, Plane);
-	//	return distance >= 0.0f;
-	//}
 }
 
 #pragma region Vector
@@ -612,9 +599,39 @@ using VectorRegister = DirectX::XMVECTOR;
 // Color type
 using Color = Vector4;   // RGBA stored as XMFLOAT4
 
-// Plane type - normalized normal
-using Plane = Vector4;   
+struct Plane : public Vector4
+{
+	explicit Plane(Vector4& plane)
+	{
+		Vector3 noraml(plane);
+		float L =  Length();
+		if (L > 0)
+		{
+			float InvL = 1.0f / L;
+			x *= InvL;
+			y *= InvL;
+			z *= InvL;
+			w *= InvL;
+		}
+	}
 
+	float GetDistance(float x, float y, float z) const
+	{
+		XMVECTOR normal = XMLoadFloat4(this);
+		XMVECTOR point = XMVectorSet(x, y, z, 1.0f);
+		return XMVectorGetX(XMVector4Dot(normal, point));
+	}
+
+	float GetDistance(const Vector3& Point) const
+	{
+		return GetDistance(Point.x, Point.y, Point.z);
+	}
+	bool IsInFront(const Vector3& Point) const
+	{
+		return GetDistance(Point) >= 0.0f;
+	}
+
+};
 
 
 
