@@ -29,7 +29,7 @@ protected:
 	void UpdateToLookAtObject(float DeltaTime);
 
 public:
-	bool bTrackObject = false;
+	bool bLookAtObject = false;
 private:
 	void OnTransformChanged() override;
 
@@ -70,7 +70,11 @@ private:
 	float MaxRotationSpeed = 30.0f;
 	float DistanceSpeedScale = 1.0f;
 
-	// 최대  속도 추적 각도(rad)
-	float MaxTrackSpeedRads = Fov;
+	//목표와의 최대 각도차이
+	float MaxDiffAngle = 25.0f;
+
+	// 최대  속도 추적 각도(degree)
+	float MaxTrackSpeedAngle = MaxDiffAngle*0.6f;
+
 #pragma endregion
 };

@@ -38,6 +38,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
+
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -132,7 +133,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	
 	Camera->SetLookAtObject(Character);
-	Camera->bTrackObject = false;
+	Camera->bLookAtObject = false;
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -192,7 +193,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					case 'R':
 					{
 						Camera->LookTo(Character->GetTransform()->Position);
-						//Character->AddRotationEuler({ (roateSpeed), 0, 0 });
+						break;
+					}
+					case 'V' :
+					{
+						Camera->bLookAtObject = !Camera->bLookAtObject;
 						break;
 					}
 					//Camera

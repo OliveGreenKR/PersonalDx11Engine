@@ -63,17 +63,71 @@ void UCamera::LookTo(const Vector3& TargetPosition)
 {
 	Vector3 Direction = TargetPosition - GetTransform()->Position;
 	Direction.Normalize();
-
 	Vector3 CurrentForward = GetForwardVector();
-
 	Quaternion toRotate =  Math::GetRotationBetweenVectors(CurrentForward, Direction);
 	AddRotationQuaternion(toRotate);
 }
 
 void UCamera::UpdateToLookAtObject(float DeltaTime)
 {
+	auto TargetObject = LookAtObject.lock();
+	if (!bLookAtObject || !TargetObject)
+		return;
 
+	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->Position);
+	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->Position);
+
+	Vector3 CurrentF = GetForwardVector();
+	// 현재 전방 벡터를 XMVECTOR로 로드
+	XMVECTOR CurrentForward = XMLoadFloat3(&CurrentF);
+
+	// 목표 방향 계산 및 정규화
+	XMVECTOR ToTarget = XMVector3Normalize(XMVectorSubtract(TargetPos, CurrentPos));
+
+	// 현재 방향과 목표 방향 사이의 회전 계산
+	XMVECTOR TargetRotation = Math::GetRotationBetweenVectors(CurrentForward, ToTarget);
+
+	// 현재 회전을 XMVECTOR로 로드
+	XMVECTOR CurrentRotation = XMLoadFloat4(&GetTransform()->Rotation);
+
+	// 각도 차이 계산 (회전 Quaternion의 각도를 추출)
+	float DiffAngleRad = 2.0f * XMScalarACos(XMVectorGetW(TargetRotation));
+	float DiffAngleDegrees = XMConvertToDegrees(DiffAngleRad);
+
+	if (DiffAngleDegrees > KINDA_SMALL)
+	{
+		// 회전 속도 계산 (MaxSpeedAngle 기준으로 정규화)
+		float SpeedFactor = Math::Clamp(DiffAngleDegrees / MaxTrackSpeedAngle, 0.0f,1.0f);
+		float RotationAmount = min(
+			MaxRotationSpeed * SpeedFactor * DeltaTime / DiffAngleDegrees,
+			1.0f
+		);
+
+		XMVECTOR ResultRotation;
+		if (DiffAngleDegrees > MaxDiffAngle)
+		{
+			// MaxDiffAngle까지만 회전
+			float LimitFactor = Math::Clamp(MaxDiffAngle / DiffAngleDegrees, 0.0f, 1.0f);
+			// 제한된 회전으로 Slerp
+			ResultRotation = Math::Slerp(CurrentRotation,
+								   XMQuaternionMultiply(CurrentRotation, TargetRotation),
+								   LimitFactor);
+		}
+		else
+		{
+			// 일반적인 회전 보간
+			ResultRotation = Math::Slerp(CurrentRotation,
+								   XMQuaternionMultiply(CurrentRotation, TargetRotation),
+								   RotationAmount);
+		}
+
+		// 결과 회전을 Quaternion으로 변환하여 적용
+		Quaternion NewRotation;
+		XMStoreFloat4(&NewRotation, ResultRotation);
+		SetRoatationQuaternion(NewRotation);
+	}
 }
+
 
 void UCamera::OnTransformChanged()
 {
