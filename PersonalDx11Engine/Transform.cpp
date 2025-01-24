@@ -5,12 +5,13 @@ void FTransform::SetRotation(const Vector3& InEulerAngles)
     Rotation = Math::EulerToQuaternion(InEulerAngles);
 }
 
-void FTransform::SetRotation(Quaternion& InQuaternion)
+void FTransform::SetRotation(const Quaternion& InQuaternion)
 {
     float lengthSquared = InQuaternion.LengthSquared();
     if (std::abs(lengthSquared - 1.0f) > KINDA_SMALL)
     {
-        InQuaternion.Normalize();
+        Rotation = InQuaternion.GetNormalized();
+        return;
     }
     Rotation = InQuaternion;
 }
@@ -31,6 +32,15 @@ void FTransform::AddRotation(const Vector3& InEulerAngles)
     //multiply mustbo right to left
     Matrix Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
     Matrix Delta = XMMatrixRotationRollPitchYaw(RadAngles.x, RadAngles.y, RadAngles.z);
+    XMMATRIX Final = Current * Delta;
+    XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
+    Rotation.Normalize();
+}
+
+void FTransform::AddRotation(const Quaternion& InQuaternion)
+{
+    Matrix Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
+    Matrix Delta = XMMatrixRotationQuaternion(XMLoadFloat4(&InQuaternion));
     XMMATRIX Final = Current * Delta;
     XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
     Rotation.Normalize();
@@ -61,18 +71,30 @@ void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
     Rotation.Normalize();
 }
 
+Matrix FTransform::GetTranslationMatrix() const
+{
+    DirectX::XMVECTOR VPosition = DirectX::XMLoadFloat3(&Position);
+    return DirectX::XMMatrixTranslationFromVector(VPosition);
+}
+
+Matrix FTransform::GetScaleMatrix() const
+{
+    DirectX::XMVECTOR VScale = DirectX::XMLoadFloat3(&Scale);
+    return XMMatrixScalingFromVector(VScale);
+}
+
+Matrix FTransform::GetRotationMatrix() const
+{
+    DirectX::XMVECTOR VRotation = DirectX::XMLoadFloat4(&Rotation);
+    return XMMatrixRotationQuaternion(VRotation);
+}
+
 Matrix FTransform::GetModelingMatrix() const
 {
-    // XMFLOAT3를 XMVECTOR로 변환
-    DirectX::XMVECTOR VPosition = DirectX::XMLoadFloat3(&Position);
-    DirectX::XMVECTOR VScale = DirectX::XMLoadFloat3(&Scale);
-    DirectX::XMVECTOR VRotation = DirectX::XMLoadFloat4(&Rotation);
-    VRotation = XMQuaternionNormalize(VRotation);
-
     //매트릭스 생성
-    DirectX::XMMATRIX ScaleMatrix = DirectX::XMMatrixScalingFromVector(VScale);
-    DirectX::XMMATRIX RotationMatrix = XMMatrixRotationQuaternion(VRotation);
-    DirectX::XMMATRIX TranslationMatrix = DirectX::XMMatrixTranslationFromVector(VPosition);
+    Matrix ScaleMatrix = GetScaleMatrix();
+    Matrix RotationMatrix = GetRotationMatrix();
+    Matrix TranslationMatrix = GetTranslationMatrix();;
 
     // M = SRT
     return ScaleMatrix * RotationMatrix * TranslationMatrix;

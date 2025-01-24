@@ -61,6 +61,13 @@ void UCamera::SetLookAtObject(shared_ptr<UGameObject>& InTarget)
 
 void UCamera::LookTo(const Vector3& TargetPosition)
 {
+	Vector3 Direction = TargetPosition - GetTransform()->Position;
+	Direction.Normalize();
+
+	Vector3 CurrentForward = GetForwardVector();
+
+	Quaternion toRotate =  Math::GetRotationBetweenVectors(CurrentForward, Direction);
+	AddRotationQuaternion(toRotate);
 }
 
 void UCamera::UpdateToLookAtObject(float DeltaTime)

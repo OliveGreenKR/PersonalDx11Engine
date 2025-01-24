@@ -191,7 +191,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					case 'R':
 					{
-						Character->AddRotationEuler({ (roateSpeed), 0, 0 });
+						Camera->LookTo(Character->GetTransform()->Position);
+						//Character->AddRotationEuler({ (roateSpeed), 0, 0 });
 						break;
 					}
 					//Camera

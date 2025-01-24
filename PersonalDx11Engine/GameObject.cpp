@@ -43,6 +43,24 @@ void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 	OnTransformChanged();
 }
 
+void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
+{
+	Transform.AddRotation(InQuaternionDelta);
+	OnTransformChanged();
+}
+
+const Vector3 UGameObject::GetForwardVector() const
+{
+	Matrix RotationMatrix = GetTransform()->GetRotationMatrix();
+	XMVECTOR BaseForward = XMLoadFloat3(&Vector3::Forward);
+	XMVECTOR TransformedForward = XMVector3Transform(BaseForward, RotationMatrix);
+	TransformedForward = XMVector3Normalize(TransformedForward);
+
+	Vector3 Result;
+	XMStoreFloat3(&Result, TransformedForward);
+	return Result;
+}
+
 UModel* UGameObject::GetModel() const
 {
 	if (auto ptr = Model.lock())
@@ -50,14 +68,6 @@ UModel* UGameObject::GetModel() const
 		return ptr.get();
 	}
 	return nullptr;
-}
-
-void UGameObject::RotateTo(const Vector3& TargetPosition)
-{
-	XMVECTOR TargetPos = XMLoadFloat3(&TargetPosition);
-	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->Position);
-	XMVECTOR DirectionToTarget = XMVectorSubtract(TargetPos, CurrentPos);
-	DirectionToTarget = XMVector3Normalize(DirectionToTarget);
 }
 
 void UGameObject::StartMove(const Vector3& InTarget)

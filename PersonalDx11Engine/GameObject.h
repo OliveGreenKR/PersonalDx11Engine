@@ -25,6 +25,9 @@ public:
 
 	void AddPosition(const Vector3& InDelta);
 	void AddRotationEuler(const Vector3& InEulerDelta);
+	void AddRotationQuaternion(const Quaternion& InQuaternionDelta);
+
+	const Vector3 GetForwardVector() const;
 
 	__forceinline const FTransform* GetTransform() const { return &Transform; }
 	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
@@ -32,7 +35,6 @@ public:
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
 
-	void RotateTo(const Vector3& TargetPosition);
 protected:
 	virtual void OnTransformChanged() {};
 

@@ -174,9 +174,8 @@ struct Vector4 : public DirectX::XMFLOAT4
 	Vector4(float X, float Y, float Z, float W) : XMFLOAT4(X, Y, Z, W) {}
 	explicit Vector4(const DirectX::XMFLOAT4& V) : XMFLOAT4(V) {}
 
-	// Implicit conversions from lower dimensions
-	Vector4(const Vector3& Vec);//w=1.0f
-	Vector4(const Vector2& Vec);// z = 0.0f, w = 1.0f
+	explicit Vector4(const Vector3& Vec);//w=1.0f
+	explicit Vector4(const Vector2& Vec);// z = 0.0f, w = 1.0f
 
 	Vector4& operator+=(const Vector4& Other)
 	{
@@ -279,10 +278,8 @@ struct Vector2 : public DirectX::XMFLOAT2
 	Vector2() : XMFLOAT2(0.0f, 0.0f) {}
 	Vector2(float X, float Y) : XMFLOAT2(X, Y) {}
 	explicit Vector2(const DirectX::XMFLOAT2& V) : XMFLOAT2(V) {}
-
-	// Implicit conversions from higher dimensions
-	Vector2(const Vector4& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
-	Vector2(const Vector3& Vec);
+	explicit Vector2(const Vector4& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
+	explicit Vector2(const Vector3& Vec);
 
 	Vector2& operator+=(const Vector2& Other)
 	{
@@ -360,10 +357,8 @@ struct Vector3 : public DirectX::XMFLOAT3
 	Vector3() : XMFLOAT3(0.0f, 0.0f, 0.0f) {}
 	Vector3(float X, float Y, float Z) : XMFLOAT3(X, Y, Z) {}
 	explicit Vector3(const DirectX::XMFLOAT3& V) : XMFLOAT3(V) {}
-
-	// Implicit conversions
-	Vector3(const Vector4& Vec) : XMFLOAT3(Vec.x, Vec.y, Vec.z) {}
-	Vector3(const Vector2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
+	explicit Vector3(const Vector4& Vec) : XMFLOAT3(Vec.x, Vec.y, Vec.z) {}
+	explicit Vector3(const Vector2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
 
 	//static
 	static const Vector3 Zero;
@@ -555,7 +550,6 @@ struct Vector3 : public DirectX::XMFLOAT3
 };
 
 inline Vector2::Vector2(const Vector3& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
-
 
 // Implementation of Create functions for integer
 inline Vector2 Vector2I::Create(const Vector2I& IntVec)
