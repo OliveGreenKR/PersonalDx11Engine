@@ -154,7 +154,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_KEYDOWN)//Key pushed
 			{
-				const float roateSpeed = 30.0f;
+				const float roateSpeed = 15.0f; //°¢¼Óµµ deg/s
 				switch (msg.wParam)
 				{
 					//character
@@ -188,23 +188,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					case VK_UP:
 					{
 						//Pitch UP
-						Camera->AddRotation({ Math::DegreeToRad(deltaTime * roateSpeed),0,0 });
+						Camera->AddRotationEuler({ (deltaTime * roateSpeed),0,0 });
 						break;
 					}
 					case VK_DOWN:
 					{
-						Camera->AddRotation({ Math::DegreeToRad(-deltaTime * roateSpeed),0,0 });
+						Camera->AddRotationEuler({ (-deltaTime * roateSpeed),0,0 });
 						break;
 					}
 					case VK_RIGHT:
 					{
 						//Yaw Up
-						Camera->AddRotation({ 0,Math::DegreeToRad(deltaTime * roateSpeed),0 });
+						Camera->AddRotationEuler({ 0,(deltaTime * roateSpeed),0 });
 						break;
 					}
 					case VK_LEFT:
 					{
-						Camera->AddRotation({ 0,Math::DegreeToRad(-deltaTime * roateSpeed),0 });
+						Camera->AddRotationEuler({ 0,(-deltaTime * roateSpeed),0 });
 						break;
 					}
 				}

@@ -18,13 +18,13 @@ public:
 
 public:
 	void SetPosition(const Vector3& InPosition);
-	//{ Pitch, Yaw, Roll }
-	void SetRotation(const Vector3& InRotation);
+	//{ Pitch, Yaw, Roll } in Degree
+	void SetRotationEuler(const Vector3& InEulerAngles);
 	void SetScale(const Vector3& InScale);
 
 	void AddPosition(const Vector3& InDelta);
-	//{ Pitch, Yaw, Roll }
-	void AddRotation(const Vector3& InDelta);
+	//{ Pitch, Yaw, Roll } in Degree
+	void AddRotationEuler(const Vector3& InEulerDelta);
 
 	__forceinline const FTransform& GetTransform() const { return Transform; }
 	

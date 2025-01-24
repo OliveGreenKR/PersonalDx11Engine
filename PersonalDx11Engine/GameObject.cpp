@@ -13,9 +13,9 @@ void UGameObject::SetPosition(const Vector3& InPosition)
 	OnTransformChanged();
 }
 
-void UGameObject::SetRotation(const Vector3& InRotation)
+void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 {
-	Transform.Rotation = InRotation;
+	Transform.SetRotation(InEulerAngles);
 	OnTransformChanged();
 }
 
@@ -31,9 +31,9 @@ void UGameObject::AddPosition(const Vector3& InDelta)
 	OnTransformChanged();
 }
 
-void UGameObject::AddRotation(const Vector3& InDelta)
+void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 {
-	Transform.Rotation += InDelta;
+	Transform.AddRotation(InEulerDelta);
 	OnTransformChanged();
 }
 
