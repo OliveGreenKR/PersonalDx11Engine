@@ -123,11 +123,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
 	Camera->SetPosition({ 0,0,-10.0f });
-	Camera->bLookAt = true;
+	
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
+	Character->SetPosition({ 1.0f,0,0 });
+
+	Camera->SetLookAtObject(Character);
+	Camera->bTrackObject = true;
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -184,6 +188,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						Character->StopMoveSlowly();
 						break;
 					}
+					case 'R':
+					{
+						Character->AddRotationEuler({ (roateSpeed), 0, 0 });
+						break;
+					}
 					//Camera
 					case VK_UP:
 					{
@@ -215,15 +224,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
+
+		//Camera->AddRotationEuler({ 15.0f * deltaTime, 0, 0 });
 		if(TargetDirection.Length() > 0)
 			Character->StartMove(TargetDirection);
 
 		Character->Tick(deltaTime);
 		Camera->Tick(deltaTime);
 
-		//if (Camera->IsInView(Character->GetTransform().Position) == false)
+		//if (Camera->IsInView(Character->GetTransform()->Position) == false)
 		//{
-		//	Character->TargetPosition(Camera->GetTransform().Position +;
+		//	Character->TargetPosition(Camera->GetTransform()->Position +;
 		//}
 #pragma endregion
 
@@ -240,31 +251,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+#pragma region UI
 		// ImGui UI 
 		Vector3 CurrentVelo = Character->CurrentVelocity;
 		Vector3 TargetVelo = Character->TargetVelocity;
 
-		ImGui::Begin("Property",nullptr, UIWindowFlags);
-		ImGui::Text("FPS : %.2f", 1.0f / deltaTime );
+		ImGui::Begin("Camera", nullptr, UIWindowFlags);
+		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
+					Character->GetTransform()->Position.y,
+					Character->GetTransform()->Position.z);
+		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
+					Camera->GetTransform()->GetEulerRotation().y,
+					Camera->GetTransform()->GetEulerRotation().z);
+		ImGui::End();
+
+		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
+		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Text("bIsMove : %d", Character->bIsMoving);
-		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f",TargetVelo.x, 
+		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f", TargetVelo.x,
 					TargetVelo.y,
 					TargetVelo.z);
 		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 					CurrentVelo.y,
 					CurrentVelo.z);
-		ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform().Position.x,
-					Character->GetTransform().Position.y,
-					Character->GetTransform().Position.z);
-
+		ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->Position.x,
+					Character->GetTransform()->Position.y,
+					Character->GetTransform()->Position.z);
+		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
+					Character->GetTransform()->GetEulerRotation().y,
+					Character->GetTransform()->GetEulerRotation().z);
 		ImGui::End();
 
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+#pragma endregion
 
 		//end render
 		Renderer->EndRender();
 #pragma endregion
+
 	}//end main Loop
 #pragma endregion 
 

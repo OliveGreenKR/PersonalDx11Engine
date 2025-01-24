@@ -19,6 +19,12 @@ void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 	OnTransformChanged();
 }
 
+void UGameObject::SetRoatationQuaternion(const Quaternion& InQuaternion)
+{
+	Transform.SetRotation(InQuaternion);
+	OnTransformChanged();
+}
+
 void UGameObject::SetScale(const Vector3& InScale)
 {
 	Transform.Scale = InScale;
@@ -44,6 +50,14 @@ UModel* UGameObject::GetModel() const
 		return ptr.get();
 	}
 	return nullptr;
+}
+
+void UGameObject::RotateTo(const Vector3& TargetPosition)
+{
+	XMVECTOR TargetPos = XMLoadFloat3(&TargetPosition);
+	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->Position);
+	XMVECTOR DirectionToTarget = XMVectorSubtract(TargetPos, CurrentPos);
+	DirectionToTarget = XMVector3Normalize(DirectionToTarget);
 }
 
 void UGameObject::StartMove(const Vector3& InTarget)

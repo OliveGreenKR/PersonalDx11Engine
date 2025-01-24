@@ -20,18 +20,19 @@ public:
 	void SetPosition(const Vector3& InPosition);
 	//{ Pitch, Yaw, Roll } in Degree
 	void SetRotationEuler(const Vector3& InEulerAngles);
+	void SetRoatationQuaternion(const Quaternion& InQuaternion);
 	void SetScale(const Vector3& InScale);
 
 	void AddPosition(const Vector3& InDelta);
-	//{ Pitch, Yaw, Roll } in Degree
 	void AddRotationEuler(const Vector3& InEulerDelta);
 
-	__forceinline const FTransform& GetTransform() const { return Transform; }
-	
+	__forceinline const FTransform* GetTransform() const { return &Transform; }
 	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
 
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
+
+	void RotateTo(const Vector3& TargetPosition);
 protected:
 	virtual void OnTransformChanged() {};
 

@@ -21,11 +21,15 @@ public:
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
 
 	bool IsInView(const Vector3& Position);
+	void SetLookAtObject(shared_ptr<UGameObject>& InTarget);
 
-	void SetLookAt(shared_ptr<UGameObject>& InTarget);
+	void LookTo(const Vector3& TargetPosition);
+
+protected:
+	void UpdateToLookAtObject(float DeltaTime);
 
 public:
-	bool bLookAt = false;
+	bool bTrackObject = false;
 private:
 	void OnTransformChanged() override;
 
@@ -39,7 +43,6 @@ private:
 	void UpdateFrustum() const;
 	void CalculateFrustum(Matrix& InViewProj) const;
 
-	void UpdateLookAt();
 private :
 	//radian
 	float Fov = PI/4.0f;		//VerticalFOV
@@ -56,7 +59,23 @@ private :
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
 
-	//Cameara track to Object
+#pragma region CameraFollow
+public:
+private:
+	//Cameara Follw to Object(Only Rotate)
+	//TODO : Camera Follow with Position? -> 'Camera Spring Arm'
 	weak_ptr<UGameObject> LookAtObject;
 
+	// 회전 보간 속도 제어
+	float RotationDampingSpeed = 5.0f;
+
+	// 거리에 따른 속도 조절을 위한 변수들
+	float MinRotationSpeed = 1.0f;
+	float MaxRotationSpeed = 10.0f;
+	float DistanceSpeedScale = 1.0f;
+
+	// 최소/최대 추적 각도
+	float MinTrackingAngle = .0f;
+	float MaxTrackingAngle = 30.0f;
+#pragma endregion
 };

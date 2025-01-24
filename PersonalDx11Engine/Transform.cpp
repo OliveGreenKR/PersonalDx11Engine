@@ -65,8 +65,9 @@ Matrix FTransform::GetModelingMatrix() const
 {
     // XMFLOAT3를 XMVECTOR로 변환
     DirectX::XMVECTOR VPosition = DirectX::XMLoadFloat3(&Position);
-    DirectX::XMVECTOR VRotation = DirectX::XMLoadFloat4(&Rotation);
     DirectX::XMVECTOR VScale = DirectX::XMLoadFloat3(&Scale);
+    DirectX::XMVECTOR VRotation = DirectX::XMLoadFloat4(&Rotation);
+    VRotation = XMQuaternionNormalize(VRotation);
 
     //매트릭스 생성
     DirectX::XMMATRIX ScaleMatrix = DirectX::XMMatrixScalingFromVector(VScale);

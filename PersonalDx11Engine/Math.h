@@ -22,6 +22,11 @@ using Quaternion = Vector4;
 
 namespace Math
 {
+	static float Lerp(const float min, const float max, const float alpha)
+	{
+		return min + alpha * (max - min);
+	}
+
 	static float DegreeToRad(float degree)
 	{
 		return degree * XM_PI / 180.0f;
@@ -257,11 +262,15 @@ struct Vector4 : public DirectX::XMFLOAT4
 		Result.Normalize();
 		return Result;
 	}
-
 	static float Dot(const Vector4& A, const Vector4& B)
 	{
 		return A.x * B.x + A.y * B.y + A.z * B.z + A.w * B.w;
 	}
+
+	//Qauternion
+	static Quaternion LookRotation(const Vector3& LookAtDirection, const Vector3& Up);
+	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor);
+	
 };
 
 struct Vector2 : public DirectX::XMFLOAT2
@@ -579,6 +588,119 @@ inline Vector4 Vector4I::Create(const Vector4I& IntVec)
 inline Vector4::Vector4(const Vector3& Vec) : XMFLOAT4(Vec.x, Vec.y, Vec.z, 1.0f) {}
 inline Vector4::Vector4(const Vector2& Vec) : XMFLOAT4(Vec.x, Vec.y, 0.0f, 1.0f) {}
 
+inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up)
+{
+	// 입력 벡터가 영벡터인 경우 체크
+	if (LookAt.LengthSquared() < KINDA_SMALL)
+	{
+		return Quaternion(0, 0, 0, 1.0f);
+	}
+	// 1. 입력 벡터들을 XMVECTOR로 변환
+	XMVECTOR vLookAt = XMVector3Normalize(XMLoadFloat3(&LookAt));
+	XMVECTOR vUp = XMVector3Normalize(XMLoadFloat3(&Up));
+
+	// 2. 직교 기저 벡터 계산
+	// Forward = 정규화된 LookAt 벡터
+	XMVECTOR vForward = vLookAt;
+
+	// Right = Up × Forward (외적)
+	XMVECTOR vRight = XMVector3Cross(vUp, vForward);
+
+	// Right가 너무 작은 경우 (LookAt과 Up이 거의 평행할 때) 처리
+	if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
+	{
+		// LookAt과 Up이 평행한 경우, 약간 다른 Up 벡터 사용
+		vUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		vRight = XMVector3Cross(vUp, vForward);
+
+		// 여전히 너무 작으면 다른 축 시도
+		if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
+		{
+			vUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+			vRight = XMVector3Cross(vUp, vForward);
+		}
+	}
+
+	// Right 정규화
+	vRight = XMVector3Normalize(vRight);
+
+	// 실제 Up = Forward × Right
+	vUp = XMVector3Cross(vForward, vRight);
+	// Up은 정규화된 벡터들의 외적이므로 따로 정규화할 필요 없음
+
+	// 3. 직교 기저 벡터들로 회전 행렬 생성
+	XMMATRIX RotationMatrix(
+		vRight,
+		vUp,
+		vForward,
+		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)
+	);
+
+	// 4. 행렬을 쿼터니온으로 변환
+	XMVECTOR quat = XMQuaternionRotationMatrix(RotationMatrix);
+
+	// 5. 결과를 Quaternion 구조체에 저장
+	Quaternion result;
+	XMStoreFloat4(&result, quat);
+
+	return result;
+}
+
+inline Quaternion Vector4::Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
+{
+	// Factor를 0과 1 사이로 제한
+	Factor = Math::Clamp(Factor, 0.0f, 1.0f);
+
+	// XMVECTOR로 변환
+	XMVECTOR Q0 = XMLoadFloat4(&Start);
+	XMVECTOR Q1 = XMLoadFloat4(&End);
+
+	// 두 쿼터니온 사이의 내적 계산
+	float CosOmega = XMVectorGetX(XMQuaternionDot(Q0, Q1));
+
+	// 내적이 음수인 경우, End 쿼터니온을 반전(더 짧은 호를 따라 보간)
+	if (CosOmega < 0.0f)
+	{
+		Q1 = XMVectorNegate(Q1);
+		CosOmega = -CosOmega;
+	}
+
+	float K0, K1;
+
+	// 두 쿼터니온이 매우 가까운 경우 선형 보간 사용
+	if (CosOmega > (1.0f-KINDA_SMALL))
+	{
+		// 선형 보간 계수 계산
+		K0 = 1.0f - Factor;
+		K1 = Factor;
+	}
+	else
+	{
+		// 구면 보간을 위한 각도와 사인 값 계산
+		float Omega = std::acos(CosOmega);
+		float SinOmega = std::sin(Omega);
+
+		// 구면 보간 계수 계산
+		K0 = std::sin((1.0f - Factor) * Omega) / SinOmega;
+		K1 = std::sin(Factor * Omega) / SinOmega;
+	}
+
+	// 보간된 쿼터니온 계산
+	XMVECTOR Result = XMVectorAdd(
+		XMVectorScale(Q0, K0),
+		XMVectorScale(Q1, K1)
+	);
+
+	// 결과 정규화
+	Result = XMQuaternionNormalize(Result);
+
+	// 결과를 Quaternion 구조체로 변환
+	Quaternion ReturnValue;
+	XMStoreFloat4(&ReturnValue, Result);
+
+	return ReturnValue;
+}
+
 // Global operators for scalar multiplication
 inline Vector2 operator*(float Scalar, const Vector2& Vec) { return Vec * Scalar; }
 inline Vector3 operator*(float Scalar, const Vector3& Vec) { return Vec * Scalar; }
@@ -678,6 +800,53 @@ namespace Math
 
 		// 라디안을 도로 변환
 		return EulerAngles * (180.0f / PI);
+	}
+
+	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
+	{
+		// SIMD 연산을 위해 XMVECTOR 변환
+		XMVECTOR Q0 = XMLoadFloat4(&Start);
+		XMVECTOR Q1 = XMLoadFloat4(&End);
+
+		// 내적 계산
+		float CosOmega = XMVectorGetX(XMVector4Dot(Q0, Q1));
+
+		// 음수 내적시 최단 경로를 위해 방향 반전
+		if (CosOmega < 0.0f)
+		{
+			Q1 = XMVectorNegate(Q1);
+			CosOmega = -CosOmega;
+		}
+
+		float K0, K1;
+
+		// 각도가 매우 작을 경우 선형 보간
+		if (CosOmega > KINDA_SMALL)
+		{
+			K0 = 1.0f - Factor;
+			K1 = Factor;
+		}
+		else
+		{
+			const float Omega = std::acos(CosOmega);
+			const float SinOmega = std::sin(Omega);
+			K0 = std::sin((1.0f - Factor) * Omega) / SinOmega;
+			K1 = std::sin(Factor * Omega) / SinOmega;
+		}
+
+		// SIMD를 활용한 보간 계산
+		XMVECTOR Result = XMVectorAdd(
+			XMVectorScale(Q0, K0),
+			XMVectorScale(Q1, K1)
+		);
+
+		// 정규화
+		Result = XMVector4Normalize(Result);
+
+		// 결과 변환 및 반환
+		Quaternion ResultFloat4;
+		XMStoreFloat4(&ResultFloat4, Result);
+		return ResultFloat4;
 	}
 }
 
