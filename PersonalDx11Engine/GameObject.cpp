@@ -80,20 +80,13 @@ void UGameObject::UpdateVelocity(const float DeltaTime)
 {
 	const float CurrentAcceleration = bIsMoving ? Acceleration : Deceleration;
 	const Vector3 VelocityDiff = TargetVelocity - CurrentVelocity;
+	const float DiffSize = VelocityDiff.Length();
 
 	if (VelocityDiff.Length() > KINDA_SMALL)
 	{
 		// 목표 속도를 향해 가속/감속
 		CurrentVelocity = CurrentVelocity +
-			VelocityDiff.GetNormalized() * CurrentAcceleration * DeltaTime;
-
-		float Speed = CurrentVelocity.Length();
-		if (MaxSpeed < 0)
-			MaxSpeed *= -1;
-
-		if (Speed > MaxSpeed)
-			CurrentVelocity *= MaxSpeed / Speed;
-
+			VelocityDiff.GetNormalized() * min(DiffSize,CurrentAcceleration * DeltaTime);
 	}
 }
 

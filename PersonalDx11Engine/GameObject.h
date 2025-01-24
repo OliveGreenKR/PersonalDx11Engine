@@ -58,7 +58,7 @@ public:
 
 	float Acceleration = 2.0f;
 	float Deceleration = 1000.0f;
-	float MaxSpeed = 100.0f;
+	float MaxSpeed = 100.0f; //must be positive
 
 	Vector3 TargetVelocity;
 	Vector3 CurrentVelocity;
