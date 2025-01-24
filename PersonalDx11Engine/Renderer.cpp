@@ -41,7 +41,7 @@ void URenderer::RenderModel(const UModel* InModel, UShader* InShader, ID3D11Samp
 	GetDeviceContext()->Draw(vertexBuffer.NumVertices, 0);
 }
 
-void URenderer::RenderGameObject(const UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
 {
 	assert(InObject, InShader);
 

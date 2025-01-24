@@ -12,8 +12,8 @@ public:
 	virtual void Tick(const float DeltaTime) override;
 
 public:
-	Matrix GetViewMatrix() const;
-	Matrix GetProjectionMatrix() const;
+	const Matrix GetViewMatrix();
+	const Matrix GetProjectionMatrix() const;
 
 	void SetFov(const float InFov) { Fov = InFov; UpdateProjectionMatrix();}
 	void SetAspectRatio(float InRatio) { AspectRatio = InRatio; UpdateProjectionMatrix(); }
@@ -38,8 +38,8 @@ private:
 
 private:
 	//logical const
-	void UpdatDirtyView() const;
-	void UpdateViewMatrix() const;
+	void UpdatDirtyView();
+	void UpdateViewMatrix();
 	void UpdateFrustum() const;
 	void CalculateFrustum(Matrix& InViewProj) const;
 
@@ -51,9 +51,6 @@ private :
 	float FarZ = 1.0f;
 
 	Matrix ProjectionMatrix;
-
-	Vector3 Up = Vector3::Up;
-	Vector3 LookAt = Vector3::Forward;
 
 	mutable bool bIsViewDirty = false;
 	mutable Matrix ViewMatrix;
@@ -70,12 +67,10 @@ private:
 	float RotationDampingSpeed = 5.0f;
 
 	// 거리에 따른 속도 조절을 위한 변수들
-	float MinRotationSpeed = 1.0f;
-	float MaxRotationSpeed = 10.0f;
+	float MaxRotationSpeed = 30.0f;
 	float DistanceSpeedScale = 1.0f;
 
-	// 최소/최대 추적 각도
-	float MinTrackingAngle = .0f;
-	float MaxTrackingAngle = 30.0f;
+	// 최대  속도 추적 각도(rad)
+	float MaxTrackSpeedRads = Fov;
 #pragma endregion
 };

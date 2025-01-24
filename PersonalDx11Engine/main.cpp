@@ -128,10 +128,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
-	Character->SetPosition({ 1.0f,0,0 });
+	Character->SetPosition({ 0.0f,0,0 });
 
+	
 	Camera->SetLookAtObject(Character);
-	Camera->bTrackObject = true;
+	Camera->bTrackObject = false;
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -164,12 +165,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					//character
 					case 'W':
 					{
-						TargetDirection = Vector3::Forward;
+						TargetDirection = Vector3::Up;
 						break;
 					}
 					case 'S':
 					{
-						TargetDirection = -Vector3::Forward;
+						TargetDirection = -Vector3::Up;
 						break;
 					}
 					case 'D':

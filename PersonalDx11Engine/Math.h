@@ -270,7 +270,8 @@ struct Vector4 : public DirectX::XMFLOAT4
 	//Qauternion
 	static Quaternion LookRotation(const Vector3& LookAtDirection, const Vector3& Up);
 	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor);
-	
+
+	const static Quaternion Identity;
 };
 
 struct Vector2 : public DirectX::XMFLOAT2
@@ -802,51 +803,67 @@ namespace Math
 		return EulerAngles * (180.0f / PI);
 	}
 
+	static XMVECTOR Slerp(const XMVECTOR& Start, const XMVECTOR& End, float Factor)
+	{
+		Factor = Math::Clamp(Factor,0.0f, 1.0f);
+
+		XMVECTOR Q0 = Start;
+		XMVECTOR Q1 = End;
+
+		XMVECTOR Result = XMQuaternionSlerp(Q0, Q1, Factor);
+		return Result;
+	}
 	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
 	{
 		// SIMD 연산을 위해 XMVECTOR 변환
 		XMVECTOR Q0 = XMLoadFloat4(&Start);
 		XMVECTOR Q1 = XMLoadFloat4(&End);
 
-		// 내적 계산
-		float CosOmega = XMVectorGetX(XMVector4Dot(Q0, Q1));
-
-		// 음수 내적시 최단 경로를 위해 방향 반전
-		if (CosOmega < 0.0f)
-		{
-			Q1 = XMVectorNegate(Q1);
-			CosOmega = -CosOmega;
-		}
-
-		float K0, K1;
-
-		// 각도가 매우 작을 경우 선형 보간
-		if (CosOmega > KINDA_SMALL)
-		{
-			K0 = 1.0f - Factor;
-			K1 = Factor;
-		}
-		else
-		{
-			const float Omega = std::acos(CosOmega);
-			const float SinOmega = std::sin(Omega);
-			K0 = std::sin((1.0f - Factor) * Omega) / SinOmega;
-			K1 = std::sin(Factor * Omega) / SinOmega;
-		}
-
 		// SIMD를 활용한 보간 계산
-		XMVECTOR Result = XMVectorAdd(
-			XMVectorScale(Q0, K0),
-			XMVectorScale(Q1, K1)
-		);
-
-		// 정규화
-		Result = XMVector4Normalize(Result);
+		XMVECTOR Result = Slerp(Q0, Q1, Factor);
 
 		// 결과 변환 및 반환
 		Quaternion ResultFloat4;
 		XMStoreFloat4(&ResultFloat4, Result);
 		return ResultFloat4;
+	}
+
+	static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
+	{
+		// 두 벡터를 정규화
+		XMVECTOR v1 = XMVector3Normalize(target);
+		XMVECTOR v2 = XMVector3Normalize(dest);
+
+		float cosAngle = XMVectorGetX(XMVector3Dot(v1, v2));
+
+		float threshold = 1.0f - KINDA_SMALL;
+
+		//parallel
+		if (cosAngle > threshold)
+			return XMQuaternionIdentity();
+		//counter
+		if(cosAngle < -threshold)
+		{
+			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVectorSet(0, 1, 0, 0)));
+			return XMQuaternionRotationAxis(rotAxis, XM_PI);
+		}
+
+		// 회전축과 각도로 쿼터니언 생성
+		XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, v2));
+		float angle = acos(cosAngle);
+		return XMQuaternionRotationAxis(rotAxis, angle);
+	}
+
+	static Quaternion GetRotationBetweenVectors(const Vector3& target, const Vector3& dest)
+	{
+		XMVECTOR V1 = XMLoadFloat3(&target);
+		XMVECTOR V2 = XMLoadFloat3(&dest);
+
+		XMVECTOR vRotation = GetRotationBetweenVectors(V1, V2);
+		
+		Quaternion result;
+		XMStoreFloat4(&result, vRotation);
+		return result;
 	}
 }
 
