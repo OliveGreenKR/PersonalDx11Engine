@@ -48,7 +48,6 @@ private :
 	float FarZ = 1.0f;
 
 	Matrix ProjectionMatrix;
-	weak_ptr<UGameObject> LookAtObject;
 
 	Vector3 Up = Vector3::Up;
 	Vector3 LookAt = Vector3::Forward;
@@ -56,4 +55,8 @@ private :
 	mutable bool bIsViewDirty = false;
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
+
+	//Cameara track to Object
+	weak_ptr<UGameObject> LookAtObject;
+
 };

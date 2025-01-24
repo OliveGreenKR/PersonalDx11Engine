@@ -123,6 +123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
 	Camera->SetPosition({ 0,0,-10.0f });
+	Camera->bLookAt = true;
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
@@ -216,7 +217,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region logic
 		if(TargetDirection.Length() > 0)
 			Character->StartMove(TargetDirection);
-		Camera->bLookAt = false;
+
 		Character->Tick(deltaTime);
 		Camera->Tick(deltaTime);
 

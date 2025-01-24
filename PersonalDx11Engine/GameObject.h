@@ -56,8 +56,8 @@ public:
 	bool bIsMoving = false;
 	bool bIsPhysicsBasedMove = true;
 
-	float Acceleration = 2.0f;
-	float Deceleration = 1000.0f;
+	float Acceleration = 10.0f;
+	float Deceleration = 10.0f;
 	float MaxSpeed = 100.0f; //must be positive
 
 	Vector3 TargetVelocity;

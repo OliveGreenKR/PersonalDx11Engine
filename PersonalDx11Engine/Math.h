@@ -11,6 +11,15 @@ const float PI = XM_PI;
 const float KINDA_SMALL = 1e-4f; // 보통 용도
 const float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
 
+// Forward declarations
+struct Vector2;
+struct Vector3;
+struct Vector4;
+struct Vector2I;
+struct Vector3I;
+struct Vector4I;
+using Quaternion = Vector4;
+
 namespace Math
 {
 	static float DegreeToRad(float degree)
@@ -21,6 +30,7 @@ namespace Math
 	{
 		return rad * 180.0f / XM_PI;
 	}
+	
 	static float Clamp(float val, float min, float max)
 	{
 		return val < min ? min : (val > max ? max : val);
@@ -28,14 +38,6 @@ namespace Math
 }
 
 #pragma region Vector
-// Forward declarations
-struct Vector2;
-struct Vector3;
-struct Vector4;
-struct Vector2I;
-struct Vector3I;
-struct Vector4I;
-
 // Integer vector declarations
 struct Vector2I
 {
@@ -163,7 +165,7 @@ struct Vector4I
 // Float vector declarations
 struct Vector4 : public DirectX::XMFLOAT4
 {
-	Vector4() : XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) {}
+	Vector4() : XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) {}
 	Vector4(float X, float Y, float Z, float W) : XMFLOAT4(X, Y, Z, W) {}
 	explicit Vector4(const DirectX::XMFLOAT4& V) : XMFLOAT4(V) {}
 
@@ -234,6 +236,11 @@ struct Vector4 : public DirectX::XMFLOAT4
 	void Normalize()
 	{
 		float L = Length();
+		if (L < KINDA_SMALL)
+		{
+			x = 0; y = 0; z = 0; w = 1.0f;
+			return;
+		}
 		if (L > 0)
 		{
 			float InvL = 1.0f / L;
@@ -615,23 +622,67 @@ inline float DistanceSquared(const Vector4& A, const Vector4& B)
 }
 #pragma endregion
 
+namespace Math
+{
+	//retrun Normalized Quat
+	static Quaternion EulerToQuaternion(const Vector3& InEuler)
+	{
+		// 각도를 라디안으로 변환
+		Vector3 RadAngles = InEuler * (PI / 180.0f);
 
-// MatrIx types
-using Matrix = DirectX::XMMATRIX;
-// not SIMD Matrix types
-using Matrix36 = DirectX::XMFLOAT3X3;
-// not SIMD Matrix types
-using Matrix64 = DirectX::XMFLOAT4X4;
+		// 각 축별 회전에 대한 사인과 코사인 계산
+		float cx = std::cos(RadAngles.x * 0.5f);
+		float cy = std::cos(RadAngles.y * 0.5f);
+		float cz = std::cos(RadAngles.z * 0.5f);
+		float sx = std::sin(RadAngles.x * 0.5f);
+		float sy = std::sin(RadAngles.y * 0.5f);
+		float sz = std::sin(RadAngles.z * 0.5f);
 
-// Quaternion type
-using Quat = Vector4;    // Quaternion stored as XMFLOAT4
+		// XYZ 순서로 회전을 적용한 쿼터니온 생성
+		Quaternion q;
+		q.w = cx * cy * cz + sx * sy * sz;
+		q.x = sx * cy * cz - cx * sy * sz;
+		q.y = cx * sy * cz + sx * cy * sz;
+		q.z = cx * cy * sz - sx * sy * cz;
 
-// SIMD optimized types
-using VectorRegister = DirectX::XMVECTOR;
+		return q.GetNormalized();  // 수치 오차를 방지하기 위해 정규화
+	}
 
-// Color type
-using Color = Vector4;   // RGBA stored as XMFLOAT4
+	static Vector3 QuaternionToEuler(const Quaternion& q)
+	{
+		Vector3 EulerAngles;
+		// 쿼터니온을 오일러 각으로 변환
+			// atan2를 사용하여 -180도에서 180도 사이의 각도를 얻음
 
+		// Pitch (x-axis rotation)
+		float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
+		float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+		EulerAngles.x = std::atan2(sinr_cosp, cosr_cosp);
+
+		// Yaw (y-axis rotation)
+		float sinp = 2.0f * (q.w * q.y - q.z * q.x);
+		if (std::abs(sinp) >= 1.0f)
+		{
+			// 90도에서의 특이점 처리
+			EulerAngles.y = std::copysign(PI / 2.0f, sinp);
+		}
+		else
+		{
+			EulerAngles.y = std::asin(sinp);
+		}
+
+		// Roll (z-axis rotation)
+		float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+		float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+		EulerAngles.z = std::atan2(siny_cosp, cosy_cosp);
+
+		// 라디안을 도로 변환
+		return EulerAngles * (180.0f / PI);
+	}
+}
+
+
+#pragma region Plane
 struct Plane : public Vector4
 {
 	Plane() = default;
@@ -642,7 +693,7 @@ struct Plane : public Vector4
 	{
 		Vector3 normal(*this);
 		float L = normal.Length();
-		if (::abs(1-L) > KINDA_SMALL)
+		if (::abs(1 - L) > KINDA_SMALL)
 		{
 			float InvL = 1.0f / L;
 			x *= InvL;
@@ -669,7 +720,23 @@ struct Plane : public Vector4
 	}
 
 };
+#pragma endregion
 
+// MatrIx types
+using Matrix = DirectX::XMMATRIX;
+// not SIMD Matrix types
+using Matrix36 = DirectX::XMFLOAT3X3;
+// not SIMD Matrix types
+using Matrix64 = DirectX::XMFLOAT4X4;
+
+// Quaternion type
+using Quat = Vector4;    // Quaternion stored as XMFLOAT4
+
+// SIMD optimized types
+using VectorRegister = DirectX::XMVECTOR;
+
+// Color type
+using Color = Vector4;   // RGBA stored as XMFLOAT4
 
 
 

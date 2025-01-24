@@ -159,5 +159,5 @@ void UCamera::UpdateLookAt()
 {
 	if (!LookAtObject.lock())
 		return;
-	LookAt = (LookAtObject.lock()->GetTransform().Position - Transform.Position).GetNormalized();
+	Vector3 NewLookAt = (LookAtObject.lock()->GetTransform().Position - Transform.Position).GetNormalized();
 }
