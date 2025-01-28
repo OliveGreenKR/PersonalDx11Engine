@@ -34,7 +34,7 @@ void FTransform::AddRotation(const Vector3& InEulerAngles)
     Matrix Delta = XMMatrixRotationRollPitchYaw(RadAngles.x, RadAngles.y, RadAngles.z);
     XMMATRIX Final = Current * Delta;
     XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
-    Rotation.Normalize();
+    //Rotation.Normalize();
 }
 
 void FTransform::AddRotation(const Quaternion& InQuaternion)

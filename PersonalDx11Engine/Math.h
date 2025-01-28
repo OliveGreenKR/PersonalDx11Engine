@@ -9,7 +9,7 @@ const float PI = XM_PI;
 
 
 constexpr float KINDA_SMALL = 1e-4f; // 보통 용도
-constexpr float KINDA_SMALLER = 1e-8f; // 정밀 계산 용도
+constexpr float KINDA_SMALLER = 1e-6f; // 정밀 계산 용도
 
 // Forward declarations
 struct Vector2;
@@ -749,28 +749,45 @@ namespace XMVector
 
 namespace Math
 {
+
+	static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
+	{
+		//회전축 정규화
+		XMVECTOR NormalizedAxis = XMVector3Normalize(InAxis);
+		return XMQuaternionRotationNormal(NormalizedAxis, RadianAngle);
+	}
 	//retrun Normalized Quat
-	static Quaternion EulerToQuaternion(const Vector3& InEuler)
+	static const Quaternion EulerToQuaternion(const Vector3& InEuler)
 	{
 		// 각도를 라디안으로 변환
-		Vector3 RadAngles = InEuler * (PI / 180.0f);
+		XMVECTOR RadianAngles = XMVectorScale(
+			XMLoadFloat3(&InEuler),
+			XM_PI / 180.0f
+		);
 
-		// 각 축별 회전에 대한 사인과 코사인 계산
-		float cx = std::cos(RadAngles.x * 0.5f);
-		float cy = std::cos(RadAngles.y * 0.5f);
-		float cz = std::cos(RadAngles.z * 0.5f);
-		float sx = std::sin(RadAngles.x * 0.5f);
-		float sy = std::sin(RadAngles.y * 0.5f);
-		float sz = std::sin(RadAngles.z * 0.5f);
+		// 각 축별 회전에 대한 독립적 계산
+		XMVECTOR PitchRotation = RotateAroundAxis(
+			XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f),  // X축
+			XMVectorGetX(RadianAngles)            // 피치 각도
+		);
 
-		// XYZ 순서로 회전을 적용한 쿼터니온 생성
-		Quaternion q;
-		q.w = cx * cy * cz + sx * sy * sz;
-		q.x = sx * cy * cz - cx * sy * sz;
-		q.y = cx * sy * cz + sx * cy * sz;
-		q.z = cx * cy * sz - sx * sy * cz;
+		XMVECTOR YawRotation = RotateAroundAxis(
+			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),  // Y축
+			XMVectorGetY(RadianAngles)            // 요 각도
+		);
 
-		return q.GetNormalized();  // 수치 오차를 방지하기 위해 정규화
+		XMVECTOR RollRotation = RotateAroundAxis(
+			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),  // Z축
+			XMVectorGetZ(RadianAngles)            // 롤 각도
+		);
+		
+		XMVECTOR RotationVec = XMQuaternionMultiply(
+			XMQuaternionMultiply(PitchRotation, YawRotation), RollRotation);
+
+		RotationVec = XMQuaternionNormalize(RotationVec);
+		Quaternion result;
+		XMStoreFloat4(&result, RotationVec);
+		return result;
 	}
 
 	static Vector3 QuaternionToEuler(const Quaternion& q)
@@ -835,24 +852,9 @@ namespace Math
 		// 상수 정의
 		static constexpr float kParallelThreshold = 1.0f - KINDA_SMALL;
 
-		// 입력 벡터의 유효성 검사 및 안전한 정규화
-		XMVECTOR lenSqTarget = XMVector3LengthSq(target);
-		XMVECTOR lenSqDest = XMVector3LengthSq(dest);
-
-		// 벡터의 길이가 너무 작은 경우를 검사
-		XMVECTOR tooSmall = XMVectorOrInt(
-			XMVectorLess(lenSqTarget, XMVectorReplicate(KINDA_SMALL)),
-			XMVectorLess(lenSqDest, XMVectorReplicate(KINDA_SMALL))
-		);
-
-		if (XMVector4EqualInt(tooSmall, XMVectorTrueInt()))
-		{
-			return XMQuaternionIdentity();
-		}
-
 		// 벡터 정규화
-		XMVECTOR v1 = XMVectorDivide(target, XMVectorSqrt(lenSqTarget));
-		XMVECTOR v2 = XMVectorDivide(dest, XMVectorSqrt(lenSqDest));
+		XMVECTOR v1 = XMVector3Normalize(target);
+		XMVECTOR v2 = XMVector3Normalize(dest);
 
 		// 코사인 각도 계산
 		XMVECTOR cosAngle = XMVector3Dot(v1, v2);

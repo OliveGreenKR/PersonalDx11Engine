@@ -33,7 +33,7 @@
       <Filter>Engine\Model</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Engine\Camera</Filter>
+      <Filter>Engine\GameObject\Camera</Filter>
     </ClCompile>
     <ClCompile Include="D3DShader.cpp">
       <Filter>Engine\Shader</Filter>
@@ -46,6 +46,9 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraArm.cpp">
+      <Filter>Engine\GameObject\CameraArm</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -67,9 +70,6 @@
     <Filter Include="Engine\Math">
       <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Camera">
-      <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Shader">
       <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
     </Filter>
@@ -85,11 +85,11 @@
     <Filter Include="Engine\GameObject">
       <UniqueIdentifier>{676a394e-aa58-4da8-a083-26ce189609f6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\GameObject\Component">
-      <UniqueIdentifier>{6a424d0a-299a-4e71-9c7e-519aeb8282fe}</UniqueIdentifier>
+    <Filter Include="Engine\GameObject\Camera">
+      <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\GameObject\Component\Movement">
-      <UniqueIdentifier>{c55e8ca9-95bb-4334-a690-53759ca2b953}</UniqueIdentifier>
+    <Filter Include="Engine\GameObject\CameraArm">
+      <UniqueIdentifier>{648e593a-871b-4d84-802a-51c51c96a733}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -128,7 +128,7 @@
     </ClInclude>
     <ClInclude Include="define.h" />
     <ClInclude Include="Camera.h">
-      <Filter>Engine\Camera</Filter>
+      <Filter>Engine\GameObject\Camera</Filter>
     </ClInclude>
     <ClInclude Include="D3DShader.h">
       <Filter>Engine\Shader</Filter>
@@ -145,6 +145,9 @@
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="Frustum.h">
       <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraArm.h">
+      <Filter>Engine\GameObject\CameraArm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

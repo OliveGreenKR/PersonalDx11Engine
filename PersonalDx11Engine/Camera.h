@@ -7,7 +7,7 @@ class UCamera : public UGameObject
 public:
 	UCamera();
 	UCamera(float fov, float aspectRatio, float nearZ, float farZ);
-	~UCamera() override = default;
+	virtual ~UCamera() override = default;
 public:
 	virtual void Tick(const float DeltaTime) override;
 
@@ -25,8 +25,6 @@ public:
 
 	void LookTo(const Vector3& TargetPosition);
 
-protected:
-	void UpdateToLookAtObject(float DeltaTime);
 
 public:
 	bool bLookAtObject = false;
@@ -56,8 +54,9 @@ private :
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
 
-#pragma region CameraFollow
-public:
+#pragma region CameraFollow(Rotataion)
+protected:
+	void UpdateToLookAtObject(float DeltaTime);
 private:
 	//Cameara Follw to Object(Only Rotate)
 	//TODO : Camera Follow with Position? -> 'Camera Spring Arm'
