@@ -1,26 +1,2 @@
-﻿  Camera.cpp
-  CameraArm.cpp
-  GameObject.cpp
-  Math.cpp
-  Model.cpp
-  Renderer.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(46,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-  Transform.cpp
-  main.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(71,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56): warning C4244:         with
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56): warning C4244:         [
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56): warning C4244:             _Ty=int
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56): warning C4244:         ]
-  (compiling source file 'main.cpp')
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(3597,56):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(125,16):
-          see reference to function template instantiation 'std::unique_ptr<UCamera,std::default_delete<UCamera>> std::make_unique<UCamera,float,int,float,float,0>(float &&,int &&,float &&,float &&)' being compiled
-  
-  Generating Code...
+﻿  Transform.cpp
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

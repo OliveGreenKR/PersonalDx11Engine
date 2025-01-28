@@ -31,10 +31,11 @@ void FTransform::AddRotation(const Vector3& InEulerAngles)
     Vector3 RadAngles = InEulerAngles * (PI / 180.0f);
     //multiply mustbo right to left
     Matrix Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
-    Matrix Delta = XMMatrixRotationRollPitchYaw(RadAngles.x, RadAngles.y, RadAngles.z);
-    XMMATRIX Final = Current * Delta;
+    XMVECTOR quat = XMQuaternionRotationRollPitchYaw(RadAngles.x, RadAngles.y, RadAngles.z);
+    Matrix Delta = XMMatrixRotationQuaternion(quat);
+    Matrix Final = XMMatrixMultiply(Current, Delta);
     XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
-    //Rotation.Normalize();
+    Rotation.Normalize();
 }
 
 void FTransform::AddRotation(const Quaternion& InQuaternion)
@@ -59,10 +60,10 @@ void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
     XMMATRIX Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
 
     // 축-각도 회전 행렬 생성
-    XMMATRIX Delta = XMMatrixRotationAxis(NormalizedAxis, AngleRadians);
-
+    XMVECTOR DeltaV = XMQuaternionRotationNormal(NormalizedAxis, AngleRadians);
+    Matrix Delta = XMMatrixRotationQuaternion(DeltaV);
     // 행렬 곱셈으로 회전 결합
-    XMMATRIX Final = Current * Delta;
+    Matrix Final = XMMatrixMultiply(Current, Delta);
 
     // 최종 행렬을 쿼터니온으로 변환
     XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));

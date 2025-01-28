@@ -78,10 +78,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->Position);
 
 	Vector3 CurrentF = GetForwardVector();
-	// 현재 전방 벡터를 XMVECTOR로 로드
 	XMVECTOR CurrentForward = XMLoadFloat3(&CurrentF);
-
-	// 목표 방향 계산 및 정규화
 	XMVECTOR ToTarget = XMVector3Normalize(XMVectorSubtract(TargetPos, CurrentPos));
 
 	// 현재 방향과 목표 방향 사이의 회전 계산
@@ -121,7 +118,6 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 								   RotationAmount);
 		}
 
-		// 결과 회전을 Quaternion으로 변환하여 적용
 		Quaternion NewRotation;
 		XMStoreFloat4(&NewRotation, ResultRotation);
 		SetRoatationQuaternion(NewRotation);
