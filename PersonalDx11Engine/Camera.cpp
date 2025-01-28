@@ -73,43 +73,41 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	auto TargetObject = LookAtObject.lock();
 	if (!bLookAtObject || !TargetObject)
 		return;
-
+	//목표 설정
 	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->Position);
 	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->Position);
-
-	Vector3 CurrentF = GetForwardVector();
-	XMVECTOR Forward = XMLoadFloat3(&CurrentF);
-	XMVECTOR Up = XMVector::XMUp(); //world UP
-	XMVECTOR Right = XMVector3Cross(Forward, Up);
-
-	XMVECTOR ToTarget = XMVector3Normalize(XMVectorSubtract(TargetPos, CurrentPos));
-
-	//Yaw 각도 계산
-	XMVECTOR ProjectedTarget = XMVector3Normalize(XMVectorSetY(ToTarget, 0.0f));
-	XMVECTOR ProjectedForward = XMVector3Normalize(XMVectorSetY(Forward, 0.0f));
-
-	// 각도 차이 계산 
-	float YawAngle = atan2(XMVectorGetX(ToTarget), XMVectorGetZ(ToTarget));
-	float PitchAngle = asin(XMVectorGetY(ToTarget));
-
-	//회전적용 yaw->pitch
-	XMVECTOR YawRotation = XMQuaternionRotationAxis(Up, YawAngle);
-	XMVECTOR PitchRotation = XMQuaternionRotationAxis(Right, PitchAngle);
-
 	XMVECTOR CurrentRotation = XMLoadFloat4(&GetTransform()->Rotation);
-	XMVECTOR TargetRotation = XMQuaternionMultiply(YawRotation, PitchRotation);
 
+	//목표계 설정
+	XMVECTOR DesiredForward = XMVectorSubtract(TargetPos, CurrentPos);
+	DesiredForward = XMVector3Normalize(DesiredForward);
+
+	XMVECTOR WorldUp = XMVector::XMUp();
+
+	XMVECTOR Right = XMVector3Cross(WorldUp, DesiredForward);
+	Right = XMVector3Normalize(Right);
+
+	XMVECTOR DesiredUp = XMVector3Cross(DesiredForward, Right);
+	DesiredUp = XMVector3Normalize(DesiredUp);
+
+	//회전행렬
+	XMMATRIX RotationMatrix = XMMatrixIdentity();
+	RotationMatrix.r[0] = Right;
+	RotationMatrix.r[1] = DesiredUp;
+	RotationMatrix.r[2] = DesiredForward;
+
+	XMVECTOR TargetRotation = XMQuaternionRotationMatrix(RotationMatrix);
+
+	// 현재 회전과 목표 회전 사이의 각도 차이 계산
 	float DiffAngleRad = XMScalarACos(
 		XMVectorGetX(XMQuaternionDot(CurrentRotation, TargetRotation))
 	);
 	float DiffAngleDegrees = XMConvertToDegrees(DiffAngleRad);
-	// 각도 차이가 미미한 경우 회전하지 않음
+
+	// 보간 로직
 	if (DiffAngleDegrees > KINDA_SMALL)
 	{
-		// 회전 속도 계산 (MaxTrackSpeedAngle 기준으로 정규화)
 		float SpeedFactor = Math::Clamp(DiffAngleDegrees / MaxTrackSpeedAngle, 0.0f, 1.0f);
-
-		// 이번 프레임에서 회전할 비율 계산
 		float RotationAmount = min(
 			MaxRotationSpeed * SpeedFactor * DeltaTime / DiffAngleDegrees,
 			1.0f
@@ -118,7 +116,6 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		XMVECTOR ResultRotation;
 		if (DiffAngleDegrees > MaxDiffAngle)
 		{
-			// 한 프레임에서 회전할 수 있는 최대 각도를 제한
 			float LimitFactor = Math::Clamp(MaxDiffAngle / DiffAngleDegrees, 0.0f, 1.0f);
 			ResultRotation = XMQuaternionSlerp(
 				CurrentRotation,
@@ -128,7 +125,6 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		}
 		else
 		{
-			// 일반적인 회전 보간
 			ResultRotation = XMQuaternionSlerp(
 				CurrentRotation,
 				TargetRotation,
@@ -136,10 +132,9 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 			);
 		}
 
-		// 결과 회전을 적용
 		Quaternion NewRotation;
 		XMStoreFloat4(&NewRotation, ResultRotation);
-		SetRoatationQuaternion(NewRotation);
+		SetRotationQuaternion(NewRotation);
 	}
 }
 

@@ -19,7 +19,7 @@ void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 	OnTransformChanged();
 }
 
-void UGameObject::SetRoatationQuaternion(const Quaternion& InQuaternion)
+void UGameObject::SetRotationQuaternion(const Quaternion& InQuaternion)
 {
 	Transform.SetRotation(InQuaternion);
 	OnTransformChanged();

@@ -270,8 +270,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
-					Character->GetTransform()->Position.y,
-					Character->GetTransform()->Position.z);
+					Camera->GetTransform()->Position.y,
+					Camera->GetTransform()->Position.z);
 		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
 					Camera->GetTransform()->GetEulerRotation().y,
 					Camera->GetTransform()->GetEulerRotation().z);
