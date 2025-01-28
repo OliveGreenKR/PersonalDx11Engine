@@ -9,7 +9,7 @@ const float PI = XM_PI;
 
 
 constexpr float KINDA_SMALL = 1e-4f; // 보통 용도
-constexpr float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
+constexpr float KINDA_SMALLER = 1e-8f; // 정밀 계산 용도
 
 // Forward declarations
 struct Vector2;
@@ -833,8 +833,7 @@ namespace Math
 	static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
 	{
 		// 상수 정의
-		static constexpr float kEpsilon = 1e-6f;
-		static constexpr float kParallelThreshold = 1.0f - kEpsilon;
+		static constexpr float kParallelThreshold = 1.0f - KINDA_SMALL;
 
 		// 입력 벡터의 유효성 검사 및 안전한 정규화
 		XMVECTOR lenSqTarget = XMVector3LengthSq(target);
@@ -842,8 +841,8 @@ namespace Math
 
 		// 벡터의 길이가 너무 작은 경우를 검사
 		XMVECTOR tooSmall = XMVectorOrInt(
-			XMVectorLess(lenSqTarget, XMVectorReplicate(kEpsilon)),
-			XMVectorLess(lenSqDest, XMVectorReplicate(kEpsilon))
+			XMVectorLess(lenSqTarget, XMVectorReplicate(KINDA_SMALL)),
+			XMVectorLess(lenSqDest, XMVectorReplicate(KINDA_SMALL))
 		);
 
 		if (XMVector4EqualInt(tooSmall, XMVectorTrueInt()))

@@ -187,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					case 'F':
 					{
 						//Character->StopMoveImmediately();
-						Character->StopMoveSlowly();
+						Character->StopMove();
 						break;
 					}
 					case 'R':
@@ -198,6 +198,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					case 'V' :
 					{
 						Camera->bLookAtObject = !Camera->bLookAtObject;
+						break;
+					}
+					case VK_SPACE :
+					{
+						Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
 						break;
 					}
 					//Camera
@@ -274,6 +279,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
+		ImGui::Text("PhysicsBased : %s", Character->bIsPhysicsBasedMove ? "TRUE" : "FALSE");
 		ImGui::Text("bIsMove : %d", Character->bIsMoving);
 		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f", TargetVelo.x,
 					TargetVelo.y,

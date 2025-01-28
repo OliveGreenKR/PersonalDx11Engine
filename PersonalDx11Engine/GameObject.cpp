@@ -70,19 +70,33 @@ UModel* UGameObject::GetModel() const
 	return nullptr;
 }
 
-void UGameObject::StartMove(const Vector3& InTarget)
+void UGameObject::StartMove(const Vector3& InDirection)
 {
 	bIsMoving = true;
-	TargetVelocity = InTarget.GetNormalized() * MaxSpeed;
-	if (!bIsPhysicsBasedMove)
+	if (bIsPhysicsBasedMove)
 	{
-		TargetPosition = InTarget;
+		TargetVelocity = InDirection.GetNormalized() * MaxSpeed;
+	}
+	else
+	{
+		TargetPosition = Transform.Position + InDirection.GetNormalized() * MaxSpeed;
+	}
+}
+
+void UGameObject::StopMove()
+{
+	if (bIsPhysicsBasedMove)
+	{
+		StopMoveSlowly();
+	}
+	else
+	{
+		StopMoveImmediately();
 	}
 }
 
 void UGameObject::StopMoveSlowly()
 {
-	bIsMoving = false;
 	TargetVelocity = Vector3::Zero;
 }
 
@@ -95,6 +109,8 @@ void UGameObject::StopMoveImmediately()
 
 void UGameObject::UpdateMovement(const float DeltaTime)
 {
+	if (bIsMoving == false)
+		return;
 	UpdateVelocity(DeltaTime);
 	UpdatePosition(DeltaTime);
 }
@@ -112,17 +128,28 @@ void UGameObject::UpdateVelocity(const float DeltaTime)
 		CurrentVelocity = CurrentVelocity +
 			VelocityDiff.GetNormalized() * min(DiffSize,CurrentAcceleration * DeltaTime);
 	}
+	else
+	{
+		bIsMoving = false;
+	}
 }
 
 //Update Positin with currentVelocity
 void UGameObject::UpdatePosition(const float DeltaTime)
 {
-	if (CurrentVelocity.Length() > KINDA_SMALL)
+	Vector3 NewPosition;
+	if (!bIsPhysicsBasedMove)
 	{
-		Vector3 NewPosition = Transform.Position +
+		NewPosition = Vector3::Lerp(Transform.Position, TargetPosition, DeltaTime);
+		SetPosition(NewPosition);
+	}
+	else if (CurrentVelocity.Length() > KINDA_SMALL)
+	{
+		NewPosition = Transform.Position +
 			CurrentVelocity * DeltaTime;
 		SetPosition(NewPosition);
 	}
+	
 }
 
 

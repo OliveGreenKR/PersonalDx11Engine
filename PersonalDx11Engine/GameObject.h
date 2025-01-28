@@ -44,8 +44,8 @@ protected:
 	std::weak_ptr<UModel> Model;
 
 public:
-
-	void StartMove(const Vector3& InTaget);
+	void StartMove(const Vector3& InDirection);
+	void StopMove();
 	void StopMoveSlowly();
 	void StopMoveImmediately();
 
