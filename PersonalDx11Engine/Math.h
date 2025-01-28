@@ -8,8 +8,8 @@ using namespace DirectX;
 const float PI = XM_PI;
 
 
-const float KINDA_SMALL = 1e-4f; // 보통 용도
-const float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
+constexpr float KINDA_SMALL = 1e-4f; // 보통 용도
+constexpr float REALLY_SMALL = 1e-8f; // 정밀 계산 용도
 
 // Forward declarations
 struct Vector2;
@@ -739,6 +739,14 @@ inline float DistanceSquared(const Vector4& A, const Vector4& B)
 }
 #pragma endregion
 
+namespace XMVector
+{
+	static const XMVECTOR XMUp = XMLoadFloat3(&Vector3::Up);
+	static const XMVECTOR XMRight = XMLoadFloat3(&Vector3::Right);
+	static const XMVECTOR XMForward = XMLoadFloat3(&Vector3::Forward);
+	static const XMVECTOR XMZero = XMVectorZero();
+}
+
 namespace Math
 {
 	//retrun Normalized Quat
@@ -824,27 +832,61 @@ namespace Math
 
 	static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
 	{
-		// 두 벡터를 정규화
-		XMVECTOR v1 = XMVector3Normalize(target);
-		XMVECTOR v2 = XMVector3Normalize(dest);
+		// 상수 정의
+		static constexpr float kEpsilon = 1e-6f;
+		static constexpr float kParallelThreshold = 1.0f - kEpsilon;
 
-		float cosAngle = XMVectorGetX(XMVector3Dot(v1, v2));
+		// 입력 벡터의 유효성 검사 및 안전한 정규화
+		XMVECTOR lenSqTarget = XMVector3LengthSq(target);
+		XMVECTOR lenSqDest = XMVector3LengthSq(dest);
 
-		float threshold = 1.0f - KINDA_SMALL;
+		// 벡터의 길이가 너무 작은 경우를 검사
+		XMVECTOR tooSmall = XMVectorOrInt(
+			XMVectorLess(lenSqTarget, XMVectorReplicate(kEpsilon)),
+			XMVectorLess(lenSqDest, XMVectorReplicate(kEpsilon))
+		);
 
-		//parallel
-		if (cosAngle > threshold)
-			return XMQuaternionIdentity();
-		//counter
-		if(cosAngle < -threshold)
+		if (XMVector4EqualInt(tooSmall, XMVectorTrueInt()))
 		{
-			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVectorSet(0, 1, 0, 0)));
+			return XMQuaternionIdentity();
+		}
+
+		// 벡터 정규화
+		XMVECTOR v1 = XMVectorDivide(target, XMVectorSqrt(lenSqTarget));
+		XMVECTOR v2 = XMVectorDivide(dest, XMVectorSqrt(lenSqDest));
+
+		// 코사인 각도 계산
+		XMVECTOR cosAngle = XMVector3Dot(v1, v2);
+		cosAngle = XMVectorMin(
+			XMVectorMax(cosAngle, XMVectorReplicate(-1.0f)),
+			XMVectorReplicate(1.0f)
+		);
+
+		// 평행한 경우 처리
+		if (XMVectorGetX(cosAngle) > kParallelThreshold)
+		{
+			return XMQuaternionIdentity();
+		}
+
+		// 반대 방향인 경우 처리
+		if (XMVectorGetX(cosAngle) < -kParallelThreshold)
+		{
+			// XMVector 네임스페이스의 상수 활용
+			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMUp));
+
+			// 회전축이 0인 경우, Right 벡터 사용
+			if (XMVector3Equal(rotAxis, XMVector::XMZero))
+			{
+				rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMRight));
+			}
+
 			return XMQuaternionRotationAxis(rotAxis, XM_PI);
 		}
 
-		// 회전축과 각도로 쿼터니언 생성
+		// 일반적인 경우의 회전 계산
 		XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, v2));
-		float angle = acos(cosAngle);
+		float angle = XMVectorGetX(XMVectorACos(cosAngle));
+
 		return XMQuaternionRotationAxis(rotAxis, angle);
 	}
 
@@ -908,12 +950,6 @@ using Matrix = DirectX::XMMATRIX;
 using Matrix36 = DirectX::XMFLOAT3X3;
 // not SIMD Matrix types
 using Matrix64 = DirectX::XMFLOAT4X4;
-
-// Quaternion type
-using Quat = Vector4;    // Quaternion stored as XMFLOAT4
-
-// SIMD optimized types
-using VectorRegister = DirectX::XMVECTOR;
 
 // Color type
 using Color = Vector4;   // RGBA stored as XMFLOAT4
