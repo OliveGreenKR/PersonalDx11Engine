@@ -741,10 +741,34 @@ inline float DistanceSquared(const Vector4& A, const Vector4& B)
 
 namespace XMVector
 {
-	static const XMVECTOR XMUp = XMLoadFloat3(&Vector3::Up);
-	static const XMVECTOR XMRight = XMLoadFloat3(&Vector3::Right);
-	static const XMVECTOR XMForward = XMLoadFloat3(&Vector3::Forward);
-	static const XMVECTOR XMZero = XMVectorZero();
+	static const XMVECTOR XMUp()
+	{
+		static const XMVECTOR Up
+			= XMLoadFloat3(&Vector3::Up);
+		return Up;
+	}
+
+	static const XMVECTOR XMForward()
+	{
+		static const XMVECTOR Forward
+			= XMLoadFloat3(&Vector3::Forward);
+		return Forward;
+	}
+
+	static const XMVECTOR XMRight()
+	{
+		static const XMVECTOR Right
+			= XMLoadFloat3(&Vector3::Right);
+		return Right;
+	}
+
+	static const XMVECTOR XMZero()
+	{
+		static const XMVECTOR Zero
+			= XMLoadFloat3(&Vector3::Zero);
+		return Zero;
+	}
+
 }
 
 namespace Math
@@ -873,12 +897,12 @@ namespace Math
 		if (XMVectorGetX(cosAngle) < -kParallelThreshold)
 		{
 			// XMVector 네임스페이스의 상수 활용
-			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMUp));
+			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMUp()));
 
 			// 회전축이 0인 경우, Right 벡터 사용
-			if (XMVector3Equal(rotAxis, XMVector::XMZero))
+			if (XMVector3Equal(rotAxis, XMVector::XMZero()))
 			{
-				rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMRight));
+				rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMRight()));
 			}
 
 			return XMQuaternionRotationAxis(rotAxis, XM_PI);
