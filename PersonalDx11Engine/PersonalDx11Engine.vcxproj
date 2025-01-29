@@ -129,7 +129,6 @@
   <ItemGroup>
     <ClCompile Include="BaseModel.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CameraArm.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
@@ -149,7 +148,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="CameraArm.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
