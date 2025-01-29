@@ -81,7 +81,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 
-
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);
@@ -177,6 +176,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		QueryPerformanceCounter(&currentTime);
 		float deltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 		lastTime = currentTime;
+
 #pragma region Input
 		//window msg process
 		Vector3 ChacterDirection;
@@ -193,121 +193,122 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
-			else if (msg.message == WM_KEYDOWN)//Key pushed
-			{
-				const float roateSpeed = 15.0f; //각속도 deg/s
-				switch (msg.wParam)
-				{
-					//character
-					case KEY_UP:
-					{
-						ChacterDirection = Vector3::Up;
-						break;
-					}
-					case KEY_DOWN:
-					{
-						ChacterDirection = -Vector3::Up;
-						break;
-					}
-					case KEY_LEFT:
-					{
-						ChacterDirection = -Vector3::Right;
-						break;
-					}
-					case KEY_RIGHT:
-					{
-						ChacterDirection = Vector3::Right;
-						break;
-					}
-					case KEY_UP2:
-					{
-						CameraDirection = Vector3::Up;
-						break;
-					}
-					case KEY_DOWN2:
-					{
-						CameraDirection = -Vector3::Up;
-						break;
-					}
-					case KEY_LEFT2:
-					{
-						CameraDirection = -Vector3::Right;
-						break;
-					}
-					case KEY_RIGHT2:
-					{
-						CameraDirection = Vector3::Right;
-						break;
-					}
-					case 'O':
-					{
-						CameraDirection = Vector3::Forward;
-						break;
-					}
-					case 'P':
-					{
-						CameraDirection = -Vector3::Forward;
-						break;
-					}
-					case 'F':
-					{
-						//Character->StopMoveImmediately();
-						Character->StopMove();
-						break;
-					}
-					case 'R':
-					{
-						Camera->LookTo(Character->GetTransform()->Position);
-						break;
-					}
-					case 'V' :
-					{
-						Camera->bLookAtObject = !Camera->bLookAtObject;
-						break;
-					}
-					case VK_F2 : 
-					{
-						Camera->bIs2D = !Camera->bIs2D;
-						break;
-					}
-					case VK_SPACE :
-					{
-						Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
-						break;
-					}
-					//Camera Rotate
-					case VK_UP:
-					{
-						//Pitch UP
-						Camera->AddRotationEuler({ (deltaTime * roateSpeed),0,0 });
-						break;
-					}
-					case VK_DOWN:
-					{
-						Camera->AddRotationEuler({ (-deltaTime * roateSpeed),0,0 });
-						break;
-					}
-					case VK_RIGHT:
-					{
-						//Yaw Up
-						Camera->AddRotationEuler({ 0,(deltaTime * roateSpeed),0 });
-						break;
-					}
-					case VK_LEFT:
-					{
-						Camera->AddRotationEuler({ 0,(-deltaTime * roateSpeed),0 });
-						break;
-					}
-				}
+			//else if (msg.message == WM_KEYDOWN)//Key pushed
+			//{
+			//	const float roateSpeed = 15.0f; //각속도 deg/s
+			//	switch (msg.wParam)
+			//	{
+			//		//character
+			//		case KEY_UP:
+			//		{
+			//			ChacterDirection = Vector3::Up;
+			//			break;
+			//		}
+			//		case KEY_DOWN:
+			//		{
+			//			ChacterDirection = -Vector3::Up;
+			//			break;
+			//		}
+			//		case KEY_LEFT:
+			//		{
+			//			ChacterDirection = -Vector3::Right;
+			//			break;
+			//		}
+			//		case KEY_RIGHT:
+			//		{
+			//			ChacterDirection = Vector3::Right;
+			//			break;
+			//		}
+			//		case KEY_UP2:
+			//		{
+			//			CameraDirection = Vector3::Up;
+			//			break;
+			//		}
+			//		case KEY_DOWN2:
+			//		{
+			//			CameraDirection = -Vector3::Up;
+			//			break;
+			//		}
+			//		case KEY_LEFT2:
+			//		{
+			//			CameraDirection = -Vector3::Right;
+			//			break;
+			//		}
+			//		case KEY_RIGHT2:
+			//		{
+			//			CameraDirection = Vector3::Right;
+			//			break;
+			//		}
+			//		case 'O':
+			//		{
+			//			CameraDirection = Vector3::Forward;
+			//			break;
+			//		}
+			//		case 'P':
+			//		{
+			//			CameraDirection = -Vector3::Forward;
+			//			break;
+			//		}
+			//		case 'F':
+			//		{
+			//			//Character->StopMoveImmediately();
+			//			Character->StopMove();
+			//			break;
+			//		}
+			//		case 'R':
+			//		{
+			//			Camera->LookTo(Character->GetTransform()->Position);
+			//			break;
+			//		}
+			//		case 'V':
+			//		{
+			//			Camera->bLookAtObject = !Camera->bLookAtObject;
+			//			break;
+			//		}
+			//		case VK_F2:
+			//		{
+			//			Camera->bIs2D = !Camera->bIs2D;
+			//			break;
+			//		}
+			//		case VK_SPACE:
+			//		{
+			//			Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
+			//			break;
+			//		}
+			//		//Camera Rotate
+			//		case VK_UP:
+			//		{
+			//			//Pitch UP
+			//			Camera->AddRotationEuler({ (deltaTime * roateSpeed),0,0 });
+			//			break;
+			//		}
+			//		case VK_DOWN:
+			//		{
+			//			Camera->AddRotationEuler({ (-deltaTime * roateSpeed),0,0 });
+			//			break;
+			//		}
+			//		case VK_RIGHT:
+			//		{
+			//			//Yaw Up
+			//			Camera->AddRotationEuler({ 0,(deltaTime * roateSpeed),0 });
+			//			break;
+			//		}
+			//		case VK_LEFT:
+			//		{
+			//			Camera->AddRotationEuler({ 0,(-deltaTime * roateSpeed),0 });
+			//			break;
+			//		}
+			//	}
 
 
-			}
+			//}
 		}
 #pragma endregion
 
+
 #pragma region logic
-		Character->StartMove(ChacterDirection);
-		Camera->StartMove(CameraDirection);
+		//Character->StartMove(ChacterDirection);
+		//Camera->StartMove(CameraDirection);
 
 		Character->Tick(deltaTime);
 		Camera->Tick(deltaTime);
