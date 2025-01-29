@@ -180,6 +180,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		},
 		"CameraMove");
+	UInputManager::Get()->UnbindKeyEvent(
+		EKeyEvent::Pressed,
+		Camera,
+		"CameraMove");
+
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
