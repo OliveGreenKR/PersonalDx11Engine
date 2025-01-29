@@ -7,7 +7,7 @@ PersonalDx11Engine/Resources/*
 *.png
 *.tga
 *.jpeg
-
+*.obj
 #ImGui
 PersonalDx11Engine/ImGui/*
 
