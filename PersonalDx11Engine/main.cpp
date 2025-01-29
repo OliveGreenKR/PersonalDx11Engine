@@ -9,6 +9,7 @@
 #include "RscUtil.h"
 #include "GameObject.h"
 #include "Camera.h"
+#include "InputManager.h"
 
 
 #define KEY_UP 'W'
@@ -35,6 +36,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
 	{
 		return true;
+	}
+
+	if (UInputManager::Get()->ProcessWindowsMessage(message, wParam, lParam))
+	{
+		return 0;
 	}
 
 	switch (message)
@@ -73,6 +79,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
+
+
+
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);

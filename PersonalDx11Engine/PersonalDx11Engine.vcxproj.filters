@@ -100,6 +100,9 @@
     <Filter Include="Engine\Input">
       <UniqueIdentifier>{959278a9-40d6-421c-b1b0-cf28bbf270ad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Delegate">
+      <UniqueIdentifier>{bfc2cec4-294c-461a-bb81-22865ef0ab6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Engine\Delegate</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
