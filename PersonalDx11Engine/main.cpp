@@ -153,7 +153,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto ShpereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
 
 	auto Camera = make_shared<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
-	Camera->SetPosition({ 0,0,-10.0f });
+	Camera->SetPosition({ 0,5.0f,-7.0f });
 	
 
 	//Main GameObejct
@@ -167,23 +167,136 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
+	Camera->LookTo(Character->GetTransform()->Position);
 
+#pragma region  InputBind
+	//input Action Bind - TODO::  Abstactionize 'Input Action'
+	//현재는 객체가 직접 본인이 반응할 키 이벤트를 관리..
+	constexpr WPARAM ACTION_MOVE_UP_P1 = 'W';
+	constexpr WPARAM ACTION_MOVE_DOWN_P1 = 'S';
+	constexpr WPARAM ACTION_MOVE_RIGHT_P1 = 'D';
+	constexpr WPARAM ACTION_MOVE_LEFT_P1 = 'A';
+	constexpr WPARAM ACTION_MOVE_STOP_P1 = 'F';
 
-	//input test
+	constexpr WPARAM ACTION_MOVE_UP_P2 = 'I';
+	constexpr WPARAM ACTION_MOVE_DOWN_P2 = 'K';
+	constexpr WPARAM ACTION_MOVE_RIGHT_P2 = 'L';
+	constexpr WPARAM ACTION_MOVE_LEFT_P2 = 'J';
+	constexpr WPARAM ACTION_MOVE_STOP_P2 = 'H';
+
+	constexpr WPARAM ACTION_CAMERA_UP = VK_UP;
+	constexpr WPARAM ACTION_CAMERA_DOWN = VK_DOWN;
+	constexpr WPARAM ACTION_CAMERA_RIGHT = VK_RIGHT;
+	constexpr WPARAM ACTION_CAMERA_LEFT = VK_LEFT;
+	constexpr WPARAM ACTION_CAMERA_FOLLOWOBJECT = 'V';
+
+	//Character
+	UInputManager::Get()->BindKeyEvent(
+		EKeyEvent::Pressed,
+		Character,
+		[&Character](const FKeyEventData& EventData) {
+			switch (EventData.KeyCode)
+			{
+				case(ACTION_MOVE_UP_P1) :
+				{
+					Character->StartMove(Vector3::Forward);
+					break;
+				}
+				case(ACTION_MOVE_DOWN_P1):
+				{
+					Character->StartMove(-Vector3::Forward);
+					break;
+				}
+				case(ACTION_MOVE_RIGHT_P1):
+				{
+					Character->StartMove(Vector3::Right);
+					break;
+				}
+				case(ACTION_MOVE_LEFT_P1):
+				{
+					Character->StartMove(-Vector3::Right);
+					break;
+				}
+				case(ACTION_MOVE_STOP_P1):
+				{
+					Character->StopMove();
+				}
+			}
+		},
+		"CharacterMove");
+
+	//Character2
+	UInputManager::Get()->BindKeyEvent(
+		EKeyEvent::Pressed,
+		Character2,
+		[&Character2](const FKeyEventData& EventData) {
+			switch (EventData.KeyCode)
+			{
+				case(ACTION_MOVE_UP_P2):
+				{
+					Character2->StartMove(Vector3::Forward);
+					break;
+				}
+				case(ACTION_MOVE_DOWN_P2):
+				{
+					Character2->StartMove(-Vector3::Forward);
+					break;
+				}
+				case(ACTION_MOVE_RIGHT_P2):
+				{
+					Character2->StartMove(Vector3::Right);
+					break;
+				}
+				case(ACTION_MOVE_LEFT_P2):
+				{
+					Character2->StartMove(-Vector3::Right);
+					break;
+				}
+				case(ACTION_MOVE_STOP_P2):
+				{
+					Character2->StopMove();
+				}
+			}
+		},
+		"CharacterMove");
+	//Camera
 	UInputManager::Get()->BindKeyEvent(
 		EKeyEvent::Pressed,
 		Camera,
 		[&Camera](const FKeyEventData& EventData) {
-			if (EventData.KeyCode == 'W')
+			switch (EventData.KeyCode)
 			{
-				Camera->StartMove(Vector3::Forward);
+				case(ACTION_CAMERA_UP):
+				{
+					Camera->StartMove(Vector3::Forward);
+					break;
+				}
+				case(ACTION_CAMERA_DOWN):
+				{
+					Camera->StartMove(-Vector3::Forward);
+					break;
+				}
+				case(ACTION_CAMERA_RIGHT):
+				{
+					Camera->StartMove(Vector3::Right);
+					break;
+				}
+				case(ACTION_CAMERA_LEFT):
+				{
+					Camera->StartMove(-Vector3::Right);
+					break;
+				}
+				case(ACTION_CAMERA_FOLLOWOBJECT):
+				{
+					Camera->bLookAtObject = !Camera->bLookAtObject;
+				}
 			}
 		},
-		"CameraMove");
-	UInputManager::Get()->UnbindKeyEvent(
-		EKeyEvent::Pressed,
-		Camera,
-		"CameraMove");
+		"CharacterMove");
+
+
+
+#pragma endregion
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -195,10 +308,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		float deltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 		lastTime = currentTime;
 
-#pragma region Input
-		//window msg process
-		Vector3 ChacterDirection;
-		Vector3 CameraDirection;
+#pragma region WinMsgProc
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			// 키 입력 메시지를 번역
@@ -211,130 +321,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
-			//else if (msg.message == WM_KEYDOWN)//Key pushed
-			//{
-			//	const float roateSpeed = 15.0f; //각속도 deg/s
-			//	switch (msg.wParam)
-			//	{
-			//		//character
-			//		case KEY_UP:
-			//		{
-			//			ChacterDirection = Vector3::Up;
-			//			break;
-			//		}
-			//		case KEY_DOWN:
-			//		{
-			//			ChacterDirection = -Vector3::Up;
-			//			break;
-			//		}
-			//		case KEY_LEFT:
-			//		{
-			//			ChacterDirection = -Vector3::Right;
-			//			break;
-			//		}
-			//		case KEY_RIGHT:
-			//		{
-			//			ChacterDirection = Vector3::Right;
-			//			break;
-			//		}
-			//		case KEY_UP2:
-			//		{
-			//			CameraDirection = Vector3::Up;
-			//			break;
-			//		}
-			//		case KEY_DOWN2:
-			//		{
-			//			CameraDirection = -Vector3::Up;
-			//			break;
-			//		}
-			//		case KEY_LEFT2:
-			//		{
-			//			CameraDirection = -Vector3::Right;
-			//			break;
-			//		}
-			//		case KEY_RIGHT2:
-			//		{
-			//			CameraDirection = Vector3::Right;
-			//			break;
-			//		}
-			//		case 'O':
-			//		{
-			//			CameraDirection = Vector3::Forward;
-			//			break;
-			//		}
-			//		case 'P':
-			//		{
-			//			CameraDirection = -Vector3::Forward;
-			//			break;
-			//		}
-			//		case 'F':
-			//		{
-			//			//Character->StopMoveImmediately();
-			//			Character->StopMove();
-			//			break;
-			//		}
-			//		case 'R':
-			//		{
-			//			Camera->LookTo(Character->GetTransform()->Position);
-			//			break;
-			//		}
-			//		case 'V':
-			//		{
-			//			Camera->bLookAtObject = !Camera->bLookAtObject;
-			//			break;
-			//		}
-			//		case VK_F2:
-			//		{
-			//			Camera->bIs2D = !Camera->bIs2D;
-			//			break;
-			//		}
-			//		case VK_SPACE:
-			//		{
-			//			Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
-			//			break;
-			//		}
-			//		//Camera Rotate
-			//		case VK_UP:
-			//		{
-			//			//Pitch UP
-			//			Camera->AddRotationEuler({ (deltaTime * roateSpeed),0,0 });
-			//			break;
-			//		}
-			//		case VK_DOWN:
-			//		{
-			//			Camera->AddRotationEuler({ (-deltaTime * roateSpeed),0,0 });
-			//			break;
-			//		}
-			//		case VK_RIGHT:
-			//		{
-			//			//Yaw Up
-			//			Camera->AddRotationEuler({ 0,(deltaTime * roateSpeed),0 });
-			//			break;
-			//		}
-			//		case VK_LEFT:
-			//		{
-			//			Camera->AddRotationEuler({ 0,(-deltaTime * roateSpeed),0 });
-			//			break;
-			//		}
-			//	}
-
-
-			//}
 		}
 #pragma endregion
 
 
 #pragma region logic
-		//Character->StartMove(ChacterDirection);
-		//Camera->StartMove(CameraDirection);
-
 		Character->Tick(deltaTime);
+		Character2->Tick(deltaTime);
 		Camera->Tick(deltaTime);
-
-		//if (Camera->IsInView(Character->GetTransform()->Position) == false)
-		//{
-		//	Character->TargetPosition(Camera->GetTransform()->Position +;
-		//}
 #pragma endregion
 
 
@@ -352,8 +346,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region UI
 		// ImGui UI 
-		Vector3 CurrentVelo = Character->CurrentVelocity;
-		Vector3 TargetVelo = Character->TargetVelocity;
+		Vector3 CurrentVelo = Character->GetCurrentVelocity();
+		Vector3 TargetVelo = Character->GetTargetVelocity();
 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
 		ImGui::Text("bIs2D : %d" , Camera->bIs2D);

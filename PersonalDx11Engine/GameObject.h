@@ -45,6 +45,7 @@ protected:
 	FTransform Transform;
 	std::weak_ptr<class UModel> Model;
 
+#pragma region Movement
 public:
 	void StartMove(const Vector3& InDirection);
 	void StopMove();
@@ -52,6 +53,9 @@ public:
 	void StopMoveImmediately();
 
 	void UpdateMovement(const float DeltaTime);
+
+	const Vector3 GetCurrentVelocity() const { return CurrentVelocity; }
+	const Vector3 GetTargetVelocity() const { return TargetVelocity; }
 protected:
 	void UpdateVelocity(const float DeltaTime);
 	void UpdatePosition(const float DeltaTime);
@@ -65,7 +69,9 @@ public:
 	float Deceleration = 10.0f;
 	float MaxSpeed = 100.0f; //must be positive
 
+private:
 	Vector3 TargetVelocity;
 	Vector3 CurrentVelocity;
 	Vector3 TargetPosition;
+#pragma endregion
 };

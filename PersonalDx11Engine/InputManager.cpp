@@ -2,17 +2,6 @@
 #include <windows.h>
 #include "Math.h"
 
-#define KEY_UP 'W'
-#define KEY_DOWN 'S'
-#define KEY_LEFT 'A'
-#define KEY_RIGHT 'D'
-
-#define KEY_UP2 'I'
-#define KEY_DOWN2 'K'
-#define KEY_LEFT2 'J'
-#define KEY_RIGHT2 'L'
-
-
 bool UInputManager::ProcessWindowsMessage(UINT Message, WPARAM WParam, LPARAM LParam)
 {
     switch (Message)
