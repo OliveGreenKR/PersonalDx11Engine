@@ -67,9 +67,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer->SetVSync(false);
 
 	//LoadTexture
-	ID3D11ShaderResourceView* DefaultTexture;
-	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, &DefaultTexture), "Texture Load Failed");
+	auto TAbstract = make_shared<ID3D11ShaderResourceView*>();
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE01, TAbstract.get()), "Texture Load Failed");
 
+	auto TPole = make_shared<ID3D11ShaderResourceView*>();
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE02, TPole.get()), "Texture Load Failed");
+	
+	auto TTile = make_shared<ID3D11ShaderResourceView*>();
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE03, TTile.get()), "Texture Load Failed");
+	
+	auto TDefault = TAbstract;
+	
 	//Shader
 	auto Shader = make_unique<UShader>();
 	D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -88,7 +96,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, layout, ARRAYSIZE(layout));
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
-	Shader->BindTexture(Renderer->GetDeviceContext(), DefaultTexture, ETextureSlot::Diffuset);
+	Shader->BindTexture(Renderer->GetDeviceContext(), *TDefault.get(), ETextureSlot::Albedo); //defaultTexure
 
 
 	// 여기에서 ImGui를 생성합니다.
@@ -135,7 +143,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 0.5f,0,10.0f });
 
-	
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
 #pragma region MainLoop
@@ -265,8 +272,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get());
-		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get());
+		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
+		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -322,6 +329,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui::DestroyContext();
 
 	Renderer->Release();
+
 #pragma region COM
 	CoUninitialize();
 #pragma endregion

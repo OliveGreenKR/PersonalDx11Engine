@@ -92,13 +92,14 @@ void FD3D::PrepareRender()
 	DeviceContext->ClearDepthStencilView(DepthStencilView, 
 										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView);
+
 	//Input Assembly
 	DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//Rasterizer
 	DeviceContext->RSSetViewports(1, &ViewportInfo);
 	DeviceContext->RSSetState(RasterizerState);
 	//OutputMerge
+	DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView);
 	DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 	DeviceContext->OMSetDepthStencilState(DepthStencilState, 1);
 }
@@ -198,8 +199,8 @@ bool FD3D::CreateDepthStencilState()
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 
 	// Stencil test parameters
 	depthStencilDesc.StencilEnable = TRUE;

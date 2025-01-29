@@ -55,6 +55,16 @@ void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject, 
 	RenderModel(InObject->GetModel(), InShader, customSampler);
 }
 
+void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
+{
+	assert(InObject, InShader);
+	if (InTexture)
+	{
+		InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
+	}
+	RenderGameObject(InCamera, InObject, InShader, InCustomSampler);
+}
+
 bool URenderer::CreateDefaultSamplerState()
 {
 	D3D11_SAMPLER_DESC samplerDesc = {};

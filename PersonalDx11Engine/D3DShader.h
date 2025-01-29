@@ -23,7 +23,7 @@ struct alignas(16) FMatrixBufferData
 
 enum class ETextureSlot
 {
-	Diffuset = 0,
+	Albedo = 0,
 	Normal,
 	Specular,
 	Max,
