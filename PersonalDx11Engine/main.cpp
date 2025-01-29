@@ -122,18 +122,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Model Data
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 
-	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 1.0f);
+	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,0,-10.0f });
 	
 
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
-	Character->SetPosition({ 0,0,0 });
+	Character->SetPosition({ 0,0,3.0f });
 
 	auto Character2 = make_shared<UGameObject>(TriModel);
-	Character->SetScale({ 0.4f,0.4f,0.6f });
-	Character->SetPosition({ 0,0,-2.0f });
+	Character2->SetScale({ 0.5f,0.5f,0.5f });
+	Character2->SetPosition({ 0.5f,0,10.0f });
 
 	
 	Camera->SetLookAtObject(Character);
@@ -278,6 +278,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Vector3 TargetVelo = Character->TargetVelocity;
 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
+		ImGui::Text("bIs2D : %d" , Camera->bIs2D);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
 					Camera->GetTransform()->Position.y,
 					Camera->GetTransform()->Position.z);

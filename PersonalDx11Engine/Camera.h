@@ -47,7 +47,7 @@ private :
 	float Fov = PI/4.0f;		//VerticalFOV
 	float AspectRatio = 1.0f;   //affect to HorizontalFOV 
 	float NearZ = 0.1f;
-	float FarZ = 1.0f;
+	float FarZ = 1000.0f;
 
 	Matrix ProjectionMatrix;
 

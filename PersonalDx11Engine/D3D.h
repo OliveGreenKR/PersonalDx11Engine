@@ -38,20 +38,25 @@ private:
     bool CreateDeviceAndSwapChain(HWND Hwnd);
     bool CreateFrameBuffer();
     bool CreateRasterizerState();
+    bool CreateDpethStencilBuffer();
+    bool CreateDepthStencilState();
+    bool CreateDepthStencillView();
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
+    void ReleaseDepthStencil();
 private:
 
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;
     IDXGISwapChain* SwapChain = nullptr;
-    //RTV는 렌더링 결과물을 저장할 메모리 영역 지정, 
-    ID3D11RenderTargetView* renderTargetView =  nullptr;
-    ID3D11DepthStencilView* depthStencilView = nullptr;
 
+    ID3D11DepthStencilView* DepthStencilView = nullptr;
+    ID3D11Texture2D* DepthStencilBuffer = nullptr;
+    ID3D11DepthStencilState* DepthStencilState = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
+    //RenderTargetView는 렌더링 결과물을 저장할 메모리 영역 지정, 
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RasterizerState* RasterizerState = nullptr;
 

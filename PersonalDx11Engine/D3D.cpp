@@ -7,23 +7,27 @@ FD3D::~FD3D()
 
 bool FD3D::Initialize(HWND Hwnd)
 {
-	return CreateDeviceAndSwapChain(Hwnd) && 
+	bool result = CreateDeviceAndSwapChain(Hwnd) &&
 		CreateFrameBuffer() &&
-		CreateRasterizerState();
+		CreateRasterizerState() &&
+		CreateDpethStencilBuffer() &&
+		CreateDepthStencilState() &&
+		CreateDepthStencillView();
+
+	assert(result);
+	return result;
 }
 
 void FD3D::Release()
 {
-	if (RasterizerState)
-	{
-		RasterizerState->Release();
-	}
+	ReleaseRasterizerState();
+	ReleaseFrameBuffer();
+	ReleaseDeviceAndSwapChain();
+	ReleaseDepthStencil();
 	if (DeviceContext)
 	{
 		DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	}
-	ReleaseFrameBuffer();
-	ReleaseDeviceAndSwapChain();
 }
 
 void FD3D::BeginScene()
@@ -84,14 +88,19 @@ bool FD3D::CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer)
 void FD3D::PrepareRender()
 {
 	DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);
+	//±íÀÌ¹öÆÛ ÃÖ´ñ°ª ÃÊ±âÈ­
+	DeviceContext->ClearDepthStencilView(DepthStencilView, 
+										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView);
+	//Input Assembly
 	DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	//Rasterizer
 	DeviceContext->RSSetViewports(1, &ViewportInfo);
 	DeviceContext->RSSetState(RasterizerState);
-
-	DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, nullptr);
+	//OutputMerge
 	DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+	DeviceContext->OMSetDepthStencilState(DepthStencilState, 1);
 }
 
 bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)
@@ -165,6 +174,65 @@ bool FD3D::CreateRasterizerState()
 	return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
 }
 
+bool FD3D::CreateDpethStencilBuffer()
+{
+	D3D11_TEXTURE2D_DESC depthBufferDesc = {};
+	depthBufferDesc.Width = static_cast<UINT>(ViewportInfo.Width);
+	depthBufferDesc.Height = static_cast<UINT>(ViewportInfo.Height);
+	depthBufferDesc.MipLevels = 1;
+	depthBufferDesc.ArraySize = 1;
+	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDesc.SampleDesc.Count = 1;
+	depthBufferDesc.SampleDesc.Quality = 0;
+	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthBufferDesc.CPUAccessFlags = 0;
+	depthBufferDesc.MiscFlags = 0;
+
+	HRESULT hr = Device->CreateTexture2D(&depthBufferDesc, nullptr, &DepthStencilBuffer);
+	return SUCCEEDED(hr);
+}
+
+bool FD3D::CreateDepthStencilState()
+{
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	// Stencil test parameters
+	depthStencilDesc.StencilEnable = TRUE;
+	depthStencilDesc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+	depthStencilDesc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+
+	// Stencil operations if pixel is front-facing
+	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	// Stencil operations if pixel is back-facing
+	depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+	depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	HRESULT hr = Device->CreateDepthStencilState(&depthStencilDesc, &DepthStencilState);
+	return SUCCEEDED(hr);
+}
+
+bool FD3D::CreateDepthStencillView()
+{
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+	HRESULT hr = Device->CreateDepthStencilView(DepthStencilBuffer, &depthStencilViewDesc, &DepthStencilView);
+	return SUCCEEDED(hr);
+}
+
 void FD3D::ReleaseDeviceAndSwapChain()
 {
 	if (DeviceContext)
@@ -213,4 +281,24 @@ void FD3D::ReleaseRasterizerState()
 		RasterizerState->Release();
 		RasterizerState = nullptr;
 	}
+}
+
+void FD3D::ReleaseDepthStencil()
+{
+	if (DepthStencilView)
+	{
+		DepthStencilView->Release();
+		DepthStencilView = nullptr;
+	}
+	if (DepthStencilState)
+	{
+		DepthStencilState->Release();
+		DepthStencilState = nullptr;
+	}
+	if (DepthStencilBuffer)
+	{
+		DepthStencilBuffer->Release();
+		DepthStencilBuffer = nullptr;
+	}
+	
 }

@@ -176,8 +176,9 @@ void UCamera::UpdateViewMatrix()
 
 	XMVECTOR currentLookAt = XMVector3Rotate(vLookAt, vRotation);
 	currentLookAt = XMVectorAdd(vPosition, currentLookAt);
-	const XMVECTOR currentUp = XMVector3Rotate(vUp, vRotation);
-	
+
+	XMVECTOR currentUp = XMVector3Rotate(vUp, vRotation);
+
 	// ºä Çà·Ä °è»ê
 	ViewMatrix = XMMatrixLookAtLH(vPosition, currentLookAt, currentUp);
 }
