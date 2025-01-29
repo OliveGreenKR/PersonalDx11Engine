@@ -152,7 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto CubeModel = UModel::GetDefaultCube(Renderer->GetDevice());
 	auto ShpereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
 
-	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
+	auto Camera = make_shared<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,0,-10.0f });
 	
 
@@ -167,6 +167,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
+
+
+	//input test
+	UInputManager::Get()->BindKeyEvent(
+		EKeyEvent::Pressed,
+		Camera,
+		[&Camera](const FKeyEventData& EventData) {
+			if (EventData.KeyCode == 'W')
+			{
+				Camera->StartMove(Vector3::Forward);
+			}
+		},
+		"CameraMove");
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
