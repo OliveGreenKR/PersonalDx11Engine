@@ -39,8 +39,12 @@ public:
 	void Release();
 
 public:
+
 	const static UModel GetSimpleTriangle(ID3D11Device* InDevice);
 	static std::shared_ptr<UModel> GetDefaultTriangle(ID3D11Device* InDevice);
+	static std::shared_ptr<UModel> GetDefaultCube(ID3D11Device* InDevice);
+	static std::shared_ptr<UModel> GetDefaultSphere(ID3D11Device* InDevice);
+
 
 
 public:

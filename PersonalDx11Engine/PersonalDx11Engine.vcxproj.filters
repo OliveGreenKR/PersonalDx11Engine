@@ -50,6 +50,9 @@
     <ClCompile Include="CameraArm.cpp">
       <Filter>Engine\GameObject\CameraArm</Filter>
     </ClCompile>
+    <ClCompile Include="BaseModel.cpp">
+      <Filter>Engine\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">

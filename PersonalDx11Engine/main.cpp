@@ -129,17 +129,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//Model Data
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
+	auto CubeModel = UModel::GetDefaultCube(Renderer->GetDevice());
+	auto ShpereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
 
 	auto Camera = make_unique<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,0,-10.0f });
 	
 
 	//Main GameObejct
-	auto Character = make_shared<UGameObject>(TriModel);
+	auto Character = make_shared<UGameObject>(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,3.0f });
 
-	auto Character2 = make_shared<UGameObject>(TriModel);
+	auto Character2 = make_shared<UGameObject>(ShpereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 0.5f,0,10.0f });
 
