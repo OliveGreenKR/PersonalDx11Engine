@@ -64,7 +64,7 @@ std::shared_ptr<UModel> UModel::GetDefaultCube(ID3D11Device* InDevice)
 std::shared_ptr<UModel> UModel::GetDefaultSphere(ID3D11Device* InDevice) {
 	uint32_t HorizontalSegments = 30;		// 가로 단계 수 (경도 분할)
 	uint32_t VerticalSegments = 30;			// 세로 단계 수 (위도 분할)
-	float Radius = 1.0f;					// 구체의 반지름
+	float Radius = 0.5f;					// 구체의 반지름
 
 	// 최종 결과를 저장할 벡터
 	// 각 격자 셀당 2개의 삼각형, 각 삼각형당 3개의 정점

@@ -5,8 +5,7 @@
 class UCamera : public UGameObject
 {
 public:
-	UCamera();
-	UCamera(float fov, float aspectRatio, float nearZ, float farZ);
+	explicit UCamera(float fov, float aspectRatio, float nearZ, float farZ);
 	virtual ~UCamera() override = default;
 public:
 	virtual void Tick(const float DeltaTime) override;

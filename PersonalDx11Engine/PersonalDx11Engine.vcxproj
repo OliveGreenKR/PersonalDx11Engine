@@ -139,6 +139,7 @@
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Frustum.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="RscUtil.h" />

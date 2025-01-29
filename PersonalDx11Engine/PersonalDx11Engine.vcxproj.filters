@@ -53,6 +53,9 @@
     <ClCompile Include="BaseModel.cpp">
       <Filter>Engine\Model</Filter>
     </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Engine\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -93,6 +96,9 @@
     </Filter>
     <Filter Include="Engine\GameObject\CameraArm">
       <UniqueIdentifier>{648e593a-871b-4d84-802a-51c51c96a733}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Input">
+      <UniqueIdentifier>{959278a9-40d6-421c-b1b0-cf28bbf270ad}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="CameraArm.h">
       <Filter>Engine\GameObject\CameraArm</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

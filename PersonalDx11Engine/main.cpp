@@ -10,6 +10,18 @@
 #include "GameObject.h"
 #include "Camera.h"
 
+
+#define KEY_UP 'W'
+#define KEY_DOWN 'S'
+#define KEY_LEFT 'A'
+#define KEY_RIGHT 'D'
+
+#define KEY_UP2 'I'
+#define KEY_DOWN2 'K'
+#define KEY_LEFT2 'J'
+#define KEY_RIGHT2 'L'
+
+
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
 
@@ -139,11 +151,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
-	Character->SetPosition({ 0,0,3.0f });
+	Character->SetPosition({ 0,0,0 });
 
 	auto Character2 = make_shared<UGameObject>(ShpereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
-	Character2->SetPosition({ 0.5f,0,10.0f });
+	Character2->SetPosition({ 0,0,0 });
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
@@ -158,7 +170,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		lastTime = currentTime;
 #pragma region Input
 		//window msg process
-		Vector3 TargetDirection;
+		Vector3 ChacterDirection;
+		Vector3 CameraDirection;
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			// 키 입력 메시지를 번역
@@ -177,24 +190,54 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				switch (msg.wParam)
 				{
 					//character
-					case 'W':
+					case KEY_UP:
 					{
-						TargetDirection = Vector3::Up;
+						ChacterDirection = Vector3::Up;
 						break;
 					}
-					case 'S':
+					case KEY_DOWN:
 					{
-						TargetDirection = -Vector3::Up;
+						ChacterDirection = -Vector3::Up;
 						break;
 					}
-					case 'D':
+					case KEY_LEFT:
 					{
-						TargetDirection = Vector3::Right;
+						ChacterDirection = -Vector3::Right;
 						break;
 					}
-					case 'A':
+					case KEY_RIGHT:
 					{
-						TargetDirection = -Vector3::Right;
+						ChacterDirection = Vector3::Right;
+						break;
+					}
+					case KEY_UP2:
+					{
+						CameraDirection = Vector3::Up;
+						break;
+					}
+					case KEY_DOWN2:
+					{
+						CameraDirection = -Vector3::Up;
+						break;
+					}
+					case KEY_LEFT2:
+					{
+						CameraDirection = -Vector3::Right;
+						break;
+					}
+					case KEY_RIGHT2:
+					{
+						CameraDirection = Vector3::Right;
+						break;
+					}
+					case 'O':
+					{
+						CameraDirection = Vector3::Forward;
+						break;
+					}
+					case 'P':
+					{
+						CameraDirection = -Vector3::Forward;
 						break;
 					}
 					case 'F':
@@ -223,7 +266,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
 						break;
 					}
-					//Camera
+					//Camera Rotate
 					case VK_UP:
 					{
 						//Pitch UP
@@ -254,10 +297,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-
-		//Camera->AddRotationEuler({ 15.0f * deltaTime, 0, 0 });
-		if(TargetDirection.Length() > 0)
-			Character->StartMove(TargetDirection);
+		Character->StartMove(ChacterDirection);
+		Camera->StartMove(CameraDirection);
 
 		Character->Tick(deltaTime);
 		Camera->Tick(deltaTime);

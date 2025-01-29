@@ -72,6 +72,8 @@ UModel* UGameObject::GetModel() const
 
 void UGameObject::StartMove(const Vector3& InDirection)
 {
+	if (InDirection.LengthSquared() < KINDA_SMALL)
+		return;
 	bIsMoving = true;
 	if (bIsPhysicsBasedMove)
 	{
