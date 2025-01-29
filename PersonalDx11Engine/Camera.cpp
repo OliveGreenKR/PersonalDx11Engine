@@ -152,7 +152,16 @@ void UCamera::UpdatDirtyView()
 
 void UCamera::UpdateProjectionMatrix()
 {
-	ProjectionMatrix = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearZ, FarZ); 
+	if (bIs2D)
+	{
+		float nearPlaneHeight = 2.0f * NearZ * tanf(Fov * 0.5f);
+		float nearPlaneWidth = nearPlaneHeight * AspectRatio;
+		ProjectionMatrix = XMMatrixOrthographicLH(nearPlaneWidth, nearPlaneHeight, NearZ, FarZ);
+	}
+	else
+	{
+		ProjectionMatrix = XMMatrixPerspectiveFovLH(Fov, AspectRatio, NearZ, FarZ);
+	}
 }
 
 void UCamera::UpdateViewMatrix()

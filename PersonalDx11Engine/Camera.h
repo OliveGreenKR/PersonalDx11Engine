@@ -27,6 +27,7 @@ public:
 
 
 public:
+	bool bIs2D = false;
 	bool bLookAtObject = false;
 private:
 	void OnTransformChanged() override;

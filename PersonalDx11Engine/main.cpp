@@ -129,7 +129,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Main GameObejct
 	auto Character = make_shared<UGameObject>(TriModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
-	Character->SetPosition({ 0.0f,0,0 });
+	Character->SetPosition({ 0,0,0 });
+
+	auto Character2 = make_shared<UGameObject>(TriModel);
+	Character->SetScale({ 0.4f,0.4f,0.6f });
+	Character->SetPosition({ 0,0,-2.0f });
 
 	
 	Camera->SetLookAtObject(Character);
@@ -200,6 +204,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						Camera->bLookAtObject = !Camera->bLookAtObject;
 						break;
 					}
+					case VK_F2 : 
+					{
+						Camera->bIs2D = !Camera->bIs2D;
+						break;
+					}
 					case VK_SPACE :
 					{
 						Character->bIsPhysicsBasedMove = !Character->bIsPhysicsBasedMove;
@@ -256,8 +265,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		//Renderer->RenderModel(TriModel.get(), Shader.get());
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get());
+		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get());
 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
