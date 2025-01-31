@@ -4,7 +4,7 @@
 UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
 	: Fov(fov), AspectRatio(aspectRatio), NearZ(nearZ), FarZ(farZ)
 {
-	bIsPhysicsBasedMove = false;
+	bIsPhysicsSimulated = false;
 	UpdateProjectionMatrix();
 }
 

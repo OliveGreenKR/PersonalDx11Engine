@@ -7,11 +7,25 @@ using namespace std;
 
 class UModel;
 
-class UGameObject
+class UGameObject : public std::enable_shared_from_this<UGameObject>
 {
 public:
+
+public:
+	static std::shared_ptr<UGameObject> Create()
+	{
+		return std::shared_ptr<UGameObject>(new UGameObject());
+	}
+
+	static std::shared_ptr<UGameObject> Create(const shared_ptr<UModel>& InModel)
+	{
+		return std::shared_ptr<UGameObject>(new UGameObject(InModel));
+	}
+
+protected:
 	UGameObject() = default;
 	UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel) {}
+public:
 	virtual ~UGameObject() = default;
 
 public:
@@ -40,6 +54,8 @@ public:
 protected:
 	virtual void OnTransformChanged() {};
 
+	virtual void UpdateComponents(const float DeltaTime);
+
 protected:
 
 	FTransform Transform;
@@ -63,15 +79,21 @@ protected:
 public:
 	//movement test
 	bool bIsMoving = false;
-	bool bIsPhysicsBasedMove = true;
+	bool bIsPhysicsSimulated = true;
 
-	float Acceleration = 10.0f;
-	float Deceleration = 10.0f;
+	bool bGravity = false;
+	float Mass = 1.0f;
+	float FrictionCoefficient = 0.5f;
 	float MaxSpeed = 100.0f; //must be positive
 
 private:
-	Vector3 TargetVelocity;
-	Vector3 CurrentVelocity;
 	Vector3 TargetPosition;
 #pragma endregion
+public:
+	void SetupPyhsics();
+	void ApplyForce(const Vector3& Force);
+	void ApplyImpulse(const Vector3& Impulse);
+
+	class URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
+	std::weak_ptr<class URigidBodyComponent> RigidBody;
 };

@@ -773,6 +773,9 @@ namespace XMVector
 
 namespace Math
 {
+	inline static float Max(const float a, const float b) {
+		return a > b ? a : b;
+	}
 
 	static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
 	{

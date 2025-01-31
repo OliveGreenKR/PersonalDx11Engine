@@ -174,9 +174,6 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Components</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectComponentInterface.h">
-      <Filter>Engine\Interface</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">

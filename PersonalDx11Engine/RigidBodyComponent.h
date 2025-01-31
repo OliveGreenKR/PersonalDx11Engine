@@ -1,27 +1,33 @@
 #pragma once
 #include <memory>
 #include "Math.h"
-#include "ObjectComponentInterface.h"
 
-using namespace DirectX;
+class UGameObject;
 
 // 물리 속성을 관리하는 RigidBody 컴포넌트
-class URigidBodyComponent : public IObejctCompoenent
+class URigidBodyComponent 
 {
 public:
-    URigidBodyComponent(std::shared_ptr<UGameObject>& InOwner) : Owner(InOwner) {
-        bIsTicked = true;
-    }
+    URigidBodyComponent() = default;
+    URigidBodyComponent(const std::shared_ptr<class UGameObject>& InOwner) : Owner(InOwner)
+    {};
 
-    void SetMass(float InMass) { Mass = InMass; }
-    void SetVelocity(const Vector3& InVelocity) { Velocity = InVelocity; }
-    void SetAcceleration(const Vector3& InAcceleration) { Acceleration = InAcceleration; }
+    void SetMass(float InMass) { Mass = Math::Max(InMass, KINDA_SMALL); }
+    void SetMaxSpeed(float InMaxSpeed) { MaxSpeed = InMaxSpeed; }
+    void SetFrictionCoefficient(float InFriction) { FrictionCoefficient = InFriction; }
+    void SetGravity(const Vector3& InGravity) { Gravity = InGravity; }
+    void EnableGravity(bool bEnable) { bUseGravity = bEnable; }
+    void EnablePhysics(bool bEnable) { bIsSimulatedPhysics = bEnable; }
 
-    void Tick(float DeltaTime);
+    const Vector3& GetVelocity() const { return Velocity; }
+    float GetSpeed() const { return Velocity.Length(); }
+    float GetMass() const { return Mass; }
+
+    void Tick(const float DeltaTime);
     void ApplyForce(const Vector3& Force);
+    void ApplyImpulse(const Vector3& InINpulse);
 
-protected:
-    virtual void Tick(float DeltaTime) override;
+    void SetOwner(std::shared_ptr<class UGameObject>& InOwner) { Owner = InOwner; }
 
 private:
     bool bUseGravity = false;
@@ -37,4 +43,6 @@ private:
     //state
     Vector3 Velocity;
     Vector3 AccumulatedForce;
+
+    std::weak_ptr<class UGameObject> Owner;
 };

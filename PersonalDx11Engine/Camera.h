@@ -5,8 +5,14 @@
 class UCamera : public UGameObject
 {
 public:
-	explicit UCamera(float fov, float aspectRatio, float nearZ, float farZ);
 	virtual ~UCamera() override = default;
+
+	static std::shared_ptr<UCamera> Create(float fov, float aspectRatio, float nearZ, float farZ)
+	{
+		return std::shared_ptr<UCamera>(new UCamera(fov,aspectRatio,nearZ,farZ));
+	}
+protected:
+	explicit UCamera(float fov, float aspectRatio, float nearZ, float farZ);
 public:
 	virtual void Tick(const float DeltaTime) override;
 

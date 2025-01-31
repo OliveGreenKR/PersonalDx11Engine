@@ -150,18 +150,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Model Data
 	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
 	auto CubeModel = UModel::GetDefaultCube(Renderer->GetDevice());
-	auto ShpereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
+	auto SphereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
 
-	auto Camera = make_shared<UCamera>(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
+	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,5.0f,-7.0f });
 	
 
 	//Main GameObejct
-	auto Character = make_shared<UGameObject>(CubeModel);
+	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 
-	auto Character2 = make_shared<UGameObject>(ShpereModel);
+	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 0,0,0 });
 
@@ -199,7 +199,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				case(ACTION_MOVE_UP_P1) :
 				{
-					Character->StartMove(Vector3::Forward);
+					Character->ApplyForce(Vector3::Forward * 5.0f);
 					break;
 				}
 				case(ACTION_MOVE_DOWN_P1):
@@ -361,7 +361,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
-		ImGui::Text("PhysicsBased : %s", Character->bIsPhysicsBasedMove ? "TRUE" : "FALSE");
+		ImGui::Text("PhysicsBased : %s", Character->bIsPhysicsSimulated ? "TRUE" : "FALSE");
 		ImGui::Text("bIsMove : %d", Character->bIsMoving);
 		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f", TargetVelo.x,
 					TargetVelo.y,

@@ -160,7 +160,6 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ObjectComponentInterface.h" />
     <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />

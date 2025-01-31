@@ -1,7 +1,6 @@
 #pragma once
 #include "Math.h"
 #include <memory>
-#include "ObjectComponentInterface.h"
 #include "Delegate.h"
 
 struct FBoundingVolume
@@ -42,7 +41,7 @@ enum class ECollisionResponse
     Block           // 물리적 충돌 응답
 };
 
-class UCollisionComponent : public IObejctCompoenent
+class UCollisionComponent
 {
 public:
     UCollisionComponent(std::shared_ptr<class UGameObject> InOwner) : Owner(InOwner) 
@@ -68,5 +67,6 @@ private:
 
     FBoundingVolume BoundingVolume;
 
+    
     std::weak_ptr<class UGameObject> Owner;
 };
