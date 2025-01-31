@@ -66,18 +66,17 @@ public:
 	void StartMove(const Vector3& InDirection);
 	void StopMove();
 	void StopMoveImmediately();
-
 	void UpdateMovement(const float DeltaTime);
 
 public:
 	//movement test
 	bool bIsMoving = false;
-	bool bIsPhysicsSimulated = true;
+	bool bIsPhysicsSimulated = false;
 
 	bool bGravity = false;
 	float Mass = 1.0f;
 	float FrictionCoefficient = 0.5f;
-	float MaxSpeed = 100.0f; //must be positive
+	float MaxSpeed = 5.0f; //must be positive
 	Vector3 CurrentVelocity = Vector3::Zero;
 
 private:

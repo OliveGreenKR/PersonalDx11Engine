@@ -87,6 +87,7 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 	//TODO:: ComponentsInterface  + vector
 	//find all Tickable compo and call Tick
 	auto RigidPtr = RigidBody.get();
+	RigidPtr->EnablePhysics(bIsPhysicsSimulated);
 	if (RigidPtr)
 	{
 		RigidPtr->Tick(DeltaTime);
@@ -94,6 +95,7 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 	}
 }
 
+//좌표기반 움직임만
 void UGameObject::StartMove(const Vector3& InDirection)
 {
 	if (InDirection.LengthSquared() < KINDA_SMALL)
@@ -111,10 +113,11 @@ void UGameObject::StopMove()
 void UGameObject::StopMoveImmediately()
 {
 	bIsMoving = false;
-	if (auto RigidBodyPtr = RigidBody.get())
-	{
-		RigidBodyPtr->Reset();
-	}
+	////for test, stop force work
+	//if (auto RigidBodyPtr = RigidBody.get())
+	//{
+	//	RigidBodyPtr->Reset();
+	//}
 
 }
 
@@ -122,21 +125,18 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 {
 	if (bIsMoving == false)
 		return;
+
 	Vector3 Current = GetTransform()->Position;
-
-	if (bIsPhysicsSimulated)
+	Vector3 Delta = TargetPosition - Current;
+	if (Delta.LengthSquared() < KINDA_SMALL)
 	{
-		Vector3 NewPosition = Current + DeltaTime * CurrentVelocity;
-		SetPosition(NewPosition);
+		StopMoveImmediately();
+		return;
 	}
-	else
-	{
-		Vector3 Current = GetTransform()->Position;
-		Vector3 NewPosition = Vector3::Lerp(Current, TargetPosition, DeltaTime * MaxSpeed);
-		SetPosition(NewPosition);
-	}
+	Vector3 NewPosition = Vector3::Lerp(Current, TargetPosition, DeltaTime);
+	SetPosition(NewPosition);
+	
 }
-
 
 void UGameObject::SetupPyhsics()
 {
@@ -157,7 +157,6 @@ void UGameObject::ApplyForce(const Vector3& Force)
 
 	if (auto RigidBodyPtr = RigidBody.get())
 	{
-		bIsMoving = true;
 		RigidBodyPtr->ApplyForce(Force);
 	}
 }

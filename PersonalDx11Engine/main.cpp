@@ -162,6 +162,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->SetupPyhsics();
+	Character->bIsPhysicsSimulated = true;
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -201,21 +202,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				case(ACTION_MOVE_UP_P1) :
 				{
+					if (EventData.bShift)
+					{
+						Character->StartMove(Vector3::Forward);
+					}
 					Character->ApplyForce(Vector3::Forward * 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_DOWN_P1):
 				{
+					if (EventData.bShift)
+					{
+						Character->StartMove(-Vector3::Forward);
+					}
 					Character->ApplyForce(-Vector3::Forward * 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_RIGHT_P1):
 				{
+					if (EventData.bShift)
+					{
+						Character->StartMove(Vector3::Right);
+					}
 					Character->ApplyForce(Vector3::Right* 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_LEFT_P1):
 				{
+					if (EventData.bShift)
+					{
+						Character->StartMove(-Vector3::Right);
+					}
 					Character->ApplyForce(-Vector3::Right* 100.0f);
 					break;
 				}
@@ -362,8 +379,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
-		ImGui::Text("PhysicsBased : %s", Character->bIsPhysicsSimulated ? "TRUE" : "FALSE");
-		ImGui::Text("bIsMove : %d", Character->bIsMoving);
+		ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+		ImGui::Checkbox("bPhysicsBased", &Character->bIsPhysicsSimulated);
 		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 					CurrentVelo.y,
 					CurrentVelo.z);
@@ -373,6 +390,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
 					Character->GetTransform()->GetEulerRotation().y,
 					Character->GetTransform()->GetEulerRotation().z);
+
+		ImGui::End();
+
+		ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
+		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
+		ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+		ImGui::Checkbox("bPhysicsBased", &Character2->bIsPhysicsSimulated);
+		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+					CurrentVelo.y,
+					CurrentVelo.z);
+		ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->Position.x,
+					Character2->GetTransform()->Position.y,
+					Character2->GetTransform()->Position.z);
+		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
+					Character2->GetTransform()->GetEulerRotation().y,
+					Character2->GetTransform()->GetEulerRotation().z);
+
 		ImGui::End();
 
 		ImGui::Render();

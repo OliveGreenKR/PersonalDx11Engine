@@ -57,16 +57,16 @@ void URigidBodyComponent::Tick(const float DeltaTime)
         vVelocity = XMVectorZero();
     }
 
-    //// 위치 갱신: x = x0 + vt
-    //if (auto OwnerPtr = Owner.lock())
-    //{
-    //    XMVECTOR vPosition = XMLoadFloat3(&OwnerPtr->GetTransform()->Position);
-    //    vPosition = XMVectorAdd(vPosition, XMVectorScale(vVelocity, DeltaTime));
+    // 위치 갱신: x = x0 + vt
+    if (auto OwnerPtr = Owner.lock())
+    {
+        XMVECTOR vPosition = XMLoadFloat3(&OwnerPtr->GetTransform()->Position);
+        vPosition = XMVectorAdd(vPosition, XMVectorScale(vVelocity, DeltaTime));
 
-    //    Vector3 NewPosition;
-    //    XMStoreFloat3(&NewPosition, vPosition);
-    //    OwnerPtr->SetPosition(NewPosition);
-    //}
+        Vector3 NewPosition;
+        XMStoreFloat3(&NewPosition, vPosition);
+        OwnerPtr->SetPosition(NewPosition);
+    }
 
     // 결과 저장
     XMStoreFloat3(&Velocity, vVelocity);
