@@ -12,6 +12,7 @@ public:
     URigidBodyComponent(const std::shared_ptr<class UGameObject>& InOwner) : Owner(InOwner)
     {};
 
+    void Reset();
     void SetMass(float InMass) { Mass = Math::Max(InMass, KINDA_SMALL); }
     void SetMaxSpeed(float InMaxSpeed) { MaxSpeed = InMaxSpeed; }
     void SetFrictionCoefficient(float InFriction) { FrictionCoefficient = InFriction; }
@@ -41,8 +42,8 @@ private:
     Vector3 Gravity = -Vector3::Up;
 
     //state
-    Vector3 Velocity;
-    Vector3 AccumulatedForce;
+    Vector3 Velocity = Vector3::Zero;
+    Vector3 AccumulatedForce = Vector3::Zero;
 
     std::weak_ptr<class UGameObject> Owner;
 };

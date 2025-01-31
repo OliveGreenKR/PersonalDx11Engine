@@ -23,8 +23,8 @@ public:
 	}
 
 protected:
-	UGameObject() = default;
-	UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel) {}
+	UGameObject();
+	UGameObject(const shared_ptr<UModel>& InModel);
 public:
 	virtual ~UGameObject() = default;
 
@@ -61,20 +61,13 @@ protected:
 	FTransform Transform;
 	std::weak_ptr<class UModel> Model;
 
-#pragma region Movement
+#pragma region Coord Movement
 public:
 	void StartMove(const Vector3& InDirection);
 	void StopMove();
-	void StopMoveSlowly();
 	void StopMoveImmediately();
 
 	void UpdateMovement(const float DeltaTime);
-
-	const Vector3 GetCurrentVelocity() const { return CurrentVelocity; }
-	const Vector3 GetTargetVelocity() const { return TargetVelocity; }
-protected:
-	void UpdateVelocity(const float DeltaTime);
-	void UpdatePosition(const float DeltaTime);
 
 public:
 	//movement test
@@ -85,6 +78,7 @@ public:
 	float Mass = 1.0f;
 	float FrictionCoefficient = 0.5f;
 	float MaxSpeed = 100.0f; //must be positive
+	Vector3 CurrentVelocity = Vector3::Zero;
 
 private:
 	Vector3 TargetPosition;
@@ -94,6 +88,6 @@ public:
 	void ApplyForce(const Vector3& Force);
 	void ApplyImpulse(const Vector3& Impulse);
 
-	class URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
-	std::weak_ptr<class URigidBodyComponent> RigidBody;
+protected:
+	std::shared_ptr<class URigidBodyComponent> RigidBody;
 };

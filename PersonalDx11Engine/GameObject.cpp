@@ -3,6 +3,16 @@
 #include "RigidBodyComponent.h"
 
 
+UGameObject::UGameObject()
+{
+	RigidBody = make_shared<URigidBodyComponent>();
+}
+
+UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
+{
+	RigidBody = make_shared<URigidBodyComponent>();
+}
+
 void UGameObject::Tick(const float DeltaTime)
 {
 	UpdateComponents(DeltaTime);
@@ -75,10 +85,12 @@ UModel* UGameObject::GetModel() const
 void UGameObject::UpdateComponents(const float DeltaTime)
 {
 	//TODO:: ComponentsInterface  + vector
-	auto Compo = RigidBody.lock();
-	if (Compo)
+	//find all Tickable compo and call Tick
+	auto RigidPtr = RigidBody.get();
+	if (RigidPtr)
 	{
-		Compo->Tick(DeltaTime);
+		RigidPtr->Tick(DeltaTime);
+		CurrentVelocity = RigidPtr->GetVelocity();
 	}
 }
 
@@ -87,93 +99,51 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	if (bIsPhysicsSimulated)
-	{
-		TargetVelocity = InDirection.GetNormalized() * MaxSpeed;
-	}
-	else
-	{
-		TargetPosition = Transform.Position + InDirection.GetNormalized() * MaxSpeed;
-	}
+	TargetPosition = Transform.Position + InDirection.GetNormalized() * MaxSpeed;
 }
 
 void UGameObject::StopMove()
 {
-	if (bIsPhysicsSimulated)
-	{
-		StopMoveSlowly();
-	}
-	else
-	{
-		StopMoveImmediately();
-	}
+	StopMoveImmediately();
 }
 
-void UGameObject::StopMoveSlowly()
-{
-	TargetVelocity = Vector3::Zero;
-}
 
 void UGameObject::StopMoveImmediately()
 {
 	bIsMoving = false;
-	TargetVelocity = Vector3::Zero;
-	CurrentVelocity = TargetVelocity;
+	if (auto RigidBodyPtr = RigidBody.get())
+	{
+		RigidBodyPtr->Reset();
+	}
+
 }
 
 void UGameObject::UpdateMovement(const float DeltaTime)
 {
 	if (bIsMoving == false)
 		return;
+	Vector3 Current = GetTransform()->Position;
 
-	if(bIsSimul)
-	UpdateVelocity(DeltaTime);
-	UpdatePosition(DeltaTime);
-}
-
-//Update Velocity to TargetVelocity
-void UGameObject::UpdateVelocity(const float DeltaTime)
-{
-	const float CurrentAcceleration = bIsMoving ? Acceleration : Deceleration;
-	const Vector3 VelocityDiff = TargetVelocity - CurrentVelocity;
-	const float DiffSize = VelocityDiff.Length();
-
-	if (VelocityDiff.Length() > KINDA_SMALL)
+	if (bIsPhysicsSimulated)
 	{
-		// 목표 속도를 향해 가속/감속
-		CurrentVelocity = RigidBody.lock()->GetVelocity();
+		Vector3 NewPosition = Current + DeltaTime * CurrentVelocity;
+		SetPosition(NewPosition);
 	}
 	else
 	{
-		bIsMoving = false;
+		Vector3 Current = GetTransform()->Position;
+		Vector3 NewPosition = Vector3::Lerp(Current, TargetPosition, DeltaTime * MaxSpeed);
+		SetPosition(NewPosition);
 	}
 }
 
-//Update Positin with currentVelocity
-void UGameObject::UpdatePosition(const float DeltaTime)
-{
-	Vector3 NewPosition;
-	if (!bIsPhysicsSimulated)
-	{
-		NewPosition = Vector3::Lerp(Transform.Position, TargetPosition, DeltaTime);
-		SetPosition(NewPosition);
-	}
-	else if (CurrentVelocity.Length() > KINDA_SMALL)
-	{
-		NewPosition = Transform.Position +
-			CurrentVelocity * DeltaTime;
-		SetPosition(NewPosition);
-	}
-	
-}
 
 void UGameObject::SetupPyhsics()
 {
-	auto selfPtr = shared_from_this();
-	RigidBody = std::make_shared<URigidBodyComponent>(selfPtr);
-	
-	if (auto RigidPtr = RigidBody.lock())
+	auto SelfPtr = shared_from_this();
+	if (auto RigidPtr = RigidBody.get())
 	{
+		RigidPtr->SetOwner(SelfPtr);
 		RigidPtr->EnablePhysics(bIsPhysicsSimulated);
 		RigidPtr->SetMass(Mass);
 		RigidPtr->SetMaxSpeed(MaxSpeed);
@@ -184,15 +154,17 @@ void UGameObject::SetupPyhsics()
 
 void UGameObject::ApplyForce(const Vector3& Force)
 {
-	if (auto RigidBodyPtr = RigidBody.lock())
+
+	if (auto RigidBodyPtr = RigidBody.get())
 	{
+		bIsMoving = true;
 		RigidBodyPtr->ApplyForce(Force);
 	}
 }
 
 void UGameObject::ApplyImpulse(const Vector3& Impulse)
 {
-	if (auto RigidBodyPtr = RigidBody.lock())
+	if (auto RigidBodyPtr = RigidBody.get())
 	{
 		RigidBodyPtr->ApplyImpulse(Impulse);
 	}

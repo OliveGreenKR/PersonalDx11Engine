@@ -2,6 +2,12 @@
 #include "Transform.h"
 #include "GameObject.h"
 
+void URigidBodyComponent::Reset()
+{
+    Velocity = Vector3::Zero;
+    AccumulatedForce = Vector3::Zero;
+}
+
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
     if (!bIsSimulatedPhysics)
@@ -10,7 +16,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
     // SIMD 최적화를 위한 벡터 로드
     XMVECTOR vVelocity = XMLoadFloat3(&Velocity);
     XMVECTOR vAccumForce = XMLoadFloat3(&AccumulatedForce);
-    Vector3 gravity = GravityScale * Gravity;
+    Vector3 gravity = GravityScale * Gravity * bUseGravity;
     XMVECTOR vGravity = XMLoadFloat3(&gravity);
 
     // 마찰력 계산 (v의 반대 방향)
@@ -51,16 +57,16 @@ void URigidBodyComponent::Tick(const float DeltaTime)
         vVelocity = XMVectorZero();
     }
 
-    // 위치 갱신: x = x0 + vt
-    if (auto OwnerPtr = Owner.lock())
-    {
-        XMVECTOR vPosition = XMLoadFloat3(&OwnerPtr->GetTransform()->Position);
-        vPosition = XMVectorAdd(vPosition, XMVectorScale(vVelocity, DeltaTime));
+    //// 위치 갱신: x = x0 + vt
+    //if (auto OwnerPtr = Owner.lock())
+    //{
+    //    XMVECTOR vPosition = XMLoadFloat3(&OwnerPtr->GetTransform()->Position);
+    //    vPosition = XMVectorAdd(vPosition, XMVectorScale(vVelocity, DeltaTime));
 
-        Vector3 NewPosition;
-        XMStoreFloat3(&NewPosition, vPosition);
-        OwnerPtr->SetPosition(NewPosition);
-    }
+    //    Vector3 NewPosition;
+    //    XMStoreFloat3(&NewPosition, vPosition);
+    //    OwnerPtr->SetPosition(NewPosition);
+    //}
 
     // 결과 저장
     XMStoreFloat3(&Velocity, vVelocity);

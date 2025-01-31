@@ -10,6 +10,7 @@
 #include "GameObject.h"
 #include "Camera.h"
 #include "InputManager.h"
+#include "RigidBodyComponent.h"
 
 
 #define KEY_UP 'W'
@@ -160,6 +161,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
+	Character->SetupPyhsics();
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -199,22 +201,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				case(ACTION_MOVE_UP_P1) :
 				{
-					Character->ApplyForce(Vector3::Forward * 5.0f);
+					Character->ApplyForce(Vector3::Forward * 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_DOWN_P1):
 				{
-					Character->StartMove(-Vector3::Forward);
+					Character->ApplyForce(-Vector3::Forward * 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_RIGHT_P1):
 				{
-					Character->StartMove(Vector3::Right);
+					Character->ApplyForce(Vector3::Right* 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_LEFT_P1):
 				{
-					Character->StartMove(-Vector3::Right);
+					Character->ApplyForce(-Vector3::Right* 100.0f);
 					break;
 				}
 				case(ACTION_MOVE_STOP_P1):
@@ -346,8 +348,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region UI
 		// ImGui UI 
-		Vector3 CurrentVelo = Character->GetCurrentVelocity();
-		Vector3 TargetVelo = Character->GetTargetVelocity();
+		Vector3 CurrentVelo = Character->CurrentVelocity;
 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
 		ImGui::Text("bIs2D : %d" , Camera->bIs2D);
@@ -363,9 +364,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Text("PhysicsBased : %s", Character->bIsPhysicsSimulated ? "TRUE" : "FALSE");
 		ImGui::Text("bIsMove : %d", Character->bIsMoving);
-		ImGui::Text("TargetVelo : %.2f  %.2f  %.2f", TargetVelo.x,
-					TargetVelo.y,
-					TargetVelo.z);
 		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 					CurrentVelo.y,
 					CurrentVelo.z);
