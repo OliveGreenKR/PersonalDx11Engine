@@ -128,12 +128,27 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 
 	Vector3 Current = GetTransform()->Position;
 	Vector3 Delta = TargetPosition - Current;
-	if (Delta.LengthSquared() < KINDA_SMALL)
+
+	//정지
+	float RemainingDistance = Delta.Length();
+	if (RemainingDistance < KINDA_SMALL)
 	{
 		StopMoveImmediately();
 		return;
 	}
-	Vector3 NewPosition = Vector3::Lerp(Current, TargetPosition, DeltaTime);
+	// 이번 프레임에서의 이동 거리 계산 (등속 운동)
+	Vector3 NewPosition;
+
+	float MoveDistance = MaxSpeed * DeltaTime;
+	if (MoveDistance > RemainingDistance)
+	{
+		NewPosition = TargetPosition;
+	}
+	else
+	{
+		NewPosition = Current + Delta.GetNormalized() * MoveDistance;
+	}
+	 
 	SetPosition(NewPosition);
 	
 }
