@@ -1,5 +1,7 @@
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\BaseModel.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\BaseModel.obj
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\BoundingVolumes.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\BoundingVolumes.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\Camera.obj
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionComponent.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\CollisionComponent.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3D.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\D3D.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\D3DShader.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\ImGui\imgui.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\imgui.obj
@@ -15,4 +17,5 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Math.cpp;C:\Users\J
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\Model.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\GameObject.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\Renderer.obj
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RigidBodyComponent.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\RigidBodyComponent.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\Transform.obj

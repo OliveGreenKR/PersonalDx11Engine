@@ -53,6 +53,13 @@
     <ClCompile Include="InputManager.cpp">
       <Filter>Engine\Input</Filter>
     </ClCompile>
+    <ClCompile Include="RigidBodyComponent.cpp">
+      <Filter>Engine\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingVolumes.cpp" />
+    <ClCompile Include="CollisionComponent.cpp">
+      <Filter>Engine\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -96,6 +103,9 @@
     </Filter>
     <Filter Include="Engine\Delegate">
       <UniqueIdentifier>{bfc2cec4-294c-461a-bb81-22865ef0ab6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components">
+      <UniqueIdentifier>{1c245548-bed2-4957-800d-fb2e516feae0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +167,15 @@
     </ClInclude>
     <ClInclude Include="Delegate.h">
       <Filter>Engine\Delegate</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBodyComponent.h">
+      <Filter>Engine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionComponent.h">
+      <Filter>Engine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectComponentInterface.h">
+      <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

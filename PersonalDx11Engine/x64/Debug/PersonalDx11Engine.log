@@ -1,37 +1,4 @@
-﻿  Camera.cpp
-  main.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(91,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(94,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(97,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82): warning C4244:         with
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82): warning C4244:         [
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82): warning C4244:             _Ty=int
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82): warning C4244:         ]
-  (compiling source file 'main.cpp')
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xutility(403,82):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(155,16):
-          see reference to function template instantiation 'std::shared_ptr<UCamera> std::make_shared<UCamera,float,int,float,float>(float &&,int &&,float &&,float &&)' being compiled
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(2906,46):
-          see reference to function template instantiation 'std::_Ref_count_obj2<UCamera>::_Ref_count_obj2<_Ty,int,_Ty,_Ty>(_Ty &&,int &&,_Ty &&,_Ty &&)' being compiled
-          with
-          [
-              _Ty=float
-          ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(2095,18):
-          see reference to function template instantiation 'void std::_Construct_in_place<_Ty,float,int,float,float>(_Ty &,float &&,int &&,float &&,float &&) noexcept(false)' being compiled
-          with
-          [
-              _Ty=UCamera
-          ]
-  
-  GameObject.cpp
-  Renderer.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(46,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(60,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+﻿  CollisionComponent.cpp
+  Transform.cpp
   Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

@@ -128,7 +128,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BaseModel.cpp" />
+    <ClCompile Include="BoundingVolumes.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
@@ -144,10 +146,12 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
@@ -156,6 +160,8 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="ObjectComponentInterface.h" />
+    <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
