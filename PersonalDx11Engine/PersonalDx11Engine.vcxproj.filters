@@ -56,7 +56,6 @@
     <ClCompile Include="RigidBodyComponent.cpp">
       <Filter>Engine\Components</Filter>
     </ClCompile>
-    <ClCompile Include="BoundingVolumes.cpp" />
     <ClCompile Include="CollisionComponent.cpp">
       <Filter>Engine\Components</Filter>
     </ClCompile>
@@ -106,6 +105,9 @@
     </Filter>
     <Filter Include="Engine\Components">
       <UniqueIdentifier>{1c245548-bed2-4957-800d-fb2e516feae0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers">
+      <UniqueIdentifier>{f545c3d7-a84c-4cf8-ad2d-1b86e7083b88}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

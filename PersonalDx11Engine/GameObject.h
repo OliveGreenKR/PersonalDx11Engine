@@ -73,9 +73,11 @@ public:
 	bool bIsMoving = false;
 	bool bIsPhysicsSimulated = false;
 
+	void SetGravity(const bool InBool); 
+	void SetPhysics(const bool InBool); 
+	void SetFrictionKinetic(const float InValue);
+	void SetFrictionStatic(const float InValue);
 	bool bGravity = false;
-	float Mass = 1.0f;
-	float FrictionCoefficient = 0.5f;
 	float MaxSpeed = 5.0f; //must be positive
 	Vector3 CurrentVelocity = Vector3::Zero;
 
@@ -83,7 +85,7 @@ private:
 	Vector3 TargetPosition;
 #pragma endregion
 public:
-	void SetupPyhsics();
+	void InitializePhysics();
 	void ApplyForce(const Vector3& Force);
 	void ApplyImpulse(const Vector3& Impulse);
 

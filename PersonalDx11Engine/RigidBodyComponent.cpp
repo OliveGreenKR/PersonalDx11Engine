@@ -16,7 +16,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
     // SIMD 최적화를 위한 벡터 로드
     XMVECTOR vVelocity = XMLoadFloat3(&Velocity);
     XMVECTOR vAccumForce = XMLoadFloat3(&AccumulatedForce);
-    Vector3 gravity = GravityScale * Gravity * bUseGravity;
+    Vector3 gravity = GravityScale * Gravity * bGravity;
     XMVECTOR vGravity = XMLoadFloat3(&gravity);
 
     // 마찰력 계산 (v의 반대 방향)
@@ -25,7 +25,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
     {
         vFriction = XMVectorScale(
             XMVector3Normalize(XMVectorNegate(vVelocity)),
-            FrictionCoefficient
+            FrictionKinetic
         );
     }
 

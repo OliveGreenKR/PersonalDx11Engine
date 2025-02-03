@@ -128,7 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BaseModel.cpp" />
-    <ClCompile Include="BoundingVolumes.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="D3D.cpp" />

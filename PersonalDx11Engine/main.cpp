@@ -158,15 +158,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 
 	//Main GameObejct
+	auto Floor = UGameObject::Create(CubeModel);
+	Floor->SetScale({ 5.0f,0.1f,5.0f });
+	Floor->SetPosition({ 0,-1,0 });
+	Floor->InitializePhysics();
+	Floor->SetGravity(false);
+	Floor->bIsPhysicsSimulated = false;
+
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
-	Character->SetupPyhsics();
+	Character->InitializePhysics();
 	Character->bIsPhysicsSimulated = true;
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 0,0,0 });
+	Character2->InitializePhysics();
+	Character2->bIsPhysicsSimulated = true;
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
@@ -253,22 +262,50 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				case(ACTION_MOVE_UP_P2):
 				{
-					Character2->StartMove(Vector3::Forward);
+					if (EventData.bShift)
+					{
+						Character2->StartMove(Vector3::Forward);
+					}
+					else
+					{
+						Character2->ApplyForce(Vector3::Forward*100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_DOWN_P2):
 				{
-					Character2->StartMove(-Vector3::Forward);
+					if (EventData.bShift)
+					{
+						Character2->StartMove(-Vector3::Forward);
+					}
+					else
+					{
+						Character2->ApplyForce(-Vector3::Forward * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_RIGHT_P2):
 				{
-					Character2->StartMove(Vector3::Right);
+					if (EventData.bShift)
+					{
+						Character2->StartMove(Vector3::Right);
+					}
+					else
+					{
+						Character2->ApplyForce(Vector3::Right * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_LEFT_P2):
 				{
-					Character2->StartMove(-Vector3::Right);
+					if (EventData.bShift)
+					{
+						Character2->StartMove(-Vector3::Right);
+					}
+					else
+					{
+						Character2->ApplyForce(-Vector3::Right * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_STOP_P2):
@@ -348,6 +385,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Character->Tick(deltaTime);
 		Character2->Tick(deltaTime);
 		Camera->Tick(deltaTime);
+		//if (!Camera->IsInView(Character->GetTransform()->Position))
+		//{
+		//	Character->ApplyImpulse(-Vector3::Right * 5.0f);
+		//}
 #pragma endregion
 
 
@@ -359,11 +400,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 
+#pragma region UI
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
-#pragma region UI
 		// ImGui UI 
 		Vector3 CurrentVelo = Character->CurrentVelocity;
 
