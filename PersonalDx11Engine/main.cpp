@@ -96,6 +96,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	auto TTile = make_shared<ID3D11ShaderResourceView*>();
 	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE03, TTile.get()), "Texture Load Failed");
+
+	auto TRock = make_shared<ID3D11ShaderResourceView*>();
+	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE04, TRock.get()), "Texture Load Failed");
 	
 	auto TDefault = TAbstract;
 	
@@ -399,6 +402,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Render
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
+		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
 
 #pragma region UI
 		ImGui_ImplDX11_NewFrame();

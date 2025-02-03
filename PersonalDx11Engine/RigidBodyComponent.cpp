@@ -8,6 +8,32 @@ void URigidBodyComponent::Reset()
     AccumulatedForce = Vector3::Zero;
 }
 
+const Vector3& URigidBodyComponent::GetCenterOfMass()
+{
+    //현재는 오너의 위치를 무게중심이라고 가정.
+    auto OwnerPtr = Owner.lock();
+    assert(OwnerPtr);
+    return OwnerPtr->GetTransform()->Position;
+}
+
+void URigidBodyComponent::ApplyLinearForce(const Vector3& Force)
+{
+    XMVECTOR vForce = XMLoadFloat3(&Force);
+    XMVECTOR vAccumForce = XMLoadFloat3(&AccumulatedForce);
+    XMStoreFloat3(&AccumulatedForce, XMVectorAdd(vAccumForce, vForce));
+}
+
+void URigidBodyComponent::ApplyTorque(const Vector3& Torque)
+{
+    XMVECTOR vTorque = XMLoadFloat3(&Torque);
+    XMVECTOR vAccumTorque = XMLoadFloat3(&AccumulatedTorque);
+    XMStoreFloat3(&AccumulatedTorque, XMVectorAdd(vAccumTorque, vTorque));
+}
+
+void URigidBodyComponent::ClampVelocities()
+{
+}
+
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
     if (!bIsSimulatedPhysics)
@@ -15,75 +41,101 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
     // SIMD 최적화를 위한 벡터 로드
     XMVECTOR vVelocity = XMLoadFloat3(&Velocity);
+    XMVECTOR vAngularVel = XMLoadFloat3(&AngularVelocity);
     XMVECTOR vAccumForce = XMLoadFloat3(&AccumulatedForce);
-    Vector3 gravity = GravityScale * Gravity * bGravity;
-    XMVECTOR vGravity = XMLoadFloat3(&gravity);
+    XMVECTOR vAccumTorque = XMLoadFloat3(&AccumulatedTorque);
 
-    // 마찰력 계산 (v의 반대 방향)
-    XMVECTOR vFriction = XMVectorZero();
-    if (XMVectorGetX(XMVector3LengthSq(vVelocity)) > KINDA_SMALL)
-    {
-        vFriction = XMVectorScale(
-            XMVector3Normalize(XMVectorNegate(vVelocity)),
-            FrictionKinetic
-        );
-    }
+    // 가속도 계산 (a = F/m)
+    XMVECTOR vAcceleration = XMVectorScale(vAccumForce, 1.0f / Mass);
+    XMVECTOR vAngularAccel = XMVectorScale(vAccumTorque, 1.0f / RotationalInertia);
 
-    // 가속도 계산: a = F/m
-    XMVECTOR vAcceleration = XMVectorAdd(
-        XMVectorScale(vAccumForce, 1.0f / Mass),  // 외력에 의한 가속도
-        XMVectorAdd(vGravity, vFriction)          // 중력 + 마찰력
-    );
+    // 속도 갱신
+    vVelocity = XMVectorAdd(vVelocity, XMVectorScale(vAcceleration, DeltaTime));
+    vAngularVel = XMVectorAdd(vAngularVel, XMVectorScale(vAngularAccel, DeltaTime));
 
-    // 속도 갱신: v = v0 + at
-    vVelocity = XMVectorAdd(
-        vVelocity,
-        XMVectorScale(vAcceleration, DeltaTime)
-    );
+    // 속도 제한
+    XMStoreFloat3(&Velocity, vVelocity);
+    XMStoreFloat3(&AngularVelocity, vAngularVel);
+    ClampVelocities();
+    vVelocity = XMLoadFloat3(&Velocity);
+    vAngularVel = XMLoadFloat3(&AngularVelocity);
 
-    // 최대 속도 제한
-    float CurrentSpeedSq = XMVectorGetX(XMVector3LengthSq(vVelocity));
-    if (CurrentSpeedSq > MaxSpeed * MaxSpeed)
-    {
-        vVelocity = XMVectorScale(
-            XMVector3Normalize(vVelocity),
-            MaxSpeed
-        );
-    }
-
-    // 속도가 매우 작으면 정지
-    if (CurrentSpeedSq < KINDA_SMALL)
-    {
-        vVelocity = XMVectorZero();
-    }
-
-    // 위치 갱신: x = x0 + vt
+    // 상태 업데이트
     if (auto OwnerPtr = Owner.lock())
     {
+        // 위치 업데이트
         XMVECTOR vPosition = XMLoadFloat3(&OwnerPtr->GetTransform()->Position);
         vPosition = XMVectorAdd(vPosition, XMVectorScale(vVelocity, DeltaTime));
 
-        Vector3 NewPosition;
-        XMStoreFloat3(&NewPosition, vPosition);
-        OwnerPtr->SetPosition(NewPosition);
+        // 회전 업데이트 (각속도로부터 쿼터니언 변화 계산)
+        float angularSpeed = XMVectorGetX(XMVector3Length(vAngularVel));
+        if (angularSpeed > KINDA_SMALL)
+        {
+            XMVECTOR rotationAxis = XMVector3Normalize(vAngularVel);
+            XMVECTOR deltaRotation = XMQuaternionRotationNormal(rotationAxis, angularSpeed * DeltaTime);
+            XMVECTOR currentRotation = XMLoadFloat4(&OwnerPtr->GetTransform()->Rotation);
+            XMVECTOR newRotation = XMQuaternionMultiply(currentRotation, deltaRotation);
+            newRotation = XMQuaternionNormalize(newRotation);
+
+            // 결과 저장
+            Vector3 newPosition;
+            Quaternion finalRotation;
+            XMStoreFloat3(&newPosition, vPosition);
+            XMStoreFloat4(&finalRotation, newRotation);
+
+            OwnerPtr->SetPosition(newPosition);
+            OwnerPtr->SetRotationQuaternion(finalRotation);
+        }
     }
 
-    // 결과 저장
-    XMStoreFloat3(&Velocity, vVelocity);
-    AccumulatedForce = Vector3::Zero; 
+    // 누적값 초기화
+    AccumulatedForce = Vector3::Zero;
+    AccumulatedTorque = Vector3::Zero;
 
 }
 
-void URigidBodyComponent::ApplyForce(const Vector3& Force)
+void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& ApplyPosition)
 {
-    XMVECTOR vForce = XMLoadFloat3(&Force);
-    XMVECTOR vAccumForce = XMLoadFloat3(&AccumulatedForce);
-    XMStoreFloat3(&AccumulatedForce, XMVectorAdd(vAccumForce, vForce));
+    if (!bIsSimulatedPhysics) 
+        return;
+
+    // 무게중심 기준 위치로 변환
+    Vector3 relativePos = ApplyPosition - GetCenterOfMass();
+
+    // 선형력 적용
+    ApplyLinearForce(Force);
+
+    // 위치에 따른 회전력 계산 및 적용
+    if (relativePos.LengthSquared() > KINDA_SMALL)
+    {
+        Vector3 torque = Vector3::Cross(relativePos, Force);
+        ApplyTorque(torque);
+    }
 }
 
-void URigidBodyComponent::ApplyImpulse(const Vector3& InImpulse)
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Position)
 {
-    XMVECTOR vImpulse = XMLoadFloat3(&InImpulse);
+    if (!bIsSimulatedPhysics) return;
+
+    // 즉각적인 선형 속도 변화
+    XMVECTOR vImpulse = XMLoadFloat3(&Impulse);
     XMVECTOR vVelocity = XMLoadFloat3(&Velocity);
     XMStoreFloat3(&Velocity, XMVectorAdd(vVelocity, XMVectorScale(vImpulse, 1.0f / Mass)));
+
+    // 무게중심 기준 위치로 변환
+    Vector3 relativePos = Position - GetCenterOfMass();
+
+    // 위치가 다르다면 각운동량 변화
+    if (relativePos.LengthSquared() > KINDA_SMALL)
+    {
+        Vector3 angularImpulse = Vector3::Cross(relativePos, Impulse);
+        XMVECTOR vAngularImpulse = XMLoadFloat3(&angularImpulse);
+        XMVECTOR vAngularVel = XMLoadFloat3(&AngularVelocity);
+        XMStoreFloat3(&AngularVelocity,
+                      XMVectorAdd(vAngularVel,
+                                  XMVectorScale(vAngularImpulse, 1.0f / RotationalInertia)));
+    }
+
+    ClampVelocities();
 }
