@@ -35,8 +35,6 @@ public:
     void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
     void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
     void SetGravityDirection(const Vector3& InGravity) { Gravity = InGravity; }
-    void SetGravity(bool bEnable) { bGravity = bEnable; }
-    void SetPhysics(bool bEnable) { bIsSimulatedPhysics = bEnable; }
 
     const Vector3& GetVelocity() const { return Velocity; }
     const Vector3& GetAngularVelocity() const { return AngularVelocity; }
@@ -59,10 +57,11 @@ private:
     void ApplyTorque(const Vector3& Torque);
     void ClampVelocities();
 
-private:
+public:
     bool bGravity = false;
     bool bIsSimulatedPhysics = true;
 
+private:
     //physics
     float Mass = 1.0f;
     float MaxSpeed = 50.0f;

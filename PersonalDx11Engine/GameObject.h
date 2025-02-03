@@ -71,15 +71,20 @@ public:
 public:
 	//movement test
 	bool bIsMoving = false;
-	bool bIsPhysicsSimulated = false;
 
-	void SetGravity(const bool InBool); 
-	void SetPhysics(const bool InBool); 
-	void SetFrictionKinetic(const float InValue);
-	void SetFrictionStatic(const float InValue);
-	bool bGravity = false;
+    bool IsPhysicsSimulated() const;
+    bool IsGravity() const;
+   
+
+    void SetGravity(const bool InBool);
+    void SetPhysics(const bool InBool);
+    void SetFrictionKinetic(const float InValue);
+    void SetFrictionStatic(const float InValue);
+
+    Vector3 GetCurrentVelocity() const;
+
+
 	float MaxSpeed = 5.0f; //must be positive
-	Vector3 CurrentVelocity = Vector3::Zero;
 
 private:
 	Vector3 TargetPosition;

@@ -32,6 +32,19 @@ void URigidBodyComponent::ApplyTorque(const Vector3& Torque)
 
 void URigidBodyComponent::ClampVelocities()
 {
+    // 선형 속도 제한
+    float speedSq = Velocity.LengthSquared();
+    if (speedSq > MaxSpeed * MaxSpeed)
+    {
+        Velocity = Velocity.GetNormalized() * MaxSpeed;
+    }
+
+    // 각속도 제한
+    float angularSpeedSq = AngularVelocity.LengthSquared();
+    if (angularSpeedSq > MaxAngularSpeed * MaxAngularSpeed)
+    {
+        AngularVelocity = AngularVelocity.GetNormalized() * MaxAngularSpeed;
+    }
 }
 
 void URigidBodyComponent::Tick(const float DeltaTime)

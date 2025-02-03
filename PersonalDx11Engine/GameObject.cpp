@@ -87,11 +87,9 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 	//TODO:: ComponentsInterface  + vector
 	//find all Tickable compo and call Tick
 	auto RigidPtr = RigidBody.get();
-	RigidPtr->SetPhysics(bIsPhysicsSimulated);
 	if (RigidPtr)
 	{
 		RigidPtr->Tick(DeltaTime);
-		CurrentVelocity = RigidPtr->GetVelocity();
 	}
 }
 
@@ -153,14 +151,24 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	
 }
 
+bool UGameObject::IsPhysicsSimulated() const
+{
+	return RigidBody.get()->bIsSimulatedPhysics;
+}
+
+bool UGameObject::IsGravity() const
+{
+	return RigidBody.get()->bGravity;
+}
+
 void UGameObject::SetGravity(const bool InBool)
 {
-	RigidBody.get()->SetGravity(InBool);
+	RigidBody.get()->bGravity = InBool;
 }
 
 void UGameObject::SetPhysics(const bool InBool)
 {
-	RigidBody.get()->SetPhysics(InBool);
+	RigidBody.get()->bIsSimulatedPhysics = InBool;
 }
 
 void UGameObject::SetFrictionKinetic(const float InValue)
@@ -173,15 +181,20 @@ void UGameObject::SetFrictionStatic(const float InValue)
 	RigidBody.get()->SetFrictionStatic(InValue);
 }
 
+Vector3 UGameObject::GetCurrentVelocity() const
+{
+	return RigidBody.get()->GetVelocity();
+}
+
 void UGameObject::InitializePhysics()
 {
 	auto SelfPtr = shared_from_this();
 	if (auto RigidPtr = RigidBody.get())
 	{
 		RigidPtr->SetOwner(SelfPtr);
-		RigidPtr->SetPhysics(bIsPhysicsSimulated);
+		RigidPtr->bIsSimulatedPhysics = true;
 		RigidPtr->SetMaxSpeed(MaxSpeed);
-		RigidPtr->SetGravity(bGravity); //gravity not yet
+		RigidPtr->bGravity = false;
 	}
 }
 
@@ -200,8 +213,4 @@ void UGameObject::ApplyImpulse(const Vector3& Impulse)
 	{
 		RigidBodyPtr->ApplyImpulse(Impulse);
 	}
-}
-
-inline void SetFrictionKinetic(const float InValue)
-{
 }

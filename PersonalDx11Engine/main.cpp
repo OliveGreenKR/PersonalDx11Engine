@@ -166,19 +166,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Floor->SetPosition({ 0,-1,0 });
 	Floor->InitializePhysics();
 	Floor->SetGravity(false);
-	Floor->bIsPhysicsSimulated = false;
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->InitializePhysics();
-	Character->bIsPhysicsSimulated = true;
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 0,0,0 });
 	Character2->InitializePhysics();
-	Character2->bIsPhysicsSimulated = true;
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
@@ -388,10 +385,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Character->Tick(deltaTime);
 		Character2->Tick(deltaTime);
 		Camera->Tick(deltaTime);
-		//if (!Camera->IsInView(Character->GetTransform()->Position))
-		//{
-		//	Character->ApplyImpulse(-Vector3::Right * 5.0f);
-		//}
 #pragma endregion
 
 
@@ -409,8 +402,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 		// ImGui UI 
-		Vector3 CurrentVelo = Character->CurrentVelocity;
-
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
 		ImGui::Text("bIs2D : %d" , Camera->bIs2D);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
@@ -421,10 +412,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					Camera->GetTransform()->GetEulerRotation().z);
 		ImGui::End();
 
+		Vector3 CurrentVelo = Character->GetCurrentVelocity();
+		bool bGravity = Character->IsGravity();
+		bool bPhysics = Character->IsPhysicsSimulated();
 		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-		ImGui::Checkbox("bPhysicsBased", &Character->bIsPhysicsSimulated);
+		ImGui::Checkbox("bPhysicsBased", &bPhysics);
+		ImGui::Checkbox("bGravity", &bGravity);
+		Character->SetGravity(bGravity);
+		Character->SetPhysics(bPhysics);
 		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 					CurrentVelo.y,
 					CurrentVelo.z);
@@ -437,10 +434,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::End();
 
+		CurrentVelo = Character2->GetCurrentVelocity();
+		bool bGravity2 = Character2->IsGravity();
+		bool bPhysics2 = Character2->IsPhysicsSimulated();
 		ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-		ImGui::Checkbox("bPhysicsBased", &Character2->bIsPhysicsSimulated);
+		ImGui::Checkbox("bPhysicsBased", &bPhysics2);
+		ImGui::Checkbox("bGravity", &bGravity2);
+		Character2->SetGravity(bGravity2);
+		Character2->SetPhysics(bPhysics2);
 		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 					CurrentVelo.y,
 					CurrentVelo.z);
