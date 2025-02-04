@@ -154,7 +154,7 @@
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetectionSystem.h" />
     <ClInclude Include="CollisionShape.h" />
-    <ClInclude Include="CollisionSystemDefines.h" />
+    <ClInclude Include="CollisionDefines.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />

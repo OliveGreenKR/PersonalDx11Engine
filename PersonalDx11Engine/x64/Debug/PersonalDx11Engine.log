@@ -1,4 +1,4 @@
 ﻿  CollisionComponent.cpp
-  RigidBodyComponent.cpp
+  CollisionDetectionSystem.cpp
   Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

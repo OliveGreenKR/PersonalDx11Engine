@@ -3,7 +3,7 @@
 #include <memory>
 #include "Delegate.h"
 #include "Transform.h"
-#include "CollisionSystemDefines.h"
+#include "CollisionDefines.h"
 
 
 #define OUT

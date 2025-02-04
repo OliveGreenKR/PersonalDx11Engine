@@ -191,7 +191,7 @@
     <ClInclude Include="CollisionShape.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionSystemDefines.h">
+    <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
   </ItemGroup>
