@@ -54,10 +54,13 @@
       <Filter>Engine\Input</Filter>
     </ClCompile>
     <ClCompile Include="RigidBodyComponent.cpp">
-      <Filter>Engine\Components</Filter>
+      <Filter>Engine\Components\RigidBody</Filter>
     </ClCompile>
     <ClCompile Include="CollisionComponent.cpp">
-      <Filter>Engine\Components</Filter>
+      <Filter>Engine\Components\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionDetection.cpp">
+      <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +111,12 @@
     </Filter>
     <Filter Include="Engine\Managers">
       <UniqueIdentifier>{f545c3d7-a84c-4cf8-ad2d-1b86e7083b88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\RigidBody">
+      <UniqueIdentifier>{97afcc3b-a5d4-4070-a7ff-2ae2714cdd63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\Collision">
+      <UniqueIdentifier>{f8174b14-3bde-47c9-8241-dff6b2941076}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -171,10 +180,13 @@
       <Filter>Engine\Delegate</Filter>
     </ClInclude>
     <ClInclude Include="RigidBodyComponent.h">
-      <Filter>Engine\Components</Filter>
+      <Filter>Engine\Components\RigidBody</Filter>
     </ClInclude>
     <ClInclude Include="CollisionComponent.h">
-      <Filter>Engine\Components</Filter>
+      <Filter>Engine\Components\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDetection.h">
+      <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
