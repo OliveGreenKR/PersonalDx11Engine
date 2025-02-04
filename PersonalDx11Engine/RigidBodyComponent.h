@@ -3,19 +3,7 @@
 #include "Math.h"
 
 class UGameObject;
- 
-// 충돌 형태를 정의하는 열거형
-enum class ECollisionShape
-{
-    Box,
-    Sphere,
-};
 
-//객체의 물리적 크기를 담당하는 클래스
-class BoundingVolume
-{
-
-};
 
 // 물리 속성을 관리하는 RigidBody 컴포넌트
 //Force를 통한 단일 외부 인터페이스를 이용해 객체의 상태를 다룰 에정.
