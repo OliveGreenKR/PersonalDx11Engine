@@ -72,16 +72,16 @@ public:
 	//movement test
 	bool bIsMoving = false;
 
-    bool IsPhysicsSimulated() const;
-    bool IsGravity() const;
+	bool IsPhysicsSimulated() const;
+	bool IsGravity() const;
    
 
-    void SetGravity(const bool InBool);
-    void SetPhysics(const bool InBool);
-    void SetFrictionKinetic(const float InValue);
-    void SetFrictionStatic(const float InValue);
+	void SetGravity(const bool InBool);
+	void SetPhysics(const bool InBool);
+	void SetFrictionKinetic(const float InValue);
+	void SetFrictionStatic(const float InValue);
 
-    Vector3 GetCurrentVelocity() const;
+	Vector3 GetCurrentVelocity() const;
 
 
 	float MaxSpeed = 5.0f; //must be positive
@@ -91,8 +91,7 @@ private:
 #pragma endregion
 public:
 	void InitializePhysics();
-	void ApplyForce(const Vector3& Force);
-	void ApplyImpulse(const Vector3& Impulse);
+	class URigidBodyComponent* GetRigidBody() { return RigidBody.get(); }
 
 protected:
 	std::shared_ptr<class URigidBodyComponent> RigidBody;

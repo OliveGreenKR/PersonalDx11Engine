@@ -91,20 +91,20 @@ void URigidBodyComponent::Tick(const float DeltaTime)
             newRotation = XMQuaternionNormalize(newRotation);
 
             // 결과 저장
-            Vector3 newPosition;
             Quaternion finalRotation;
-            XMStoreFloat3(&newPosition, vPosition);
             XMStoreFloat4(&finalRotation, newRotation);
-
-            OwnerPtr->SetPosition(newPosition);
             OwnerPtr->SetRotationQuaternion(finalRotation);
         }
+
+        Vector3 newPosition;
+        XMStoreFloat3(&newPosition, vPosition);
+        OwnerPtr->SetPosition(newPosition);
     }
+  
 
     // 누적값 초기화
     AccumulatedForce = Vector3::Zero;
     AccumulatedTorque = Vector3::Zero;
-
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& ApplyPosition)
@@ -125,7 +125,6 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& ApplyP
         ApplyTorque(torque);
     }
 }
-
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Position)
 {

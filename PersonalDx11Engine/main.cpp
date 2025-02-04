@@ -215,7 +215,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						Character->StartMove(Vector3::Forward);
 					}
-					Character->ApplyForce(Vector3::Forward * 100.0f);
+					else
+					{
+						Character->GetRigidBody()->ApplyForce(Vector3::Forward * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_DOWN_P1):
@@ -224,7 +227,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						Character->StartMove(-Vector3::Forward);
 					}
-					Character->ApplyForce(-Vector3::Forward * 100.0f);
+					else
+					{
+						Character->GetRigidBody()->ApplyForce(-Vector3::Forward * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_RIGHT_P1):
@@ -233,7 +239,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						Character->StartMove(Vector3::Right);
 					}
-					Character->ApplyForce(Vector3::Right* 100.0f);
+					else
+					{
+						Character->GetRigidBody()->ApplyForce(Vector3::Right * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_LEFT_P1):
@@ -242,7 +251,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						Character->StartMove(-Vector3::Right);
 					}
-					Character->ApplyForce(-Vector3::Right* 100.0f);
+					else
+					{
+						Character->GetRigidBody()->ApplyForce(-Vector3::Right * 100.0f);
+					}
 					break;
 				}
 				case(ACTION_MOVE_STOP_P1):
@@ -268,7 +280,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(Vector3::Forward*100.0f);
+						Character2->GetRigidBody()->ApplyForce(Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -280,7 +292,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(-Vector3::Forward * 100.0f);
+						Character2->GetRigidBody()->ApplyForce(-Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -292,7 +304,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(Vector3::Right * 100.0f);
+						Character2->GetRigidBody()->ApplyForce(Vector3::Right * 100.0f);
 					}
 					break;
 				}
@@ -304,7 +316,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(-Vector3::Right * 100.0f);
+						Character2->GetRigidBody()->ApplyForce(-Vector3::Right * 100.0f);
 					}
 					break;
 				}

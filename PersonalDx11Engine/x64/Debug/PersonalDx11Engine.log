@@ -6,7 +6,4 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(92,2): war
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(95,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(98,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(101,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-  GameObject.cpp
-  RigidBodyComponent.cpp
-  Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

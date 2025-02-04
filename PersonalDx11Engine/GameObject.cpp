@@ -197,20 +197,3 @@ void UGameObject::InitializePhysics()
 		RigidPtr->bGravity = false;
 	}
 }
-
-void UGameObject::ApplyForce(const Vector3& Force)
-{
-
-	if (auto RigidBodyPtr = RigidBody.get())
-	{
-		RigidBodyPtr->ApplyForce(Force);
-	}
-}
-
-void UGameObject::ApplyImpulse(const Vector3& Impulse)
-{
-	if (auto RigidBodyPtr = RigidBody.get())
-	{
-		RigidBodyPtr->ApplyImpulse(Impulse);
-	}
-}
