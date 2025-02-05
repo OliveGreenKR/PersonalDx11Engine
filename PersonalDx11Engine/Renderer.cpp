@@ -55,12 +55,14 @@ void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject, 
 	RenderModel(InObject->GetModel(), InShader, customSampler);
 }
 
-void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, const Vector4& InColor, ID3D11SamplerState* InCustomSampler)
+void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 {
 	assert(InObject, InShader);
-	FDebugBufferData DebugBufferData(InColor);
-	InShader->BindColor(GetDeviceContext(), DebugBufferData);
+	Vector4 Color;
+	Color = InObject->bDebug ? InObject->GetDebugColor() : Color::White();
+	FDebugBufferData DebugBufferData(Color);
 
+	InShader->BindColor(GetDeviceContext(), DebugBufferData);
 	if (InTexture)
 	{
 		InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);

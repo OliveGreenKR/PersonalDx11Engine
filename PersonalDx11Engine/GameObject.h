@@ -1,7 +1,7 @@
 #pragma once
 #include "Transform.h"
 #include <memory>
-
+#include "Color.h"
 
 using namespace std;
 
@@ -89,10 +89,23 @@ public:
 private:
 	Vector3 TargetPosition;
 #pragma endregion
+#pragma region Physics
 public:
 	void InitializePhysics();
 	class URigidBodyComponent* GetRigidBody() { return RigidBody.get(); }
 
 protected:
 	std::shared_ptr<class URigidBodyComponent> RigidBody;
+#pragma endregion
+
+#pragma region Debug
+public:
+	bool bDebug = false;
+
+	void SetDebugColor(const Vector4& InColor) { DebugColor = InColor; }
+	Vector4 GetDebugColor() const  { return DebugColor; }
+
+protected:
+	Vector4 DebugColor = Color::White();
+#pragma endregion
 };

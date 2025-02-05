@@ -167,6 +167,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->InitializePhysics();
+	Character->SetDebugColor(Color::Red());
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -401,8 +402,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get(),Color::Yellow());
-		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get(),Color::Green());
+		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
+		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
 #pragma region UI
 		ImGui_ImplDX11_NewFrame();
@@ -410,7 +411,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::NewFrame();
 		// ImGui UI 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
-		ImGui::Text("bIs2D : %d" , Camera->bIs2D);
+		ImGui::Checkbox("bIs2" , &Camera->bIs2D);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
 					Camera->GetTransform()->Position.y,
 					Camera->GetTransform()->Position.z);
@@ -425,6 +426,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+		ImGui::Checkbox("bDebug", &Character->bDebug);
 		ImGui::Checkbox("bPhysicsBased", &bPhysics);
 		ImGui::Checkbox("bGravity", &bGravity);
 		Character->SetGravity(bGravity);
@@ -447,6 +449,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
 		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 		ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+		ImGui::Checkbox("bDebug", &Character2->bDebug);
 		ImGui::Checkbox("bPhysicsBased", &bPhysics2);
 		ImGui::Checkbox("bGravity", &bGravity2);
 		Character2->SetGravity(bGravity2);
