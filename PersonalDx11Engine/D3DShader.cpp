@@ -150,6 +150,11 @@ void UShader::BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& 
 	UpdateConstantBuffer<FMatrixBufferData>(DeviceContext, BufferData, EBufferSlot::Matrix);
 }
 
+void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& BufferData)
+{
+	UpdateConstantBuffer<FDebugBufferData>(DeviceContext, BufferData, EBufferSlot::DebugColor);
+}
+
 void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
 {
 	// 새로운 샘플러 설정

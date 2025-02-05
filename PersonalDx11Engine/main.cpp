@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "InputManager.h"
 #include "RigidBodyComponent.h"
+#include "Color.h"
 
 
 #define KEY_UP 'W'
@@ -80,7 +81,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-
 
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
@@ -400,18 +400,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//before render
 		Renderer->BeforeRender();
 
-		FDebugColorBufferData BufferData(1, 1, 1, 1);
-		FDebugColorBufferData BufferDataGreen(0, 1, 0, 1);
-
 		//Render
-		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferDataGreen, EBufferSlot::DebugColor);
-		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
-		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferData, EBufferSlot::DebugColor);
-		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
-		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferData, EBufferSlot::DebugColor);
+		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get(),Color::Yellow());
+		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get(),Color::Green());
 		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
-
-
 #pragma region UI
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();

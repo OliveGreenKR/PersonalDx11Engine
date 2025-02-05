@@ -161,6 +161,7 @@
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Frustum.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />

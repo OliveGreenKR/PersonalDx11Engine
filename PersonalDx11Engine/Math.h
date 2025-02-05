@@ -979,8 +979,4 @@ using Matrix36 = DirectX::XMFLOAT3X3;
 // not SIMD Matrix types
 using Matrix64 = DirectX::XMFLOAT4X4;
 
-// Color type
-using Color = Vector4;   // RGBA stored as XMFLOAT4
-
-
 
