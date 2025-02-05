@@ -1,4 +1,20 @@
-﻿  CollisionComponent.cpp
-  CollisionDetectionSystem.cpp
+﻿  Camera.cpp
+  CollisionComponent.cpp
+  CollisionDetectionSubSystem.cpp
+  CollisionManager.cpp
+  GameObject.cpp
+  Renderer.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(46,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Renderer.cpp(60,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+  RigidBodyComponent.cpp
+  Transform.cpp
+  main.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(92,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(95,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(98,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(101,2): warning C4002: too many arguments for function-like macro invocation 'assert'
   Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

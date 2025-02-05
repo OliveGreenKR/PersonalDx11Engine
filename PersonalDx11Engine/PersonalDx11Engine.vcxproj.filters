@@ -59,8 +59,11 @@
     <ClCompile Include="CollisionComponent.cpp">
       <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionDetectionSystem.cpp">
+    <ClCompile Include="CollisionDetectionSubSystem.cpp">
       <Filter>Engine\Components\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Engine\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -185,14 +188,14 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionDetectionSystem.h">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionShape.h">
+    <ClInclude Include="CollisionDetectionSubSystem.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
     <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Components\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Engine\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

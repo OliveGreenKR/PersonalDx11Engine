@@ -72,6 +72,22 @@ void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
     Rotation.Normalize();
 }
 
+FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha)
+{
+    FTransform Result;
+
+    // 위치 선형 보간
+    Result.Position = Vector3::Lerp(Start.Position, End.Position, Alpha);
+
+    // 회전 구면 선형 보간
+    Result.Rotation = Vector4::Slerp(Start.Rotation, End.Rotation, Alpha);
+
+    // 스케일 선형 보간
+    Result.Scale = Vector3::Lerp(Start.Scale, End.Scale, Alpha);
+
+    return Result;
+}
+
 Matrix FTransform::GetTranslationMatrix() const
 {
     DirectX::XMVECTOR VPosition = DirectX::XMLoadFloat3(&Position);

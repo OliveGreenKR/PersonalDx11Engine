@@ -130,7 +130,8 @@
     <ClCompile Include="BaseModel.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
-    <ClCompile Include="CollisionDetectionSystem.cpp" />
+    <ClCompile Include="CollisionDetectionSubSystem.cpp" />
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
@@ -152,9 +153,9 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionComponent.h" />
-    <ClInclude Include="CollisionDetectionSystem.h" />
-    <ClInclude Include="CollisionShape.h" />
+    <ClInclude Include="CollisionDetectionSubSystem.h" />
     <ClInclude Include="CollisionDefines.h" />
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />

@@ -19,6 +19,7 @@ struct FTransform
 	void AddRotation(const Quaternion& InQuaternion);
 	void RotateAroundAxis(const Vector3& InAxis, float AngleDegrees);
 
+	static FTransform  InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha);
 public:
 	Vector3 Position = Vector3(0.0f, 0.0f, 0.0f);
 	//radian angles, {Pitch,Yaw,Roll}
