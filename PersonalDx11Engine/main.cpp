@@ -104,24 +104,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	//Shader
 	auto Shader = make_unique<UShader>();
-	D3D11_INPUT_ELEMENT_DESC layout[] =
+	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
 	{
 		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
 		// InputSlotClass,InstanceDataStepRate
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
+	auto DebugShader = make_unique<UShader>();
 
 	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
 
-	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, layout, ARRAYSIZE(layout));
+	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, textureShaderLayout, ARRAYSIZE(textureShaderLayout));
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
 	Shader->BindTexture(Renderer->GetDeviceContext(), *TDefault.get(), ETextureSlot::Albedo); //defaultTexure
-
 
 	// 여기에서 ImGui를 생성합니다.
 	IMGUI_CHECKVERSION();
@@ -404,10 +400,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//before render
 		Renderer->BeforeRender();
 
+		FDebugColorBufferData BufferData(1, 1, 1, 1);
+		FDebugColorBufferData BufferDataGreen(0, 1, 0, 1);
+
 		//Render
+		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferDataGreen, EBufferSlot::DebugColor);
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
+		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferData, EBufferSlot::DebugColor);
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
+		Shader->UpdateConstantBuffer(Renderer->GetDeviceContext(), BufferData, EBufferSlot::DebugColor);
 		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
+
 
 #pragma region UI
 		ImGui_ImplDX11_NewFrame();

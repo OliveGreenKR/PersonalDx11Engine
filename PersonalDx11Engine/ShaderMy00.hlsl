@@ -1,11 +1,16 @@
 Texture2D shaderTexture : register(t0);
 SamplerState SampleType : register(s0);
-
+//vertex 쉐이더에서 반드시 모든 컨스탄틉 버퍼를 참조해야 정상 동작함
 cbuffer MATRIX_BUFFER : register(b0)
 {
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
+};
+
+cbuffer DEBUG_BUFFER : register(b1)
+{
+    float4 debugColor;
 };
 
 struct VS_INPUT
@@ -18,7 +23,7 @@ struct PS_INPUT
 {
     float4 position : SV_POSITION; // Transformed position to pass to the pixel shader
     float2 tex : TEXCOORD0;
-    float3 debugValues : TEXCOORD1;
+    float4 debugValues : TEXCOORD1;
 };
 
 PS_INPUT mainVS(VS_INPUT input)
@@ -35,22 +40,19 @@ PS_INPUT mainVS(VS_INPUT input)
     float4 projPos = output.position;
     
     output.tex = input.tex;
-    
-    output.debugValues.x = viewPos.z;
-    output.debugValues.y = worldPos.z;
-    output.debugValues.z = projPos.z;
-    
+    output.debugValues = debugColor;
+ 
     return output;
 }
 
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float4 outputColor;
-
+    float4 color = input.debugValues;
     float4 textureColor = shaderTexture.Sample(SampleType, input.tex);
-    outputColor = textureColor;
-    //float r = (input.debugValues.y - 0) / 30.0f;
-    //outputColor = float4(input.debugValues.y, 0,0,1.0f);
+    
+    // 디버그 컬러와 텍스처 색상을 혼합
+    outputColor = textureColor * color;
     
     return outputColor;
     

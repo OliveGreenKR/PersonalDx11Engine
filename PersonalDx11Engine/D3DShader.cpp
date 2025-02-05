@@ -31,7 +31,7 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 	assert(SUCCEEDED(result), "input layout create failed.");
 		
 
-	//Create ConstantBuffer
+	//Create ConstantBuffer - Only vertex reference
 	ID3D11ShaderReflection* Reflector = nullptr;
 	result = D3DReflect(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&Reflector);
 
@@ -69,7 +69,6 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 		}
 		Reflector->Release();
 	}
-
 
 	VSBlob->Release();
 	PSBlob->Release();

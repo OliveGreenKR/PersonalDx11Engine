@@ -21,6 +21,16 @@ struct alignas(16) FMatrixBufferData
 		World(world), View(view), Projection(projection) {};
 };
 
+struct alignas(16) FDebugColorBufferData
+{
+	XMFLOAT4 DebugColor = XMFLOAT4(1, 1, 1, 1);
+	FDebugColorBufferData() = default;
+	FDebugColorBufferData(float r, float g, float b, float a) 
+	{
+		DebugColor = XMFLOAT4(r, g, b, a);
+	};
+};
+
 enum class ETextureSlot
 {
 	Albedo = 0,
@@ -32,6 +42,7 @@ enum class ETextureSlot
 enum class EBufferSlot
 {
 	Matrix = 0,
+	DebugColor,
 	Max
 };
 /// <summary>
@@ -55,7 +66,7 @@ public:
 	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
 	__forceinline const bool IsInitialized() const { return bIsInitialized; }
 
-private:
+public:
 	template<typename T>
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
 
