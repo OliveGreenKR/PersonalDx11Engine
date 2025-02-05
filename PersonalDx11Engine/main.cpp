@@ -411,7 +411,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::NewFrame();
 		// ImGui UI 
 		ImGui::Begin("Camera", nullptr, UIWindowFlags);
-		ImGui::Checkbox("bIs2" , &Camera->bIs2D);
+		ImGui::Checkbox("bIs2D" , &Camera->bIs2D);
 		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
 					Camera->GetTransform()->Position.y,
 					Camera->GetTransform()->Position.z);

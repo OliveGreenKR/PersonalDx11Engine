@@ -111,12 +111,6 @@ void UGameObject::StopMove()
 void UGameObject::StopMoveImmediately()
 {
 	bIsMoving = false;
-	////for test, stop force work
-	//if (auto RigidBodyPtr = RigidBody.get())
-	//{
-	//	RigidBodyPtr->Reset();
-	//}
-
 }
 
 void UGameObject::UpdateMovement(const float DeltaTime)
