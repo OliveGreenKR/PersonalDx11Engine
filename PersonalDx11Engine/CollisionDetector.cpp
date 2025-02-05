@@ -1,8 +1,6 @@
 #include "CollisionDetector.h"
 #include <algorithm>
 
-
-
 FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	const FCollisionShapeData& ShapeA,
 	const FTransform& TransformA,

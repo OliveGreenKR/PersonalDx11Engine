@@ -13,6 +13,9 @@
 #include "RigidBodyComponent.h"
 #include "Color.h"
 
+#include "CollisionComponent.h"
+#include "CollisionDetector.h"
+
 
 #define KEY_UP 'W'
 #define KEY_DOWN 'S'
@@ -167,7 +170,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->InitializePhysics();
-	Character->SetDebugColor(Color::Red());
+	//Character->SetDebugColor(Color::Red());
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -177,6 +180,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
 	Camera->LookTo(Character->GetTransform()->Position);
+
+
+	//CollisionTest
+	auto CollisionDetector = make_unique<FCollisionDetector>();
+
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
@@ -394,6 +402,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Character->Tick(deltaTime);
 		Character2->Tick(deltaTime);
 		Camera->Tick(deltaTime);
+
+		FCollisionShapeData ShapeData1;
+		ShapeData1.Type = ECollisionShapeType::Box;
+		ShapeData1.HalfExtent = Character->GetTransform()->Scale;
+
+		FCollisionShapeData ShapeData2;
+		ShapeData1.Type = ECollisionShapeType::Sphere;
+		ShapeData1.HalfExtent = Character2->GetTransform()->Scale;
+		
+		FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
+			ShapeData1, *Character->GetTransform(),
+			ShapeData2, *Character2->GetTransform()
+		);
+
+		if (result.bCollided)
+		{
+			Character->SetDebugColor(Color::Red());
+		}
+		else
+		{
+			Character->SetDebugColor(Color::White());
+		}
 #pragma endregion
 
 
