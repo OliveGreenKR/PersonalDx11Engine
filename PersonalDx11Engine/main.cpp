@@ -166,18 +166,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Floor->SetPosition({ 0,-1,0 });
 	Floor->InitializePhysics();
 	Floor->SetGravity(false);
+	Floor->InitializePhysics();
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->InitializePhysics();
 	Character->bDebug = true;
+	Character->GetRigidBody()->SetMass(20.0f);
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->InitializePhysics();
 	Character2->bDebug = true;
+	Character2->GetRigidBody()->SetMass(1.0f);
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
@@ -431,8 +434,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			FCollisionResponseParameters Param1, Param2;
 			Param1.Velocity = Character->GetCurrentVelocity();
-			Param1.FrictionKinetic = 0.5f;
-			Param1.FrictionStatic = 0.8f;
+			Param1.FrictionKinetic = 0.3f;
+			Param1.FrictionStatic = 0.5f;
 			Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
 			Param1.Mass = Character->GetRigidBody()->GetMass();
 			Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
@@ -440,8 +443,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Param1.Restitution = 0.5f;
 
 			Param2.Velocity = Character2->GetCurrentVelocity();
-			Param2.FrictionKinetic = 0.5f;
-			Param2.FrictionStatic = 0.8f;
+			Param2.FrictionKinetic = 0.3f;
+			Param2.FrictionStatic = 0.5f;
 			Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
 			Param2.Mass = Character2->GetRigidBody()->GetMass();
 			Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
@@ -449,8 +452,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Param2.Restitution = 0.5f;
 
 			FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
-			Character->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
-			Character2->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
+			Character->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
+			Character2->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
 		}
 
 		Character->Tick(deltaTime);

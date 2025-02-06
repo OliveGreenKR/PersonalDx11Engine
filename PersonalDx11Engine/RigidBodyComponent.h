@@ -54,8 +54,8 @@ private:
     float Mass = 1.0f;
     float MaxSpeed = 50.0f;
     float MaxAngularSpeed = 6.0f * PI;
-    float FrictionKinetic = 0.5f;
-    float FrictionStatic = 0.8f;
+    float FrictionKinetic = 0.3f;
+    float FrictionStatic = 0.5f;
     float GravityScale = 9.8f;
     Vector3 Gravity = -Vector3::Up;
     float RotationalInertia = 1.0f;
