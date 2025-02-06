@@ -430,7 +430,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (result.bCollided)
 		{
 			FCollisionResponseParameters Param1, Param2;
-			Param1.AngularVelocity = Character->GetCurrentVelocity();
+			Param1.Velocity = Character->GetCurrentVelocity();
 			Param1.FrictionKinetic = 0.5f;
 			Param1.FrictionStatic = 0.8f;
 			Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
@@ -439,7 +439,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Param1.Position = Character->GetTransform()->Position;
 			Param1.Restitution = 0.5f;
 
-			Param2.AngularVelocity = Character2->GetCurrentVelocity();
+			Param2.Velocity = Character2->GetCurrentVelocity();
 			Param2.FrictionKinetic = 0.5f;
 			Param2.FrictionStatic = 0.8f;
 			Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
