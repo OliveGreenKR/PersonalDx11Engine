@@ -15,6 +15,7 @@
 
 #include "CollisionComponent.h"
 #include "CollisionDetector.h"
+#include "CollisionResponseCalculator.h"
 
 
 #define KEY_UP 'W'
@@ -170,12 +171,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->InitializePhysics();
-	//Character->SetDebugColor(Color::Red());
+	Character->bDebug = true;
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
-	Character2->SetPosition({ 0,0,0 });
+	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->InitializePhysics();
+	Character2->bDebug = true;
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
@@ -184,6 +186,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//CollisionTest
 	auto CollisionDetector = make_unique<FCollisionDetector>();
+	auto CollisionCalculator = make_unique<FCollisionResponseCalculator>();
 
 
 #pragma region  InputBind
@@ -397,19 +400,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 #pragma endregion
 
-
 #pragma region logic
-		Character->Tick(deltaTime);
-		Character2->Tick(deltaTime);
-		Camera->Tick(deltaTime);
 
 		FCollisionShapeData ShapeData1;
 		ShapeData1.Type = ECollisionShapeType::Box;
-		ShapeData1.HalfExtent = Character->GetTransform()->Scale;
+		ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
 
 		FCollisionShapeData ShapeData2;
-		ShapeData1.Type = ECollisionShapeType::Sphere;
-		ShapeData1.HalfExtent = Character2->GetTransform()->Scale;
+		ShapeData2.Type = ECollisionShapeType::Sphere;
+		ShapeData2.HalfExtent = Character2->GetTransform()->Scale * 0.5f;
 		
 		FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
 			ShapeData1, *Character->GetTransform(),
@@ -419,14 +418,49 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (result.bCollided)
 		{
 			Character->SetDebugColor(Color::Red());
+			Character2->SetDebugColor(Color::Red());
 		}
 		else
 		{
 			Character->SetDebugColor(Color::White());
+			Character2->SetDebugColor(Color::White());
 		}
-#pragma endregion
 
 
+		if (result.bCollided)
+		{
+			FCollisionResponseParameters Param1, Param2;
+			Param1.AngularVelocity = Character->GetCurrentVelocity();
+			Param1.FrictionKinetic = 0.5f;
+			Param1.FrictionStatic = 0.8f;
+			Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
+			Param1.Mass = Character->GetRigidBody()->GetMass();
+			Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
+			Param1.Position = Character->GetTransform()->Position;
+			Param1.Restitution = 0.5f;
+
+			Param2.AngularVelocity = Character2->GetCurrentVelocity();
+			Param2.FrictionKinetic = 0.5f;
+			Param2.FrictionStatic = 0.8f;
+			Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
+			Param2.Mass = Character2->GetRigidBody()->GetMass();
+			Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
+			Param2.Position = Character2->GetTransform()->Position;
+			Param2.Restitution = 0.5f;
+
+			FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
+			Character->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
+			Character2->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
+		}
+
+		Character->Tick(deltaTime);
+		Character2->Tick(deltaTime);
+		Camera->Tick(deltaTime);
+
+#pragma endregion 
+
+
+		
 #pragma region Rendering
 		//before render
 		Renderer->BeforeRender();

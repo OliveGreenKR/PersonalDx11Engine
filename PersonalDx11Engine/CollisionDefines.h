@@ -25,38 +25,7 @@ struct FCollisionShapeData
     }
 
     ECollisionShapeType Type = ECollisionShapeType::Box;
-    Vector3 HalfExtent = Vector3::Zero;  // Box용 - Sphere는 x값만 사용
-};
-
-// 개별 충돌체 정보
-struct FCollisionTestData
-{
-    FCollisionShapeData ShapeData;
-    FTransform Transform;
-};
-
-// 연속 충돌 검사용 데이터
-struct FCollisionSweptTestData
-{
-    FCollisionShapeData ShapeData;
-    FTransform PrevTransform;
-    FTransform CurrentTransform;
-};
-
-// 충돌 쌍 데이터
-struct FCollisionPairData
-{
-    FCollisionTestData A;
-    FCollisionTestData B;
-    float TimeStep = 0.0f;
-};
-
-// 연속 충돌 쌍 데이터 
-struct FCollisionSweptPairData
-{
-    FCollisionSweptTestData A;
-    FCollisionSweptTestData B;
-    float TimeStep = 0.0f;
+    Vector3 HalfExtent = Vector3::Zero;  //Sphere는 x값만 사용
 };
 
 // 충돌 감지 결과
@@ -69,20 +38,34 @@ struct FCollisionDetectionResult
     float TimeOfImpact = 0.0f;          // CCD용 충돌 시점
 };
 
+
+// 충돌 응답 계산을 위한 매개변수, 충돌 반응에 필요한 물리 속성 정보
+struct FCollisionResponseParameters
+{
+    float Mass = 0.0f;
+    float RotationalInertia = 0.0f;
+    
+    Vector3 Position = Vector3::Zero;
+    Vector3 Velocity = Vector3::Zero;
+    Vector3 AngularVelocity = Vector3::Zero;
+
+    float Restitution = 0.5f; // 반발계수
+    float FrictionStatic = 0.8f;
+    float FrictionKinetic = 0.5f;
+};
+
+struct FCollisionResponseResult
+{
+    Vector3 NetImpulse = Vector3::Zero; // 모든 물리적 효과를 통합한 최종 충격량
+    Vector3 ApplicationPoint = Vector3::Zero;
+};
+
 // 충돌 이벤트 정보 (컴포넌트의 델리게이트에서 사용)
 struct FCollisionEventData
 {
     std::weak_ptr<class UCollisionComponent> OtherComponent;
     FCollisionDetectionResult CollisionResult;
     float TimeStep;
-};
-
-// 디버그 시각화 설정
-struct FCollisionDebugParams
-{
-    bool bShowCollisionShapes = false;
-    bool bShowCollisionEvents = false;
-    Vector4 ShapeColor = { 0.0f, 1.0f, 0.0f, 0.5f };  // 반투명 녹색
 };
 
 // 시스템 설정
@@ -92,5 +75,4 @@ struct FCollisionSystemConfig
     float MaximumTimeStep = 0.0333f;     // 최대 시간 간격 (약 30fps)
     int32_t MaxIterations = 8;           // 최대 반복 횟수
     float CCDMotionThreshold = 1.0f;     // CCD 활성화 속도 임계값
-    FCollisionDebugParams DebugParams;
 };

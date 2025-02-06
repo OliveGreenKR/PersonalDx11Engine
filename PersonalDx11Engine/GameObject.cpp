@@ -180,6 +180,11 @@ Vector3 UGameObject::GetCurrentVelocity() const
 	return RigidBody.get()->GetVelocity();
 }
 
+Vector3 UGameObject::GetCurrentAngularVelocity() const
+{
+	return RigidBody.get()->GetAngularVelocity();
+}
+
 void UGameObject::InitializePhysics()
 {
 	auto SelfPtr = shared_from_this();

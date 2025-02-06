@@ -59,11 +59,14 @@
     <ClCompile Include="CollisionComponent.cpp">
       <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionDetectionSubSystem.cpp">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Engine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionDetector.cpp">
+      <Filter>Engine\Components\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionResponseCalculator.cpp">
+      <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,9 +191,6 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionDetectionSubSystem.h">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
@@ -199,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDetector.h">
+      <Filter>Engine\Components\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionResponseCalculator.h">
+      <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

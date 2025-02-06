@@ -82,6 +82,7 @@ public:
 	void SetFrictionStatic(const float InValue);
 
 	Vector3 GetCurrentVelocity() const;
+	Vector3 GetCurrentAngularVelocity() const;
 
 
 	float MaxSpeed = 5.0f; //must be positive
