@@ -52,6 +52,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
     if (!bIsSimulatedPhysics)
         return;
 
+#pragma region TEST
+    //TEST
     //테스트용 가상지면(xz) 마찰력
     float normalForce = Mass * 0.981f;  // 수직항력
     float horizontalSpeedSq = Velocity.x * Velocity.x + Velocity.z * Velocity.z;
@@ -76,6 +78,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
         Vector3 angularFriction = angularFrictionDir * angularFrictionMagnitude;
         ApplyTorque(angularFriction);
     }
+#pragma endregion
 
     // SIMD 최적화를 위한 벡터 로드
     XMVECTOR vVelocity = XMLoadFloat3(&Velocity);
