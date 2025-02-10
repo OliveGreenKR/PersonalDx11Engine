@@ -168,7 +168,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Floor->SetPosition({ 0,-1,0 });
 	Floor->InitializePhysics();
 	Floor->SetGravity(false);
-	Floor->InitializePhysics();
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
@@ -182,7 +181,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->InitializePhysics();
 	Character2->bDebug = true;
-	Character2->GetRigidBody()->SetMass(1.0f);
+	Character2->GetRigidBody()->SetMass(5.0f);
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;

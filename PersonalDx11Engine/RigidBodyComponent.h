@@ -73,11 +73,13 @@ private:
     Vector3 AngularAcceleration = Vector3::Zero;
     Vector3 AccumulatedForce = Vector3::Zero;
     Vector3 AccumulatedTorque = Vector3::Zero;
+    Vector3 AccumulatedInstantForce = Vector3::Zero;
+    Vector3 AccumulatedInstantTorque = Vector3::Zero;
 
     // 물리 속성
     float Mass = 1.0f;
     float RotationalInertia = 1.0f;
-    float MaxSpeed = 50.0f;
+    float MaxSpeed = 5.0f;
     float MaxAngularSpeed = 6.0f * PI;
     float FrictionKinetic = 0.5f;
     float FrictionStatic = 0.5f;

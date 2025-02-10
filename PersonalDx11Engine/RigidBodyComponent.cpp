@@ -20,8 +20,9 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		AddLinearAcceleration(GravityDirection * GravityScale);
 	}
 
-	AddLinearAcceleration(AccumulatedForce / Mass);
-	AddAngularAcceleration(AccumulatedTorque / Mass);
+	//Impulse 적용
+	AddLinearAcceleration((AccumulatedForce + AccumulatedInstantForce) / Mass);
+	AddAngularAcceleration((AccumulatedTorque + AccumulatedInstantTorque) / RotationalInertia);
 
 	UpdateLinearVelocity(DeltaTime);
 	UpdateAngularVelocity(DeltaTime);
@@ -30,6 +31,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	// 5. 힘 초기화
 	AccumulatedForce = Vector3::Zero;
 	AccumulatedTorque = Vector3::Zero;
+	AccumulatedInstantForce = Vector3::Zero;
+	AccumulatedInstantTorque = Vector3::Zero;
 }
 
 void URigidBodyComponent::UpdateLinearVelocity(const float DeltaTime)
@@ -95,10 +98,11 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 	if (!bIsSimulatedPhysics)
 		return;
 
-	AddLinearVelocity(Impulse / Mass);
+	static constexpr float ImpulseDuration = 0.016f;
+	Vector3 InstantForce = Impulse / ImpulseDuration;
 
-	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
-	AddAngularVelocity(AngularImpulse / RotationalInertia);
+	AccumulatedInstantForce += InstantForce;
+	AccumulatedInstantTorque += Vector3::Cross(Location - GetCenterOfMass(), InstantForce);
 }
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
