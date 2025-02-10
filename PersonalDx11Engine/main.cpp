@@ -470,8 +470,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Camera->Tick(deltaTime);
 
 #pragma endregion 
-
-
 		
 #pragma region Rendering
 		//before render

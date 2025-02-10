@@ -7,6 +7,18 @@
 
 class UCollisionComponent;
 
+//충돌 매니저가 컴포넌트관리할때 사용할 구조체
+struct FCollisionComponentState
+{
+	std::shared_ptr<UCollisionComponent> Component;
+	std::vector<std::weak_ptr<UCollisionComponent>> CurrentCollisions;  // 현재 프레임의 충돌 대상들
+	std::vector<std::weak_ptr<UCollisionComponent>> PreviousCollisions; // 이전 프레임의 충돌 대상들
+
+	// CCD를 위한 추가 정보
+	FTransform PreviousTransform;
+	FTransform CurrentTransform;
+};
+
 //todo 서브 시스템 구현
 class FCollisionDectection;
 class FCollisionResponse;
