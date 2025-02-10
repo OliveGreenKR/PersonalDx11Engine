@@ -58,6 +58,7 @@ public:
 
 public:
     bool bCollisionEnabled = true;
+    bool bDestroyed = false;
 
 public:
     // 충돌 이벤트 publish

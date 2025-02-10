@@ -59,6 +59,42 @@ struct FCollisionResponseResult
     Vector3 NetImpulse = Vector3::Zero; // 모든 물리적 효과를 통합한 최종 충격량
     Vector3 ApplicationPoint = Vector3::Zero;
 };
+//충돌 컴포넌트 쌍 구조체
+struct FCollisionPair
+{
+    std::weak_ptr<class UCollisionComponent> ComponentA;
+    std::weak_ptr<class UCollisionComponent> ComponentB;
+
+    bool operator==(const FCollisionPair& Other) const {
+        auto a1 = ComponentA.lock();
+        auto a2 = ComponentB.lock();
+        auto b1 = Other.ComponentA.lock();
+        auto b2 = Other.ComponentB.lock();
+
+        if (!a1 || !a2 || !b1 || !b2) return false;
+
+        return (a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1);
+    }
+};
+
+// std 해시 함수 특수화 
+namespace std
+{
+    template<>
+    struct hash<FCollisionPair>
+    {
+        size_t operator()(const FCollisionPair& Key) const {
+            auto comp1 = Key.ComponentA.lock();
+            auto comp2 = Key.ComponentB.lock();
+
+            if (!comp1 || !comp2) return 0;
+
+            size_t h1 = std::hash<UCollisionComponent*>()(comp1.get());
+            size_t h2 = std::hash<UCollisionComponent*>()(comp2.get());
+            return h1 ^ (h2 << 1);
+        }
+    };
+}
 
 // 충돌 이벤트 정보 (컴포넌트의 델리게이트에서 사용)
 struct FCollisionEventData

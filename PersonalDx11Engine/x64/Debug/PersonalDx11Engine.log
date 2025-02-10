@@ -1,5 +1,8 @@
-﻿  GameObject.cpp
-  RigidBodyComponent.cpp
+﻿  CollisionComponent.cpp
+  CollisionDetector.cpp
+  CollisionEventDispatcher.cpp
+  CollisionManager.cpp
+  CollisionResponseCalculator.cpp
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')

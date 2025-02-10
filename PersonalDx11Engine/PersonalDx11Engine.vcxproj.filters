@@ -68,6 +68,9 @@
     <ClCompile Include="CollisionResponseCalculator.cpp">
       <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
+    <ClCompile Include="CollisionEventDispatcher.cpp">
+      <Filter>Engine\Components\Collision</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -204,6 +207,9 @@
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
     <ClInclude Include="CollisionResponseCalculator.h">
+      <Filter>Engine\Components\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionEventDispatcher.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
   </ItemGroup>
