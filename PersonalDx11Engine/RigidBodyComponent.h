@@ -69,7 +69,7 @@ private:
     float RotationalInertia = 1.0f;
     float MaxSpeed = 5.0f;
     float MaxAngularSpeed = 6.0f * PI;
-    float FrictionKinetic = 0.5f;
+    float FrictionKinetic = 0.3f;
     float FrictionStatic = 0.5f;
     float Restitution = 0.5f;
     float LinearDrag = 0.01f;

@@ -26,9 +26,17 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	// 마찰력을 가속도로 변환하여 추가
 	if (LinearVelocity.LengthSquared() > KINDA_SMALL)
 	{
-		Vector3 FrictionAccel = -LinearVelocity.GetNormalized() * (FrictionKinetic * GravityScale);
+		Vector3 FrictionAccel = -LinearVelocity.GetNormalized() * (FrictionKinetic);
 		TotalAcceleration += FrictionAccel;
 	}
+
+	// 저장된 충격량 처리 (순간적인 속도 변화)
+	LinearVelocity += AccumulatedInstantForce / Mass;
+	AngularVelocity += AccumulatedInstantTorque / RotationalInertia;
+
+	// 충격량 초기화
+	AccumulatedInstantForce = Vector3::Zero;
+	AccumulatedInstantTorque = Vector3::Zero;
 
 	// 외부에서 적용된 힘에 의한 가속도 추가
 	TotalAcceleration += AccumulatedForce / Mass;
@@ -82,11 +90,9 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 	if (!bIsSimulatedPhysics)
 		return;
 
-	static constexpr float ImpulseDuration = 0.016f;
-	Vector3 InstantForce = Impulse / ImpulseDuration;
-
-	AccumulatedInstantForce += InstantForce;
-	AccumulatedInstantTorque += Vector3::Cross(Location - GetCenterOfMass(), InstantForce);
+	AccumulatedInstantForce += Impulse;
+	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
+	AccumulatedInstantTorque += AngularImpulse;
 }
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
