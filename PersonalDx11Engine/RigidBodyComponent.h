@@ -22,7 +22,7 @@ public:
     void SetMaxAngularSpeed(float InMaxSpeed) { MaxAngularSpeed = InMaxSpeed; }
     void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
     void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
-    void SetGravityDirection(const Vector3& InGravity) { Gravity = InGravity; }
+    void SetGravityDirection(const Vector3& InGravity) { GravityDirection = InGravity; }
 
     const Vector3& GetVelocity() const { return Velocity; }
     const Vector3& GetAngularVelocity() const { return AngularVelocity; }
@@ -57,7 +57,7 @@ private:
     float FrictionKinetic = 0.3f;
     float FrictionStatic = 0.5f;
     float GravityScale = 9.8f;
-    Vector3 Gravity = -Vector3::Up;
+    Vector3 GravityDirection = -Vector3::Up;
     float RotationalInertia = 1.0f;
 
 
