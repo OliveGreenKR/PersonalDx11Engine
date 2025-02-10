@@ -19,13 +19,7 @@ public:
     void SetAngularVelocity(const Vector3& InAngularVelocity);
     void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
 
-    // 가속도 기반 인터페이스
-    void SetLinearAcceleration(const Vector3& InAcceleration) { LinearAcceleration = InAcceleration; }
-    void AddLinearAcceleration(const Vector3& InAccelerationDelta) { LinearAcceleration += InAccelerationDelta; }
-    void SetAngularAcceleration(const Vector3& InAcceleration) { AngularAcceleration = InAcceleration; }
-    void AddAngularAcceleration(const Vector3& InAccelerationDelta) { AngularAcceleration += InAccelerationDelta; }
-
-    // 힘 기반 레거시 인터페이스 (내부적으로 가속도로 변환)
+    // 힘 기반 인터페이스 (내부적으로 가속도로 변환)
     inline void ApplyForce(const Vector3& Force) { ApplyForce(Force, GetCenterOfMass()); }
     void ApplyForce(const Vector3& Force, const Vector3& Location);
     inline void ApplyImpulse(const Vector3& Impulse) { ApplyImpulse(Impulse, GetCenterOfMass()); }
@@ -34,8 +28,6 @@ public:
     // Getters
     inline const Vector3& GetLinearVelocity() const { return LinearVelocity; }
     inline const Vector3& GetAngularVelocity() const { return AngularVelocity; }
-    inline const Vector3& GetLinearAcceleration() const { return LinearAcceleration; }
-    inline const Vector3& GetAngularAcceleration() const { return AngularAcceleration; }
     inline float GetSpeed() const { return LinearVelocity.Length(); }
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
@@ -58,8 +50,6 @@ public:
     bool bIsSimulatedPhysics = true;
 
 private:
-    void UpdateLinearVelocity(float DeltaTime);
-    void UpdateAngularVelocity(float DeltaTime);
     void UpdateTransform(float DeltaTime);
     void ClampVelocities();
     void ApplyDrag(float DeltaTime) {}//todo
@@ -69,8 +59,6 @@ private:
     // 물리 상태 변수
     Vector3 LinearVelocity = Vector3::Zero;
     Vector3 AngularVelocity = Vector3::Zero;
-    Vector3 LinearAcceleration = Vector3::Zero;
-    Vector3 AngularAcceleration = Vector3::Zero;
     Vector3 AccumulatedForce = Vector3::Zero;
     Vector3 AccumulatedTorque = Vector3::Zero;
     Vector3 AccumulatedInstantForce = Vector3::Zero;

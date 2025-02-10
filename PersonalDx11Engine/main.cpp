@@ -181,7 +181,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->InitializePhysics();
 	Character2->bDebug = true;
-	Character2->GetRigidBody()->SetMass(5.0f);
+	Character2->GetRigidBody()->SetMass(1.0f);
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;

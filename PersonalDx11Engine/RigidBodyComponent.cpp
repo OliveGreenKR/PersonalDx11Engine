@@ -6,8 +6,6 @@ void URigidBodyComponent::Reset()
 {
 	LinearVelocity = Vector3::Zero;
 	AngularVelocity = Vector3::Zero;
-	LinearAcceleration = Vector3::Zero;
-	AngularAcceleration = Vector3::Zero;
 }
 
 void URigidBodyComponent::Tick(const float DeltaTime)
@@ -15,54 +13,40 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	if (!bIsSimulatedPhysics)
 		return;
 
+	// 1. 모든 힘을 가속도로 변환하여 하나의 순수한 가속도 벡터로 관리
+	Vector3 TotalAcceleration = Vector3::Zero;
+	Vector3 TotalAngularAcceleration = Vector3::Zero;
+
+	// 중력 가속도 추가
 	if (bGravity)
 	{
-		AddLinearAcceleration(GravityDirection * GravityScale);
+		TotalAcceleration += GravityDirection * GravityScale;
 	}
 
-	//Impulse 적용
-	AddLinearAcceleration((AccumulatedForce + AccumulatedInstantForce) / Mass);
-	AddAngularAcceleration((AccumulatedTorque + AccumulatedInstantTorque) / RotationalInertia);
-
-	UpdateLinearVelocity(DeltaTime);
-	UpdateAngularVelocity(DeltaTime);
-	UpdateTransform(DeltaTime);
-
-	// 5. 힘 초기화
-	AccumulatedForce = Vector3::Zero;
-	AccumulatedTorque = Vector3::Zero;
-	AccumulatedInstantForce = Vector3::Zero;
-	AccumulatedInstantTorque = Vector3::Zero;
-}
-
-void URigidBodyComponent::UpdateLinearVelocity(const float DeltaTime)
-{
-	LinearVelocity += LinearAcceleration * DeltaTime;
-
-	// 마찰력에 의한 감속
+	// 마찰력을 가속도로 변환하여 추가
 	if (LinearVelocity.LengthSquared() > KINDA_SMALL)
 	{
-		Vector3 frictionDir = -LinearVelocity.GetNormalized();
-		Vector3 frictionAcc = frictionDir * FrictionKinetic * GravityScale;
-		LinearVelocity += frictionAcc * DeltaTime;
+		Vector3 FrictionAccel = -LinearVelocity.GetNormalized() * (FrictionKinetic * GravityScale);
+		TotalAcceleration += FrictionAccel;
 	}
 
+	// 외부에서 적용된 힘에 의한 가속도 추가
+	TotalAcceleration += AccumulatedForce / Mass;
+	TotalAngularAcceleration += AccumulatedTorque / RotationalInertia;
+
+	// 2. 통합된 가속도로 속도 업데이트
+	LinearVelocity += TotalAcceleration * DeltaTime;
+	AngularVelocity += TotalAngularAcceleration * DeltaTime;
+
+	// 3. 속도 제한
 	ClampVelocities();
-}
 
-void URigidBodyComponent::UpdateAngularVelocity(const float DeltaTime)
-{
-	AngularVelocity += AngularAcceleration * DeltaTime;
+	// 4. 위치 업데이트
+	UpdateTransform(DeltaTime);
 
-	// 회전 마찰력
-	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
-	{
-		Vector3 frictionDir = -AngularVelocity.GetNormalized();
-		Vector3 frictionAcc = frictionDir * FrictionKinetic * GravityScale;
-		AngularVelocity += frictionAcc * DeltaTime;
-	}
-
-	ClampVelocities();
+	// 5. 외부 가속도 초기화
+	AccumulatedForce = Vector3::Zero;
+	AccumulatedTorque = Vector3::Zero;
 }
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)
