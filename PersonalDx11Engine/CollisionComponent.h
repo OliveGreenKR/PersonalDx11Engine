@@ -49,6 +49,7 @@ public:
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 
+    void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
     const FCollisionShapeData& GetCollisionShape() const { return Shape; }
     FCollisionShapeData& GetCollisionShape() { return Shape; }
 

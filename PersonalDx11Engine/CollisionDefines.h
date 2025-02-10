@@ -35,7 +35,7 @@ struct FCollisionDetectionResult
     Vector3 Normal = Vector3::Zero;      // 충돌 법선
     Vector3 Point = Vector3::Zero;       // 충돌 지점
     float PenetrationDepth = 0.0f;       // 침투 깊이
-    float TimeOfImpact = 0.0f;          // CCD용 충돌 시점
+    float TimeOfImpact = 0.0f;           // CCD용 충돌 시점
 };
 
 

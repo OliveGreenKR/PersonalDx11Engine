@@ -94,6 +94,7 @@ private:
 public:
 	void InitializePhysics();
 	class URigidBodyComponent* GetRigidBody() { return RigidBody.get(); }
+	std::shared_ptr<class URigidBodyComponent>& GetSharedRigidBody() { return RigidBody; }
 
 protected:
 	std::shared_ptr<class URigidBodyComponent> RigidBody;

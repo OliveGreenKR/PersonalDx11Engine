@@ -14,8 +14,10 @@
 #include "Color.h"
 
 #include "CollisionComponent.h"
+#include "CollisionManager.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
+#include "CollisionEventDispatcher.h"
 
 
 #define KEY_UP 'W'
@@ -188,8 +190,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//CollisionTest
+	FCollisionShapeData ShapeData1;
+	ShapeData1.Type = ECollisionShapeType::Box;
+	ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
+
+	FCollisionShapeData ShapeData2;
+	ShapeData2.Type = ECollisionShapeType::Sphere;
+	ShapeData2.HalfExtent = Character2->GetTransform()->Scale * 0.5f;
+
+	auto CollisionComp1 = make_shared<UCollisionComponent>(Character->GetSharedRigidBody());
+	CollisionComp1.get()->SetCollisionShape(ShapeData1);
+	auto CollisionComp2 = make_shared<UCollisionComponent>(Character2->GetSharedRigidBody());
+	CollisionComp2.get()->SetCollisionShape(ShapeData2);
+
 	auto CollisionDetector = make_unique<FCollisionDetector>();
 	auto CollisionCalculator = make_unique<FCollisionResponseCalculator>();
+	auto CollisioEventDispatcher = make_unique<FCollisionEventDispatcher>();
 
 
 #pragma region  InputBind
@@ -405,18 +421,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 
-		FCollisionShapeData ShapeData1;
-		ShapeData1.Type = ECollisionShapeType::Box;
-		ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
-
-		FCollisionShapeData ShapeData2;
-		ShapeData2.Type = ECollisionShapeType::Sphere;
-		ShapeData2.HalfExtent = Character2->GetTransform()->Scale * 0.5f;
-		
 		FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
 			ShapeData1, *Character->GetTransform(),
 			ShapeData2, *Character2->GetTransform()
 		);
+
+		FCollisionEventData collisionEvent;
 
 		if (result.bCollided)
 		{
