@@ -71,6 +71,8 @@ private:
     Vector3 AngularVelocity = Vector3::Zero;
     Vector3 LinearAcceleration = Vector3::Zero;
     Vector3 AngularAcceleration = Vector3::Zero;
+    Vector3 AccumulatedForce = Vector3::Zero;
+    Vector3 AccumulatedTorque = Vector3::Zero;
 
     // 물리 속성
     float Mass = 1.0f;
