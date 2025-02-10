@@ -45,6 +45,7 @@ public:
 	const Vector3 GetForwardVector() const;
 
 	__forceinline const FTransform* GetTransform() const { return &Transform; }
+	__forceinline FTransform* GetTransform() { return &Transform; }
 	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
 
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }

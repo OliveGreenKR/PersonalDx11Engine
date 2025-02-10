@@ -500,16 +500,24 @@ struct Vector3 : public DirectX::XMFLOAT3
 	// Static utility functions
 	static float Dot(const Vector3& A, const Vector3& B)
 	{
-		return A.x * B.x + A.y * B.y + A.z * B.z;
+		XMVECTOR vA, vB;
+		vA = XMLoadFloat3(&A);
+		vB = XMLoadFloat3(&B);
+
+		XMVECTOR vResult = XMVector3Dot(vA, vB);
+		return XMVectorGetX(vResult);
 	}
 
 	static Vector3 Cross(const Vector3& A, const Vector3& B)
 	{
-		return Vector3(
-			A.y * B.z - A.z * B.y,
-			A.z * B.x - A.x * B.z,
-			A.x * B.y - A.y * B.x
-		);
+		XMVECTOR vA, vB;
+		vA = XMLoadFloat3(&A);
+		vB = XMLoadFloat3(&B);
+		
+		XMVECTOR vResult = XMVector3Cross(vA, vB);
+		Vector3 Result;
+		XMStoreFloat3(&Result, vResult);
+		return Result;
 	}
 
 	static Vector3 Min(const Vector3& A, const Vector3& B)
