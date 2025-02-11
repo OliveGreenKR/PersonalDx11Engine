@@ -17,7 +17,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.3412
       while trying to match the argument list '(const FCollisionPair, const FCollisionPair)'
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
       the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(13,34):
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(66,34):
           see reference to function template instantiation '_FwdIt std::remove_if<std::_List_const_iterator<std::_List_val<std::_List_simple_types<_Ty>>>,UCollisionManager::CleanupDestroyedComponents::<lambda_1>>(_FwdIt,const _FwdIt,_Pr)' being compiled
           with
           [
@@ -34,7 +34,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.3412
   (compiling source file 'CollisionManager.cpp')
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,24):
       No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(24,14):
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(77,14):
       see declaration of 'UCollisionManager::CleanupDestroyedComponents::<lambda_2>::operator ()'
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18):
       while trying to match the argument list '(std::shared_ptr<_Ty>)'
@@ -44,7 +44,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.3412
           ]
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18):
       the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(21,34):
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(74,34):
           see reference to function template instantiation '_FwdIt std::remove_if<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,UCollisionManager::CleanupDestroyedComponents::<lambda_2>>(_FwdIt,const _FwdIt,_Pr)' being compiled
           with
           [
@@ -53,6 +53,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.3412
               _Pr=UCollisionManager::CleanupDestroyedComponents::<lambda_2>
           ]
   
+  CollisionResponseCalculator.cpp
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')

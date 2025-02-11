@@ -21,7 +21,8 @@ public:
         const FTransform& CurrentTransformA,
         const FCollisionShapeData& ShapeB,
         const FTransform& PrevTransformB,
-        const FTransform& CurrentTransformB);
+        const FTransform& CurrentTransformB,
+        const float DeltaTime);
 
 private:
     // Box-Box 충돌 검사
@@ -44,6 +45,5 @@ private:
         float SphereRadius, const FTransform& SphereTransform);
 
 public:
-    int MaxIterations = 4;
-    float TimeThreshold = 0.01f;
+    float TimeStep = 0.02f;
 }; 

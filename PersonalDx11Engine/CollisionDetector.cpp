@@ -45,7 +45,8 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	const FTransform& CurrentTransformA, 
 	const FCollisionShapeData& ShapeB, 
 	const FTransform& PrevTransformB, 
-	const FTransform& CurrentTransformB)
+	const FTransform& CurrentTransformB,
+	const float DeltaTime)
 {
 	// 초기 상태와 최종 상태에서의 충돌 검사
 	FCollisionDetectionResult StartResult = DetectCollisionDiscrete(ShapeA, PrevTransformA, ShapeB, PrevTransformB);
@@ -67,43 +68,29 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 		}
 	}
 
-	// 이진 검색을 통한 첫 충돌 시점 찾기
-	float MinTime = 0.0f;
-	float MaxTime = 1.0f;
+	float currentTime = 0.0f;
 
 	FCollisionDetectionResult Result;
 	Result.bCollided = false;
 
-	for (int i = 0; i < MaxIterations; ++i)
+	while (currentTime < DeltaTime)
 	{
-		float MidTime = (MinTime + MaxTime) * 0.5f;
+		float alpha = currentTime / DeltaTime;
 
 		// 중간 시점의 Transform 계산
-		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, MidTime);
-		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, MidTime);
+		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, alpha);
+		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, alpha);
 
-		// 이진 탐색으로 충돌 시점 찾기
+		//최초 충돌 시점 찾기
 		Result = DetectCollisionDiscrete(ShapeA, InterpolatedTransformA, ShapeB, InterpolatedTransformB);
 
 		if (Result.bCollided)
 		{
-			MaxTime = MidTime;
-		}
-		else
-		{
-			MinTime = MidTime;
-		}
-
-		// 충분한 정밀도에 도달하면 종료
-		if (MaxTime - MinTime < TimeThreshold)
-		{
-			if (Result.bCollided)
-			{
-				Result.TimeOfImpact = MaxTime;
-				return Result;
-			}
+			Result.TimeOfImpact = currentTime;
 			break;
 		}
+
+		currentTime += TimeStep;
 	}
 
 	return EndResult;  // 최종 상태의 결과 반환

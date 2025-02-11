@@ -43,6 +43,16 @@ namespace std
 }
 #pragma endregion
 
+
+struct FCollisionSystemConfig
+{
+    bool bPhysicsSimulated = true;
+    float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
+    float MaximumTimeStep = 0.0333f;     // 최대 시간 간격 (약 30fps)
+    float CCDMotionThreshold = 1.0f;     // CCD 활성화 속도 임계값
+};
+
+
 class UCollisionManager
 {
 private:
@@ -85,9 +95,8 @@ private:
 
 private:
     // 충돌 검사 및 응답 처리를 위한 내부 함수들
-    void ProcessCollisions(float DeltaTime);
+    void ProcessCollisions(const float DeltaTime);
     void UpdateCollisionPairs();
-    void CleanupDestroyedComponents();
 
     // CCD 관련 함수들
     bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
@@ -115,13 +124,7 @@ private:
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectionResult,
         float DeltaTime);
-
-    // 충돌 상태 관리
-    void UpdateCollisionState(
-        const FCollisionPair& Pair,
-        bool CurrentlyColliding,
-        const FCollisionDetectionResult& DetectionResult,
-        float DeltaTime);
+    //
 
 private:
     FCollisionDetector* Detector;

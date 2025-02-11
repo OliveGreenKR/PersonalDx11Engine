@@ -13,7 +13,10 @@ UCollisionManager::~UCollisionManager()
 
 void UCollisionManager::Tick(const float DeltaTime)
 {
+	if (!Config.bPhysicsSimulated)
+		return;
 
+	ProcessCollisions(DeltaTime);
 }
 
 void UCollisionManager::UnRegisterAll()
@@ -44,6 +47,17 @@ void UCollisionManager::Release()
 		delete Detector;
 	}
 	UnRegisterAll();
+}
+
+void UCollisionManager::ProcessCollisions(const float DeltaTime)
+{
+	//TODO : BroadPhase
+
+	//Narrow Phase
+	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	{
+
+	}
 }
 
 void UCollisionManager::CleanupDestroyedComponents()

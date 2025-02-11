@@ -74,12 +74,3 @@ enum class ECollisionState
     Stay,
     Exit,
 };
-
-// 시스템 설정
-struct FCollisionSystemConfig
-{
-    float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
-    float MaximumTimeStep = 0.0333f;     // 최대 시간 간격 (약 30fps)
-    int32_t MaxIterations = 8;           // 최대 반복 횟수
-    float CCDMotionThreshold = 1.0f;     // CCD 활성화 속도 임계값
-};
