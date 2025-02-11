@@ -51,7 +51,7 @@ struct FCollisionSystemConfig
 {
     bool bPhysicsSimulated = true;
     float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
-    float MaximumTimeStep = 0.0333f;     // 최대 시간 간격 (약 30fps)
+    float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDMotionThreshold = 1.0f;     // CCD 활성화 속도 임계값
 };
 
