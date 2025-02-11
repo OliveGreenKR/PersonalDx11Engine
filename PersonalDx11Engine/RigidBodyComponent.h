@@ -14,8 +14,8 @@ public:
     void Tick(const float DeltaTime);
 
     // 속도 기반 인터페이스
-    void SetLinearVelocity(const Vector3& InVelocity);
-    void AddLinearVelocity(const Vector3& InVelocityDelta);
+    void SetVelocity(const Vector3& InVelocity);
+    void AddVelocity(const Vector3& InVelocityDelta);
     void SetAngularVelocity(const Vector3& InAngularVelocity);
     void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
 
@@ -26,12 +26,11 @@ public:
     void ApplyImpulse(const Vector3& Impulse, const Vector3& Location);
 
     // Getters
-    inline const Vector3& GetLinearVelocity() const { return LinearVelocity; }
+    inline const Vector3& GetVelocity() const { return Velocity; }
     inline const Vector3& GetAngularVelocity() const { return AngularVelocity; }
-    inline float GetSpeed() const { return LinearVelocity.Length(); }
+    inline float GetSpeed() const { return Velocity.Length(); }
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
-
 
     // 물리 속성 설정
     void SetMass(float InMass);
@@ -57,7 +56,7 @@ private:
 
 private:
     // 물리 상태 변수
-    Vector3 LinearVelocity = Vector3::Zero;
+    Vector3 Velocity = Vector3::Zero;
     Vector3 AngularVelocity = Vector3::Zero;
     Vector3 AccumulatedForce = Vector3::Zero;
     Vector3 AccumulatedTorque = Vector3::Zero;

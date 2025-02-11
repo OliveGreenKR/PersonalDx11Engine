@@ -4,7 +4,7 @@
 
 void URigidBodyComponent::Reset()
 {
-	LinearVelocity = Vector3::Zero;
+	Velocity = Vector3::Zero;
 	AngularVelocity = Vector3::Zero;
 }
 
@@ -13,7 +13,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	if (!bIsSimulatedPhysics)
 		return;
 
-	// 1. 모든 힘을 가속도로 변환하여 하나의 순수한 가속도 벡터로 관리
+	// 모든 힘을 가속도로 변환
 	Vector3 TotalAcceleration = Vector3::Zero;
 	Vector3 TotalAngularAcceleration = Vector3::Zero;
 
@@ -23,15 +23,46 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		TotalAcceleration += GravityDirection * GravityScale;
 	}
 
-	// 마찰력을 가속도로 변환하여 추가
-	if (LinearVelocity.LengthSquared() > KINDA_SMALL)
+	if (Velocity.LengthSquared() > KINDA_SMALL)
 	{
-		Vector3 FrictionAccel = -LinearVelocity.GetNormalized() * (FrictionKinetic);
-		TotalAcceleration += FrictionAccel;
+
+		// 정적 마찰력 영역에서 운동 마찰력 영역으로의 전환 확인
+		if (Velocity.Length() < KINDA_SMALL &&
+			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityScale )
+		{
+			// 정적 마찰력이 외력을 상쇄
+			AccumulatedForce = Vector3::Zero;
+		}
+		else
+		{
+			// 운동 마찰력 적용
+			Vector3 frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityScale;
+			TotalAcceleration += frictionAccel;
+		}
 	}
 
+	// 각운동 마찰력 처리
+	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
+	{
+
+		//정적 마찰 비교
+		if (AngularVelocity.Length() < KINDA_SMALL && 
+			AccumulatedTorque.Length() <= FrictionStatic * RotationalInertia)
+		{
+			// 정적 마찰 토크가 외부 토크를 상쇄
+			AccumulatedTorque = Vector3::Zero;
+		}
+		else
+		{
+			// 운동 마찰 토크 적용
+			Vector3 frictionAccel = -AngularVelocity * FrictionKinetic;
+			TotalAngularAcceleration += frictionAccel;
+		}
+	}
+
+
 	// 저장된 충격량 처리 (순간적인 속도 변화)
-	LinearVelocity += AccumulatedInstantForce / Mass;
+	Velocity += AccumulatedInstantForce / Mass;
 	AngularVelocity += AccumulatedInstantTorque / RotationalInertia;
 
 	// 충격량 초기화
@@ -42,17 +73,17 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	TotalAcceleration += AccumulatedForce / Mass;
 	TotalAngularAcceleration += AccumulatedTorque / RotationalInertia;
 
-	// 2. 통합된 가속도로 속도 업데이트
-	LinearVelocity += TotalAcceleration * DeltaTime;
+	// 통합된 가속도로 속도 업데이트
+	Velocity += TotalAcceleration * DeltaTime;
 	AngularVelocity += TotalAngularAcceleration * DeltaTime;
 
-	// 3. 속도 제한
+	// 속도 제한
 	ClampVelocities();
 
-	// 4. 위치 업데이트
+	// 위치 업데이트
 	UpdateTransform(DeltaTime);
 
-	// 5. 외부 가속도 초기화
+	// 외부 힘 초기화
 	AccumulatedForce = Vector3::Zero;
 	AccumulatedTorque = Vector3::Zero;
 }
@@ -62,7 +93,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	if (auto OwnerPtr = Owner.lock())
 	{
 		// 위치 업데이트
-		Vector3 NewPosition = OwnerPtr->GetTransform()->Position + LinearVelocity * DeltaTime;
+		Vector3 NewPosition = OwnerPtr->GetTransform()->Position + Velocity * DeltaTime;
 		OwnerPtr->SetPosition(NewPosition);
 
 		// 회전 업데이트
@@ -109,15 +140,15 @@ void URigidBodyComponent::SetMass(float InMass)
 	RotationalInertia = Mass * 0.4f; // 구체 근사
 }
 
-void URigidBodyComponent::SetLinearVelocity(const Vector3& InVelocity)
+void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 {
-	LinearVelocity = InVelocity;
+	Velocity = InVelocity;
 	ClampVelocities();
 }
 
-void URigidBodyComponent::AddLinearVelocity(const Vector3& InVelocityDelta)
+void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
 {
-	LinearVelocity += InVelocityDelta;
+	Velocity += InVelocityDelta;
 	ClampVelocities();
 }
 
@@ -136,10 +167,14 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 void URigidBodyComponent::ClampVelocities()
 {
 	// 선형 속도 제한
-	float speedSq = LinearVelocity.LengthSquared();
+	float speedSq = Velocity.LengthSquared();
 	if (speedSq > MaxSpeed * MaxSpeed)
 	{
-		LinearVelocity = LinearVelocity.GetNormalized() * MaxSpeed;
+		Velocity = Velocity.GetNormalized() * MaxSpeed;
+	}
+	else if (speedSq < KINDA_SMALL)
+	{
+		Velocity = Vector3::Zero;
 	}
 
 	// 각속도 제한
@@ -147,5 +182,9 @@ void URigidBodyComponent::ClampVelocities()
 	if (angularSpeedSq > MaxAngularSpeed * MaxAngularSpeed)
 	{
 		AngularVelocity = AngularVelocity.GetNormalized() * MaxAngularSpeed;
+	}
+	else if (angularSpeedSq < KINDA_SMALL)
+	{
+		AngularVelocity = Vector3::Zero;
 	}
 }

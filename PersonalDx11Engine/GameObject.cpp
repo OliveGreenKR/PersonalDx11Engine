@@ -177,7 +177,7 @@ void UGameObject::SetFrictionStatic(const float InValue)
 
 Vector3 UGameObject::GetCurrentVelocity() const
 {
-	return RigidBody.get()->GetLinearVelocity();
+	return RigidBody.get()->GetVelocity();
 }
 
 Vector3 UGameObject::GetCurrentAngularVelocity() const
