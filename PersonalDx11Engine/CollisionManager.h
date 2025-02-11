@@ -17,18 +17,21 @@ class URigidBodyComponent;
 struct FCollisionPair
 {
     FCollisionPair(size_t InIndexA, size_t InIndexB)
-        : IndexA(InIndexA < InIndexB ? IndexA : IndexB)
-        , IndexB(InIndexA >= InIndexB ? IndexA : IndexB)
-    {
-    }
+        : IndexA(InIndexA < InIndexB ? InIndexA : InIndexB)
+        , IndexB(InIndexA >= InIndexB ? InIndexA : InIndexB)
+    {}
+
+    FCollisionPair(const FCollisionPair& Other) = default;
+    FCollisionPair& operator=(const FCollisionPair& Other) = default;
 
     size_t IndexA; //always smaller than indexB
-    size_t IndexB; //always smaller than indexA
+    size_t IndexB; //always smaller than indexA}
 
     bool operator==(const FCollisionPair& Other) const
     {
         return IndexA == Other.IndexA && IndexB == Other.IndexB;
     }
+
 };
 
 namespace std

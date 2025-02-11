@@ -63,19 +63,25 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 void UCollisionManager::CleanupDestroyedComponents()
 {
 
-	ActiveCollisionPairs.erase(std::remove_if(ActiveCollisionPairs.begin(),
-											  ActiveCollisionPairs.end(),
-											  [this](const FCollisionPair& pair)
-											  {
-												  return IsDestroyedComponent(pair.IndexA) ||
-													  IsDestroyedComponent(pair.IndexB);
-											  }));
+	// erase-remove 구문 수정
+	auto it = ActiveCollisionPairs.begin();
+	while(it != ActiveCollisionPairs.end())
+	{
+		if (IsDestroyedComponent(it->IndexA) || IsDestroyedComponent(it->IndexB))
+		{
+			it = ActiveCollisionPairs.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
 
 	RegisteredComponents.erase(std::remove_if(RegisteredComponents.begin(),
 											  RegisteredComponents.end(),
-											  [](const UCollisionComponent* Comp)
+											  [](const std::shared_ptr<UCollisionComponent>& Comp)
 											  {
-												  assert(Comp);
-												  return Comp->bDestroyed;
+												  assert(Comp.get());
+												  return Comp.get()->bDestroyed;
 											  }));
 }
