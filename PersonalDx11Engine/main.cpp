@@ -202,9 +202,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto CollisionComp2 = make_shared<UCollisionComponent>(Character2->GetSharedRigidBody());
 	CollisionComp2.get()->SetCollisionShape(ShapeData2);
 
+	CollisionComp1->BindOnCollisionEnter(Character, [&Character](const FCollisionEventData& EventData) 
+										 {
+											 if (!EventData.CollisionResult.bCollided)
+												 return;
+											 Character->SetDebugColor(Color::Red());
+
+										 }, "OnCollisionEnter");
+	CollisionComp2->BindOnCollisionEnter(Character2, [&Character2](const FCollisionEventData& EventData)
+										 {
+											 if (!EventData.CollisionResult.bCollided)
+												 return;
+											 Character2->SetDebugColor(Color::Red());
+										 }, "OnCollisionEnter");
+
+	CollisionComp1->BindOnCollisionExit(Character, [&Character](const FCollisionEventData& EventData)
+										 {
+											 Character->SetDebugColor(Color::White());
+
+										 }, "OnCollisionExit");
+	CollisionComp2->BindOnCollisionExit(Character2, [&Character2](const FCollisionEventData& EventData)
+										 {
+											 Character2->SetDebugColor(Color::White());
+										 }, "OnCollisionExit");
+
 	auto CollisionDetector = make_unique<FCollisionDetector>();
 	auto CollisionCalculator = make_unique<FCollisionResponseCalculator>();
 	auto CollisioEventDispatcher = make_unique<FCollisionEventDispatcher>();
+
+	bool bPreviousCollision = false;
 
 
 #pragma region  InputBind
@@ -420,25 +446,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 
+		//collision Detect
 		FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
 			ShapeData1, *Character->GetTransform(),
 			ShapeData2, *Character2->GetTransform()
 		);
 
-		FCollisionEventData collisionEvent;
-
-		if (result.bCollided)
-		{
-			Character->SetDebugColor(Color::Red());
-			Character2->SetDebugColor(Color::Red());
-		}
-		else
-		{
-			Character->SetDebugColor(Color::White());
-			Character2->SetDebugColor(Color::White());
-		}
-
-
+		//collision Response
 		if (result.bCollided)
 		{
 			FCollisionResponseParameters Param1, Param2;
@@ -464,6 +478,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Character->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
 			Character2->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
 		}
+
+		//event dispatch
+		FCollisionEventData collisionEvent;
+		collisionEvent.CollisionResult = result;
+
+		ECollisionState state = ECollisionState::None;
+
+		if (result.bCollided)
+		{
+			if (!bPreviousCollision)
+			{
+				state = ECollisionState::Enter;
+			}
+			else
+			{
+				state = ECollisionState::Stay;
+			}
+		}
+		else
+		{
+			if (bPreviousCollision)
+			{
+				state = ECollisionState::Exit;
+			}
+		}
+
+		bPreviousCollision = result.bCollided;
+
+		collisionEvent.OtherComponent = CollisionComp2;
+		CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp1, collisionEvent, state);
+		collisionEvent.OtherComponent = CollisionComp1;
+		CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp2, collisionEvent, state);
 
 		Character->Tick(deltaTime);
 		Character2->Tick(deltaTime);

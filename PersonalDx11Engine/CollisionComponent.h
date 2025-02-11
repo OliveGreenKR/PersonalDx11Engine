@@ -56,7 +56,6 @@ public:
     const Vector3& GetPreviousPosition() const { return PreviousPosition; }
     void SetPreviousPosition(const Vector3& InPosition) { PreviousPosition = InPosition; }
 
-
 public:
     bool bCollisionEnabled = true;
     bool bDestroyed = false;

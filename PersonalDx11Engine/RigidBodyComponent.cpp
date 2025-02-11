@@ -6,7 +6,11 @@ void URigidBodyComponent::Reset()
 {
 	Velocity = Vector3::Zero;
 	AngularVelocity = Vector3::Zero;
-}
+	AccumulatedForce = Vector3::Zero;
+	AccumulatedTorque = Vector3::Zero;
+	AccumulatedInstantForce = Vector3::Zero;
+	AccumulatedInstantTorque = Vector3::Zero;
+}	
 
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
@@ -23,6 +27,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		TotalAcceleration += GravityDirection * GravityScale;
 	}
 
+	//¸¶Âû·Â
 	if (Velocity.LengthSquared() > KINDA_SMALL)
 	{
 
