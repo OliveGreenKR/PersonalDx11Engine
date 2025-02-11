@@ -17,9 +17,9 @@ class UCollisionComponent
 public:
     UCollisionComponent() = default;
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-    UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InType, const Vector3& InHalfExtents);
+    UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
-
+public:
     // √ ±‚»≠
     void Initialize(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 

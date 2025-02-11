@@ -1,4 +1,11 @@
 #include <windows.h>
+
+//ImGui
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_internal.h"
+#include "ImGui/imgui_impl_dx11.h"
+#include "imGui/imgui_impl_win32.h"
+
 #include <memory>
 #include "define.h"
 #include "Renderer.h"
@@ -30,9 +37,8 @@
 #define KEY_LEFT2 'J'
 #define KEY_RIGHT2 'L'
 
-
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 800;
+constexpr int SCREEN_WIDTH = 800;
+constexpr int SCREEN_HEIGHT = 800;
 
 using namespace std;
 

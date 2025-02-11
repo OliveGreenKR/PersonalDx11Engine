@@ -1,11 +1,64 @@
-﻿  CollisionResponseCalculator.cpp
+﻿  CollisionManager.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17): error C2678: binary '=': no operator found which takes a left-hand operand of type 'const FCollisionPair' (or there is no acceptable conversion)
+  (compiling source file 'CollisionManager.cpp')
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(32,1):
+      could be 'FCollisionPair &FCollisionPair::operator =(FCollisionPair &&)'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+          'FCollisionPair &FCollisionPair::operator =(FCollisionPair &&)': cannot convert 'this' pointer from 'const FCollisionPair' to 'FCollisionPair &'
+              C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+              Conversion loses qualifiers
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(32,1):
+      or       'FCollisionPair &FCollisionPair::operator =(const FCollisionPair &)'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+          'FCollisionPair &FCollisionPair::operator =(const FCollisionPair &)': cannot convert 'this' pointer from 'const FCollisionPair' to 'FCollisionPair &'
+              C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+              Conversion loses qualifiers
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+      while trying to match the argument list '(const FCollisionPair, const FCollisionPair)'
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2218,17):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(13,34):
+          see reference to function template instantiation '_FwdIt std::remove_if<std::_List_const_iterator<std::_List_val<std::_List_simple_types<_Ty>>>,UCollisionManager::CleanupDestroyedComponents::<lambda_1>>(_FwdIt,const _FwdIt,_Pr)' being compiled
+          with
+          [
+              _FwdIt=std::_List_const_iterator<std::_List_val<std::_List_simple_types<FCollisionPair>>>,
+              _Ty=FCollisionPair,
+              _Pr=UCollisionManager::CleanupDestroyedComponents::<lambda_1>
+          ]
+  
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18): error C2664: 'bool UCollisionManager::CleanupDestroyedComponents::<lambda_2>::operator ()(const UCollisionComponent *) const': cannot convert argument 1 from 'std::shared_ptr<_Ty>' to 'const UCollisionComponent *'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18): error C2664:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18): error C2664:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18): error C2664:             _Ty=UCollisionComponent
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18): error C2664:         ]
+  (compiling source file 'CollisionManager.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,24):
+      No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(24,14):
+      see declaration of 'UCollisionManager::CleanupDestroyedComponents::<lambda_2>::operator ()'
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18):
+      while trying to match the argument list '(std::shared_ptr<_Ty>)'
+          with
+          [
+              _Ty=UCollisionComponent
+          ]
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(2217,18):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(21,34):
+          see reference to function template instantiation '_FwdIt std::remove_if<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,UCollisionManager::CleanupDestroyedComponents::<lambda_2>>(_FwdIt,const _FwdIt,_Pr)' being compiled
+          with
+          [
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<std::shared_ptr<UCollisionComponent>>>>,
+              _Ty=std::shared_ptr<UCollisionComponent>,
+              _Pr=UCollisionManager::CleanupDestroyedComponents::<lambda_2>
+          ]
+  
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(98,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(101,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(104,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(107,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(110,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(113,2): warning C4002: too many arguments for function-like macro invocation 'assert'
   Generating Code...
-  PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

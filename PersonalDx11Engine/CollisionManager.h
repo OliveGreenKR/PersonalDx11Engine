@@ -1,84 +1,133 @@
 #pragma once
+#include "Math.h"
+#include "CollisionComponent.h"
+#include "CollisionDefines.h"
+#include "CollisionDetector.h"
+#include "CollisionResponseCalculator.h"
+#include "CollisionEventDispatcher.h"
 #include <memory>
 #include <vector>
-#include <algorithm>
-#include "CollisionDefines.h"
-#include "CollisionComponent.h"
+#include <unordered_set>
+#include <unordered_map>
 
 class UCollisionComponent;
+class URigidBodyComponent;
 
-//충돌 매니저가 컴포넌트관리할때 사용할 구조체
-struct FCollisionComponentState
+#pragma region CollisionPair
+struct FCollisionPair
 {
-	std::shared_ptr<UCollisionComponent> Component;
-	std::vector<std::weak_ptr<UCollisionComponent>> CurrentCollisions;  // 현재 프레임의 충돌 대상들
-	std::vector<std::weak_ptr<UCollisionComponent>> PreviousCollisions; // 이전 프레임의 충돌 대상들
+    FCollisionPair(size_t InIndexA, size_t InIndexB)
+        : IndexA(InIndexA < InIndexB ? IndexA : IndexB)
+        , IndexB(InIndexA >= InIndexB ? IndexA : IndexB)
+    {
+    }
 
-	// CCD를 위한 추가 정보
-	FTransform PreviousTransform;
-	FTransform CurrentTransform;
+    size_t IndexA; //always smaller than indexB
+    size_t IndexB; //always smaller than indexA
+
+    bool operator==(const FCollisionPair& Other) const
+    {
+        return IndexA == Other.IndexA && IndexB == Other.IndexB;
+    }
 };
 
-//todo 서브 시스템 구현
-class FCollisionDectection;
-class FCollisionResponse;
-class FCollisionEvent;
-
+namespace std
+{
+    template<>
+    struct hash<FCollisionPair>
+    {
+        size_t operator()(const FCollisionPair& Pair) const {
+            return ((Pair.IndexA + Pair.IndexB) * (Pair.IndexA + Pair.IndexB + 1) / 2) + Pair.IndexB;
+        }
+    };
+}
+#pragma endregion
 
 class UCollisionManager
 {
-	//모든 collision component들의 생명 주기를 관리하고
+private:
+    UCollisionManager();
+    ~UCollisionManager();
 
-	/*
-	* 모든 Collision Component들의 생성 및 소멸을 관리.
-	* 모든 콜리전 컴포의 순서쌍과의 충돌 검사 및 충돌 반응을 총괄.
-	* 
-	* 3가지 서브 시스템으로 나누어서 구성
-	* 
-	* - Collision Detection System : 충돌 탐지
-	* - Collision Response System: 
-			충돌 반응을 계산하여 해당 컴포넌트의 상위 리지드 바디에게 힘의 형태로 전달
-	* - Collision Event System : 충돌 이벤트 발송
-	* 
-	* **Broad Phase는 비구현 예정.
-	*/
-
-private :
-	UCollisionManager() = default;
 public:
-	~UCollisionManager() { Release(); }
-	
-	// 복사 및 이동 방지
-	UCollisionManager(const UCollisionManager&) = delete;
-	UCollisionManager& operator=(const UCollisionManager&) = delete;
-	UCollisionManager(UCollisionManager&&) = delete;
-	UCollisionManager& operator=(UCollisionManager&&) = delete;
+    static UCollisionManager* Get() {
+        static UCollisionManager Instance;
+        return &Instance;
+    }
 
-	static UCollisionManager* Get()
-	{
-		static std::unique_ptr<UCollisionManager> Instance
-			= std::unique_ptr<UCollisionManager>(new UCollisionManager());
+    // 팩토리 메소드: 외부에서 사용할 컴포넌트 생성
+    std::shared_ptr<UCollisionComponent> Create(
+        const std::shared_ptr<URigidBodyComponent>& InRigidBody,
+        const ECollisionShapeType& InType = ECollisionShapeType::Sphere,
+        const Vector3& InHalfExtents = Vector3::One * 0.5f)
+    {
+        auto NewComponent = std::shared_ptr<UCollisionComponent>(
+            new UCollisionComponent(InRigidBody, InType, InHalfExtents)
+        );
+        RegisteredComponents.push_back(NewComponent);
+        return NewComponent;
+    }
 
-		return Instance.get();
+    void Tick(const float DeltaTime);
+    void UnRegisterAll();
 
-	}
-	void Tick(const float DeltaTime);
-
-	static UCollisionManager* CreateCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-	UCollisionManager* GetCollisionByIndex(const unsigned int InIndex) const;
-
-	void Release();
-
-private:
-	void DeleteCollisionByIndex(const unsigned itn);
-
+public:
+    // 시스템 설정
+    FCollisionSystemConfig Config;
 
 private:
-	std::vector<std::shared_ptr<UCollisionManager>> Collisions;
+    void Initialize();
+    void Release();
 
-	//std::unique_ptr<class FCollisionDetection> Detector;
-	//std::unique_ptr<class FCollisionResponse> ResponseCalculator;
-	//std::unique_ptr<class FCollisionEventPublisher> EventPublisher;
+    // 실제 컴포넌트 삭제 처리
+    void CleanupDestroyedComponents();
+    inline bool IsDestroyedComponent(size_t idx) { return RegisteredComponents[idx]->bDestroyed; }
 
+private:
+    // 충돌 검사 및 응답 처리를 위한 내부 함수들
+    void ProcessCollisions(float DeltaTime);
+    void UpdateCollisionPairs();
+    void CleanupDestroyedComponents();
+
+    // CCD 관련 함수들
+    bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
+
+    void ProcessCCDCollision(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        float DeltaTime);
+
+    // 실제 충돌 처리 및 이벤트 발행
+    void HandleCollision(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const FCollisionDetectionResult& DetectionResult,
+        float DeltaTime);
+
+    void ApplyCollisionResponse(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const FCollisionDetectionResult& DetectionResult);
+
+    // 이벤트 처리
+    void BroadcastCollisionEvents(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const FCollisionDetectionResult& DetectionResult,
+        float DeltaTime);
+
+    // 충돌 상태 관리
+    void UpdateCollisionState(
+        const FCollisionPair& Pair,
+        bool CurrentlyColliding,
+        const FCollisionDetectionResult& DetectionResult,
+        float DeltaTime);
+
+private:
+    FCollisionDetector* Detector;
+    FCollisionResponseCalculator* ResponseCalculator;
+    FCollisionEventDispatcher* EventDispatcher;
+
+    std::vector<std::shared_ptr<UCollisionComponent>> RegisteredComponents;
+    std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 };
-

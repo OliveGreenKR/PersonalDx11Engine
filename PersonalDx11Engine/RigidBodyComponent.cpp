@@ -142,7 +142,7 @@ void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);
 	// 회전 관성도 질량에 따라 갱신
-	RotationalInertia = Mass * 0.4f; // 구체 근사
+	RotationalInertia = 1.0f * Mass; //근사
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)

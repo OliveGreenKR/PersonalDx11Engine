@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX  
 #include <directxmath.h>
 #include <cmath>
 #include <algorithm>
@@ -365,6 +366,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 	static const Vector3 Up;
 	static const Vector3 Forward;
 	static const Vector3 Right;
+	static const Vector3 One;
 
 	// Assignment operators
 	Vector3& operator=(const Vector4& Vec)

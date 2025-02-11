@@ -7,10 +7,10 @@ UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyCompone
 	Initialize(InRigidBody);
 }
 
-UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InType, const Vector3& InHalfExtents)
+UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
 {
 	Initialize(InRigidBody);
-	Shape.Type = InType;
+	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
 
