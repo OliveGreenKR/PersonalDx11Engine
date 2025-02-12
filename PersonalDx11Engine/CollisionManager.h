@@ -106,6 +106,8 @@ private:
     inline bool IsDestroyedComponent(size_t Idx) const {
         return RegisteredComponents[Idx].Component->bDestroyed;
     }
+    // 도우미 함수: 충돌 쌍의 인덱스 업데이트
+    void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
 
 private:
     // 충돌 처리 관련 함수들
