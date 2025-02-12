@@ -40,9 +40,19 @@ void UCollisionManager::UnRegisterAll()
 
 void UCollisionManager::Initialize()
 {
-	Detector = new FCollisionDetector();
-	ResponseCalculator = new FCollisionResponseCalculator();
-	EventDispatcher = new FCollisionEventDispatcher();
+	try
+	{
+		Detector = new FCollisionDetector();
+		ResponseCalculator = new FCollisionResponseCalculator();
+		EventDispatcher = new FCollisionEventDispatcher();
+	}
+	catch (...)
+	{
+		delete EventDispatcher;
+		delete ResponseCalculator;
+		delete Detector;
+		std::terminate();
+	}
 }
 
 void UCollisionManager::Release()
@@ -72,6 +82,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		for (size_t j = i+1 ; j < RegisteredComponents.size(); ++j)
 		{
 			//객체 속도 검사
+			
 			//임계속도보다 빠르면 CCD, 아니면 DCD
 			
 			//충돌쌍 검사

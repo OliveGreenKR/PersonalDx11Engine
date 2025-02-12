@@ -130,9 +130,9 @@ private:
     //
 
 private:
-    FCollisionDetector* Detector;
-    FCollisionResponseCalculator* ResponseCalculator;
-    FCollisionEventDispatcher* EventDispatcher;
+    FCollisionDetector* Detector = nullptr;
+    FCollisionResponseCalculator* ResponseCalculator = nullptr;
+    FCollisionEventDispatcher* EventDispatcher = nullptr;
 
     std::vector<std::shared_ptr<UCollisionComponent>> RegisteredComponents;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
