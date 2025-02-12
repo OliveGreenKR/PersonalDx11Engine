@@ -207,5 +207,87 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 
 void UCollisionManager::UpdateCollisionPairs()
 {
+	if (!bIsInitialized || !CollisionTree || RegisteredComponents.empty())
+	{
+		ActiveCollisionPairs.clear();
+		return;
+	}
 
+	// 새로운 충돌 쌍을 저장할 임시 컨테이너
+	std::unordered_set<FCollisionPair> NewCollisionPairs;
+	// 더 현실적인 초기 예약 크기 계산
+	size_t EstimatedPairs = std::min(ActiveCollisionPairs.size(),
+									 RegisteredComponents.size() * (RegisteredComponents.size() - 1) / 2);
+	NewCollisionPairs.reserve(EstimatedPairs);
+
+	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	{
+		const auto& ComponentData = RegisteredComponents[i];
+		auto* Component = ComponentData.Component.get();
+
+		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
+		if (!Component || Component->bDestroyed || !Component->bCollisionEnabled)
+		{
+			continue;
+		}
+
+		// 트리 노드 ID 유효성 검사 추가
+		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
+		{
+			continue;
+		}
+
+		const FDynamicAABBTree::AABB& TargetFatBounds = CollisionTree->GetFatBounds(ComponentData.TreeNodeId);
+
+		CollisionTree->QueryOverlap(
+			TargetFatBounds,
+			[this, i, &NewCollisionPairs](size_t OtherNodeId) {
+				if (OtherNodeId == FDynamicAABBTree::NULL_NODE ||
+					RegisteredComponents[i].TreeNodeId >= OtherNodeId)
+				{
+					return;
+				}
+
+				size_t OtherIndex = FindComponentIndex(OtherNodeId);
+				if (OtherIndex == SIZE_MAX)
+				{
+					return;
+				}
+
+				const auto& OtherComponent = RegisteredComponents[OtherIndex].Component;
+				if (!OtherComponent || OtherComponent->bDestroyed ||
+					!OtherComponent->bCollisionEnabled)
+				{
+					return;
+				}
+
+				NewCollisionPairs.insert(FCollisionPair(i, OtherIndex));
+			});
+	}
+
+	ActiveCollisionPairs = std::move(NewCollisionPairs);
+}
+
+UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
+{
+	for (const auto& Data : RegisteredComponents)
+	{
+		if (Data.TreeNodeId == TreeNodeId)
+		{
+			return Data.Component.get();
+		}
+	}
+	return nullptr;
+}
+
+size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
+{
+	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	{
+		if (RegisteredComponents[i].TreeNodeId == TreeNodeId)
+		{
+			return i;
+		}
+	}
+	return SIZE_MAX;
 }

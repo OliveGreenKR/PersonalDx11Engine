@@ -423,7 +423,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		},
 		"CharacterMove");
-
+	//Safe Delegate test
 	UInputManager::Get()->BindKeyEventSystem(
 		EKeyEvent::Pressed,
 		[&Character2](const FKeyEventData& EventData) {

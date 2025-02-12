@@ -418,8 +418,7 @@ float FDynamicAABBTree::ComputeInheritedCost(size_t NodeId) const
     return Cost;
 }
 
-template<typename Callback>
-void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, Callback&& Func)
+void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func)
 {
     std::vector<size_t> Stack;
     Stack.reserve(NodeCount);
@@ -444,7 +443,7 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, Callback&& Func)
             // 리프 노드면 콜백 호출
             if (CurrentNode.BoundableObject)
             {
-                Func(CurrentNode.BoundableObject);
+                Func(NodeId);
             }
         }
         else

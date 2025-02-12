@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <functional>
 
 class FDynamicAABBTree
 {
@@ -101,9 +102,19 @@ public:
     void UpdateTree();
 
     // 쿼리 기능
-    template<typename Callback>
-    void QueryOverlap(const AABB& QueryBounds, Callback&& Func);
+    void QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func);
 
+    const AABB& GetBounds(const size_t NodeId)
+    {
+        assert(NodePool[NodeId].BoundableObject);
+        return NodePool[NodeId].Bounds;
+    }
+
+    const AABB& GetFatBounds(const size_t NodeId)
+    {
+        assert(NodePool[NodeId].BoundableObject);
+        return NodePool[NodeId].FatBounds;
+    }
 private:
     // 노드 풀 관리
     size_t AllocateNode();
@@ -120,8 +131,8 @@ private:
     float ComputeInheritedCost(size_t NodeId) const;
 
 private:
-    std::vector<Node> NodePool;           // 노드 메모리 풀
-    std::vector<size_t> FreeNodes;        // 재사용 가능한 노드 인덱스
+    std::vector<Node> NodePool;           // 노드 메모리 풀 - 모든 노드를 보관
+    std::vector<size_t> FreeNodes;        // 재사용 가능한 노드 인덱스만 보관
     size_t RootId = NULL_NODE;            // 루트 노드 인덱스
     size_t NodeCount = 0;                 // 현재 사용 중인 노드 수
 };
