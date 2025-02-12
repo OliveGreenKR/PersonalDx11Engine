@@ -54,6 +54,7 @@ public:
     // 시뮬레이션 플래그
     bool bGravity = false;
     bool bIsSimulatedPhysics = true;
+    bool IsStatic() { return Type == ERigidBodyType::Static; }
 
 private:
     void UpdateTransform(float DeltaTime);

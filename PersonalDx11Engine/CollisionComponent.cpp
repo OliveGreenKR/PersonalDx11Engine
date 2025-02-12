@@ -26,6 +26,11 @@ const FTransform* UCollisionComponent::GetTransform() const
 	return RigidBody.lock()->GetOwner()->GetTransform();
 }
 
+bool UCollisionComponent::IsStatic() const
+{
+	return RigidBody.lock()->IsStatic();
+}
+
 void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
 	if (InRigidBody.get())

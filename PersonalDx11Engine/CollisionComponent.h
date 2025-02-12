@@ -6,14 +6,11 @@
 #include "CollisionDefines.h"
 #include "DynamicBoundableInterface.h"
 
-
-#define OUT
-
 class URigidBodyComponent;
 class UGameObject;
 
 // 충돌 응답에 필요한 속성 관리
-class UCollisionComponent : public IDynamicBoundable, public std::enable_shared_from_this<UCollisionComponent>
+class UCollisionComponent : public IDynamicBoundable
 {
 public:
     UCollisionComponent() = default;
@@ -24,6 +21,7 @@ public:
     // Inherited via IDynamicBoundable
     Vector3 GetHalfExtent() const override;
     const FTransform* GetTransform() const override;
+    bool IsStatic() const override;
 
 public:
     // 초기화
