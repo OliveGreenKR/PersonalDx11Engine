@@ -71,6 +71,9 @@
     <ClCompile Include="CollisionEventDispatcher.cpp">
       <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
+    <ClCompile Include="DynamicAABBTree.cpp">
+      <Filter>Engine\DataStructure</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -126,6 +129,9 @@
     </Filter>
     <Filter Include="Engine\Components\Collision">
       <UniqueIdentifier>{f8174b14-3bde-47c9-8241-dff6b2941076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DataStructure">
+      <UniqueIdentifier>{3789f00b-54d1-4c05-b63f-fa85424a14d0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -211,6 +217,12 @@
     </ClInclude>
     <ClInclude Include="CollisionEventDispatcher.h">
       <Filter>Engine\Components\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicAABBTree.h">
+      <Filter>Engine\DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicBoundableInterface.h">
+      <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

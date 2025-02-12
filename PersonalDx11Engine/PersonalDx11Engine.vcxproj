@@ -136,6 +136,7 @@
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
+    <ClCompile Include="DynamicAABBTree.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -164,6 +165,8 @@
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="DynamicAABBTree.h" />
+    <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="InputManager.h" />
