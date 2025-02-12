@@ -24,12 +24,10 @@ public:
     // Inherited via IDynamicBoundable
     Vector3 GetHalfExtent() const override;
     const FTransform* GetTransform() const override;
-    bool HasBoundsChanged() const override;
-    void SetBoundsChanged(bool InBool) override { bBoundsDirty = InBool; }
 
 public:
     // 초기화
-    void Initialize();
+    void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
 
     // 충돌 이벤트 
@@ -57,12 +55,8 @@ public:
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 
-    void SetCollisionShape(const FCollisionShapeData& InShape) {
-        Shape = InShape; 
-        bBoundsDirty = true;
-    }
+    void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
     const FCollisionShapeData& GetCollisionShape() const { return Shape; }
-    //FCollisionShapeData& GetCollisionShape() { return Shape; }
 
     const Vector3& GetPreviousPosition() const { return PreviousPosition; }
     void SetPreviousPosition(const Vector3& InPosition) { PreviousPosition = InPosition; }
@@ -70,11 +64,7 @@ public:
 public:
     bool bCollisionEnabled = true;
     bool bDestroyed = false;
-    
-public:
-    bool bBoundsDirty = false;
-public:
-    void OnOwnerTransformChagned() { bBoundsDirty = true; }
+
 public:
     // 충돌 이벤트 publish
     void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {

@@ -5,23 +5,14 @@
 
 UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
-	RigidBody = InRigidBody;
+	BindRigidBody(InRigidBody);
 }
 
 UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
 {
-	RigidBody = InRigidBody;
+	BindRigidBody(InRigidBody);
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
-}
-
-
-void UCollisionComponent::Initialize()
-{
-	if (auto RigidPtr = RigidBody.lock())
-	{
-		RigidPtr->GetOwner()->OnTransformChangedDelegate.Bind(shared_from_this(), [this]() {OnOwnerTransformChagned();}, "BoundsCheck");
-	}
 }
 
 Vector3 UCollisionComponent::GetHalfExtent() const
@@ -35,7 +26,11 @@ const FTransform* UCollisionComponent::GetTransform() const
 	return RigidBody.lock()->GetOwner()->GetTransform();
 }
 
-bool UCollisionComponent::HasBoundsChanged() const
+void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
-	return bBoundsDirty;
+	if (InRigidBody.get())
+	{
+		RigidBody = InRigidBody;
+	}
 }
+
