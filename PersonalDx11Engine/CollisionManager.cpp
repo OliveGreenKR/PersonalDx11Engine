@@ -1,35 +1,42 @@
 #include "CollisionManager.h"
 #include <algorithm>
 
-UCollisionManager::UCollisionManager()
-{
-	Initialize();
-}
-
 UCollisionManager::~UCollisionManager()
 {
 	Release();
 }
 
-void UCollisionManager::Tick(const float DeltaTime)
+std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
+	const std::shared_ptr<URigidBodyComponent>& InRigidBody,
+	const ECollisionShapeType& InType,
+	const Vector3& InHalfExtents)
 {
-	if (!Config.bPhysicsSimulated)
-		return;
+	if (!bIsInitialized || !InRigidBody)
+	{
+		return nullptr;
+	}
 
-	//CleanupDestroyedComponents();
+	// 새 컴포넌트 생성
+	auto NewComponent = std::shared_ptr<UCollisionComponent>(
+		new UCollisionComponent(InRigidBody, InType, InHalfExtents)
+	);
 
-	//BraodPhas를 통해 잠재적 충돌 가능성이 있는 쌍 생성
-	//이전 프레임 충돌 상태 정보 유지
-	//UpdateCollisionPairs();
+	// AABB 트리에 등록
+	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
+	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
+	{
+		return nullptr;
+	}
 
-	//각 충돌쌍에 대해 ProcessCollision실행
-	//ProcessCollisions(DeltaTime);
-		//객체 속도를 통한 CCD 필요 검사
-		//	객체 속도에 따라 Detector의 timeStep 변화Lerp(minstep,maxstep)
-		//충돌 감지 실행
-		//충돌 반응
-		//충돌 이벤트
-		//상태 업데이트
+	// 컴포넌트 데이터 생성 및 등록
+	FComponentData ComponentData;
+	ComponentData.Component = NewComponent;
+	ComponentData.TreeNodeId = TreeNodeId;
+
+	// 벡터에 추가
+	RegisteredComponents.push_back(std::move(ComponentData));
+
+	return NewComponent;
 }
 
 void UCollisionManager::UnRegisterAll()
@@ -45,18 +52,28 @@ void UCollisionManager::Initialize()
 		Detector = new FCollisionDetector();
 		ResponseCalculator = new FCollisionResponseCalculator();
 		EventDispatcher = new FCollisionEventDispatcher();
+		CollisionTree = new FDynamicAABBTree(Config.InitialCapacity);
 	}
 	catch (...)
 	{
 		delete EventDispatcher;
 		delete ResponseCalculator;
 		delete Detector;
+		delete CollisionTree;
 		std::terminate();
 	}
+
+	RegisteredComponents.reserve(Config.InitialCapacity);
+	ActiveCollisionPairs.reserve(Config.InitialCapacity);
+	bIsInitialized = true;
 }
 
 void UCollisionManager::Release()
 {
+	if (CollisionTree)
+	{
+		delete CollisionTree;
+	}
 	if (EventDispatcher)
 	{
 		delete EventDispatcher;
@@ -72,52 +89,3 @@ void UCollisionManager::Release()
 	UnRegisterAll();
 }
 
-void UCollisionManager::ProcessCollisions(const float DeltaTime)
-{
-	//TODO : BroadPhase
-
-	//Narrow Phase
-	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
-	{
-		for (size_t j = i+1 ; j < RegisteredComponents.size(); ++j)
-		{
-			//객체 속도 검사
-			
-			//임계속도보다 빠르면 CCD, 아니면 DCD
-			
-			//충돌쌍 검사
-
-			//충돌 반응
-
-			//결과 이벤트 디스패치
-
-			//충돌쌍들 저장
-		}
-	}
-}
-
-void UCollisionManager::CleanupDestroyedComponents()
-{
-
-	// erase-remove 구문 수정
-	auto it = ActiveCollisionPairs.begin();
-	while(it != ActiveCollisionPairs.end())
-	{
-		if (IsDestroyedComponent(it->IndexA) || IsDestroyedComponent(it->IndexB))
-		{
-			it = ActiveCollisionPairs.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
-
-	RegisteredComponents.erase(std::remove_if(RegisteredComponents.begin(),
-											  RegisteredComponents.end(),
-											  [](const std::shared_ptr<UCollisionComponent>& Comp)
-											  {
-												  assert(Comp.get());
-												  return Comp.get()->bDestroyed;
-											  }));
-}

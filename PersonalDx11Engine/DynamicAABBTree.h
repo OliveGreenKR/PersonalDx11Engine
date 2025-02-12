@@ -11,8 +11,8 @@ class FDynamicAABBTree
 public:
     // 16바이트 정렬을 위한 상수
     static constexpr size_t NULL_NODE = static_cast<size_t>(-1);
-    static constexpr float AABB_EXTENSION = 0.1f;    // AABB 확장 계수
-    static constexpr float AABB_MULTIPLIER = 2.0f;   // 동적 갱신 최적화용 승수
+    float AABB_Extension = 0.1f;    // AABB 확장 계수
+    static constexpr float MIN_MARGIN = 0.01f;
 
     struct AABB
     {

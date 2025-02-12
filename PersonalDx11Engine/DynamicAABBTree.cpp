@@ -35,7 +35,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
     NewNode.Bounds.Max = Position + HalfExtent;
 
     // Fat AABB 설정 (마진 추가)
-    Vector3 Margin = HalfExtent * AABB_MULTIPLIER + Vector3(AABB_EXTENSION, AABB_EXTENSION, AABB_EXTENSION);
+    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One * (MIN_MARGIN);  // 매우 작은 AABB를 위한 최소 여유
     NewNode.FatBounds.Min = Position - Margin;
     NewNode.FatBounds.Max = Position + Margin;
 
@@ -392,7 +392,7 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
     UpdateNode.Bounds.Max = Position + HalfExtent;
 
     // Fat AABB 업데이트
-    Vector3 Margin = HalfExtent * AABB_MULTIPLIER + Vector3(AABB_EXTENSION, AABB_EXTENSION, AABB_EXTENSION);
+    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One * MIN_MARGIN;
     UpdateNode.FatBounds.Min = Position - Margin;
     UpdateNode.FatBounds.Max = Position + Margin;
 

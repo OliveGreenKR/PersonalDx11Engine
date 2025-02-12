@@ -195,7 +195,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//CollisionTest
-	FCollisionShapeData ShapeData1;
+	/*FCollisionShapeData ShapeData1;
 	ShapeData1.Type = ECollisionShapeType::Box;
 	ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
 
@@ -236,7 +236,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto CollisionCalculator = make_unique<FCollisionResponseCalculator>();
 	auto CollisioEventDispatcher = make_unique<FCollisionEventDispatcher>();
 
-	bool bPreviousCollision = false;
+	bool bPreviousCollision = false;*/
 
 
 #pragma region  InputBind
@@ -452,70 +452,70 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 
-		//collision Detect
-		FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
-			ShapeData1, *Character->GetTransform(),
-			ShapeData2, *Character2->GetTransform()
-		);
+		////collision Detect
+		//FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
+		//	ShapeData1, *Character->GetTransform(),
+		//	ShapeData2, *Character2->GetTransform()
+		//);
 
-		//collision Response
-		if (result.bCollided)
-		{
-			FCollisionResponseParameters Param1, Param2;
-			Param1.Velocity = Character->GetCurrentVelocity();
-			Param1.FrictionKinetic = 0.3f;
-			Param1.FrictionStatic = 0.5f;
-			Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
-			Param1.Mass = Character->GetRigidBody()->GetMass();
-			Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
-			Param1.Position = Character->GetTransform()->Position;
-			Param1.Restitution = 0.5f;
+		////collision Response
+		//if (result.bCollided)
+		//{
+		//	FCollisionResponseParameters Param1, Param2;
+		//	Param1.Velocity = Character->GetCurrentVelocity();
+		//	Param1.FrictionKinetic = 0.3f;
+		//	Param1.FrictionStatic = 0.5f;
+		//	Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
+		//	Param1.Mass = Character->GetRigidBody()->GetMass();
+		//	Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
+		//	Param1.Position = Character->GetTransform()->Position;
+		//	Param1.Restitution = 0.5f;
 
-			Param2.Velocity = Character2->GetCurrentVelocity();
-			Param2.FrictionKinetic = 0.3f;
-			Param2.FrictionStatic = 0.5f;
-			Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
-			Param2.Mass = Character2->GetRigidBody()->GetMass();
-			Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
-			Param2.Position = Character2->GetTransform()->Position;
-			Param2.Restitution = 0.5f;
+		//	Param2.Velocity = Character2->GetCurrentVelocity();
+		//	Param2.FrictionKinetic = 0.3f;
+		//	Param2.FrictionStatic = 0.5f;
+		//	Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
+		//	Param2.Mass = Character2->GetRigidBody()->GetMass();
+		//	Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
+		//	Param2.Position = Character2->GetTransform()->Position;
+		//	Param2.Restitution = 0.5f;
 
-			FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
-			Character->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
-			Character2->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
-		}
+		//	FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
+		//	Character->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
+		//	Character2->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
+		//}
 
-		//event dispatch
-		FCollisionEventData collisionEvent;
-		collisionEvent.CollisionResult = result;
+		////event dispatch
+		//FCollisionEventData collisionEvent;
+		//collisionEvent.CollisionResult = result;
 
-		ECollisionState state = ECollisionState::None;
+		//ECollisionState state = ECollisionState::None;
 
-		if (result.bCollided)
-		{
-			if (!bPreviousCollision)
-			{
-				state = ECollisionState::Enter;
-			}
-			else
-			{
-				state = ECollisionState::Stay;
-			}
-		}
-		else
-		{
-			if (bPreviousCollision)
-			{
-				state = ECollisionState::Exit;
-			}
-		}
+		//if (result.bCollided)
+		//{
+		//	if (!bPreviousCollision)
+		//	{
+		//		state = ECollisionState::Enter;
+		//	}
+		//	else
+		//	{
+		//		state = ECollisionState::Stay;
+		//	}
+		//}
+		//else
+		//{
+		//	if (bPreviousCollision)
+		//	{
+		//		state = ECollisionState::Exit;
+		//	}
+		//}
 
-		bPreviousCollision = result.bCollided;
+		//bPreviousCollision = result.bCollided;
 
-		collisionEvent.OtherComponent = CollisionComp2;
-		CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp1, collisionEvent, state);
-		collisionEvent.OtherComponent = CollisionComp1;
-		CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp2, collisionEvent, state);
+		//collisionEvent.OtherComponent = CollisionComp2;
+		//CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp1, collisionEvent, state);
+		//collisionEvent.OtherComponent = CollisionComp1;
+		//CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp2, collisionEvent, state);
 
 		Character->Tick(deltaTime);
 		Character2->Tick(deltaTime);
