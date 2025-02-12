@@ -22,9 +22,9 @@
 
 #include "CollisionComponent.h"
 #include "CollisionManager.h"
-#include "CollisionDetector.h"
-#include "CollisionResponseCalculator.h"
-#include "CollisionEventDispatcher.h"
+//#include "CollisionDetector.h"
+//#include "CollisionResponseCalculator.h"
+//#include "CollisionEventDispatcher.h"
 
 
 #define KEY_UP 'W'
@@ -195,6 +195,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//CollisionTest
+	UCollisionManager::Get()->Create(Character->GetSharedRigidBody(), ECollisionShapeType::Box, { 0.5f,0.5f,0.5f });
+	UCollisionManager::Get()->Create(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, { 0.5f,0.5f,0.5f });
+
 	/*FCollisionShapeData ShapeData1;
 	ShapeData1.Type = ECollisionShapeType::Box;
 	ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
@@ -238,7 +241,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	bool bPreviousCollision = false;*/
 
-
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
 	//현재는 객체가 직접 본인이 반응할 키 이벤트를 관리..
@@ -259,6 +261,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	constexpr WPARAM ACTION_CAMERA_RIGHT = VK_RIGHT;
 	constexpr WPARAM ACTION_CAMERA_LEFT = VK_LEFT;
 	constexpr WPARAM ACTION_CAMERA_FOLLOWOBJECT = 'V';
+
+	constexpr WPARAM ACTION_DEBUG_1 = VK_F1;
 
 	//Character
 	UInputManager::Get()->BindKeyEvent(
@@ -420,6 +424,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		},
 		"CharacterMove");
 
+	UInputManager::Get()->BindKeyEventSystem(
+		EKeyEvent::Pressed,
+		[&Character2](const FKeyEventData& EventData) {
+			if (EventData.KeyCode == ACTION_DEBUG_1)
+			{
+				if (Character2.get())
+				{
+					Character2.reset();
+				}
+			}
+		},
+		"DEBUG1");
+
 
 
 #pragma endregion
@@ -517,9 +534,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//collisionEvent.OtherComponent = CollisionComp1;
 		//CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp2, collisionEvent, state);
 
-		Character->Tick(deltaTime);
-		Character2->Tick(deltaTime);
-		Camera->Tick(deltaTime);
+		if(Character)
+			Character->Tick(deltaTime);
+		if(Character2)
+			Character2->Tick(deltaTime);
+		if(Camera)
+			Camera->Tick(deltaTime);
 
 #pragma endregion 
 		
@@ -536,61 +556,70 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 		// ImGui UI 
-		ImGui::Begin("Camera", nullptr, UIWindowFlags);
-		ImGui::Checkbox("bIs2D" , &Camera->bIs2D);
-		ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
-					Camera->GetTransform()->Position.y,
-					Camera->GetTransform()->Position.z);
-		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
-					Camera->GetTransform()->GetEulerRotation().y,
-					Camera->GetTransform()->GetEulerRotation().z);
-		ImGui::End();
+		if (Camera)
+		{
+			ImGui::Begin("Camera", nullptr, UIWindowFlags);
+			ImGui::Checkbox("bIs2D", &Camera->bIs2D);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
+						Camera->GetTransform()->Position.y,
+						Camera->GetTransform()->Position.z);
+			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
+						Camera->GetTransform()->GetEulerRotation().y,
+						Camera->GetTransform()->GetEulerRotation().z);
+			ImGui::End();
+		}
+		
+		if (Character)
+		{
+			Vector3 CurrentVelo = Character->GetCurrentVelocity();
+			bool bGravity = Character->IsGravity();
+			bool bPhysics = Character->IsPhysicsSimulated();
+			ImGui::Begin("Charcter", nullptr, UIWindowFlags);
+			ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
+			ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+			ImGui::Checkbox("bDebug", &Character->bDebug);
+			ImGui::Checkbox("bPhysicsBased", &bPhysics);
+			ImGui::Checkbox("bGravity", &bGravity);
+			Character->SetGravity(bGravity);
+			Character->SetPhysics(bPhysics);
+			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+						CurrentVelo.y,
+						CurrentVelo.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->Position.x,
+						Character->GetTransform()->Position.y,
+						Character->GetTransform()->Position.z);
+			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
+						Character->GetTransform()->GetEulerRotation().y,
+						Character->GetTransform()->GetEulerRotation().z);
 
-		Vector3 CurrentVelo = Character->GetCurrentVelocity();
-		bool bGravity = Character->IsGravity();
-		bool bPhysics = Character->IsPhysicsSimulated();
-		ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
-		ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-		ImGui::Checkbox("bDebug", &Character->bDebug);
-		ImGui::Checkbox("bPhysicsBased", &bPhysics);
-		ImGui::Checkbox("bGravity", &bGravity);
-		Character->SetGravity(bGravity);
-		Character->SetPhysics(bPhysics);
-		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-					CurrentVelo.y,
-					CurrentVelo.z);
-		ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->Position.x,
-					Character->GetTransform()->Position.y,
-					Character->GetTransform()->Position.z);
-		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
-					Character->GetTransform()->GetEulerRotation().y,
-					Character->GetTransform()->GetEulerRotation().z);
+			ImGui::End();
+		}
+		
+		if (Character2)
+		{
+			Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+			bool bGravity2 = Character2->IsGravity();
+			bool bPhysics2 = Character2->IsPhysicsSimulated();
+			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
+			ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
+			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+			ImGui::Checkbox("bDebug", &Character2->bDebug);
+			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
+			ImGui::Checkbox("bGravity", &bGravity2);
+			Character2->SetGravity(bGravity2);
+			Character2->SetPhysics(bPhysics2);
+			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+						CurrentVelo.y,
+						CurrentVelo.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->Position.x,
+						Character2->GetTransform()->Position.y,
+						Character2->GetTransform()->Position.z);
+			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
+						Character2->GetTransform()->GetEulerRotation().y,
+						Character2->GetTransform()->GetEulerRotation().z);
 
-		ImGui::End();
-
-		CurrentVelo = Character2->GetCurrentVelocity();
-		bool bGravity2 = Character2->IsGravity();
-		bool bPhysics2 = Character2->IsPhysicsSimulated();
-		ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-		ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
-		ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-		ImGui::Checkbox("bDebug", &Character2->bDebug);
-		ImGui::Checkbox("bPhysicsBased", &bPhysics2);
-		ImGui::Checkbox("bGravity", &bGravity2);
-		Character2->SetGravity(bGravity2);
-		Character2->SetPhysics(bPhysics2);
-		ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-					CurrentVelo.y,
-					CurrentVelo.z);
-		ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->Position.x,
-					Character2->GetTransform()->Position.y,
-					Character2->GetTransform()->Position.z);
-		ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
-					Character2->GetTransform()->GetEulerRotation().y,
-					Character2->GetTransform()->GetEulerRotation().z);
-
-		ImGui::End();
+			ImGui::End();
+		}
 
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

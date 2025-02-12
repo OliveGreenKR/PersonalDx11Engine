@@ -49,6 +49,21 @@ public:
     // 윈도우 프로시저에서 호출될 메시지 처리 함수
     bool ProcessWindowsMessage(UINT Message, WPARAM WParam, LPARAM LParam);
 
+    //시스템 바운딩
+    void BindKeyEventSystem(
+        EKeyEvent EventType,
+        const std::function<void(const FKeyEventData&)>& InFunction,
+        const std::string& InFunctionName)
+    {
+        KeyEventDelegates[EventType].BindSystem(InFunction, InFunctionName);
+    }
+    //시스템 언바운딩
+    void UnbindKeyEventSystem(
+        EKeyEvent EventType,
+        const std::string& InFunctionName)
+    {
+        KeyEventDelegates[EventType].UnbindSystem(InFunctionName);
+    }
 
     // 특정 키 이벤트에 대한 함수 바인딩
     template<typename T>

@@ -96,6 +96,8 @@ public:
     void UnRegisterAll();
     bool IsInitialized() const { return bIsInitialized; }
 
+    size_t GetRegisterComponentsCount() { return RegisteredComponents.size(); }
+
 public:
     FCollisionSystemConfig Config;
 

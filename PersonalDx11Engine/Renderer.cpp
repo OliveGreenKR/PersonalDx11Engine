@@ -32,9 +32,9 @@ void URenderer::EndRender()
 
 void URenderer::RenderModel(const UModel* InModel, UShader* InShader, ID3D11SamplerState* customSampler)
 {
+	if (!InModel || !InModel->IsIntialized())
+		return;
 	UINT offset = 0;
-
-	assert(InModel->IsIntialized());
 
 	VertexBufferInfo vertexBuffer = InModel->GetVertexBufferInfo();
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer.Buffer, &vertexBuffer.Stride, &offset);
@@ -43,7 +43,8 @@ void URenderer::RenderModel(const UModel* InModel, UShader* InShader, ID3D11Samp
 
 void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
 {
-	assert(InObject, InShader);
+	if (!InObject || !InShader)
+		return;
 
 	Matrix WorldMatrix = InObject->GetWorldMatrix();
 	Matrix ViewMatrix = InCamera->GetViewMatrix();
@@ -57,7 +58,9 @@ void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject, 
 
 void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 {
-	assert(InObject, InShader);
+	if (!InObject || !InShader)
+		return;
+
 	Vector4 Color;
 	Color = InObject->bDebug ? InObject->GetDebugColor() : Color::White();
 	FDebugBufferData DebugBufferData(Color);

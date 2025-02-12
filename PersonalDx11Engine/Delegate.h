@@ -21,10 +21,23 @@ private:
         FunctionType Function;
         std::weak_ptr<void> BoundObject;  // void 타입으로 모든 객체 타입 지원
         std::string FunctionName;
+        bool bSystem = false;
 
         bool operator==(const FBoundFunction& Other) const
         {
-            // weak_ptr의 소유자가 같은지 확인
+            // 둘 다 시스템 함수인 경우 
+            if (bSystem && Other.bSystem)
+            {
+                return FunctionName == Other.FunctionName;
+            }
+
+            // 하나만 시스템 함수인 경우
+            if (bSystem || Other.bSystem)
+            {
+                return false;  // 시스템 함수와 객체 함수는 절대 같을 수 없음
+            }
+
+            // 둘 다 객체에 바인딩된 함수인 경우
             bool bSameObject = !BoundObject.owner_before(Other.BoundObject) &&
                 !Other.BoundObject.owner_before(BoundObject);
 
@@ -35,6 +48,47 @@ private:
     std::vector<FBoundFunction> BoundFunctions;
 
 public:
+    // 시스템 함수 바인딩 (객체 없이 함수만 바인딩)
+    void BindSystem(const std::function<void(Args...)>& InFunction,
+                    const std::string& InFunctionName)
+    {
+        // 시스템 함수
+        FBoundFunction NewBinding{ InFunction, std::weak_ptr<void>(), InFunctionName ,true };
+
+        // 중복 바인딩 방지
+        auto ExistingBinding = std::find_if(
+            BoundFunctions.begin(),
+            BoundFunctions.end(),
+            [&](const FBoundFunction& Existing)
+            {
+                return Existing == NewBinding;
+            }
+        );
+
+        if (ExistingBinding == BoundFunctions.end())
+        {
+            BoundFunctions.push_back(std::move(NewBinding));
+        }
+    }
+
+    // 시스템 함수 언바인딩
+    void UnbindSystem(const std::string& InFunctionName)
+    {
+        BoundFunctions.erase(
+            std::remove_if(
+                BoundFunctions.begin(),
+                BoundFunctions.end(),
+                [&](const FBoundFunction& Binding)
+                {
+                    return Binding.bSystem &&
+                        Binding.FunctionName == InFunctionName;
+                }
+            ),
+            BoundFunctions.end()
+        );
+    }
+
+
     // 멤버 함수를 델리게이트에 바인딩
     template<typename T>
     void Bind(const std::shared_ptr<T>& InObject,
@@ -120,18 +174,37 @@ public:
     }
 
     // 델리게이트 실행 (살아있는 객체의 함수만 호출)
-    void Broadcast(Args... InArgs) const
+    void Broadcast(Args... InArgs) 
     {
+        bool isDirty = false;
         for (const auto& Binding : BoundFunctions)
         {
-            if (auto BoundObject = Binding.BoundObject.lock())
+            // 객체에 바인딩된 함수의 경우 객체 생존 확인
+            if (!Binding.bSystem)
             {
-                // 객체가 아직 살아있는 경우에만 함수 호출
-                if (Binding.Function)
+                if (Binding.BoundObject.expired())
                 {
-                    Binding.Function(InArgs...);
+                    isDirty = true;
+                    continue;
+                }
+                if (auto BoundObject = Binding.BoundObject.lock())
+                {
+                    if (Binding.Function)
+                    {
+                        Binding.Function(InArgs...);
+                    }
                 }
             }
+            // 시스템 함수는 객체 확인 없이 직접 호출
+            else if (Binding.Function)
+            {
+                Binding.Function(InArgs...);
+            }
+        }
+
+        if (isDirty)
+        {
+            RemoveExpiredBindings();
         }
     }
 
@@ -144,7 +217,23 @@ public:
                 BoundFunctions.end(),
                 [](const FBoundFunction& Binding)
                 {
-                    return Binding.BoundObject.expired();
+                    return !Binding.bSystem && Binding.BoundObject.expired();
+                }
+            ),
+            BoundFunctions.end()
+        );
+    }
+
+    // 정리 함수 - null을 참조하고 있는 모든 바인딩 제거(시스템포함)
+    void RemoveSystemBindings()
+    {
+        BoundFunctions.erase(
+            std::remove_if(
+                BoundFunctions.begin(),
+                BoundFunctions.end(),
+                [](const FBoundFunction& Binding)
+                {
+                    return Binding.bSystem || Binding.BoundObject.expired();
                 }
             ),
             BoundFunctions.end()

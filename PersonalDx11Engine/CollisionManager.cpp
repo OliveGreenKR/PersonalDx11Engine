@@ -204,3 +204,8 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 		ActiveCollisionPairs.insert(Pair);
 	}
 }
+
+void UCollisionManager::UpdateCollisionPairs()
+{
+
+}
