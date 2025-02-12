@@ -35,7 +35,7 @@ public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
 private:
-	void OnTransformChanged() override;
+	virtual void OnTransformChanged() override;
 
 private:
 	void UpdateProjectionMatrix();

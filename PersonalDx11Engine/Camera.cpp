@@ -136,6 +136,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 
 void UCamera::OnTransformChanged()
 {
+	UGameObject::OnTransformChanged();
 	bIsViewDirty = true;
 }
 

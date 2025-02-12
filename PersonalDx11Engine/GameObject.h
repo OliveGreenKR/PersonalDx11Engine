@@ -2,6 +2,7 @@
 #include "Transform.h"
 #include <memory>
 #include "Color.h"
+#include "Delegate.h"
 
 using namespace std;
 
@@ -51,9 +52,11 @@ public:
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
 
+public:
+	FDelegate<> OnTransformChangedDelegate;
 
 protected:
-	virtual void OnTransformChanged() {};
+	virtual void OnTransformChanged() { OnTransformChangedDelegate.Broadcast(); };
 
 	virtual void UpdateComponents(const float DeltaTime);
 

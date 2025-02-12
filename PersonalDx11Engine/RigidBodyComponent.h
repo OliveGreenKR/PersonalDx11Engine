@@ -4,6 +4,12 @@
 
 class UGameObject;
 
+enum class ERigidBodyType
+{
+    Dynamic,
+    Static
+};
+
 class URigidBodyComponent
 {
 public:
@@ -31,6 +37,7 @@ public:
     inline float GetSpeed() const { return Velocity.Length(); }
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
+    inline UGameObject* const GetOwner() const { return Owner.lock().get(); }
 
     // 물리 속성 설정
     void SetMass(float InMass);
@@ -55,6 +62,9 @@ private:
     Vector3 GetCenterOfMass() const;
 
 private:
+    // 물리 객체 상태
+    ERigidBodyType Type = ERigidBodyType::Dynamic;
+
     // 물리 상태 변수
     Vector3 Velocity = Vector3::Zero;
     Vector3 AngularVelocity = Vector3::Zero;

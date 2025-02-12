@@ -16,14 +16,14 @@ void UCollisionManager::Tick(const float DeltaTime)
 	if (!Config.bPhysicsSimulated)
 		return;
 
-	CleanupDestroyedComponents();
+	//CleanupDestroyedComponents();
 
 	//BraodPhas를 통해 잠재적 충돌 가능성이 있는 쌍 생성
 	//이전 프레임 충돌 상태 정보 유지
-	UpdateCollisionPairs();
+	//UpdateCollisionPairs();
 
 	//각 충돌쌍에 대해 ProcessCollision실행
-	ProcessCollisions(DeltaTime);
+	//ProcessCollisions(DeltaTime);
 		//객체 속도를 통한 CCD 필요 검사
 		//	객체 속도에 따라 Detector의 timeStep 변화Lerp(minstep,maxstep)
 		//충돌 감지 실행

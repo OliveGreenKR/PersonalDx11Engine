@@ -4,6 +4,7 @@
 #include "Delegate.h"
 #include "Transform.h"
 #include "CollisionDefines.h"
+#include "DynamicBoundableInterface.h"
 
 
 #define OUT
@@ -12,7 +13,7 @@ class URigidBodyComponent;
 class UGameObject;
 
 // 충돌 응답에 필요한 속성 관리
-class UCollisionComponent
+class UCollisionComponent : public IDynamicBoundable, public std::enable_shared_from_this<UCollisionComponent>
 {
 public:
     UCollisionComponent() = default;
@@ -20,8 +21,15 @@ public:
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
 public:
+    // Inherited via IDynamicBoundable
+    Vector3 GetHalfExtent() const override;
+    const FTransform* GetTransform() const override;
+    bool HasBoundsChanged() const override;
+    void SetBoundsChanged(bool InBool) override { bBoundsDirty = InBool; }
+
+public:
     // 초기화
-    void Initialize(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+    void Initialize();
 
 
     // 충돌 이벤트 
@@ -49,9 +57,12 @@ public:
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 
-    void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
+    void SetCollisionShape(const FCollisionShapeData& InShape) {
+        Shape = InShape; 
+        bBoundsDirty = true;
+    }
     const FCollisionShapeData& GetCollisionShape() const { return Shape; }
-    FCollisionShapeData& GetCollisionShape() { return Shape; }
+    //FCollisionShapeData& GetCollisionShape() { return Shape; }
 
     const Vector3& GetPreviousPosition() const { return PreviousPosition; }
     void SetPreviousPosition(const Vector3& InPosition) { PreviousPosition = InPosition; }
@@ -59,7 +70,11 @@ public:
 public:
     bool bCollisionEnabled = true;
     bool bDestroyed = false;
-
+    
+public:
+    bool bBoundsDirty = false;
+public:
+    void OnOwnerTransformChagned() { bBoundsDirty = true; }
 public:
     // 충돌 이벤트 publish
     void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
@@ -86,4 +101,5 @@ private:
     FDelegate<const FCollisionEventData&> OnCollisionExit;
 
     friend class UCollisionManager;
+
 };
