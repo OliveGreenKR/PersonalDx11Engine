@@ -74,7 +74,9 @@
     <ClCompile Include="DynamicAABBTree.cpp">
       <Filter>Engine\DataStructure</Filter>
     </ClCompile>
-    <ClCompile Include="ActorComponent.cpp" />
+    <ClCompile Include="ActorComponent.cpp">
+      <Filter>Engine\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
