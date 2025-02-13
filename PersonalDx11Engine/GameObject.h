@@ -3,6 +3,7 @@
 #include <memory>
 #include "Color.h"
 #include "Delegate.h"
+#include "ActorComponent.h"
 
 using namespace std;
 
@@ -95,6 +96,7 @@ public:
 
 protected:
 	std::shared_ptr<class URigidBodyComponent> RigidBody;
+	std::shared_ptr<UActorComponent> RootActorComp;
 #pragma endregion
 
 #pragma region Debug

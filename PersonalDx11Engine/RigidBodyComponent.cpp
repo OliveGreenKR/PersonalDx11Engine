@@ -97,7 +97,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 {
-	if (auto OwnerPtr = Owner.lock())
+	if (auto OwnerPtr = GetOwner())
 	{
 		// 위치 업데이트
 		Vector3 NewPosition = OwnerPtr->GetTransform()->GetPosition() + Velocity * DeltaTime;
@@ -135,24 +135,14 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
-	auto OwnerPtr = Owner.lock();
+	auto OwnerPtr = GetOwner();
 	assert(OwnerPtr);
 	return OwnerPtr->GetTransform()->GetPosition();
 }
 
-UGameObject* URigidBodyComponent::GetOwner() const
-{
-	return Owner.lock() ? Owner.lock().get() : nullptr ;
-}
-
-const UActorComponent* URigidBodyComponent::GetOwnerComponent() const
-{
-	return nullptr;
-}
-
 const FTransform* URigidBodyComponent::GetTransform() const
 {
-	if (auto OwnerPtr = Owner.lock())
+	if (auto OwnerPtr = GetOwner())
 	{
 		return  OwnerPtr->GetTransform();
 	}

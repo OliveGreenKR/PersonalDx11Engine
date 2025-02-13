@@ -5,20 +5,27 @@
 
 UGameObject::UGameObject()
 {
+	RootActorComp = make_shared<UActorComponent>();
 	RigidBody = make_shared<URigidBodyComponent>();
 }
 
 UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 {
 	RigidBody = make_shared<URigidBodyComponent>();
+	RootActorComp = make_shared<UActorComponent>();
 }
 
 void UGameObject::PostInitialized()
 {
-	//todo PostInit components
-	auto CompPtr = RigidBody.get();
+	auto CompPtr = RootActorComp.get();
+	CompPtr->SetOwner(this);
+
+	//for temp
+	RootActorComp.get()->AddChild(RigidBody);
+
 	if (CompPtr)
 	{
+		CompPtr->BroadcastPostInitialized();
 	}
 }
 
@@ -89,10 +96,10 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 {
 	//TODO:: ComponentsInterface  + vector
 	//find all Tickable compo and call Tick
-	auto RigidPtr = RigidBody.get();
-	if (RigidPtr)
+	auto CompPtr = RootActorComp.get();
+	if (CompPtr)
 	{
-		RigidPtr->Tick(DeltaTime);
+		CompPtr->BroadcastTick(DeltaTime);
 	}
 }
 
@@ -193,7 +200,6 @@ void UGameObject::InitializePhysics()
 	auto SelfPtr = shared_from_this();
 	if (auto RigidPtr = RigidBody.get())
 	{
-		RigidPtr->SetOwner(SelfPtr);
 		RigidPtr->bIsSimulatedPhysics = true;
 		RigidPtr->SetMaxSpeed(MaxSpeed);
 		RigidPtr->bGravity = false;

@@ -52,28 +52,6 @@ void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 	GetOwner()->SetDebugColor(Color::Red());
 }
 
-UGameObject* UCollisionComponent::GetOwner() const
-{
-	if (GetOwnerComponent())
-	{
-		return GetOwnerComponent()->GetOwner();
-	}
-	else{
-		return nullptr;
-	}
-}
-
-const UActorComponent* UCollisionComponent::GetOwnerComponent() const
-{
-	if (RigidBody.lock())
-	{
-		return RigidBody.lock().get();
-	}
-	else
-	{
-		return nullptr;
-	}
-}
 
 void UCollisionComponent::PostInitialized()
 {

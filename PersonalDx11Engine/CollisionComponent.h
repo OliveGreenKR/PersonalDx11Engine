@@ -20,16 +20,13 @@ public:
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
 public:
-    // Inherited via UActorComponent
-    UGameObject* GetOwner() const override;
-    const UActorComponent* GetOwnerComponent() const override;
-
-    virtual void PostInitialized() override;
-
     // Inherited via IDynamicBoundable
     Vector3 GetHalfExtent() const override;
     const FTransform* GetTransform() const override;
     bool IsStatic() const override;
+
+protected:
+    virtual void PostInitialized() override;
 
 public:
 

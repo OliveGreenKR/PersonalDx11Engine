@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <queue>
 
 class UGameObject;
 
@@ -11,12 +12,25 @@ public:
     UActorComponent() = default;
     virtual ~UActorComponent() = default;
 
-    // 순수 가상 함수
-    virtual void PostInitialize() {}
-    virtual void Tick(float DeltaTime) {}
-    virtual UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
+
+    UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
+
+
+public:
+    // 초기화 전파
+    void BroadcastPostInitialized();
+
+    // Tick 전파
+    void BroadcastTick(float DeltaTime);
+
+    // 컴포넌트 활성화 상태
+    void SetActive(bool bNewActive) { bIsActive = bNewActive; }
+    bool IsActive() const { return bIsActive; }
 
 protected:
+    // 순수 가상 함수
+    virtual void PostInitialized() {}
+    virtual void Tick(float DeltaTime) {}
     // 소유 관계 설정
     void SetOwner(UGameObject* InOwner) { OwnerObject = InOwner; }
     void SetParent(const std::shared_ptr<UActorComponent>& InParent);
@@ -50,25 +64,57 @@ protected:
     }
 
     template<typename T>
-    std::vector<T*> FindComponentsByType() const
+    std::vector<std::weak_ptr<T>> FindComponentsByType() const
     {
-        std::vector<T*> Found;
+        std::vector<std::weak_ptr<T>> Found;
 
-        // 현재 컴포넌트 체크
-        if (auto ThisComponent = dynamic_cast<T*>(this))
-            Found.push_back(ThisComponent);
+        std::shared_ptr<UActorComponent>& SharedThis = shared_from_this();
+        Found.push_back(SharedThis);
+
 
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
         {
-            auto ChildComponents = Child->FindComponentsByType<T>();
-            Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
+            if (Child)
+            {
+                auto ChildComponents = Child->FindComponentsByType<T>();
+                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
+            }
         }
 
         return Found;
     }
 
 private:
+    // non-const 버전의 raw 포인터 반환 함수도 함께 제공
+    template<typename T>
+    std::vector<T*> FindComponentsRaw() const
+    {
+        std::vector<T*> Found;
+
+        // 현재 컴포넌트 체크
+        if (auto ThisComponent = dynamic_cast<const T*>(this))
+        {
+            Found.push_back(const_cast<T*>(ThisComponent));
+        }
+
+        // 자식 컴포넌트들 검색
+        for (const auto& Child : ChildComponents)
+        {
+            if (Child)
+            {
+                auto ChildComponents = Child->FindComponentsRaw<T>();
+                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
+            }
+        }
+
+        return Found;
+    }
+
+private:
+    bool bIsActive = true;
+
+    //생명주기가 종속될것이기에 일반 raw 사용
     UGameObject* OwnerObject = nullptr;
     std::weak_ptr<UActorComponent> ParentComponent;
     std::vector<std::shared_ptr<UActorComponent>> ChildComponents;

@@ -1,6 +1,44 @@
 #include "ActorComponent.h"
 #include <cassert>
 
+void UActorComponent::BroadcastPostInitialized()
+{
+    // 비활성화된 경우 전파하지 않음
+    if (!bIsActive)
+        return;
+
+    // 자신의 PostInitialize 호출
+    PostInitialized();
+
+    // 모든 자식 컴포넌트에 대해 PostInitialize 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child)
+        {
+            Child->BroadcastPostInitialized();
+        }
+    }
+}
+
+void UActorComponent::BroadcastTick(float DeltaTime)
+{
+    // 비활성화된 경우 전파하지 않음
+    if (!bIsActive)
+        return;
+
+    // 자신의 Tick 호출
+    Tick(DeltaTime);
+
+    // 모든 자식 컴포넌트에 대해 Tick 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child)
+        {
+            Child->BroadcastTick(DeltaTime);
+        }
+    }
+}
+
 void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
 {
     // 자기 자신을 부모로 설정하는 것 방지
@@ -51,8 +89,8 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     {
         Child->SetOwner(RootOwner);
         // 자식의 자식들에게도 소유자 전파
-        auto Descendants = Child->FindComponentsByType<UActorComponent>();
-        for (auto* Descendant : Descendants)
+        auto Descendants = Child->FindComponentsRaw<UActorComponent>();
+        for (auto Descendant : Descendants)
         {
             Descendant->SetOwner(RootOwner);
         }
@@ -79,7 +117,7 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
 
     // 자식 및 그 하위 컴포넌트들의 소유자 제거
     (*it)->SetOwner(nullptr);
-    auto Descendants = (*it)->FindComponentsByType<UActorComponent>();
+    auto Descendants = (*it)->FindComponentsRaw<UActorComponent>();
     for (auto* Descendant : Descendants)
     {
         Descendant->SetOwner(nullptr);

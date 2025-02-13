@@ -15,14 +15,9 @@ class URigidBodyComponent : public UActorComponent
 {
 public:
     URigidBodyComponent() = default;
-    URigidBodyComponent(const std::shared_ptr<UGameObject>& InOwner) : Owner(InOwner) {}
 
     void Reset();
     virtual void Tick(const float DeltaTime) override;
-
-    // Inherited via UActorComponent
-    UGameObject* GetOwner() const  override;
-    const UActorComponent* GetOwnerComponent() const  override;
 
     // 속도 기반 인터페이스
     void SetVelocity(const Vector3& InVelocity);
@@ -53,8 +48,8 @@ public:
     inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
     inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
 
-    //Owner설정
-    inline void SetOwner(std::shared_ptr<UGameObject>& InOwner) { Owner = InOwner; }
+    ////Owner설정
+    //inline void SetOwner(std::shared_ptr<UGameObject>& InOwner) { Owner = InOwner; }
 public:
     // 시뮬레이션 플래그
     bool bGravity = false;
@@ -94,7 +89,7 @@ private:
     Vector3 GravityDirection = -Vector3::Up;
 
 
-    std::weak_ptr<UGameObject> Owner;
+    //std::weak_ptr<UGameObject> Owner;
 
 
 };
