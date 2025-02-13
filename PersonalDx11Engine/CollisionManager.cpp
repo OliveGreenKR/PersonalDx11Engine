@@ -34,6 +34,8 @@ std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
+	InRigidBody->AddChild(NewComponent);
+
 	// AABB 트리에 등록
 	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
 	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
