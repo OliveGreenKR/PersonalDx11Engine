@@ -213,6 +213,7 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 	}
 }
 
+
 void UCollisionManager::UpdateCollisionPairs()
 {
 	if (!bIsInitialized || !CollisionTree || RegisteredComponents.empty())
@@ -310,22 +311,25 @@ bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
 
 FCollisionDetectionResult UCollisionManager::DetectCCDCollision(const FCollisionPair& InPair, const float DeltaTime)
 {
+	FCollisionDetectionResult DectectionResult;
+
 	FComponentData& CompAData = RegisteredComponents[InPair.IndexA];
 	FComponentData& CompBData = RegisteredComponents[InPair.IndexB];
 
 	auto CompA = CompAData.Component.get();
 	auto CompB = CompBData.Component.get();
 	if (!CompA || !CompB)
-		return;
+		return DectectionResult;
 
 	size_t NodeIdA = CompAData.TreeNodeId;
 	size_t NodeIdB = CompBData.TreeNodeId;
 
-	FCollisionDetectionResult DectectionResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
+	DectectionResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
 								 CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
 
 	return DectectionResult;
 }
+
 
 UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
 {
@@ -349,4 +353,26 @@ size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 		}
 	}
 	return SIZE_MAX;
+}
+
+//----------------------------not imple yet
+void UCollisionManager::ProcessCollisions(const float DeltaTime)
+{
+}
+
+FCollisionDetectionResult UCollisionManager::DetectDCDCollision(const FCollisionPair& InPair, const float DeltaTime)
+{
+	return FCollisionDetectionResult();
+}
+
+void UCollisionManager::HandleCollision(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult, const float DeltaTime)
+{
+}
+
+void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult)
+{
+}
+
+void UCollisionManager::BroadcastCollisionEvents(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult, const float DeltaTime)
+{
 }

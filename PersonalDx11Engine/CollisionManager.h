@@ -3,9 +3,10 @@
 #include <memory>
 #include <vector>
 #include <unordered_set>
+#include "CollisionComponent.h"
+
 
 class FDynamicAABBTree;
-class UCollisionComponent;
 class URigidBodyComponent;
 struct FTransform;
 
