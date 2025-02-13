@@ -1,75 +1,91 @@
 #include "Transform.h"
 
-void FTransform::SetRotation(const Vector3& InEulerAngles)
-{
-    Rotation = Math::EulerToQuaternion(InEulerAngles);
+void FTransform::SetEulerRotation(const Vector3& EulerAngles) {
+    SetRotation(Math::EulerToQuaternion(EulerAngles));
 }
 
 void FTransform::SetRotation(const Quaternion& InQuaternion)
 {
-    float lengthSquared = InQuaternion.LengthSquared();
-    if (std::abs(lengthSquared - 1.0f) > KINDA_SMALL)
+    // 회전 변화량 계산을 위한 내적
+    float Dot = Quaternion::Dot(Rotation, InQuaternion);
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    if (ChangeMagnitude > RotationThreshold)
     {
-        Rotation = InQuaternion.GetNormalized();
-        return;
+        float LengthSq = InQuaternion.LengthSquared();
+        //정규화 유지
+        if (std::abs(LengthSq - 1.0f) > KINDA_SMALL)
+        {
+            Rotation = InQuaternion.GetNormalized();
+        }
+        else
+        {
+            Rotation = InQuaternion;
+        }
+        NotifyTransformChanged();
     }
-    Rotation = InQuaternion;
 }
 
-const Vector3 FTransform::GetEulerRotation() const
+void FTransform::SetPosition(const Vector3& InPosition)
 {
-    return Math::QuaternionToEuler(Rotation);
+    if ((Position - InPosition).LengthSquared() > PositionThreshold * PositionThreshold)
+    {
+        Position = InPosition;
+        NotifyTransformChanged();
+    }
+        
 }
 
-const Quaternion FTransform::GetQuarternionRotation() const
-{
-    return Rotation;
-}
-
-void FTransform::AddRotation(const Vector3& InEulerAngles)
-{
-    Vector3 RadAngles = InEulerAngles * (PI / 180.0f);
-    //multiply mustbo right to left
-    Matrix Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
-    XMVECTOR quat = XMQuaternionRotationRollPitchYaw(RadAngles.x, RadAngles.y, RadAngles.z);
-    Matrix Delta = XMMatrixRotationQuaternion(quat);
-    Matrix Final = XMMatrixMultiply(Current, Delta);
-    XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
-    Rotation.Normalize();
+void FTransform::SetScale(const Vector3& InScale) {
+    if ((InScale - Scale).LengthSquared() > ScaleThreshold * ScaleThreshold)
+    {
+        Scale = InScale;
+        NotifyTransformChanged();
+    }
 }
 
 void FTransform::AddRotation(const Quaternion& InQuaternion)
 {
-    Matrix Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
-    Matrix Delta = XMMatrixRotationQuaternion(XMLoadFloat4(&InQuaternion));
-    XMMATRIX Final = Current * Delta;
-    XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
-    Rotation.Normalize();
+    XMVECTOR CurrentV = XMLoadFloat4(&Rotation);
+    XMVECTOR DeltaV = XMLoadFloat4(&InQuaternion);
+
+    float Dot = XMVectorGetX(XMVector4Dot(CurrentV, DeltaV));
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    if (ChangeMagnitude > RotationThreshold)
+    {
+        // 직접 쿼터니온 곱셈으로 회전 결합
+        XMVECTOR ResultV = XMQuaternionMultiply(CurrentV, DeltaV);
+        ResultV = XMQuaternionNormalize(ResultV);
+        XMStoreFloat4(&Rotation, ResultV);
+        NotifyTransformChanged();
+    }
 }
 
 void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
 {
-    //check Axis
-    if (InAxis.LengthSquared() < KINDA_SMALL)
-    {
+    // 축 벡터 검사
+    if (InAxis.LengthSquared() < KINDA_SMALL || std::abs(AngleDegrees) < KINDA_SMALL)
         return;
-    }
 
+    // 현재 회전 로드
+    XMVECTOR CurrentRotation = XMLoadFloat4(&Rotation);
+
+    // 축 정규화 및 각도를 라디안으로 변환
     XMVECTOR NormalizedAxis = XMVector3Normalize(XMLoadFloat3(&InAxis));
-    float AngleRadians = Math::DegreeToRad(AngleDegrees);
-    XMMATRIX Current = XMMatrixRotationQuaternion(XMLoadFloat4(&Rotation));
+    float AngleRadians = XMConvertToRadians(AngleDegrees);
 
-    // 축-각도 회전 행렬 생성
-    XMVECTOR DeltaV = XMQuaternionRotationNormal(NormalizedAxis, AngleRadians);
-    Matrix Delta = XMMatrixRotationQuaternion(DeltaV);
-    // 행렬 곱셈으로 회전 결합
-    Matrix Final = XMMatrixMultiply(Current, Delta);
+    // 축과 각도로부터 회전 쿼터니온 생성
+    XMVECTOR DeltaRotation = XMQuaternionRotationNormal(NormalizedAxis, AngleRadians);
 
-    // 최종 행렬을 쿼터니온으로 변환
-    XMStoreFloat4(&Rotation, XMQuaternionRotationMatrix(Final));
+    // 현재 회전에 새로운 회전 결합
+    XMVECTOR ResultRotation = XMQuaternionMultiply(CurrentRotation, DeltaRotation);
 
-    // 수치 안정성을 위한 정규화
-    Rotation.Normalize();
+    // 정규화 및 저장
+    ResultRotation = XMQuaternionNormalize(ResultRotation);
+    XMStoreFloat4(&Rotation, ResultRotation);
+
+    NotifyTransformChanged();
 }
 
 FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha)
@@ -86,6 +102,12 @@ FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTran
     Result.Scale = Vector3::Lerp(Start.Scale, End.Scale, Alpha);
 
     return Result;
+}
+
+void FTransform::NotifyTransformChanged()
+{
+    ++TransformVersion;
+    OnTransformChanged.Broadcast(*this);
 }
 
 Matrix FTransform::GetTranslationMatrix() const
