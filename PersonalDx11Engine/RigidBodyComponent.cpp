@@ -14,6 +14,8 @@ void URigidBodyComponent::Reset()
 
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
+	UActorComponent::Tick(DeltaTime);
+
 	if (!bIsSimulatedPhysics)
 		return;
 
@@ -136,6 +138,16 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	auto OwnerPtr = Owner.lock();
 	assert(OwnerPtr);
 	return OwnerPtr->GetTransform()->GetPosition();
+}
+
+const UGameObject* URigidBodyComponent::GetOwner()
+{
+	return Owner.lock() ? Owner.lock().get() : nullptr ;
+}
+
+const UActorComponent* URigidBodyComponent::GetOwnerComponent()
+{
+	return nullptr;
 }
 
 const FTransform* URigidBodyComponent::GetTransform() const

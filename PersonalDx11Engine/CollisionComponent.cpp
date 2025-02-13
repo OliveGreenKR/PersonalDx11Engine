@@ -33,22 +33,35 @@ bool UCollisionComponent::IsStatic() const
 	return RigidBody.lock()->IsStatic();
 }
 
-void UCollisionComponent::UpdatePrevTransform()
-{
-	if (auto RigidPtr = RigidBody.lock())
-	{
-		if (auto RigidOwnerTransform = RigidPtr->GetTransform())
-		{
-			PrevTransform = *RigidOwnerTransform;
-		}
-	}
-}
 
 void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
 	if (InRigidBody.get())
 	{
 		RigidBody = InRigidBody;
+	}
+}
+
+const UGameObject* UCollisionComponent::GetOwner()
+{
+	if (RigidBody.lock())
+	{
+		return RigidBody.lock()->GetOwner();
+	}
+	else{
+		return nullptr;
+	}
+}
+
+const UActorComponent* UCollisionComponent::GetOwnerComponent()
+{
+	if (RigidBody.lock())
+	{
+		return RigidBody.lock().get();
+	}
+	else
+	{
+		return nullptr;
 	}
 }
 

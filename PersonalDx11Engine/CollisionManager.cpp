@@ -296,7 +296,6 @@ void UCollisionManager::UpdateCollisionTransform()
 			continue;
 		}
 
-		Component->UpdatePrevTransform();
 	}
 
 	CollisionTree->UpdateTree();

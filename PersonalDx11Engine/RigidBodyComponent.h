@@ -1,6 +1,7 @@
 #pragma once
 #include "Math.h"
 #include <memory>
+#include "ActorComponent.h"
 
 class UGameObject;
 
@@ -10,14 +11,18 @@ enum class ERigidBodyType
     Static
 };
 
-class URigidBodyComponent
+class URigidBodyComponent : public UActorComponent
 {
 public:
     URigidBodyComponent() = default;
     URigidBodyComponent(const std::shared_ptr<UGameObject>& InOwner) : Owner(InOwner) {}
 
     void Reset();
-    void Tick(const float DeltaTime);
+    virtual void Tick(const float DeltaTime) override;
+
+    // Inherited via UActorComponent
+    const UGameObject* GetOwner() override;
+    const UActorComponent* GetOwnerComponent() override;
 
     // 속도 기반 인터페이스
     void SetVelocity(const Vector3& InVelocity);
@@ -91,4 +96,6 @@ private:
 
 
     std::weak_ptr<UGameObject> Owner;
+
+
 };
