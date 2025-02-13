@@ -56,6 +56,7 @@ void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 void UCollisionComponent::PostInitialized()
 {
 	UActorComponent::PostInitialized();
+
 	GetOwner()->GetTransform()->
 		OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
 }

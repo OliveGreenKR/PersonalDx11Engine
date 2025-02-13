@@ -30,6 +30,7 @@ public:
 
 public:
 	virtual void PostInitialized();
+	virtual void PostInitializedComponents();
 	virtual void Tick(const float DeltaTime) ;
 
 public:
@@ -52,6 +53,8 @@ public:
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
 
+
+	void AddActorComponent(shared_ptr<UActorComponent>& InActorComp);
 protected:
 	virtual void UpdateComponents(const float DeltaTime);
 

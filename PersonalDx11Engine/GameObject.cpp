@@ -17,6 +17,11 @@ UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 
 void UGameObject::PostInitialized()
 {
+	
+}
+
+void UGameObject::PostInitializedComponents()
+{
 	auto CompPtr = RootActorComp.get();
 	CompPtr->SetOwner(this);
 
@@ -25,7 +30,7 @@ void UGameObject::PostInitialized()
 
 	if (CompPtr)
 	{
-		CompPtr->BroadcastPostInitialized();
+		CompPtr->BroadcastPostInitializedForComponents();
 	}
 }
 
@@ -90,6 +95,11 @@ UModel* UGameObject::GetModel() const
 		return ptr.get();
 	}
 	return nullptr;
+}
+
+void UGameObject::AddActorComponent(shared_ptr<UActorComponent>& InActorComp)
+{
+	RootActorComp->AddChild(InActorComp);
 }
 
 void UGameObject::UpdateComponents(const float DeltaTime)

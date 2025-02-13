@@ -184,7 +184,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->bDebug = true;
 	Character->GetRigidBody()->SetMass(20.0f);
 	Character->PostInitialized();
-	
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -194,14 +193,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->GetRigidBody()->SetMass(1.0f);
 	Character2->PostInitialized();
 
+	//CollisionTest
+	UCollisionManager::Get()->Create(Character->GetSharedRigidBody(), ECollisionShapeType::Box, { 0.5f,0.5f,0.5f });
+	UCollisionManager::Get()->Create(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, { 0.5f,0.5f,0.5f });
+	
+	Character->PostInitializedComponents();
+	Character2->PostInitializedComponents();
+
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
 	Camera->LookTo(Character->GetTransform()->GetPosition());
 
 
-	//CollisionTest
-	UCollisionManager::Get()->Create(Character->GetSharedRigidBody(), ECollisionShapeType::Box, { 0.5f,0.5f,0.5f });
-	UCollisionManager::Get()->Create(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, { 0.5f,0.5f,0.5f });
+
 
 	/*FCollisionShapeData ShapeData1;
 	ShapeData1.Type = ECollisionShapeType::Box;

@@ -18,7 +18,7 @@ public:
 
 public:
     // 초기화 전파
-    void BroadcastPostInitialized();
+    void BroadcastPostInitializedForComponents();
 
     // Tick 전파
     void BroadcastTick(float DeltaTime);
@@ -28,13 +28,14 @@ public:
     bool IsActive() const { return bIsActive; }
 
 protected:
-    // 순수 가상 함수
+    // 순수 가상 함수 - root에 의해서 전파될 예정, 액터 초기화 이후 호출되어야함
     virtual void PostInitialized() {}
     virtual void Tick(float DeltaTime) {}
     // 소유 관계 설정
     void SetOwner(UGameObject* InOwner) { OwnerObject = InOwner; }
     void SetParent(const std::shared_ptr<UActorComponent>& InParent);
 
+public:
     // 컴포넌트 계층 구조 관리
     bool AddChild(const std::shared_ptr<UActorComponent>& Child);
     bool RemoveChild(const std::shared_ptr<UActorComponent>& Child);
