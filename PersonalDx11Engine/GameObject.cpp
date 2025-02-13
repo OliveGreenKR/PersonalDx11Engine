@@ -21,44 +21,38 @@ void UGameObject::Tick(const float DeltaTime)
 
 void UGameObject::SetPosition(const Vector3& InPosition)
 {
-	Transform.Position = InPosition;
-	OnTransformChanged();
+	Transform.SetPosition(InPosition);
 }
 
 void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 {
 	Transform.SetEulerRotation(InEulerAngles);
-	OnTransformChanged();
 }
 
 void UGameObject::SetRotationQuaternion(const Quaternion& InQuaternion)
 {
 	Transform.SetRotation(InQuaternion);
-	OnTransformChanged();
 }
 
 void UGameObject::SetScale(const Vector3& InScale)
 {
-	Transform.Scale = InScale;
-	OnTransformChanged();
+	Transform.SetScale(InScale);
 }
 
 void UGameObject::AddPosition(const Vector3& InDelta)
 {
-	Transform.Position += InDelta;
-	OnTransformChanged();
+
+	Transform.AddPosition(InDelta);
 }
 
 void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 {
 	Transform.AddEulerRotation(InEulerDelta);
-	OnTransformChanged();
 }
 
 void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 {
 	Transform.AddRotation(InQuaternionDelta);
-	OnTransformChanged();
 }
 
 const Vector3 UGameObject::GetForwardVector() const
@@ -99,7 +93,7 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	TargetPosition = Transform.Position + InDirection.GetNormalized() * MaxSpeed;
+	TargetPosition = Transform.GetPosition() + InDirection.GetNormalized() * MaxSpeed;
 }
 
 void UGameObject::StopMove()
@@ -118,7 +112,7 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	if (bIsMoving == false)
 		return;
 
-	Vector3 Current = GetTransform()->Position;
+	Vector3 Current = Transform.GetPosition();
 	Vector3 Delta = TargetPosition - Current;
 
 	//Á¤Áö

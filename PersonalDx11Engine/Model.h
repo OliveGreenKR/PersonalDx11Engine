@@ -49,14 +49,14 @@ public:
 
 public:
 	template<typename T>
-	const bool Initialize(ID3D11Device* InDevice, const T* InVertices, const UINT InNumVertices);
+	const bool Initialize(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices);
 	
 	__forceinline const VertexBufferInfo GetVertexBufferInfo() const { return VertexBufferInfo; }
 	__forceinline const bool IsIntialized() const { return bIsInitialized; }
 
 private:
 	template<typename T>
-	const bool CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const UINT InNumVertices);
+	const bool CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices);
 
 private:
 	bool bIsInitialized = false;
@@ -68,14 +68,14 @@ private:
 /// T : must be  the base of 'UModel::FVertexData'
 /// </summary>
 template<typename T>
-inline const bool UModel::Initialize(ID3D11Device* InDevice, const T* InVertices, const UINT InNumVertices)
+inline const bool UModel::Initialize(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices)
 {
 	bool result  = CreateVertexBuffer(InDevice, InVertices, InNumVertices);
 	return bIsInitialized = result;
 }
 
 template<typename T>
-inline const bool UModel::CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const UINT InNumVertices)
+inline const bool UModel::CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices)
 {
 	if (!InDevice || !InVertices || InNumVertices == 0)
 	{

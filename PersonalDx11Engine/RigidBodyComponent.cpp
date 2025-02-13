@@ -98,7 +98,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	if (auto OwnerPtr = Owner.lock())
 	{
 		// 위치 업데이트
-		Vector3 NewPosition = OwnerPtr->GetTransform()->Position + Velocity * DeltaTime;
+		Vector3 NewPosition = OwnerPtr->GetTransform()->GetPosition() + Velocity * DeltaTime;
 		OwnerPtr->SetPosition(NewPosition);
 
 		// 회전 업데이트
@@ -135,7 +135,7 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
 	auto OwnerPtr = Owner.lock();
 	assert(OwnerPtr);
-	return OwnerPtr->GetTransform()->Position;
+	return OwnerPtr->GetTransform()->GetPosition();
 }
 
 const FTransform* URigidBodyComponent::GetTransform() const

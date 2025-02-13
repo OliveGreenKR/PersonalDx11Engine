@@ -60,8 +60,8 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	if (!EndResult.bCollided)
 	{
 		// 시작과 끝 모두 충돌하지 않으며, 경로가 매우 짧은 경우 -> 충돌 검사 건너띄기
-		Vector3 RelativeMotion = (CurrentTransformA.Position - PrevTransformA.Position) -
-			(CurrentTransformB.Position - PrevTransformB.Position);
+		Vector3 RelativeMotion = (CurrentTransformA.GetPosition() - PrevTransformA.GetPosition()) -
+			(CurrentTransformB.GetPosition() - PrevTransformB.GetPosition());
 		if (RelativeMotion.LengthSquared() < KINDA_SMALL)
 		{
 			return EndResult;  
@@ -103,8 +103,8 @@ FCollisionDetectionResult FCollisionDetector::SphereSphere(
 	FCollisionDetectionResult Result;
 
 	// SIMD 연산을 위한 벡터 로드
-	XMVECTOR vPosA = XMLoadFloat3(&TransformA.Position);
-	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
+	XMVECTOR vPosA = XMLoadFloat3(&TransformA.GetPosition());
+	XMVECTOR vPosB = XMLoadFloat3(&TransformB.GetPosition());
 
 	// 중심점 간의 벡터 계산
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
@@ -153,10 +153,10 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 	FCollisionDetectionResult Result;
 
 	// 월드 공간에서의 박스 최소/최대점 계산
-	Vector3 MinA = TransformA.Position - ExtentA;
-	Vector3 MaxA = TransformA.Position + ExtentA;
-	Vector3 MinB = TransformB.Position - ExtentB;
-	Vector3 MaxB = TransformB.Position + ExtentB;
+	Vector3 MinA = TransformA.GetPosition() - ExtentA;
+	Vector3 MaxA = TransformA.GetPosition() + ExtentA;
+	Vector3 MinB = TransformB.GetPosition() - ExtentB;
+	Vector3 MaxB = TransformB.GetPosition() + ExtentB;
 
 	// AABB 충돌 검사
 	if (MinA.x <= MaxB.x && MaxA.x >= MinB.x &&
@@ -188,13 +188,13 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 		// 충돌 법선 설정
 		switch (minIndex)
 		{
-			case 0: Result.Normal.x = (TransformA.Position.x < TransformB.Position.x) ? -1.0f : 1.0f; break;
-			case 1: Result.Normal.y = (TransformA.Position.y < TransformB.Position.y) ? -1.0f : 1.0f; break;
-			case 2: Result.Normal.z = (TransformA.Position.z < TransformB.Position.z) ? -1.0f : 1.0f; break;
+			case 0: Result.Normal.x = (TransformA.GetPosition().x < TransformB.GetPosition().x) ? -1.0f : 1.0f; break;
+			case 1: Result.Normal.y = (TransformA.GetPosition().y < TransformB.GetPosition().y) ? -1.0f : 1.0f; break;
+			case 2: Result.Normal.z = (TransformA.GetPosition().z < TransformB.GetPosition().z) ? -1.0f : 1.0f; break;
 		}
 
 		// 충돌 지점은 두 박스의 중심점 사이의 중간점으로 설정
-		Result.Point = (TransformA.Position + TransformB.Position) * 0.5f;
+		Result.Point = (TransformA.GetPosition() + TransformB.GetPosition()) * 0.5f;
 	}
 
 	return Result;
@@ -209,8 +209,8 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 	Matrix RotationA = TransformA.GetRotationMatrix();
 	Matrix RotationB = TransformB.GetRotationMatrix();
 
-	XMVECTOR vPosA = XMLoadFloat3(&TransformA.Position);
-	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
+	XMVECTOR vPosA = XMLoadFloat3(&TransformA.GetPosition());
+	XMVECTOR vPosB = XMLoadFloat3(&TransformB.GetPosition());
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
 
 	// 각 박스의 축 방향 벡터 추출
@@ -305,8 +305,8 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 
 	// 1. 박스의 로컬 공간으로 구공간 이동
 	// 박스의 회전을 고려하기 위해 역회전 행렬 사용
-	XMVECTOR vSpherePos = XMLoadFloat3(&SphereTransform.Position);
-	XMVECTOR vBoxPos = XMLoadFloat3(&BoxTransform.Position);
+	XMVECTOR vSpherePos = XMLoadFloat3(&SphereTransform.GetPosition());
+	XMVECTOR vBoxPos = XMLoadFloat3(&BoxTransform.GetPosition());
 	Matrix BoxRotationInv = XMMatrixTranspose(BoxTransform.GetRotationMatrix());
 
 	// 구의 중심점 회전

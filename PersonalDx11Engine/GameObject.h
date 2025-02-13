@@ -30,6 +30,7 @@ public:
 	virtual ~UGameObject() = default;
 
 public:
+	virtual void PostInitialized() {};
 	virtual void Tick(const float DeltaTime);
 
 public:
@@ -53,12 +54,9 @@ public:
 	UModel* GetModel() const;
 
 protected:
-	virtual void OnTransformChanged() { };
-
 	virtual void UpdateComponents(const float DeltaTime);
 
 protected:
-
 	FTransform Transform;
 	std::weak_ptr<class UModel> Model;
 

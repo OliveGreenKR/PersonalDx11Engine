@@ -114,6 +114,22 @@ public:
         }
     }
 
+    // 멤버 함수 포인터를 위한 새로운 오버로드 추가
+    template<typename U, typename T>
+    void Bind(const std::shared_ptr<U>& InObject,
+              void (T::* MemberFunction)(Args...),
+              const std::string& InFunctionName)
+    {
+        static_assert(std::is_base_of_v<U, T> || std::is_same_v<T, U>,
+                      "U must be base of T or same type");
+
+        FunctionType BoundFunction = [InObject, MemberFunction](Args... args) {
+            (static_cast<T*>(InObject.get())->*MemberFunction)(std::forward<Args>(args)...);
+            };
+
+        Bind(InObject, BoundFunction, InFunctionName);
+    }
+
     // 특정 객체의 특정 함수를 언바인딩
     template<typename T>
     void Unbind(const std::shared_ptr<T>& InObject, const std::string& InFunctionName)

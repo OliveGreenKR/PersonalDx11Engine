@@ -154,9 +154,9 @@ private:
 
 private:
     // 하부 시스템 클래스들
-    FCollisionDetector* Detector = nullptr;
-    FCollisionResponseCalculator* ResponseCalculator = nullptr;
-    FCollisionEventDispatcher* EventDispatcher = nullptr;
+    class FCollisionDetector* Detector = nullptr;
+    class FCollisionResponseCalculator* ResponseCalculator = nullptr;
+    class FCollisionEventDispatcher* EventDispatcher = nullptr;
 
     // 컴포넌트 관리
     std::vector<FComponentData> RegisteredComponents; //순차 접근-캐시효율성 을 위한 벡터 사용

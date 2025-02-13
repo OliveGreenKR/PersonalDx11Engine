@@ -1,174 +1,24 @@
-﻿  Camera.cpp
+﻿  BaseModel.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+  (compiling source file 'BaseModel.cpp')
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\BaseModel.cpp(14,9):
+          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexData>(ID3D11Device *,const T *,const size_t)' being compiled
+          with
+          [
+              T=UModel::FVertexData
+          ]
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
+          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
+          with
+          [
+              T=UModel::FVertexData
+          ]
+  
+  Camera.cpp
   CollisionComponent.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(59,53): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(72,52): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(73,65): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(74,57): error C2248: 'FTransform::Rotation': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(89,13):
-      see declaration of 'FTransform::Rotation'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(170,51): error C2248: 'FTransform::Rotation': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(89,13):
-      see declaration of 'FTransform::Rotation'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Camera.cpp(171,51): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
   CollisionDetector.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(63,46): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(63,72): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(64,22): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(64,48): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(106,43): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(107,43): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(156,27): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(157,27): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(158,27): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(159,27): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(191,41): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(191,65): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(192,41): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(192,65): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(193,41): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(193,65): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(197,29): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(197,51): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(212,43): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(213,43): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(308,53): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionDetector.cpp(309,47): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
   CollisionEventDispatcher.cpp
   CollisionManager.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(94,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
@@ -213,33 +63,6 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(152,40): error C2143: syntax error: missing ',' before '&'
   (compiling source file 'CollisionManager.cpp')
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,23): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,43): error C2238: unexpected token(s) preceding ';'
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,33): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,63): error C2238: unexpected token(s) preceding ';'
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,30): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'CollisionManager.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,57): error C2238: unexpected token(s) preceding ';'
-  (compiling source file 'CollisionManager.cpp')
-  
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(111,41): error C2027: use of undefined type 'UCollisionComponent'
   (compiling source file 'CollisionManager.cpp')
       C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(8,7):
@@ -258,21 +81,6 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cp
       C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(166,10):
       see declaration of 'UCollisionManager::bIsInitialized'
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(71,3): error C2065: 'Detector': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(72,3): error C2065: 'ResponseCalculator': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(73,3): error C2065: 'EventDispatcher': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(76,3): error C2065: 'Detector': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(77,3): error C2065: 'ResponseCalculator': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(78,3): error C2065: 'EventDispatcher': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(100,9): error C2065: 'EventDispatcher': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(100,2): error C2541: 'delete': cannot delete objects that are not pointers
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(101,9): error C2065: 'ResponseCalculator': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(101,2): error C2541: 'delete': cannot delete objects that are not pointers
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(102,9): error C2065: 'Detector': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(102,2): error C2541: 'delete': cannot delete objects that are not pointers
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(105,2): error C2065: 'EventDispatcher': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(106,2): error C2065: 'ResponseCalculator': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(107,2): error C2065: 'Detector': undeclared identifier
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,46): error C2039: 'DetectCCDCollision': is not a member of 'UCollisionManager'
       C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(61,7):
       see declaration of 'UCollisionManager'
@@ -295,158 +103,54 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(324,19): error C2065: 'CompBData': undeclared identifier
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(326,47): error C2065: 'Detector': undeclared identifier
   CollisionResponseCalculator.cpp
+  D3D.cpp
+  D3DShader.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(19,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(21,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(24,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(27,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(31,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(64,4): warning C4002: too many arguments for function-like macro invocation 'assert'
   DynamicAABBTree.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\DynamicAABBTree.cpp(77,73): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\DynamicAABBTree.cpp(387,73): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-  GameObject.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(24,11): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(42,11): error C2248: 'FTransform::Scale': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(90,10):
-      see declaration of 'FTransform::Scale'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(48,11): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(102,28): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(121,34): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-  Renderer.cpp
-  RigidBodyComponent.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RigidBodyComponent.cpp(101,49): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RigidBodyComponent.cpp(138,33): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-  Transform.cpp
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_dx11.cpp
+  imgui_impl_win32.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  InputManager.cpp
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,23): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(157,43): error C2238: unexpected token(s) preceding ';'
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,33): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(158,63): error C2238: unexpected token(s) preceding ';'
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,30): error C2143: syntax error: missing ';' before '*'
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,5): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
-  (compiling source file 'main.cpp')
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(159,57): error C2238: unexpected token(s) preceding ';'
   (compiling source file 'main.cpp')
   
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(104,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(107,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(110,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(113,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(194,42): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
+  Math.cpp
+  Generating Code...
+  Compiling...
+  Model.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+  (compiling source file 'Model.cpp')
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.cpp(16,8):
+          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexSimple>(ID3D11Device *,const T *,const size_t)' being compiled
+          with
+          [
+              T=UModel::FVertexSimple
+          ]
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
+          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
+          with
+          [
+              T=UModel::FVertexSimple
+          ]
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(563,69): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(564,29): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(565,29): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(588,72): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(589,32): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(590,32): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(614,73): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(615,33): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(616,33): error C2248: 'FTransform::Position': cannot access private member declared in class 'FTransform'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(87,10):
-      see declaration of 'FTransform::Position'
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Transform.h(7,8):
-      see declaration of 'FTransform'
-  
+  GameObject.cpp
+  Renderer.cpp
+  RigidBodyComponent.cpp
+  Transform.cpp
   Generating Code...

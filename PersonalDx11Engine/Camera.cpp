@@ -13,6 +13,12 @@ void UCamera::Tick(float DeltaTime)
 	UpdateToLookAtObject(DeltaTime);
 }
 
+void UCamera::PostInitialized()
+{
+	UGameObject::PostInitialized();
+	Transform.OnTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged");
+}
+
 const Matrix UCamera::GetViewMatrix()
 {
 	//TODO cache dirty check 
@@ -56,7 +62,7 @@ void UCamera::SetLookAtObject(shared_ptr<UGameObject>& InTarget)
 
 void UCamera::LookTo(const Vector3& TargetPosition)
 {
-	Vector3 Direction = TargetPosition - GetTransform()->Position;
+	Vector3 Direction = TargetPosition - GetTransform()->GetPosition();
 	Direction.Normalize();
 	Vector3 CurrentForward = GetForwardVector();
 	Quaternion toRotate =  Math::GetRotationBetweenVectors(CurrentForward, Direction);
@@ -69,9 +75,9 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	if (!bLookAtObject || !TargetObject)
 		return;
 	//목표 설정
-	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->Position);
-	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->Position);
-	XMVECTOR CurrentRotation = XMLoadFloat4(&GetTransform()->Rotation);
+	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->GetPosition());
+	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->GetPosition());
+	XMVECTOR CurrentRotation = XMLoadFloat4(&GetTransform()->GetQuaternionRotation());
 
 	//목표계 설정
 	XMVECTOR DesiredForward = XMVectorSubtract(TargetPos, CurrentPos);
@@ -134,16 +140,15 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 }
 
 
-void UCamera::OnTransformChanged()
-{
-	UGameObject::OnTransformChanged();
-	bIsViewDirty = true;
-}
-
 void UCamera::UpdatDirtyView() 
 {
 	UpdateViewMatrix();
 	UpdateFrustum();
+}
+
+void UCamera::OnTransformChanged(const FTransform& Changed)
+{
+	bIsViewDirty = true;
 }
 
 void UCamera::UpdateProjectionMatrix()
@@ -167,8 +172,8 @@ void UCamera::UpdateViewMatrix()
 	XMVECTOR vUp = XMVector::XMUp();
 
 	//현재 상태
-	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->Rotation);
-	XMVECTOR vPosition = XMLoadFloat3(&GetTransform()->Position);
+	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->GetQuaternionRotation());
+	XMVECTOR vPosition = XMLoadFloat3(&GetTransform()->GetPosition());
 
 	XMVECTOR currentLookAt = XMVector3Rotate(vLookAt, vRotation);
 	currentLookAt = XMVectorAdd(vPosition, currentLookAt);

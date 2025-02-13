@@ -166,6 +166,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,5.0f,-7.0f });
+	Camera->PostInitialized();
 	
 
 	//Main GameObejct
@@ -174,6 +175,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Floor->SetPosition({ 0,-1,0 });
 	Floor->InitializePhysics();
 	Floor->SetGravity(false);
+	Floor->PostInitialized();
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
@@ -181,6 +183,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->InitializePhysics();
 	Character->bDebug = true;
 	Character->GetRigidBody()->SetMass(20.0f);
+	Character->PostInitialized();
+	
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
@@ -188,10 +192,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->InitializePhysics();
 	Character2->bDebug = true;
 	Character2->GetRigidBody()->SetMass(1.0f);
+	Character2->PostInitialized();
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
-	Camera->LookTo(Character->GetTransform()->Position);
+	Camera->LookTo(Character->GetTransform()->GetPosition());
 
 
 	//CollisionTest
@@ -485,7 +490,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//	Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
 		//	Param1.Mass = Character->GetRigidBody()->GetMass();
 		//	Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
-		//	Param1.Position = Character->GetTransform()->Position;
+		//	Param1.Position = Character->GetTransform()->GetPosition();
 		//	Param1.Restitution = 0.5f;
 
 		//	Param2.Velocity = Character2->GetCurrentVelocity();
@@ -494,7 +499,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//	Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
 		//	Param2.Mass = Character2->GetRigidBody()->GetMass();
 		//	Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
-		//	Param2.Position = Character2->GetTransform()->Position;
+		//	Param2.Position = Character2->GetTransform()->GetPosition();
 		//	Param2.Restitution = 0.5f;
 
 		//	FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
@@ -560,9 +565,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			ImGui::Begin("Camera", nullptr, UIWindowFlags);
 			ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->Position.x,
-						Camera->GetTransform()->Position.y,
-						Camera->GetTransform()->Position.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->GetPosition().x,
+						Camera->GetTransform()->GetPosition().y,
+						Camera->GetTransform()->GetPosition().z);
 			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
 						Camera->GetTransform()->GetEulerRotation().y,
 						Camera->GetTransform()->GetEulerRotation().z);
@@ -585,9 +590,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 						CurrentVelo.y,
 						CurrentVelo.z);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->Position.x,
-						Character->GetTransform()->Position.y,
-						Character->GetTransform()->Position.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->GetPosition().x,
+						Character->GetTransform()->GetPosition().y,
+						Character->GetTransform()->GetPosition().z);
 			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
 						Character->GetTransform()->GetEulerRotation().y,
 						Character->GetTransform()->GetEulerRotation().z);
@@ -611,9 +616,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 						CurrentVelo.y,
 						CurrentVelo.z);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->Position.x,
-						Character2->GetTransform()->Position.y,
-						Character2->GetTransform()->Position.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
+						Character2->GetTransform()->GetPosition().y,
+						Character2->GetTransform()->GetPosition().z);
 			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
 						Character2->GetTransform()->GetEulerRotation().y,
 						Character2->GetTransform()->GetEulerRotation().z);

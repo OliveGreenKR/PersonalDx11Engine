@@ -15,6 +15,7 @@ protected:
 	explicit UCamera(float fov, float aspectRatio, float nearZ, float farZ);
 public:
 	virtual void Tick(const float DeltaTime) override;
+	virtual void PostInitialized() override;
 
 public:
 	const Matrix GetViewMatrix();
@@ -34,10 +35,9 @@ public:
 public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
-private:
-	virtual void OnTransformChanged() override;
 
 private:
+	void OnTransformChanged(const FTransform& Changed);
 	void UpdateProjectionMatrix();
 
 private:

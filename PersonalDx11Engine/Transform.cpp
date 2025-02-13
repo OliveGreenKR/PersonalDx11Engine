@@ -44,6 +44,20 @@ void FTransform::SetScale(const Vector3& InScale) {
     }
 }
 
+void FTransform::AddPosition(const Vector3& InPosition)
+{
+    if (InPosition.LengthSquared() > PositionThreshold * PositionThreshold)
+    {
+        Position += InPosition;
+        NotifyTransformChanged();
+    }
+}
+
+void FTransform::AddEulerRotation(const Vector3& InEulerAngles)
+{
+    AddRotation(Math::EulerToQuaternion(InEulerAngles));
+}
+
 void FTransform::AddRotation(const Quaternion& InQuaternion)
 {
     XMVECTOR CurrentV = XMLoadFloat4(&Rotation);
@@ -107,7 +121,7 @@ FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTran
 void FTransform::NotifyTransformChanged()
 {
     ++TransformVersion;
-    OnTransformChanged.Broadcast(*this);
+    OnTransformChangedDelegate.Broadcast(*this);
 }
 
 Matrix FTransform::GetTranslationMatrix() const

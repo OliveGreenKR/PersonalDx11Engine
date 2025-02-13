@@ -25,7 +25,7 @@ public:
 		Rotation(std::move(Other.Rotation)),
 		Scale(std::move(Other.Scale)),
 		TransformVersion(Other.TransformVersion),
-		OnTransformChanged(std::move(Other.OnTransformChanged))
+		OnTransformChangedDelegate(std::move(Other.OnTransformChangedDelegate))
 	{
 	}
 
@@ -55,7 +55,7 @@ public:
 			Rotation = std::move(Other.Rotation);
 			Scale = std::move(Other.Scale);
 			TransformVersion = Other.TransformVersion;
-			OnTransformChanged = std::move(Other.OnTransformChanged);
+			OnTransformChangedDelegate = std::move(Other.OnTransformChangedDelegate);
 		}
 		return *this;
 	}
@@ -66,6 +66,7 @@ public:
 	void SetPosition(const Vector3& InPosition);
 	void SetScale(const Vector3& InScale);
 
+	void AddPosition(const Vector3& InPosition);
 	void AddEulerRotation(const Vector3& InEulerAngles);
 	void AddRotation(const Quaternion& InQuaternion);
 	void RotateAroundAxis(const Vector3& InAxis, float AngleDegrees);
@@ -73,7 +74,7 @@ public:
 	const Vector3& GetPosition() const { return Position; }
 	const Vector3& GetScale() const { return Scale; }
 	const Vector3 GetEulerRotation() const { return Math::QuaternionToEuler(Rotation);}
-	const Quaternion& GetQuarternionRotation() const { return Rotation; }
+	const Quaternion& GetQuaternionRotation() const { return Rotation; }
 
 	Matrix GetTranslationMatrix() const;
 	Matrix GetScaleMatrix() const;
@@ -81,6 +82,10 @@ public:
 	Matrix GetModelingMatrix() const;
 
 	static FTransform  InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha);
+public:
+	//never broadcast directly
+	FDelegate<const FTransform&> OnTransformChangedDelegate;
+
 private:
 	void NotifyTransformChanged();
 private:
@@ -92,8 +97,6 @@ private:
 
 private:
 	uint32_t TransformVersion = 0;
-	FDelegate<const FTransform&> OnTransformChanged;
-
 	// 성능 최적화를 위한 변화 감지 임계값
 	static constexpr float PositionThreshold = KINDA_SMALL;
 	static constexpr float RotationThreshold = KINDA_SMALL;
