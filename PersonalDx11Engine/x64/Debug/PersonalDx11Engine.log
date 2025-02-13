@@ -1,24 +1,4 @@
-﻿  BaseModel.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'BaseModel.cpp')
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\BaseModel.cpp(14,9):
-          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexData>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexData
-          ]
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
-          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexData
-          ]
-  
-  Camera.cpp
-  CollisionComponent.cpp
-  CollisionDetector.cpp
+﻿  CollisionComponent.cpp
   CollisionEventDispatcher.cpp
   CollisionManager.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(94,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
@@ -81,45 +61,27 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cp
       C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(166,10):
       see declaration of 'UCollisionManager::bIsInitialized'
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,46): error C2039: 'DetectCCDCollision': is not a member of 'UCollisionManager'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(311,46): error C2039: 'DetectCCDCollision': is not a member of 'UCollisionManager'
       C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.h(61,7):
       see declaration of 'UCollisionManager'
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(315,2): error C2065: 'FComponentData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(315,18): error C2065: 'CompAData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(315,30): error C2065: 'RegisteredComponents': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(316,2): error C2065: 'FComponentData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(316,18): error C2065: 'CompBData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(316,30): error C2065: 'RegisteredComponents': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(318,15): error C2065: 'CompAData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(319,15): error C2065: 'CompBData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(320,7): error C3536: 'CompA': cannot be used before it is initialized
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(320,17): error C3536: 'CompB': cannot be used before it is initialized
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(321,3): error C2561: 'DetectCCDCollision': function must return a value
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,46):
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,2): error C2065: 'FComponentData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,18): error C2065: 'CompAData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(313,30): error C2065: 'RegisteredComponents': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(314,2): error C2065: 'FComponentData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(314,18): error C2065: 'CompBData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(314,30): error C2065: 'RegisteredComponents': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(316,15): error C2065: 'CompAData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(317,15): error C2065: 'CompBData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(318,7): error C3536: 'CompA': cannot be used before it is initialized
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(318,17): error C3536: 'CompB': cannot be used before it is initialized
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(319,3): error C2561: 'DetectCCDCollision': function must return a value
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(311,46):
       see declaration of 'DetectCCDCollision'
   
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(323,19): error C2065: 'CompAData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(324,19): error C2065: 'CompBData': undeclared identifier
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(326,47): error C2065: 'Detector': undeclared identifier
-  CollisionResponseCalculator.cpp
-  D3D.cpp
-  D3DShader.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(19,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(21,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(24,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(27,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(31,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(64,4): warning C4002: too many arguments for function-like macro invocation 'assert'
-  DynamicAABBTree.cpp
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_impl_dx11.cpp
-  imgui_impl_win32.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  InputManager.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(321,19): error C2065: 'CompAData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(322,19): error C2065: 'CompBData': undeclared identifier
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cpp(324,47): error C2065: 'Detector': undeclared identifier
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')
@@ -128,29 +90,7 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(104,2): wa
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(107,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(110,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(113,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-  Math.cpp
-  Generating Code...
-  Compiling...
-  Model.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'Model.cpp')
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.cpp(16,8):
-          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexSimple>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexSimple
-          ]
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
-          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexSimple
-          ]
-  
   GameObject.cpp
-  Renderer.cpp
   RigidBodyComponent.cpp
   Transform.cpp
   Generating Code...

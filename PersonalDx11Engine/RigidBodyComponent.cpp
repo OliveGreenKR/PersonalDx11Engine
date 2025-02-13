@@ -140,12 +140,12 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return OwnerPtr->GetTransform()->GetPosition();
 }
 
-const UGameObject* URigidBodyComponent::GetOwner()
+UGameObject* URigidBodyComponent::GetOwner() const
 {
 	return Owner.lock() ? Owner.lock().get() : nullptr ;
 }
 
-const UActorComponent* URigidBodyComponent::GetOwnerComponent()
+const UActorComponent* URigidBodyComponent::GetOwnerComponent() const
 {
 	return nullptr;
 }

@@ -11,7 +11,7 @@ class URigidBodyComponent;
 class UGameObject;
 
 // 충돌 응답에 필요한 속성 관리
-class UCollisionComponent : public IDynamicBoundable , public UActorComponent
+class UCollisionComponent : public UActorComponent, public IDynamicBoundable
 {
     friend class UCollisionManager;
 public:
@@ -21,8 +21,10 @@ public:
     ~UCollisionComponent() = default;
 public:
     // Inherited via UActorComponent
-    const UGameObject* GetOwner() override;
-    const UActorComponent* GetOwnerComponent() override;
+    UGameObject* GetOwner() const override;
+    const UActorComponent* GetOwnerComponent() const override;
+
+    virtual void PostInitialized() override;
 
     // Inherited via IDynamicBoundable
     Vector3 GetHalfExtent() const override;
@@ -84,17 +86,18 @@ public:
     }
 
 private:
+    void OnOwnerTransformChanged(const FTransform& InChanged);
+
+private:
     std::weak_ptr<URigidBodyComponent> RigidBody;
     FCollisionShapeData Shape;
     FTransform PrevTransform;    // CCD를 위한 이전 프레임 트랜스폼
 
 
+    bool bIsTransformDirty = false;
+
     // 충돌 이벤트 델리게이트
     FDelegate<const FCollisionEventData&> OnCollisionEnter;
     FDelegate<const FCollisionEventData&> OnCollisionStay;
     FDelegate<const FCollisionEventData&> OnCollisionExit;
-
-
-
-
 };

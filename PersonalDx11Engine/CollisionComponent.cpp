@@ -1,6 +1,8 @@
 #include "CollisionComponent.h"
+#include <memory>
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
+
 
 
 UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
@@ -42,18 +44,23 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 	}
 }
 
-const UGameObject* UCollisionComponent::GetOwner()
+void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
-	if (RigidBody.lock())
+	bIsTransformDirty = true;
+}
+
+UGameObject* UCollisionComponent::GetOwner() const
+{
+	if (GetOwnerComponent())
 	{
-		return RigidBody.lock()->GetOwner();
+		return GetOwnerComponent()->GetOwner();
 	}
 	else{
 		return nullptr;
 	}
 }
 
-const UActorComponent* UCollisionComponent::GetOwnerComponent()
+const UActorComponent* UCollisionComponent::GetOwnerComponent() const
 {
 	if (RigidBody.lock())
 	{
@@ -63,5 +70,12 @@ const UActorComponent* UCollisionComponent::GetOwnerComponent()
 	{
 		return nullptr;
 	}
+}
+
+void UCollisionComponent::PostInitialized()
+{
+	UActorComponent::PostInitialized();
+	GetOwner()->GetTransform()->
+		OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
 }
 

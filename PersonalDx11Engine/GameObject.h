@@ -3,13 +3,12 @@
 #include <memory>
 #include "Color.h"
 #include "Delegate.h"
-#include "EngineLifeCycleInterface.h"
 
 using namespace std;
 
 class UModel;
 
-class UGameObject : public IEngineLifeCycle,  public std::enable_shared_from_this<UGameObject>
+class UGameObject : public std::enable_shared_from_this<UGameObject>
 {
 public:
 	static std::shared_ptr<UGameObject> Create()
@@ -29,8 +28,8 @@ public:
 	virtual ~UGameObject() = default;
 
 public:
-	virtual void PostInitialized() override {};
-	virtual void Tick(const float DeltaTime) override ;
+	virtual void PostInitialized() {};
+	virtual void Tick(const float DeltaTime) ;
 
 public:
 	void SetPosition(const Vector3& InPosition);

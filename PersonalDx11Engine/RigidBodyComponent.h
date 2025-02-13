@@ -21,8 +21,8 @@ public:
     virtual void Tick(const float DeltaTime) override;
 
     // Inherited via UActorComponent
-    const UGameObject* GetOwner() override;
-    const UActorComponent* GetOwnerComponent() override;
+    UGameObject* GetOwner() const  override;
+    const UActorComponent* GetOwnerComponent() const  override;
 
     // 속도 기반 인터페이스
     void SetVelocity(const Vector3& InVelocity);
@@ -43,7 +43,6 @@ public:
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
     const struct FTransform* GetTransform() const;
-    inline UGameObject* const GetOwner() const { return Owner.lock().get(); }
 
     // 물리 속성 설정
     void SetMass(float InMass);

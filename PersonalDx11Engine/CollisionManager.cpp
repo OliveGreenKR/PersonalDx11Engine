@@ -40,7 +40,6 @@ std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
 	FComponentData ComponentData;
 	ComponentData.Component = NewComponent;
 	ComponentData.TreeNodeId = TreeNodeId;
-	ComponentData.Component->UpdatePrevTransform();
 
 	// 벡터에 추가
 	RegisteredComponents.push_back(std::move(ComponentData));
