@@ -12,6 +12,7 @@ class UGameObject;
 // 충돌 응답에 필요한 속성 관리
 class UCollisionComponent : public IDynamicBoundable
 {
+    friend class UCollisionManager;
 public:
     UCollisionComponent() = default;
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
@@ -24,6 +25,8 @@ public:
     bool IsStatic() const override;
 
 public:
+    void UpdatePrevTransform();
+
     // 초기화
     void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
@@ -56,8 +59,7 @@ public:
     void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
     const FCollisionShapeData& GetCollisionShape() const { return Shape; }
 
-    const Vector3& GetPreviousPosition() const { return PreviousPosition; }
-    void SetPreviousPosition(const Vector3& InPosition) { PreviousPosition = InPosition; }
+    const FTransform& GetPreviousTransform() const { return PrevTransform; }
 
 public:
     bool bCollisionEnabled = true;
@@ -80,14 +82,12 @@ public:
 private:
     std::weak_ptr<URigidBodyComponent> RigidBody;
     FCollisionShapeData Shape;
-    Vector3 PreviousPosition;    // CCD를 위한 이전 프레임 위치
+    FTransform PrevTransform;    // CCD를 위한 이전 프레임 위치
 
 
     // 충돌 이벤트 델리게이트
     FDelegate<const FCollisionEventData&> OnCollisionEnter;
     FDelegate<const FCollisionEventData&> OnCollisionStay;
     FDelegate<const FCollisionEventData&> OnCollisionExit;
-
-    friend class UCollisionManager;
 
 };

@@ -1,17 +1,13 @@
 #pragma once
 #include "Math.h"
-#include "DynamicAABBTree.h"
-#include "CollisionComponent.h"
-#include "CollisionDefines.h"
-#include "CollisionDetector.h"
-#include "CollisionResponseCalculator.h"
-#include "CollisionEventDispatcher.h"
 #include <memory>
 #include <vector>
 #include <unordered_set>
 
+class FDynamicAABBTree;
 class UCollisionComponent;
 class URigidBodyComponent;
+struct FTransform;
 
 #pragma region CollisionPair
 struct FCollisionPair
@@ -50,13 +46,18 @@ struct FCollisionSystemConfig
     bool bPhysicsSimulated = true;
     float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
-    float CCDMotionThreshold = 1.0f;     // CCD 활성화 속도 임계값
+    float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
 
     // AABB Tree 관련 설정
     size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간
 };
 
+/// <summary>
+/// 컴포넌트 콜리전객체의 생성 및 소멸을 관리.
+/// DynamicAABBTree를 이용해 객체의 충돌쌍을 관리하고
+/// 충돌 테스트 및 충돌 반응등을 수행함
+/// </summary>
 class UCollisionManager
 {
 private:
@@ -71,6 +72,7 @@ private:
     ~UCollisionManager();
 
 private:
+    //컴포넌트 관리 구조체
     struct FComponentData
     {
         std::shared_ptr<UCollisionComponent> Component;
@@ -117,20 +119,27 @@ private:
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
 
+    //새로운 충돌쌍 업데이트
     void UpdateCollisionPairs();
+
+    //컴포넌트 트랜스폼 업데이트
+    void UpdateCollisionTransform();
 
     bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
 
-    void ProcessCCDCollision(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
-        float DeltaTime);
+    FCollisionDetectionResult DetectCCDCollision(
+        const FCollisionPair& InPair,
+        const float DeltaTime);
+
+    FCollisionDetectionResult DetectDCDCollision(
+        const FCollisionPair& InPair,
+        const float DeltaTime);
 
     void HandleCollision(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectionResult,
-        float DeltaTime);
+        const float DeltaTime);
 
     void ApplyCollisionResponse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
@@ -141,7 +150,7 @@ private:
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectionResult,
-        float DeltaTime);
+        const float DeltaTime);
 
 private:
     // 하부 시스템 클래스들
@@ -150,7 +159,7 @@ private:
     FCollisionEventDispatcher* EventDispatcher = nullptr;
 
     // 컴포넌트 관리
-    std::vector<FComponentData> RegisteredComponents;
+    std::vector<FComponentData> RegisteredComponents; //순차 접근-캐시효율성 을 위한 벡터 사용
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 

@@ -37,6 +37,7 @@ public:
     inline float GetSpeed() const { return Velocity.Length(); }
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
+    const struct FTransform* GetTransform() const;
     inline UGameObject* const GetOwner() const { return Owner.lock().get(); }
 
     // 물리 속성 설정

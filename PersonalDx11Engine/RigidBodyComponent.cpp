@@ -138,6 +138,15 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return OwnerPtr->GetTransform()->Position;
 }
 
+const FTransform* URigidBodyComponent::GetTransform() const
+{
+	if (auto OwnerPtr = Owner.lock())
+	{
+		return  OwnerPtr->GetTransform();
+	}
+	return nullptr;
+}
+
 void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);

@@ -1,5 +1,13 @@
 #include "CollisionManager.h"
+#include "RigidBodyComponent.h"
+#include "Transform.h"
 #include <algorithm>
+#include "DynamicAABBTree.h"
+#include "CollisionComponent.h"
+#include "CollisionDefines.h"
+#include "CollisionDetector.h"
+#include "CollisionResponseCalculator.h"
+#include "CollisionEventDispatcher.h"
 
 UCollisionManager::~UCollisionManager()
 {
@@ -32,6 +40,7 @@ std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
 	FComponentData ComponentData;
 	ComponentData.Component = NewComponent;
 	ComponentData.TreeNodeId = TreeNodeId;
+	ComponentData.Component->UpdatePrevTransform();
 
 	// 벡터에 추가
 	RegisteredComponents.push_back(std::move(ComponentData));
@@ -215,7 +224,7 @@ void UCollisionManager::UpdateCollisionPairs()
 
 	// 새로운 충돌 쌍을 저장할 임시 컨테이너
 	std::unordered_set<FCollisionPair> NewCollisionPairs;
-	// 더 현실적인 초기 예약 크기 계산
+	// TODO :: 초기 예약 크기 계산
 	size_t EstimatedPairs = std::min(ActiveCollisionPairs.size(),
 									 RegisteredComponents.size() * (RegisteredComponents.size() - 1) / 2);
 	NewCollisionPairs.reserve(EstimatedPairs);
@@ -266,6 +275,58 @@ void UCollisionManager::UpdateCollisionPairs()
 	}
 
 	ActiveCollisionPairs = std::move(NewCollisionPairs);
+}
+
+void UCollisionManager::UpdateCollisionTransform()
+{
+	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	{
+		const auto& ComponentData = RegisteredComponents[i];
+		auto* Component = ComponentData.Component.get();
+
+		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
+		if (!Component || Component->bDestroyed || !Component->bCollisionEnabled || Component->GetRigidBody()->IsStatic())
+		{
+			continue;
+		}
+
+		// 트리 노드 ID 유효성 검사 추가
+		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
+		{
+			continue;
+		}
+
+		Component->UpdatePrevTransform();
+	}
+
+	CollisionTree->UpdateTree();
+}
+
+bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
+{
+	if (!RigidBody)
+		return false;
+
+	return RigidBody->GetVelocity().Length() > Config.CCDVelocityThreshold;
+}
+
+FCollisionDetectionResult UCollisionManager::DetectCCDCollision(const FCollisionPair& InPair, const float DeltaTime)
+{
+	FComponentData& CompAData = RegisteredComponents[InPair.IndexA];
+	FComponentData& CompBData = RegisteredComponents[InPair.IndexB];
+
+	auto CompA = CompAData.Component.get();
+	auto CompB = CompBData.Component.get();
+	if (!CompA || !CompB)
+		return;
+
+	size_t NodeIdA = CompAData.TreeNodeId;
+	size_t NodeIdB = CompBData.TreeNodeId;
+
+	FCollisionDetectionResult DectectionResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
+								 CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
+
+	return DectectionResult;
 }
 
 UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
