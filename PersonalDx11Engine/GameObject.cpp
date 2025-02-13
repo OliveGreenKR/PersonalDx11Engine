@@ -13,6 +13,15 @@ UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 	RigidBody = make_shared<URigidBodyComponent>();
 }
 
+void UGameObject::PostInitialized()
+{
+	//todo PostInit components
+	auto CompPtr = RigidBody.get();
+	if (CompPtr)
+	{
+	}
+}
+
 void UGameObject::Tick(const float DeltaTime)
 {
 	UpdateComponents(DeltaTime);

@@ -47,6 +47,9 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
 	bIsTransformDirty = true;
+
+	//test
+	GetOwner()->SetDebugColor(Color::Red());
 }
 
 UGameObject* UCollisionComponent::GetOwner() const

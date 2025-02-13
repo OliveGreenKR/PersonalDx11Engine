@@ -28,7 +28,7 @@ public:
 	virtual ~UGameObject() = default;
 
 public:
-	virtual void PostInitialized() {};
+	virtual void PostInitialized();
 	virtual void Tick(const float DeltaTime) ;
 
 public:
