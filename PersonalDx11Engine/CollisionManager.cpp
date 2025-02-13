@@ -29,13 +29,16 @@ std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
 		new UCollisionComponent(InRigidBody, InType, InHalfExtents)
 	);
 
-	InRigidBody->AddChild(NewComponent);
+	return NewComponent;
+}
 
+void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
+{
 	// AABB 트리에 등록
 	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
 	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
 	{
-		return nullptr;
+		return;
 	}
 
 	// 컴포넌트 데이터 생성 및 등록
@@ -45,8 +48,6 @@ std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
 
 	// 벡터에 추가
 	RegisteredComponents.push_back(std::move(ComponentData));
-
-	return NewComponent;
 }
 
 void UCollisionManager::UnRegisterAll()

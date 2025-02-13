@@ -89,7 +89,7 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     {
         Child->SetOwner(RootOwner);
         // 자식의 자식들에게도 소유자 전파
-        auto Descendants = Child->FindComponentsRaw<UActorComponent>();
+        auto Descendants = Child->FindChildrenRaw<UActorComponent>();
         for (auto Descendant : Descendants)
         {
             Descendant->SetOwner(RootOwner);
@@ -117,7 +117,7 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
 
     // 자식 및 그 하위 컴포넌트들의 소유자 제거
     (*it)->SetOwner(nullptr);
-    auto Descendants = (*it)->FindComponentsRaw<UActorComponent>();
+    auto Descendants = (*it)->FindChildrenRaw<UActorComponent>();
     for (auto* Descendant : Descendants)
     {
         Descendant->SetOwner(nullptr);

@@ -95,6 +95,9 @@ public:
         const ECollisionShapeType& InType,
         const Vector3& InHalfExtents);
 
+    void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent,
+                              const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+
     void Tick(const float DeltaTime);
     void UnRegisterAll();
     bool IsInitialized() const { return bIsInitialized; }

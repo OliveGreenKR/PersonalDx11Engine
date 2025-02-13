@@ -17,17 +17,15 @@ UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 
 void UGameObject::PostInitialized()
 {
-	
+	auto CompPtr = RootActorComp.get();
+	CompPtr->SetOwner(this);
+	//for temp
+	RootActorComp.get()->AddChild(RigidBody);
 }
 
 void UGameObject::PostInitializedComponents()
 {
 	auto CompPtr = RootActorComp.get();
-	CompPtr->SetOwner(this);
-
-	//for temp
-	RootActorComp.get()->AddChild(RigidBody);
-
 	if (CompPtr)
 	{
 		CompPtr->BroadcastPostInitializedForComponents();

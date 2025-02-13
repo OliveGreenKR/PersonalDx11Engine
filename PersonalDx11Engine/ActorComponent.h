@@ -65,6 +65,37 @@ public:
     }
 
     template<typename T>
+    T* FindChildByType() const
+    {
+        // 자식 컴포넌트들 검색
+        for (const auto& Child : ChildComponents)
+        {
+            if (auto FoundComponent = Child->FindComponentByType<T>())
+                return FoundComponent;
+        }
+
+        return nullptr;
+    }
+
+    template<typename T>
+    std::vector<std::weak_ptr<T>> FindChildrenByType() const
+    {
+        std::vector<std::weak_ptr<T>> Found;
+
+        // 자식 컴포넌트들 검색
+        for (const auto& Child : ChildComponents)
+        {
+            if (Child)
+            {
+                auto ChildComponents = Child->FindComponentsByType<T>();
+                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
+            }
+        }
+
+        return Found;
+    }
+
+    template<typename T>
     std::vector<std::weak_ptr<T>> FindComponentsByType() const
     {
         std::vector<std::weak_ptr<T>> Found;
@@ -98,6 +129,25 @@ private:
         {
             Found.push_back(const_cast<T*>(ThisComponent));
         }
+
+        // 자식 컴포넌트들 검색
+        for (const auto& Child : ChildComponents)
+        {
+            if (Child)
+            {
+                auto ChildComponents = Child->FindComponentsRaw<T>();
+                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
+            }
+        }
+
+        return Found;
+    }
+
+    // non-const 버전의 raw 포인터 반환 함수도 함께 제공
+    template<typename T>
+    std::vector<T*> FindChildrenRaw() const
+    {
+        std::vector<T*> Found;
 
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
