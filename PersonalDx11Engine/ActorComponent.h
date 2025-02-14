@@ -36,7 +36,7 @@ private:
 public:
     void BraodcastPostTreeInitialized();
     // 초기화 전파
-    void BroadcastPostitialized();
+    void BroadcastPostOwnerInitialized();
 
     // Tick 전파
     void BroadcastTick(float DeltaTime);
@@ -46,8 +46,8 @@ public:
     bool IsActive() const { return bIsActive; }
 
 protected:
-    // 컴포넌트간 의존성 초기화
-    virtual void PostInitialized() {}
+    // 오너 의존성 초기화
+    virtual void PostOwnerInitialized() {}
     // 컴포넌트 트리 구조 완성 후 초기화
     virtual void PostTreeInitialized(){}
 

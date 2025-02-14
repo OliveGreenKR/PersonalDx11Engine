@@ -57,9 +57,9 @@ void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 }
 
 
-void UCollisionComponent::PostInitialized()
+void UCollisionComponent::PostOwnerInitialized()
 {
-	UActorComponent::PostInitialized();
+	UActorComponent::PostOwnerInitialized();
 }
 
 void UCollisionComponent::PostTreeInitialized()

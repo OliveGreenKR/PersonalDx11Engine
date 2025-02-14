@@ -25,7 +25,7 @@ void UGameObject::PostInitialized()
 	//Components Initialze
 	if (CompPtr)
 	{
-		CompPtr->BroadcastPostitialized();
+		CompPtr->BroadcastPostOwnerInitialized();
 	}
 }
 
