@@ -64,7 +64,7 @@ struct FCollisionResponseResult
 struct FCollisionEventData
 {
     std::weak_ptr<class UCollisionComponent> OtherComponent;
-    FCollisionDetectionResult CollisionResult;
+    FCollisionDetectionResult CollisionDetectResult;
 };
 
 enum class ECollisionState

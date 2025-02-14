@@ -6,6 +6,8 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
+#include "Utils.h"
+
 #include <memory>
 #include "define.h"
 #include "Renderer.h"
@@ -590,6 +592,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 		if (Character)
 		{
+			
 			Vector3 CurrentVelo = Character->GetCurrentVelocity();
 			bool bGravity = Character->IsGravity();
 			bool bPhysics = Character->IsPhysicsSimulated();
@@ -610,7 +613,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
 						Character->GetTransform()->GetEulerRotation().y,
 						Character->GetTransform()->GetEulerRotation().z);
-
+			ImGui::Text(Utils::ToString(CollisionComp1->GetPreviousTransform()));
 			ImGui::End();
 		}
 		

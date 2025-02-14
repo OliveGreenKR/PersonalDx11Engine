@@ -13,69 +13,70 @@ class UGameObject;
 // 충돌 응답에 필요한 속성 관리
 class UCollisionComponent : public UActorComponent, public IDynamicBoundable
 {
-    friend class UCollisionManager;
+	friend class UCollisionManager;
 public:
-    //UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-    //UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
-    UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
-    ~UCollisionComponent() = default;
+	//UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+	//UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
+	UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
+	~UCollisionComponent() = default;
 private:
-    UCollisionComponent() = default;
+	UCollisionComponent() = default;
 public:
-    // Inherited via IDynamicBoundable
-    Vector3 GetHalfExtent() const override;
-    const FTransform* GetTransform() const override;
-    bool IsStatic() const override;
-    bool IsTransformChanged() const override { return bIsTransformDirty; }
-    void SetTransformChagedClean() override { bIsTransformDirty = false; }
+	// Inherited via IDynamicBoundable
+	Vector3 GetHalfExtent() const override;
+	const FTransform* GetTransform() const override;
+	bool IsStatic() const override;
+	bool IsTransformChanged() const override { return bIsTransformDirty; }
+	void SetTransformChagedClean() override { bIsTransformDirty = false; }
 
 protected:
-    virtual void PostOwnerInitialized() override;
-    virtual void PostTreeInitialized() override;
-    virtual void Tick(const float DeltaTime) override;
+	virtual void PostOwnerInitialized() override;
+	virtual void PostTreeInitialized() override;
+	virtual void Tick(const float DeltaTime) override;
 
 public:
-    // 초기화
-    void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+	// 초기화
+	void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
 public:
-    URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 
-    void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
-    const FCollisionShapeData& GetCollisionShape() const { return Shape; }
+	//Getter
+	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
+	const FCollisionShapeData& GetCollisionShape() const { return Shape; }
+	const FTransform& GetPreviousTransform() const { return PrevTransform; }
 
-    const FTransform& GetPreviousTransform() const { return PrevTransform; }
-
+	//Setter
+	void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
+	
 public:
-    bool bCollisionEnabled = true;
-    bool bDestroyed = false;
-
+	bool bCollisionEnabled : 1;
+	bool bDestroyed : 1;
 public:
-    // 충돌 이벤트 델리게이트
-    FDelegate<const FCollisionEventData&> OnCollisionEnter;
-    FDelegate<const FCollisionEventData&> OnCollisionStay;
-    FDelegate<const FCollisionEventData&> OnCollisionExit;
+	// 충돌 이벤트 델리게이트
+	FDelegate<const FCollisionEventData&> OnCollisionEnter;
+	FDelegate<const FCollisionEventData&> OnCollisionStay;
+	FDelegate<const FCollisionEventData&> OnCollisionExit;
 
-    // 충돌 이벤트 publish
-    void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
-        OnCollisionEnter.Broadcast(CollisionInfo);
-    }
+	// 충돌 이벤트 publish
+	void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
+		OnCollisionEnter.Broadcast(CollisionInfo);
+	}
 
-    void OnCollisionStayEvent(const FCollisionEventData& CollisionInfo) {
-        OnCollisionStay.Broadcast(CollisionInfo);
-    }
+	void OnCollisionStayEvent(const FCollisionEventData& CollisionInfo) {
+		OnCollisionStay.Broadcast(CollisionInfo);
+	}
 
-    void OnCollisionExitEvent(const FCollisionEventData& CollisionInfo) {
-        OnCollisionExit.Broadcast(CollisionInfo);
-    }
+	void OnCollisionExitEvent(const FCollisionEventData& CollisionInfo) {
+		OnCollisionExit.Broadcast(CollisionInfo);
+	}
 
 private:
-    void OnOwnerTransformChanged(const FTransform& InChanged);
+	void OnOwnerTransformChanged(const FTransform& InChanged);
 
 private:
-    std::weak_ptr<URigidBodyComponent> RigidBody;
-    FCollisionShapeData Shape;
-    FTransform PrevTransform = FTransform();    // CCD를 위한 이전 프레임 트랜스폼
+	std::weak_ptr<URigidBodyComponent> RigidBody;
+	FCollisionShapeData Shape;
+	FTransform PrevTransform = FTransform();    // CCD를 위한 이전 프레임 트랜스폼
 
-    bool bIsTransformDirty = false;
+	bool bIsTransformDirty = false;
 };

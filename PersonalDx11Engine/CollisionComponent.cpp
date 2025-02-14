@@ -16,7 +16,7 @@
 //	
 //}
 
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false), bCollisionEnabled(true)
 {
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
@@ -73,6 +73,8 @@ void UCollisionComponent::PostTreeInitialized()
 
 void UCollisionComponent::Tick(const float DeltaTime)
 {
+	UActorComponent::Tick(DeltaTime);
+
 	//test
 	if (bIsTransformDirty)
 	{
@@ -82,6 +84,8 @@ void UCollisionComponent::Tick(const float DeltaTime)
 	{
 		GetOwner()->SetDebugColor(Color::White());
 	}
-	
+
+	//이전 트랜스폼 저장
+	PrevTransform = *GetTransform();
 }
 

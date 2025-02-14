@@ -10,7 +10,7 @@ class UActorComponent : public std::enable_shared_from_this<UActorComponent>
 {
 
 public:
-    UActorComponent() = default;
+    UActorComponent() : bIsActive(true) {}
     virtual ~UActorComponent() = default;
 
     UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
@@ -184,7 +184,7 @@ private:
     }
 
 private:
-    bool bIsActive = true;
+    bool bIsActive : 1;
 
     //생명주기가 종속될것이기에 일반 raw 사용
     UGameObject* OwnerObject = nullptr;

@@ -54,6 +54,7 @@ void UCollisionManager::Tick(const float DeltaTime)
 {
 	UpdateCollisionTransform();
 	UpdateCollisionPairs();
+	ProcessCollisions(DeltaTime);
 }
 
 void UCollisionManager::UnRegisterAll()
@@ -313,7 +314,6 @@ bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
 {
 	if (!RigidBody)
 		return false;
-
 	return RigidBody->GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
@@ -366,6 +366,41 @@ size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 //----------------------------not imple yet
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
+	for (auto ActivePair : ActiveCollisionPairs)
+	{
+		auto CompA = FindComponentByTreeNodeId(ActivePair.IndexA);
+		auto CompB = FindComponentByTreeNodeId(ActivePair.IndexB);
+
+		FCollisionDetectionResult detectResult;
+
+		if (CompA && CompB)
+		{
+			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
+			{
+				//ccd
+				detectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
+															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
+			}
+			else
+			{
+				//dcd
+				detectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(),*CompA->GetTransform(),
+																 CompB->GetCollisionShape(),*CompB->GetTransform());
+			}
+		}
+
+		if (!detectResult.bCollided)
+			return;
+
+
+		//TODO : ColliisionResponse
+
+		//TODO : RecordPrevCollisionState
+		FCollisionEventData EventData;
+		EventData.CollisionDetectResult = detectResult;
+		EventDispatcher->DispatchCollisionEvents(CompA, EventData, ECollisionState::Enter);
+		EventDispatcher->DispatchCollisionEvents(CompB, EventData, ECollisionState::Enter);
+	}
 }
 
 FCollisionDetectionResult UCollisionManager::DetectDCDCollision(const FCollisionPair& InPair, const float DeltaTime)

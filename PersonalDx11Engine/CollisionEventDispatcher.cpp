@@ -3,6 +3,15 @@
 
 void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UCollisionComponent>& InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
+    if (!InComponent.get() || !InComponent->bCollisionEnabled)
+    {
+        return;
+    }
+    DispatchCollisionEvents(InComponent.get(), EventData, CollisionState);
+}
+
+void FCollisionEventDispatcher::DispatchCollisionEvents(const UCollisionComponent* InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
+{
     if (!InComponent || !InComponent->bCollisionEnabled)
     {
         return;

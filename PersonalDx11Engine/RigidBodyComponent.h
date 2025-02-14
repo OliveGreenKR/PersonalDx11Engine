@@ -52,8 +52,8 @@ public:
     //inline void SetOwner(std::shared_ptr<UGameObject>& InOwner) { Owner = InOwner; }
 public:
     // 시뮬레이션 플래그
-    bool bGravity = false;
-    bool bIsSimulatedPhysics = true;
+    bool bGravity  =  false;
+    bool bIsSimulatedPhysics  = true;
     bool IsStatic() { return RigidType == ERigidBodyType::Static; }
 
 private:

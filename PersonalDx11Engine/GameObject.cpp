@@ -124,7 +124,7 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 
 void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)
 {
-	if (!InCollision.CollisionResult.bCollided)
+	if (!InCollision.CollisionDetectResult.bCollided)
 		return;
 
 	DebugColor = Color::Green();
@@ -132,7 +132,7 @@ void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)
 
 void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)
 {
-	if (InCollision.CollisionResult.bCollided)
+	if (InCollision.CollisionDetectResult.bCollided)
 		return;
 
 	DebugColor = Color::White();

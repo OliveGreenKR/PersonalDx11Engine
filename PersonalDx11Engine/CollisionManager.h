@@ -16,6 +16,7 @@ struct FCollisionPair
     FCollisionPair(size_t InIndexA, size_t InIndexB)
         : IndexA(InIndexA < InIndexB ? InIndexA : InIndexB)
         , IndexB(InIndexA < InIndexB ? InIndexB : InIndexA)
+        , bPrevCollided(false)
     {}
 
     FCollisionPair(const FCollisionPair& Other) = default;
@@ -23,6 +24,7 @@ struct FCollisionPair
 
     size_t IndexA;
     size_t IndexB;
+    bool bPrevCollided : 1;
 
     bool operator==(const FCollisionPair& Other) const
     {
@@ -113,6 +115,8 @@ private:
     }
     //충돌 쌍의 인덱스 새로 업데이트 -for deletion
     void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
+
+    //검색 헬퍼
     UCollisionComponent* FindComponentByTreeNodeId(size_t TreeNodeId) const;
     size_t FindComponentIndex(size_t TreeNodeId) const;
 
@@ -120,13 +124,13 @@ private:
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
 
+    bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
+
     //새로운 충돌쌍 업데이트
     void UpdateCollisionPairs();
 
     //컴포넌트 트랜스폼 업데이트
     void UpdateCollisionTransform();
-
-    bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
 
     FCollisionDetectionResult DetectCCDCollision(
         const FCollisionPair& InPair,
