@@ -1,8 +1,4 @@
-﻿  CollisionComponent.cpp
-  CollisionEventDispatcher.cpp
-  CollisionManager.cpp
-  GameObject.cpp
-  main.cpp
+﻿  main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')
   
@@ -10,5 +6,4 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(104,2): wa
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(107,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(110,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(113,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-  Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

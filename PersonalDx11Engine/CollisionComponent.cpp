@@ -17,12 +17,6 @@ UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyCompone
 	Shape.HalfExtent = InHalfExtents;
 }
 
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
-{
-	Shape.Type = InShape;
-	Shape.HalfExtent = InHalfExtents;
-}
-
 Vector3 UCollisionComponent::GetHalfExtent() const
 {
 	return Shape.HalfExtent;
@@ -30,14 +24,7 @@ Vector3 UCollisionComponent::GetHalfExtent() const
 
 const FTransform* UCollisionComponent::GetTransform() const
 {
-	if (RigidBody.lock())
-	{
-		auto OwnerPtr = RigidBody.lock()->GetOwner();
-		return RigidBody.lock()->GetOwner()->GetTransform();
-	}
-		
-
-	return &PrevTransform;
+	return GetOwner()->GetTransform();
 }
 
 bool UCollisionComponent::IsStatic() const
@@ -46,12 +33,11 @@ bool UCollisionComponent::IsStatic() const
 }
 
 
-void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
+void UCollisionComponent::BindRigidBody()
 {
-	if (InRigidBody.get())
+	if (auto RigidPtr = RigidBody.lock())
 	{
-		RigidBody = InRigidBody;
-		RigidBody.lock()->AddChild(shared_from_this());
+		RigidPtr->AddChild(shared_from_this());
 	}
 }
 
@@ -64,13 +50,16 @@ void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 void UCollisionComponent::PostInitialized()
 {
 	UActorComponent::PostInitialized();
+	BindRigidBody();
+}
 
+void UCollisionComponent::PostTreeInitialized()
+{
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		GetOwner()->GetTransform()->
 			OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
 	}
-	
 }
 
 void UCollisionComponent::Tick(const float DeltaTime)

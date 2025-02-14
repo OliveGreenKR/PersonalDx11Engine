@@ -15,11 +15,11 @@ class UCollisionComponent : public UActorComponent, public IDynamicBoundable
 {
     friend class UCollisionManager;
 public:
-    UCollisionComponent() = default;
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
-    UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
+private:
+    UCollisionComponent() = default;
 public:
     // Inherited via IDynamicBoundable
     Vector3 GetHalfExtent() const override;
@@ -30,11 +30,12 @@ public:
 
 protected:
     virtual void PostInitialized() override;
+    virtual void PostTreeInitialized() override;
     virtual void Tick(const float DeltaTime) override;
 
 public:
     // √ ±‚»≠
-    void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+    void BindRigidBody();
 
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }

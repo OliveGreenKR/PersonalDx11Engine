@@ -34,6 +34,7 @@ private:
     UActorComponent& operator=(UActorComponent&&) = delete;
 
 public:
+    void BraodcastPostTreeInitialized();
     // 초기화 전파
     void BroadcastPostitialized();
 
@@ -45,8 +46,11 @@ public:
     bool IsActive() const { return bIsActive; }
 
 protected:
-    // 순수 가상 함수 - root에 의해서 전파될 예정, 액터 초기화 이후 호출되어야함
+    // 컴포넌트간 의존성 초기화
     virtual void PostInitialized() {}
+    // 컴포넌트 트리 구조 완성 후 초기화
+    virtual void PostTreeInitialized(){}
+
     virtual void Tick(float DeltaTime) {}
     // 소유 관계 설정
     void SetOwner(UGameObject* InOwner) { OwnerObject = InOwner; }
