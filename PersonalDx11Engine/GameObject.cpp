@@ -5,14 +5,12 @@
 
 UGameObject::UGameObject()
 {
-	RootActorComp = make_shared<UActorComponent>();
-	//RigidBody = make_shared<URigidBodyComponent>();
+	RootActorComp = UActorComponent::Create<UActorComponent>();
 }
 
 UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 {
-	RootActorComp = make_shared<UActorComponent>();
-	//RigidBody = make_shared<URigidBodyComponent>();
+	RootActorComp = UActorComponent::Create<UActorComponent>();
 }
 
 void UGameObject::PostInitialized()
@@ -161,53 +159,76 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	
 }
 
-bool UGameObject::IsPhysicsSimulated() const
+void UGameObject::ApplyForce(const Vector3&& InForce)
 {
-	return RigidBody.get()->bIsSimulatedPhysics;
-}
+	if (!IsPhysicsSimulated())
+		return;
 
-bool UGameObject::IsGravity() const
-{
-	return RigidBody.get()->bGravity;
-}
-
-void UGameObject::SetGravity(const bool InBool)
-{
-	RigidBody.get()->bGravity = InBool;
-}
-
-void UGameObject::SetPhysics(const bool InBool)
-{
-	RigidBody.get()->bIsSimulatedPhysics = InBool;
-}
-
-void UGameObject::SetFrictionKinetic(const float InValue)
-{
-	RigidBody.get()->SetFrictionKinetic(InValue);
-}
-
-void UGameObject::SetFrictionStatic(const float InValue)
-{
-	RigidBody.get()->SetFrictionStatic(InValue);
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		return RigidComp->ApplyForce(InForce);
+	}
 }
 
 Vector3 UGameObject::GetCurrentVelocity() const
 {
-	return RigidBody.get()->GetVelocity();
-}
+	if (!IsPhysicsSimulated())
+		return Vector3::Zero;
 
-Vector3 UGameObject::GetCurrentAngularVelocity() const
-{
-	return RigidBody.get()->GetAngularVelocity();
-}
-
-void UGameObject::InitializePhysics()
-{
-	auto SelfPtr = shared_from_this();
-	if (auto RigidPtr = RootActorComp->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
 	{
-		RigidPtr->bIsSimulatedPhysics = true;
-		RigidPtr->SetMaxSpeed(MaxSpeed);
-		RigidPtr->bGravity = false;
+		return RigidComp->GetVelocity();
+	}
+
+	return Vector3::Zero;
+}
+
+bool UGameObject::IsGravity() const
+{
+	if (!IsPhysicsSimulated())
+		return false;
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		return RigidComp->bGravity;
+	}
+	return false;
+}
+
+bool UGameObject::IsPhysicsSimulated() const
+{
+	if (!RootActorComp.get())
+		return false;
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		return RigidComp->bIsSimulatedPhysics;
+	}
+	return false;
+}
+
+void UGameObject::SetGravity(const bool InBool)
+{
+	if (!IsPhysicsSimulated())
+		return;
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		RigidComp->bGravity = InBool;
 	}
 }
+
+void UGameObject::SetPhysics(const bool InBool)
+{
+	if (!IsPhysicsSimulated())
+		return;
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		RigidComp->bIsSimulatedPhysics = InBool;
+	}
+}
+
+void UGameObject::AddActorComponent(const shared_ptr<UActorComponent>& InActorComp)
+{
+	if (!InActorComp.get() || !RootActorComp.get())
+		return;
+	RootActorComp.get()->AddChild(InActorComp);
+}
+

@@ -24,10 +24,14 @@ Vector3 UCollisionComponent::GetHalfExtent() const
 
 const FTransform* UCollisionComponent::GetTransform() const
 {
-	if(RigidBody.lock())
+	if (RigidBody.lock())
+	{
+		auto OwnerPtr = RigidBody.lock()->GetOwner();
 		return RigidBody.lock()->GetOwner()->GetTransform();
+	}
+		
 
-	return nullptr;
+	return &PrevTransform;
 }
 
 bool UCollisionComponent::IsStatic() const

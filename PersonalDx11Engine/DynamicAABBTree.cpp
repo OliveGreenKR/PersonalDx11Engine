@@ -27,9 +27,10 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
     Node& NewNode = NodePool[NodeId];
 
     // 초기 바운드 설정
+    auto OwnerTrans = Object->GetTransform();
     const Vector3 Position = Object->GetTransform()->GetPosition();
     const Vector3 HalfExtent = Object->GetHalfExtent();
-
+    
     // 실제 AABB 설정
     NewNode.Bounds.Min = Position - HalfExtent;
     NewNode.Bounds.Max = Position + HalfExtent;

@@ -173,34 +173,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
 	Floor->SetPosition({ 0,-1,0 });
-	Floor->InitializePhysics();
-	Floor->SetGravity(false);
 	Floor->PostInitialized();
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
-	Character->InitializePhysics();
 	Character->bDebug = true;
-	Character->GetRigidBody()->SetMass(20.0f);
 	Character->PostInitialized();
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 1.0f,0,0 });
-	Character2->InitializePhysics();
 	Character2->bDebug = true;
-	Character2->GetRigidBody()->SetMass(1.0f);
 	Character2->PostInitialized();
 
+	//rigid
+	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
+	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
+	
+	Character->AddActorComponent(RigidComp1);
+	Character2->AddActorComponent(RigidComp2);
 
 	//CollisionTest
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(Character->GetSharedRigidBody(), ECollisionShapeType::Box, Vector3( 0.5f,0.5f,0.5f ));
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, Vector3( 0.5f,0.5f,0.5f ));
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(RigidComp1, ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(RigidComp2, ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
 
-	
-	UCollisionManager::Get()->RegisterCollision(CollisionComp1, Character->GetSharedRigidBody());
-	UCollisionManager::Get()->RegisterCollision(CollisionComp2, Character2->GetSharedRigidBody());
+	UCollisionManager::Get()->RegisterCollision(CollisionComp1, RigidComp1);
+	UCollisionManager::Get()->RegisterCollision(CollisionComp2, RigidComp2);
+
 
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
@@ -208,8 +208,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
 	Camera->LookTo(Character->GetTransform()->GetPosition());
-
-
 
 
 	/*FCollisionShapeData ShapeData1;
@@ -293,7 +291,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->GetRigidBody()->ApplyForce(Vector3::Forward * 100.0f);
+						Character->ApplyForce(Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -305,7 +303,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->GetRigidBody()->ApplyForce(-Vector3::Forward * 100.0f);
+						Character->ApplyForce(-Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -317,7 +315,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->GetRigidBody()->ApplyForce(Vector3::Right * 100.0f);
+						Character->ApplyForce(Vector3::Right * 100.0f);
 					}
 					break;
 				}
@@ -329,7 +327,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->GetRigidBody()->ApplyForce(-Vector3::Right * 100.0f);
+						Character->ApplyForce(-Vector3::Right * 100.0f);
 					}
 					break;
 				}
@@ -356,7 +354,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->GetRigidBody()->ApplyForce(Vector3::Forward * 100.0f);
+						Character2->ApplyForce(Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -368,7 +366,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->GetRigidBody()->ApplyForce(-Vector3::Forward * 100.0f);
+						Character2->ApplyForce(-Vector3::Forward * 100.0f);
 					}
 					break;
 				}
@@ -380,7 +378,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->GetRigidBody()->ApplyForce(Vector3::Right * 100.0f);
+						Character2->ApplyForce(Vector3::Right * 100.0f);
 					}
 					break;
 				}
@@ -392,7 +390,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->GetRigidBody()->ApplyForce(-Vector3::Right * 100.0f);
+						Character2->ApplyForce(-Vector3::Right * 100.0f);
 					}
 					break;
 				}

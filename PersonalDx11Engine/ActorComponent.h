@@ -8,23 +8,23 @@ class UGameObject;
 
 class UActorComponent : public std::enable_shared_from_this<UActorComponent>
 {
+
 public:
+    UActorComponent() = default;
+    virtual ~UActorComponent() = default;
+
     UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
+
 
     template<typename T, typename ...Args>
     static std::shared_ptr<T> Create(Args&&... args)
     {
         // T가 Base를 상속받았는지 컴파일 타임에 체크
-        static_assert(std::is_base_of<UActorComponent, T>::value,
+        static_assert(std::is_base_of_v<UActorComponent, T> || std::is_same_v<T, UActorComponent>,
                       "T must inherit from Base");
-
         // std::make_shared를 사용하여 객체 생성
-        return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        return std::make_shared<T>(std::forward<Args>(args)...);
     }
-
-protected:
-    UActorComponent() = default;
-    virtual ~UActorComponent() = default;
 
 private:
     // private 복사/이동 생성자와 대입 연산자
@@ -65,7 +65,7 @@ public:
 
     // 컴포넌트 검색 유틸리티
     template<typename T>
-    T* FindComponentByType() const
+    T* FindComponentByType()
     {
         // 현재 컴포넌트 체크
         if (auto ThisComponent = dynamic_cast<T*>(this))
@@ -82,7 +82,7 @@ public:
     }
 
     template<typename T>
-    T* FindChildByType() const
+    T* FindChildByType()
     {
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
@@ -95,7 +95,7 @@ public:
     }
 
     template<typename T>
-    std::vector<std::weak_ptr<T>> FindChildrenByType() const
+    std::vector<std::weak_ptr<T>> FindChildrenByType()
     {
         std::vector<std::weak_ptr<T>> Found;
 
@@ -113,7 +113,7 @@ public:
     }
 
     template<typename T>
-    std::vector<std::weak_ptr<T>> FindComponentsByType() const
+    std::vector<std::weak_ptr<T>> FindComponentsByType()
     {
         std::vector<std::weak_ptr<T>> Found;
 
@@ -137,7 +137,7 @@ public:
 private:
     // non-const 버전의 raw 포인터 반환 함수도 함께 제공
     template<typename T>
-    std::vector<T*> FindComponentsRaw() const
+    std::vector<T*> FindComponentsRaw()
     {
         std::vector<T*> Found;
 
@@ -162,7 +162,7 @@ private:
 
     // non-const 버전의 raw 포인터 반환 함수도 함께 제공
     template<typename T>
-    std::vector<T*> FindChildrenRaw() const
+    std::vector<T*> FindChildrenRaw()
     {
         std::vector<T*> Found;
 
