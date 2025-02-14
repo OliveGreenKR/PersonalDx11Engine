@@ -73,32 +73,32 @@ public:
 	//movement test
 	bool bIsMoving = false;
 
-	bool IsPhysicsSimulated() const;
-	bool IsGravity() const;
-   
+	//bool IsPhysicsSimulated() const;
+	//bool IsGravity() const;
+ //  
 
-	void SetGravity(const bool InBool);
-	void SetPhysics(const bool InBool);
-	void SetFrictionKinetic(const float InValue);
-	void SetFrictionStatic(const float InValue);
+	//void SetGravity(const bool InBool);
+	//void SetPhysics(const bool InBool);
+	//void SetFrictionKinetic(const float InValue);
+	//void SetFrictionStatic(const float InValue);
 
-	Vector3 GetCurrentVelocity() const;
-	Vector3 GetCurrentAngularVelocity() const;
+	//Vector3 GetCurrentVelocity() const;
+	//Vector3 GetCurrentAngularVelocity() const;
 
-
-	float MaxSpeed = 5.0f; //must be positive
+	//float MaxSpeed = 5.0f; //must be positive
 
 private:
 	Vector3 TargetPosition;
 #pragma endregion
-#pragma region Physics
+#pragma region ActorComp
 public:
 	void InitializePhysics();
-	class URigidBodyComponent* GetRigidBody() { return RigidBody.get(); }
-	std::shared_ptr<class URigidBodyComponent>& GetSharedRigidBody() { return RigidBody; }
+	//class URigidBodyComponent* GetRigidBody() { return RigidBody.get(); }
+	//std::shared_ptr<class URigidBodyComponent>& GetSharedRigidBody() { return RigidBody; }
+	UActorComponent* GetRootActorComp() { return RootActorComp.get(); }
 
 protected:
-	std::shared_ptr<class URigidBodyComponent> RigidBody;
+	//std::shared_ptr<class URigidBodyComponent> RigidBody;
 	std::shared_ptr<UActorComponent> RootActorComp;
 #pragma endregion
 

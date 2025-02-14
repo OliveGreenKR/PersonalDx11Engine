@@ -6,21 +6,19 @@
 UGameObject::UGameObject()
 {
 	RootActorComp = make_shared<UActorComponent>();
-	RigidBody = make_shared<URigidBodyComponent>();
+	//RigidBody = make_shared<URigidBodyComponent>();
 }
 
 UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 {
-	RigidBody = make_shared<URigidBodyComponent>();
 	RootActorComp = make_shared<UActorComponent>();
+	//RigidBody = make_shared<URigidBodyComponent>();
 }
 
 void UGameObject::PostInitialized()
 {
 	auto CompPtr = RootActorComp.get();
 	CompPtr->SetOwner(this);
-	//for temp
-	RootActorComp.get()->AddChild(RigidBody);
 }
 
 void UGameObject::PostInitializedComponents()
@@ -34,8 +32,8 @@ void UGameObject::PostInitializedComponents()
 
 void UGameObject::Tick(const float DeltaTime)
 {
-	UpdateComponents(DeltaTime);
 	UpdateMovement(DeltaTime);
+	UpdateComponents(DeltaTime);
 }
 
 void UGameObject::SetPosition(const Vector3& InPosition)
@@ -206,7 +204,7 @@ Vector3 UGameObject::GetCurrentAngularVelocity() const
 void UGameObject::InitializePhysics()
 {
 	auto SelfPtr = shared_from_this();
-	if (auto RigidPtr = RigidBody.get())
+	if (auto RigidPtr = RootActorComp->FindChildByType<URigidBodyComponent>())
 	{
 		RigidPtr->bIsSimulatedPhysics = true;
 		RigidPtr->SetMaxSpeed(MaxSpeed);

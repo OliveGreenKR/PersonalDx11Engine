@@ -193,11 +193,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->GetRigidBody()->SetMass(1.0f);
 	Character2->PostInitialized();
 
+
 	//CollisionTest
-	auto CollisionComp1 = UCollisionManager::Get()->Create(Character->GetSharedRigidBody(), ECollisionShapeType::Box, { 0.5f,0.5f,0.5f });
-	auto CollisionComp2 = UCollisionManager::Get()->Create(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, { 0.5f,0.5f,0.5f });
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(Character->GetSharedRigidBody(), ECollisionShapeType::Box, Vector3( 0.5f,0.5f,0.5f ));
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(Character2->GetSharedRigidBody(), ECollisionShapeType::Sphere, Vector3( 0.5f,0.5f,0.5f ));
+
 	
 	UCollisionManager::Get()->RegisterCollision(CollisionComp1, Character->GetSharedRigidBody());
+	UCollisionManager::Get()->RegisterCollision(CollisionComp2, Character2->GetSharedRigidBody());
 
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();

@@ -14,26 +14,13 @@ UCollisionManager::~UCollisionManager()
 	Release();
 }
 
-std::shared_ptr<UCollisionComponent> UCollisionManager::Create(
-	const std::shared_ptr<URigidBodyComponent>& InRigidBody,
-	const ECollisionShapeType& InType,
-	const Vector3& InHalfExtents)
+void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
 	if (!bIsInitialized || !InRigidBody)
 	{
-		return nullptr;
+		return;
 	}
 
-	// 새 컴포넌트 생성
-	auto NewComponent = std::shared_ptr<UCollisionComponent>(
-		new UCollisionComponent(InRigidBody, InType, InHalfExtents)
-	);
-
-	return NewComponent;
-}
-
-void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
-{
 	InRigidBody->AddChild(NewComponent);
 
 	// AABB 트리에 등록

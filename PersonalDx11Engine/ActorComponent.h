@@ -9,12 +9,29 @@ class UGameObject;
 class UActorComponent : public std::enable_shared_from_this<UActorComponent>
 {
 public:
+    UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
+
+    template<typename T, typename ...Args>
+    static std::shared_ptr<T> Create(Args&&... args)
+    {
+        // T가 Base를 상속받았는지 컴파일 타임에 체크
+        static_assert(std::is_base_of<UActorComponent, T>::value,
+                      "T must inherit from Base");
+
+        // std::make_shared를 사용하여 객체 생성
+        return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+
+protected:
     UActorComponent() = default;
     virtual ~UActorComponent() = default;
 
-
-    UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
-
+private:
+    // private 복사/이동 생성자와 대입 연산자
+    UActorComponent(const UActorComponent&) = delete;
+    UActorComponent& operator=(const UActorComponent&) = delete;
+    UActorComponent(UActorComponent&&) = delete;
+    UActorComponent& operator=(UActorComponent&&) = delete;
 
 public:
     // 초기화 전파

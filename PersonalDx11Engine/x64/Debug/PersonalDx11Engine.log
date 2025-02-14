@@ -1,2 +1,36 @@
-﻿  CollisionManager.cpp
-  PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe
+﻿  main.cpp
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
+  (compiling source file 'main.cpp')
+  
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(104,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(107,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(110,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(113,2): warning C4002: too many arguments for function-like macro invocation 'assert'
+  GameObject.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(293,9): error C2248: 'UActorComponent::~UActorComponent': cannot access protected member declared in class 'UActorComponent'
+  (compiling source file 'GameObject.cpp')
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\ActorComponent.h(191,1):
+      compiler has generated 'UActorComponent::~UActorComponent' here
+      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\ActorComponent.h(9,7):
+      see declaration of 'UActorComponent'
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\xmemory(293,9):
+      the template instantiation context (the oldest one first) is
+          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\GameObject.cpp(8,18):
+          see reference to function template instantiation 'std::shared_ptr<_Ty> std::make_shared<UActorComponent,>(void)' being compiled
+          with
+          [
+              _Ty=UActorComponent
+          ]
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(2906,26):
+          see reference to class template instantiation 'std::_Ref_count_obj2<UActorComponent>' being compiled
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(2112,10):
+          while compiling class template member function 'void std::_Ref_count_obj2<UActorComponent>::_Destroy(void) noexcept'
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include\memory(2113,14):
+          see reference to function template instantiation 'void std::_Destroy_in_place<_Ty>(_Ty &) noexcept' being compiled
+          with
+          [
+              _Ty=UActorComponent
+          ]
+  
+  Renderer.cpp
+  Generating Code...

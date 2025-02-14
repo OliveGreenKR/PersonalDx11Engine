@@ -97,6 +97,11 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 {
+	if (RigidType == ERigidBodyType::Static)
+	{
+		return;
+	}
+
 	if (auto OwnerPtr = GetOwner())
 	{
 		// 위치 업데이트

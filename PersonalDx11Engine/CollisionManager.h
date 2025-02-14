@@ -55,7 +55,7 @@ struct FCollisionSystemConfig
 };
 
 /// <summary>
-/// 컴포넌트 콜리전객체의 생성 및 소멸을 관리.
+/// 등록된 컴포넌들의 충돌 현상을 관리
 /// DynamicAABBTree를 이용해 객체의 충돌쌍을 관리하고
 /// 충돌 테스트 및 충돌 반응등을 수행함
 /// </summary>
@@ -89,11 +89,6 @@ public:
         }
         return &Instance;
     }
-
-    std::shared_ptr<UCollisionComponent> Create(
-        const std::shared_ptr<URigidBodyComponent>& InRigidBody,
-        const ECollisionShapeType& InType,
-        const Vector3& InHalfExtents);
 
     void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent,
                               const std::shared_ptr<URigidBodyComponent>& InRigidBody);

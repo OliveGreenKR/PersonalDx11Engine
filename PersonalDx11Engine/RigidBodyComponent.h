@@ -54,7 +54,7 @@ public:
     // 시뮬레이션 플래그
     bool bGravity = false;
     bool bIsSimulatedPhysics = true;
-    bool IsStatic() { return Type == ERigidBodyType::Static; }
+    bool IsStatic() { return RigidType == ERigidBodyType::Static; }
 
 private:
     void UpdateTransform(float DeltaTime);
@@ -64,7 +64,7 @@ private:
 
 private:
     // 물리 객체 상태
-    ERigidBodyType Type = ERigidBodyType::Dynamic;
+    ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
     // 물리 상태 변수
     Vector3 Velocity = Vector3::Zero;
