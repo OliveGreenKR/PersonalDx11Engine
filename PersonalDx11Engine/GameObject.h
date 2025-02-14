@@ -62,6 +62,12 @@ protected:
 	FTransform Transform;
 	std::weak_ptr<class UModel> Model;
 
+#pragma region EventTriggered
+	virtual void OnCollisionBegin(const struct FCollisionEventData& InCollision);
+	virtual void OnCollisionStay(const struct FCollisionEventData& InCollision) {}
+	virtual void OnCollisionEnd(const struct FCollisionEventData& InCollision);
+#pragma endregion
+
 #pragma region Coord Movement
 public:
 	void StartMove(const Vector3& InDirection);

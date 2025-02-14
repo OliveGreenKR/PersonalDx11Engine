@@ -1,21 +1,21 @@
 #include "ActorComponent.h"
 #include <cassert>
 
-void UActorComponent::BroadcastPostInitializedComponents()
+void UActorComponent::BroadcastPostitialized()
 {
     // 비활성화된 경우 전파하지 않음
     if (!bIsActive)
         return;
 
-    // 자신의 PostInitialize 호출
+    // 자신의 PostInitialized 호출
     PostInitialized();
 
-    // 모든 자식 컴포넌트에 대해 PostInitialize 전파
+    // 모든 자식 컴포넌트에 대해 PostInitialized 전파
     for (const auto& Child : ChildComponents)
     {
         if (Child)
         {
-            Child->BroadcastPostInitializedComponents();
+            Child->BroadcastPostitialized();
         }
     }
 }

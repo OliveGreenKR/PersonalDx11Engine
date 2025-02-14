@@ -7,12 +7,18 @@
 
 UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
-	BindRigidBody(InRigidBody);
+	RigidBody = InRigidBody;
 }
 
 UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
 {
-	BindRigidBody(InRigidBody);
+	RigidBody = InRigidBody;
+	Shape.Type = InShape;
+	Shape.HalfExtent = InHalfExtents;
+}
+
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
+{
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
@@ -45,6 +51,7 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 	if (InRigidBody.get())
 	{
 		RigidBody = InRigidBody;
+		RigidBody.lock()->AddChild(shared_from_this());
 	}
 }
 
@@ -58,8 +65,12 @@ void UCollisionComponent::PostInitialized()
 {
 	UActorComponent::PostInitialized();
 
-	GetOwner()->GetTransform()->
-		OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
+	if (auto RigidPtr = RigidBody.lock())
+	{
+		GetOwner()->GetTransform()->
+			OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
+	}
+	
 }
 
 void UCollisionComponent::Tick(const float DeltaTime)

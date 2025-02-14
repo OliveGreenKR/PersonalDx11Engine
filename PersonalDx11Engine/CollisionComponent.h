@@ -18,6 +18,7 @@ public:
     UCollisionComponent() = default;
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
     UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
+    UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
 public:
     // Inherited via IDynamicBoundable
@@ -32,32 +33,8 @@ protected:
     virtual void Tick(const float DeltaTime) override;
 
 public:
-
     // 초기화
     void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-
-
-    // 충돌 이벤트 
-    template<typename T>
-    void BindOnCollisionEnter(const std::shared_ptr<T>& InObject,
-                              const std::function<void(const FCollisionEventData&)>& InFunction,
-                              const std::string& InFunctionName) {
-        OnCollisionEnter.Bind(InObject, InFunction, InFunctionName);
-    }
-
-    template<typename T>
-    void BindOnCollisionStay(const std::shared_ptr<T>& InObject,
-                             const std::function<void(const FCollisionEventData&)>& InFunction,
-                             const std::string& InFunctionName) {
-        OnCollisionStay.Bind(InObject, InFunction, InFunctionName);
-    }
-
-    template<typename T>
-    void BindOnCollisionExit(const std::shared_ptr<T>& InObject,
-                             const std::function<void(const FCollisionEventData&)>& InFunction,
-                             const std::string& InFunctionName) {
-        OnCollisionExit.Bind(InObject, InFunction, InFunctionName);
-    }
 
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
@@ -72,6 +49,11 @@ public:
     bool bDestroyed = false;
 
 public:
+    // 충돌 이벤트 델리게이트
+    FDelegate<const FCollisionEventData&> OnCollisionEnter;
+    FDelegate<const FCollisionEventData&> OnCollisionStay;
+    FDelegate<const FCollisionEventData&> OnCollisionExit;
+
     // 충돌 이벤트 publish
     void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
         OnCollisionEnter.Broadcast(CollisionInfo);
@@ -93,11 +75,5 @@ private:
     FCollisionShapeData Shape;
     FTransform PrevTransform = FTransform();    // CCD를 위한 이전 프레임 트랜스폼
 
-
     bool bIsTransformDirty = false;
-
-    // 충돌 이벤트 델리게이트
-    FDelegate<const FCollisionEventData&> OnCollisionEnter;
-    FDelegate<const FCollisionEventData&> OnCollisionStay;
-    FDelegate<const FCollisionEventData&> OnCollisionExit;
 };

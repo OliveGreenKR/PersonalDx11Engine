@@ -1,30 +1,40 @@
 #include "GameObject.h"
 #include "Model.h"
 #include "RigidBodyComponent.h"
+#include "CollisionComponent.h"
+#include "CollisionDefines.h"
 
 
 UGameObject::UGameObject()
 {
 	RootActorComp = UActorComponent::Create<UActorComponent>();
+	auto CompPtr = RootActorComp.get();
+	CompPtr->SetOwner(this);
 }
 
 UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 {
 	RootActorComp = UActorComponent::Create<UActorComponent>();
+	auto CompPtr = RootActorComp.get();
+	CompPtr->SetOwner(this);
 }
 
 void UGameObject::PostInitialized()
 {
-	auto CompPtr = RootActorComp.get();
-	CompPtr->SetOwner(this);
 }
 
 void UGameObject::PostInitializedComponents()
 {
 	auto CompPtr = RootActorComp.get();
+	//Components Initialze
 	if (CompPtr)
 	{
-		CompPtr->BroadcastPostInitializedComponents();
+		CompPtr->BroadcastPostitialized();
+	}
+
+	if( auto CollisionComp = RootActorComp.get()->FindChildByType<UCollisionComponent>())
+	{
+		CollisionComp->OnCollisionEnter.Bind(shared_from_this(), &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
 	}
 }
 
@@ -106,6 +116,21 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 	}
 }
 
+void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)
+{
+	if (!InCollision.CollisionResult.bCollided)
+		return;
+
+	DebugColor = Color::Green();
+}
+
+void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)
+{
+	if (InCollision.CollisionResult.bCollided)
+		return;
+
+	DebugColor = Color::White();
+}
 //좌표기반 움직임만
 void UGameObject::StartMove(const Vector3& InDirection)
 {

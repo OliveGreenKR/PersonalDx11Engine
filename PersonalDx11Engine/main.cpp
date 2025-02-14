@@ -164,12 +164,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto CubeModel = UModel::GetDefaultCube(Renderer->GetDevice());
 	auto SphereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
 
+#pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,5.0f,-7.0f });
-	Camera->PostInitialized();
-	
 
-	//Main GameObejct
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
 	Floor->SetPosition({ 0,-1,0 });
@@ -179,37 +177,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetScale({ 0.5f,0.5f,0.5f });
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
-	Character->PostInitialized();
+	
 
 	auto Character2 = UGameObject::Create(SphereModel);
 	Character2->SetScale({ 0.5f,0.5f,0.5f });
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->bDebug = true;
+#pragma endregion
+	Camera->PostInitialized();
+	Character->PostInitialized();
 	Character2->PostInitialized();
-
-	//rigid
-	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
-	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
-	
-	//rigid attach
-	Character->AddActorComponent(RigidComp1);
-	Character2->AddActorComponent(RigidComp2);
-
-	//Collision
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(RigidComp1, ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(RigidComp2, ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
-
-	UCollisionManager::Get()->RegisterCollision(CollisionComp1, RigidComp1);
-	UCollisionManager::Get()->RegisterCollision(CollisionComp2, RigidComp2);
-
-
-	Character->PostInitializedComponents();
-	Character2->PostInitializedComponents();
 
 	Camera->SetLookAtObject(Character);
 	Camera->bLookAtObject = false;
 	Camera->LookTo(Character->GetTransform()->GetPosition());
+#pragma region Actor Components Initialization
+	//rigid
+	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
+	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 
+	//Collision
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
+#pragma endregion
+	//rigid attach
+	Character->AddActorComponent(RigidComp1);
+	Character2->AddActorComponent(RigidComp2);
+
+	CollisionComp1->BindRigidBody(RigidComp1);
+	CollisionComp2->BindRigidBody(RigidComp2);
+
+	Character->PostInitializedComponents();
+	Character2->PostInitializedComponents();
+	Camera->PostInitializedComponents();
+
+	//콜리전 컴포넌트 등록
+	UCollisionManager::Get()->RegisterCollision(CollisionComp1);
+	UCollisionManager::Get()->RegisterCollision(CollisionComp2);
 
 	/*FCollisionShapeData ShapeData1;
 	ShapeData1.Type = ECollisionShapeType::Box;
