@@ -1,7 +1,7 @@
 #include "ActorComponent.h"
 #include <cassert>
 
-void UActorComponent::BroadcastPostInitializedForComponents()
+void UActorComponent::BroadcastPostInitializedComponents()
 {
     // 비활성화된 경우 전파하지 않음
     if (!bIsActive)
@@ -15,7 +15,7 @@ void UActorComponent::BroadcastPostInitializedForComponents()
     {
         if (Child)
         {
-            Child->BroadcastPostInitializedForComponents();
+            Child->BroadcastPostInitializedComponents();
         }
     }
 }

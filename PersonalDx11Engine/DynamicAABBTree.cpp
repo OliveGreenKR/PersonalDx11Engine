@@ -75,10 +75,15 @@ void FDynamicAABBTree::UpdateTree()
         if (!Node.IsLeaf() || !Node.BoundableObject)
             continue;
 
-        const Vector3& CurrentPos = Node.BoundableObject->GetTransform()->GetPosition();
-        const Vector3& CurrentExtent = Node.BoundableObject->GetHalfExtent();
+        //const Vector3& CurrentPos = Node.BoundableObject->GetTransform()->GetPosition();
+        //const Vector3& CurrentExtent = Node.BoundableObject->GetHalfExtent();
 
-        if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
+        //if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
+        //{
+        //    NodesToUpdate.push_back(i);
+        //}
+
+        if (Node.BoundableObject->IsTransformChanged())
         {
             NodesToUpdate.push_back(i);
         }
@@ -400,6 +405,8 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
     // 이전 상태 저장
     UpdateNode.LastPosition = Position;
     UpdateNode.LastHalfExtent = HalfExtent;
+
+    UpdateNode.BoundableObject->SetTransformChagedClean();
 }
 
 float FDynamicAABBTree::ComputeCost(const AABB& Bounds) const

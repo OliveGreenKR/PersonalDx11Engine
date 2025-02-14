@@ -109,7 +109,7 @@ private:
     inline bool IsDestroyedComponent(size_t Idx) const {
         return RegisteredComponents[Idx].Component->bDestroyed;
     }
-    //충돌 쌍의 인덱스 새로 업데이트
+    //충돌 쌍의 인덱스 새로 업데이트 -for deletion
     void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
     UCollisionComponent* FindComponentByTreeNodeId(size_t TreeNodeId) const;
     size_t FindComponentIndex(size_t TreeNodeId) const;

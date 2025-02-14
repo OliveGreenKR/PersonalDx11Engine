@@ -39,6 +39,12 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 	RegisteredComponents.push_back(std::move(ComponentData));
 }
 
+void UCollisionManager::Tick(const float DeltaTime)
+{
+	UpdateCollisionTransform();
+	UpdateCollisionPairs();
+}
+
 void UCollisionManager::UnRegisterAll()
 {
 	if (!bIsInitialized || !CollisionTree)
@@ -204,7 +210,6 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 		ActiveCollisionPairs.insert(Pair);
 	}
 }
-
 
 void UCollisionManager::UpdateCollisionPairs()
 {

@@ -35,7 +35,7 @@ private:
 
 public:
     // 초기화 전파
-    void BroadcastPostInitializedForComponents();
+    void BroadcastPostInitializedComponents();
 
     // Tick 전파
     void BroadcastTick(float DeltaTime);

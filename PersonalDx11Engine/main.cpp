@@ -191,10 +191,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 	
+	//rigid attach
 	Character->AddActorComponent(RigidComp1);
 	Character2->AddActorComponent(RigidComp2);
 
-	//CollisionTest
+	//Collision
 	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(RigidComp1, ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
 	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(RigidComp2, ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
 
@@ -552,6 +553,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Character2->Tick(deltaTime);
 		if(Camera)
 			Camera->Tick(deltaTime);
+		UCollisionManager::Get()->Tick(deltaTime);
 
 #pragma endregion 
 		

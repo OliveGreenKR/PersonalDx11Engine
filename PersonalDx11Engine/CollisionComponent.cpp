@@ -51,9 +51,6 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
 	bIsTransformDirty = true;
-
-	//test
-	GetOwner()->SetDebugColor(Color::Red());
 }
 
 
@@ -63,5 +60,19 @@ void UCollisionComponent::PostInitialized()
 
 	GetOwner()->GetTransform()->
 		OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
+}
+
+void UCollisionComponent::Tick(const float DeltaTime)
+{
+	//test
+	if (bIsTransformDirty)
+	{
+		GetOwner()->SetDebugColor(Color::Red());
+	}
+	else
+	{
+		GetOwner()->SetDebugColor(Color::White());
+	}
+	
 }
 

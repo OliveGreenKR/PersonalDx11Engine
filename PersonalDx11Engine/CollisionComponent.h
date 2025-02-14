@@ -24,9 +24,12 @@ public:
     Vector3 GetHalfExtent() const override;
     const FTransform* GetTransform() const override;
     bool IsStatic() const override;
+    bool IsTransformChanged() const override { return bIsTransformDirty; }
+    void SetTransformChagedClean() override { bIsTransformDirty = false; }
 
 protected:
     virtual void PostInitialized() override;
+    virtual void Tick(const float DeltaTime) override;
 
 public:
 

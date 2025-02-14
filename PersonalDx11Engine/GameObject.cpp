@@ -24,7 +24,7 @@ void UGameObject::PostInitializedComponents()
 	auto CompPtr = RootActorComp.get();
 	if (CompPtr)
 	{
-		CompPtr->BroadcastPostInitializedForComponents();
+		CompPtr->BroadcastPostInitializedComponents();
 	}
 }
 
@@ -98,7 +98,6 @@ void UGameObject::AddActorComponent(shared_ptr<UActorComponent>& InActorComp)
 
 void UGameObject::UpdateComponents(const float DeltaTime)
 {
-	//TODO:: ComponentsInterface  + vector
 	//find all Tickable compo and call Tick
 	auto CompPtr = RootActorComp.get();
 	if (CompPtr)
