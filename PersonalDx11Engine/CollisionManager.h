@@ -117,13 +117,14 @@ private:
     void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
 
     //검색 헬퍼
-    UCollisionComponent* FindComponentByTreeNodeId(size_t TreeNodeId) const;
+    //UCollisionComponent* FindComponentByTreeNodeId(size_t TreeNodeId) const = delete;
     size_t FindComponentIndex(size_t TreeNodeId) const;
 
 private:
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
 
+    //CCD 임계속도 비교
     bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
 
     //새로운 충돌쌍 업데이트
@@ -152,10 +153,8 @@ private:
         const FCollisionDetectionResult& DetectionResult);
 
     void BroadcastCollisionEvents(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
-        const FCollisionDetectionResult& DetectionResult,
-        const float DeltaTime);
+        const FCollisionPair& InPair,
+        const FCollisionDetectionResult& DetectionResult);
 
 private:
     // 하부 시스템 클래스들

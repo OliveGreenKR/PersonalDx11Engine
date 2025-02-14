@@ -203,8 +203,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->AddActorComponent(RigidComp2);
 
 	//Collision
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, Vector3(0.25f, 0.25f, 0.25f));
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, Vector3(0.25f, 0.25f, 0.25f));
 	
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);

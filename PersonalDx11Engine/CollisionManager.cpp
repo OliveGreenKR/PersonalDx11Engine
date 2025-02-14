@@ -339,17 +339,17 @@ FCollisionDetectionResult UCollisionManager::DetectCCDCollision(const FCollision
 }
 
 
-UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
-{
-	for (const auto& Data : RegisteredComponents)
-	{
-		if (Data.TreeNodeId == TreeNodeId)
-		{
-			return Data.Component.get();
-		}
-	}
-	return nullptr;
-}
+//UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
+//{
+//	for (const auto& Data : RegisteredComponents)
+//	{
+//		if (Data.TreeNodeId == TreeNodeId)
+//		{
+//			return Data.Component.get();
+//		}
+//	}
+//	return nullptr;
+//}
 
 size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 {
@@ -368,8 +368,11 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
 	for (auto ActivePair : ActiveCollisionPairs)
 	{
-		auto CompA = FindComponentByTreeNodeId(ActivePair.IndexA);
-		auto CompB = FindComponentByTreeNodeId(ActivePair.IndexB);
+		auto CompAData = RegisteredComponents[ActivePair.IndexA];
+		auto CompBData = RegisteredComponents[ActivePair.IndexB];
+
+		auto CompA = CompAData.Component;
+		auto CompB = CompBData.Component;
 
 		FCollisionDetectionResult detectResult;
 
@@ -390,16 +393,20 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		if (!detectResult.bCollided)
+		{
+			ActivePair.bPrevCollided = detectResult.bCollided;
 			return;
+		}
+			
 
 
 		//TODO : ColliisionResponse
-
+		
 		//TODO : RecordPrevCollisionState
-		FCollisionEventData EventData;
-		EventData.CollisionDetectResult = detectResult;
-		EventDispatcher->DispatchCollisionEvents(CompA, EventData, ECollisionState::Enter);
-		EventDispatcher->DispatchCollisionEvents(CompB, EventData, ECollisionState::Enter);
+		BroadcastCollisionEvents(ActivePair, detectResult);
+
+		//record PrevCollided
+		ActivePair.bPrevCollided = detectResult.bCollided;
 	}
 }
 
@@ -416,6 +423,47 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 {
 }
 
-void UCollisionManager::BroadcastCollisionEvents(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult, const float DeltaTime)
+void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
 {
+	auto CompAData = RegisteredComponents[InPair.IndexA];
+	auto CompBData = RegisteredComponents[InPair.IndexB];
+
+	auto CompA = CompAData.Component;
+	auto CompB = CompBData.Component;
+	if (!CompA || !CompB)
+		return;
+
+	FCollisionEventData EventData;
+	EventData.CollisionDetectResult = DetectionResult;
+
+	ECollisionState NowState = ECollisionState::None;
+	if (InPair.bPrevCollided)
+	{
+		if (DetectionResult.bCollided)
+		{
+			NowState = ECollisionState::Stay;
+		}
+		else
+		{
+			NowState = ECollisionState::Exit;
+		}
+
+	}
+	else
+	{
+		if (DetectionResult.bCollided)
+		{
+			NowState = ECollisionState::Enter;
+		}
+	}
+
+	if (NowState == ECollisionState::None)
+	{
+		return;
+	}
+
+	EventData.OtherComponent = CompB;
+	EventDispatcher->DispatchCollisionEvents(CompA, EventData, NowState);
+	EventData.OtherComponent = CompA;
+	EventDispatcher->DispatchCollisionEvents(CompB, EventData, NowState);
 }
