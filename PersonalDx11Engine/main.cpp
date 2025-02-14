@@ -196,17 +196,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 
-	//Collision
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(RigidComp1,ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(RigidComp2,ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
-#pragma endregion
 	//rigid attach
 	Character->AddActorComponent(RigidComp1);
 	Character2->AddActorComponent(RigidComp2);
 
-	CollisionComp1->BindRigidBody();
-	CollisionComp2->BindRigidBody();
-
+	//Collision
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, Vector3(0.5f, 0.5f, 0.5f));
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, Vector3(0.5f, 0.5f, 0.5f));
+	
+	//Collision Attach
+	CollisionComp1->BindRigidBody(RigidComp1);
+	CollisionComp2->BindRigidBody(RigidComp2);
+#pragma endregion
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();

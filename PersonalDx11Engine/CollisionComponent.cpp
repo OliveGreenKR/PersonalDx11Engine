@@ -5,14 +5,19 @@
 
 
 
-UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
-{
-	RigidBody = InRigidBody;
-}
+//UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
+//{
+//	RigidBody = InRigidBody;
+//}
+//
+//UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
+//{
+//	RigidBody = InRigidBody;
+//	
+//}
 
-UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
 {
-	RigidBody = InRigidBody;
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
@@ -33,8 +38,13 @@ bool UCollisionComponent::IsStatic() const
 }
 
 
-void UCollisionComponent::BindRigidBody()
+void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
+	if (!InRigidBody.get())
+		return;
+
+	RigidBody = InRigidBody;
+
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		RigidPtr->AddChild(shared_from_this());
@@ -50,7 +60,6 @@ void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 void UCollisionComponent::PostInitialized()
 {
 	UActorComponent::PostInitialized();
-	BindRigidBody();
 }
 
 void UCollisionComponent::PostTreeInitialized()

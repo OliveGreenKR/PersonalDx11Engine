@@ -15,8 +15,9 @@ class UCollisionComponent : public UActorComponent, public IDynamicBoundable
 {
     friend class UCollisionManager;
 public:
-    UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-    UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
+    //UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+    //UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
+    UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
     ~UCollisionComponent() = default;
 private:
     UCollisionComponent() = default;
@@ -35,7 +36,7 @@ protected:
 
 public:
     // √ ±‚»≠
-    void BindRigidBody();
+    void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
 public:
     URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }

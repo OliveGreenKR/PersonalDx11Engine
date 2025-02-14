@@ -21,15 +21,21 @@ UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 
 void UGameObject::PostInitialized()
 {
-}
-
-void UGameObject::PostInitializedComponents()
-{
 	auto CompPtr = RootActorComp.get();
 	//Components Initialze
 	if (CompPtr)
 	{
 		CompPtr->BroadcastPostitialized();
+	}
+}
+
+void UGameObject::PostInitializedComponents()
+{
+	auto CompPtr = RootActorComp.get();
+	//Comp Post Tree Initialize
+	if (CompPtr)
+	{
+		CompPtr->BraodcastPostTreeInitialized();
 	}
 
 	if( auto CollisionComp = RootActorComp.get()->FindChildByType<UCollisionComponent>())
