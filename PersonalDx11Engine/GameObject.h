@@ -44,7 +44,7 @@ public:
 	void AddRotationEuler(const Vector3& InEulerDelta);
 	void AddRotationQuaternion(const Quaternion& InQuaternionDelta);
 
-	const Vector3 GetForwardVector() const;
+	const Vector3 GetNormalizedForwardVector() const;
 
 	__forceinline const FTransform* GetTransform() const { return &Transform; }
 	__forceinline FTransform* GetTransform() { return &Transform; }

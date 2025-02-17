@@ -30,12 +30,12 @@ public:
 	void SetLookAtObject(shared_ptr<UGameObject>& InTarget);
 
 	void LookTo(const Vector3& TargetPosition);
+	void LookTo();
 
 
 public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
-
 private:
 	void OnTransformChanged(const FTransform& Changed);
 	void UpdateProjectionMatrix();
@@ -62,7 +62,7 @@ private :
 
 #pragma region CameraFollow(Rotataion)
 protected:
-	void UpdateToLookAtObject(float DeltaTime);
+	void UpdateToLookAtObject(const float DeltaTime);
 private:
 	//Cameara Follw to Object(Only Rotate)
 	//TODO : Camera Follow with Position? -> 'Camera Spring Arm'
@@ -75,11 +75,14 @@ private:
 	float MaxRotationSpeed = 30.0f;
 	float DistanceSpeedScale = 1.0f;
 
-	//목표와의 최대 각도차이
-	float MaxDiffAngle = 25.0f;
+	//목표와의 각도차이
+	float MinTrackAngle = KINDA_SMALL;
+	float MaxTrackAngle = 15.0f;
 
 	// 최대  속도 추적 각도(degree)
-	float MaxTrackSpeedAngle = MaxDiffAngle*0.6f;
+	float MaxTrackAngleSpeed = MaxTrackAngle*0.6f;
+#pragma endregion
 
+#pragma region DEBUG
 #pragma endregion
 };

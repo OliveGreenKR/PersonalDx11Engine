@@ -91,7 +91,6 @@ private:
 	void NotifyTransformChanged();
 private:
 	Vector3 Position = Vector3(0.0f, 0.0f, 0.0f);
-	//radian angles, {Pitch,Yaw,Roll}
 	Quaternion Rotation = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 	Vector3 Scale = Vector3(1.0f, 1.0f, 1.0f);
 

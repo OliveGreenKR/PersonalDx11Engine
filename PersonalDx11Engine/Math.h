@@ -269,7 +269,6 @@ struct Vector4 : public DirectX::XMFLOAT4
 
 	//Qauternion
 	static Quaternion LookRotation(const Vector3& LookAtDirection, const Vector3& Up);
-	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor);
 
 	const static Quaternion Identity;
 };
@@ -548,15 +547,6 @@ struct Vector3 : public DirectX::XMFLOAT3
 			Math::Clamp(Value.z, Min.z, Max.z)
 		);
 	}
-
-	static Vector3 Lerp(const Vector3& Current, const Vector3& Dest, float Alpha)
-	{
-		return Vector3(
-			Current.x + (Dest.x - Current.x) * Alpha,
-			Current.y + (Dest.y - Current.y) * Alpha,
-			Current.z + (Dest.z - Current.z) * Alpha
-		);
-	}
 };
 
 inline Vector2::Vector2(const Vector3& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
@@ -649,61 +639,6 @@ inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up
 	XMStoreFloat4(&result, quat);
 
 	return result;
-}
-
-inline Quaternion Vector4::Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
-{
-	// Factor를 0과 1 사이로 제한
-	Factor = Math::Clamp(Factor, 0.0f, 1.0f);
-
-	// XMVECTOR로 변환
-	XMVECTOR Q0 = XMLoadFloat4(&Start);
-	XMVECTOR Q1 = XMLoadFloat4(&End);
-
-	// 두 쿼터니온 사이의 내적 계산
-	float CosOmega = XMVectorGetX(XMQuaternionDot(Q0, Q1));
-
-	// 내적이 음수인 경우, End 쿼터니온을 반전(더 짧은 호를 따라 보간)
-	if (CosOmega < 0.0f)
-	{
-		Q1 = XMVectorNegate(Q1);
-		CosOmega = -CosOmega;
-	}
-
-	float K0, K1;
-
-	// 두 쿼터니온이 매우 가까운 경우 선형 보간 사용
-	if (CosOmega > (1.0f-KINDA_SMALL))
-	{
-		// 선형 보간 계수 계산
-		K0 = 1.0f - Factor;
-		K1 = Factor;
-	}
-	else
-	{
-		// 구면 보간을 위한 각도와 사인 값 계산
-		float Omega = std::acos(CosOmega);
-		float SinOmega = std::sin(Omega);
-
-		// 구면 보간 계수 계산
-		K0 = std::sin((1.0f - Factor) * Omega) / SinOmega;
-		K1 = std::sin(Factor * Omega) / SinOmega;
-	}
-
-	// 보간된 쿼터니온 계산
-	XMVECTOR Result = XMVectorAdd(
-		XMVectorScale(Q0, K0),
-		XMVectorScale(Q1, K1)
-	);
-
-	// 결과 정규화
-	Result = XMQuaternionNormalize(Result);
-
-	// 결과를 Quaternion 구조체로 변환
-	Quaternion ReturnValue;
-	XMStoreFloat4(&ReturnValue, Result);
-
-	return ReturnValue;
 }
 
 // Global operators for scalar multiplication
@@ -859,6 +794,22 @@ namespace Math
 		return EulerAngles * (180.0f / PI);
 	}
 
+	static XMVECTOR Lerp(const XMVECTOR& Start, const XMVECTOR& End, float Alpha)
+	{
+		return XMVectorLerp(Start, End, Alpha);
+	}
+
+	static Vector3 Lerp(const Vector3& Current, const Vector3& Dest, float Alpha)
+	{
+		XMVECTOR V0 = XMLoadFloat3(&Current);
+		XMVECTOR V1 = XMLoadFloat3(&Dest);
+		XMVECTOR Result = Lerp(V0, V1, Alpha);
+		Vector3 ResultVector;
+		XMStoreFloat3(&ResultVector, Result);
+		return ResultVector;
+	}
+
+
 	static XMVECTOR Slerp(const XMVECTOR& Start, const XMVECTOR& End, float Factor)
 	{
 		Factor = Math::Clamp(Factor,0.0f, 1.0f);
@@ -869,6 +820,7 @@ namespace Math
 		XMVECTOR Result = XMQuaternionSlerp(Q0, Q1, Factor);
 		return Result;
 	}
+
 	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
 	{
 		// SIMD 연산을 위해 XMVECTOR 변환
@@ -938,6 +890,14 @@ namespace Math
 		Quaternion result;
 		XMStoreFloat4(&result, vRotation);
 		return result;
+	}
+
+	static XMVECTOR GetRotationVBetweenVectors(const Vector3& target, const Vector3& dest)
+	{
+		XMVECTOR V1 = XMLoadFloat3(&target);
+		XMVECTOR V2 = XMLoadFloat3(&dest);
+
+		return GetRotationBetweenVectors(V1, V2);
 	}
 }
 

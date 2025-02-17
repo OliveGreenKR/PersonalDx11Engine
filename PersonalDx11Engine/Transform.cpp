@@ -71,7 +71,9 @@ void FTransform::AddRotation(const Quaternion& InQuaternion)
         // 직접 쿼터니온 곱셈으로 회전 결합
         XMVECTOR ResultV = XMQuaternionMultiply(CurrentV, DeltaV);
         ResultV = XMQuaternionNormalize(ResultV);
-        XMStoreFloat4(&Rotation, ResultV);
+        Quaternion InQuaternion;
+        XMStoreFloat4(&InQuaternion, ResultV);
+        Rotation = InQuaternion;
         NotifyTransformChanged();
     }
 }
@@ -107,13 +109,13 @@ FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTran
     FTransform Result;
 
     // 위치 선형 보간
-    Result.Position = Vector3::Lerp(Start.Position, End.Position, Alpha);
+    Result.Position = Math::Lerp(Start.Position, End.Position, Alpha);
 
     // 회전 구면 선형 보간
-    Result.Rotation = Vector4::Slerp(Start.Rotation, End.Rotation, Alpha);
+    Result.Rotation = Math::Slerp(Start.Rotation, End.Rotation, Alpha);
 
     // 스케일 선형 보간
-    Result.Scale = Vector3::Lerp(Start.Scale, End.Scale, Alpha);
+    Result.Scale = Math::Lerp(Start.Scale, End.Scale, Alpha);
 
     return Result;
 }

@@ -87,7 +87,7 @@ void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 	Transform.AddRotation(InQuaternionDelta);
 }
 
-const Vector3 UGameObject::GetForwardVector() const
+const Vector3 UGameObject::GetNormalizedForwardVector() const
 {
 	Matrix RotationMatrix = GetTransform()->GetRotationMatrix();
 	XMVECTOR BaseForward = XMVector::XMForward();

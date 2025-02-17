@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include "Math.h"
 
 UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
 	: Fov(fov), AspectRatio(aspectRatio), NearZ(nearZ), FarZ(farZ)
@@ -10,13 +9,14 @@ UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
 void UCamera::Tick(float DeltaTime)
 {
 	UGameObject::Tick(DeltaTime);
-	UpdateToLookAtObject(DeltaTime);
+	if(bLookAtObject)
+		UpdateToLookAtObject(DeltaTime);
 }
 
 void UCamera::PostInitialized()
 {
 	UGameObject::PostInitialized();
-	Transform.OnTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged");
+	Transform.OnTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
 }
 
 const Matrix UCamera::GetViewMatrix()
@@ -64,9 +64,18 @@ void UCamera::LookTo(const Vector3& TargetPosition)
 {
 	Vector3 Direction = TargetPosition - GetTransform()->GetPosition();
 	Direction.Normalize();
-	Vector3 CurrentForward = GetForwardVector();
+	Vector3 CurrentForward = GetNormalizedForwardVector();
 	Quaternion toRotate =  Math::GetRotationBetweenVectors(CurrentForward, Direction);
 	AddRotationQuaternion(toRotate);
+}
+
+void UCamera::LookTo()
+{
+	auto TargetObject = LookAtObject.lock();
+	if (TargetObject)
+	{
+		LookTo(TargetObject->GetTransform()->GetPosition());
+	}
 }
 
 void UCamera::UpdateToLookAtObject(float DeltaTime)
@@ -74,72 +83,46 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	auto TargetObject = LookAtObject.lock();
 	if (!bLookAtObject || !TargetObject)
 		return;
-	//목표 설정
-	XMVECTOR CurrentPos = XMLoadFloat3(&GetTransform()->GetPosition());
-	XMVECTOR TargetPos = XMLoadFloat3(&TargetObject->GetTransform()->GetPosition());
-	XMVECTOR CurrentRotation = XMLoadFloat4(&GetTransform()->GetQuaternionRotation());
 
-	//목표계 설정
-	XMVECTOR DesiredForward = XMVectorSubtract(TargetPos, CurrentPos);
-	DesiredForward = XMVector3Normalize(DesiredForward);
+	// 1. 목표 방향 계산
+	Vector3 TargetPosition = TargetObject->GetTransform()->GetPosition();
+	Vector3 CurrentPosition = GetTransform()->GetPosition();
+	Vector3 DesiredDirection = TargetPosition - CurrentPosition;
+	DesiredDirection.Normalize();
+	Vector3 CurrentForward = GetNormalizedForwardVector();
 
-	XMVECTOR WorldUp = XMVector::XMUp();
+	// 2. 현재 방향에서 목표 방향으로의 회전 계산
+	Quaternion ToRotate = Math::GetRotationBetweenVectors(CurrentForward, DesiredDirection);
 
-	XMVECTOR Right = XMVector3Cross(WorldUp, DesiredForward);
-	Right = XMVector3Normalize(Right);
+	// 3. 회전 각도 계산
+	float DotProduct = Vector3::Dot(CurrentForward, DesiredDirection);
+	DotProduct = Math::Clamp(DotProduct, -1.0f, 1.0f);
+	float AngleDiff = Math::RadToDegree(std::acos(DotProduct)); //[0:180]
 
-	XMVECTOR DesiredUp = XMVector3Cross(DesiredForward, Right);
-	DesiredUp = XMVector3Normalize(DesiredUp);
+	// 4. 최소 각도 체크
+	if (AngleDiff < MinTrackAngle)
+		return;
 
-	//회전행렬
-	XMMATRIX RotationMatrix = XMMatrixIdentity();
-	RotationMatrix.r[0] = Right;
-	RotationMatrix.r[1] = DesiredUp;
-	RotationMatrix.r[2] = DesiredForward;
+	// 5. 회전 속도 계산 (각도가 클수록 빠르게)
+	float SpeedFactor = Math::Clamp(AngleDiff / MaxTrackAngleSpeed, 0.0f, 1.0f);
+	float CurrentRotationSpeed = MaxRotationSpeed * SpeedFactor * DeltaTime;
 
-	XMVECTOR TargetRotation = XMQuaternionRotationMatrix(RotationMatrix);
-
-	// 현재 회전과 목표 회전 사이의 각도 차이 계산
-	float DiffAngleRad = XMScalarACos(
-		XMVectorGetX(XMQuaternionDot(CurrentRotation, TargetRotation))
-	);
-	float DiffAngleDegrees = XMConvertToDegrees(DiffAngleRad);
-
-	// 보간 로직
-	if (DiffAngleDegrees > KINDA_SMALL)
+	// 6. 최종 회전 계산
+	Quaternion StepRotation;
+	if (AngleDiff > MaxTrackAngle)
 	{
-		float SpeedFactor = Math::Clamp(DiffAngleDegrees / MaxTrackSpeedAngle, 0.0f, 1.0f);
-		float RotationAmount = min(
-			MaxRotationSpeed * SpeedFactor * DeltaTime / DiffAngleDegrees,
-			1.0f
-		);
-
-		XMVECTOR ResultRotation;
-		if (DiffAngleDegrees > MaxDiffAngle)
-		{
-			float LimitFactor = Math::Clamp(MaxDiffAngle / DiffAngleDegrees, 0.0f, 1.0f);
-			ResultRotation = XMQuaternionSlerp(
-				CurrentRotation,
-				TargetRotation,
-				LimitFactor * RotationAmount
-			);
-		}
-		else
-		{
-			ResultRotation = XMQuaternionSlerp(
-				CurrentRotation,
-				TargetRotation,
-				RotationAmount
-			);
-		}
-
-		Quaternion NewRotation;
-		XMStoreFloat4(&NewRotation, ResultRotation);
-		SetRotationQuaternion(NewRotation);
+		float RotateAmount = MaxTrackAngle / AngleDiff;
+		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
 	}
+	else
+	{
+		float RotateAmount = CurrentRotationSpeed / AngleDiff;
+		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
+	}
+
+	// 7. 회전 적용
+	AddRotationQuaternion(StepRotation);
 }
-
-
 void UCamera::UpdatDirtyView() 
 {
 	UpdateViewMatrix();

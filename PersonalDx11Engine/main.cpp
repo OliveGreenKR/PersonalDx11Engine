@@ -173,7 +173,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
 	Floor->SetPosition({ 0,-1,0 });
-	Floor->PostInitialized();
+	
 
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale({ 0.5f,0.5f,0.5f });
@@ -187,12 +187,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->bDebug = true;
 #pragma endregion
 	Camera->PostInitialized();
+	Floor->PostInitialized();
 	Character->PostInitialized();
 	Character2->PostInitialized();
 
 	Camera->SetLookAtObject(Character);
-	Camera->bLookAtObject = false;
 	Camera->LookTo(Character->GetTransform()->GetPosition());
+	Camera->bLookAtObject = false;
 #pragma region Actor Components Initialization
 	//rigid
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
@@ -281,6 +282,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	constexpr WPARAM ACTION_CAMERA_RIGHT = VK_RIGHT;
 	constexpr WPARAM ACTION_CAMERA_LEFT = VK_LEFT;
 	constexpr WPARAM ACTION_CAMERA_FOLLOWOBJECT = 'V';
+	constexpr WPARAM ACTION_CAMERA_LOOKTO = VK_F2;
+
 
 	constexpr WPARAM ACTION_DEBUG_1 = VK_F1;
 
@@ -439,6 +442,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				case(ACTION_CAMERA_FOLLOWOBJECT):
 				{
 					Camera->bLookAtObject = !Camera->bLookAtObject;
+					break;
+				}
+				case(ACTION_CAMERA_LOOKTO):
+				{
+					Camera->LookTo();
+					break;
 				}
 			}
 		},
@@ -488,78 +497,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-
-		////collision Detect
-		//FCollisionDetectionResult result = CollisionDetector->DetectCollisionDiscrete(
-		//	ShapeData1, *Character->GetTransform(),
-		//	ShapeData2, *Character2->GetTransform()
-		//);
-
-		////collision Response
-		//if (result.bCollided)
-		//{
-		//	FCollisionResponseParameters Param1, Param2;
-		//	Param1.Velocity = Character->GetCurrentVelocity();
-		//	Param1.FrictionKinetic = 0.3f;
-		//	Param1.FrictionStatic = 0.5f;
-		//	Param1.AngularVelocity = Character->GetCurrentAngularVelocity();
-		//	Param1.Mass = Character->GetRigidBody()->GetMass();
-		//	Param1.RotationalInertia = Character->GetRigidBody()->GetRotationalInertia();
-		//	Param1.Position = Character->GetTransform()->GetPosition();
-		//	Param1.Restitution = 0.5f;
-
-		//	Param2.Velocity = Character2->GetCurrentVelocity();
-		//	Param2.FrictionKinetic = 0.3f;
-		//	Param2.FrictionStatic = 0.5f;
-		//	Param2.AngularVelocity = Character2->GetCurrentAngularVelocity();
-		//	Param2.Mass = Character2->GetRigidBody()->GetMass();
-		//	Param2.RotationalInertia = Character2->GetRigidBody()->GetRotationalInertia();
-		//	Param2.Position = Character2->GetTransform()->GetPosition();
-		//	Param2.Restitution = 0.5f;
-
-		//	FCollisionResponseResult response = CollisionCalculator->CalculateResponse(result, Param1, Param2);
-		//	Character->GetRigidBody()->ApplyImpulse(-response.NetImpulse, response.ApplicationPoint);
-		//	Character2->GetRigidBody()->ApplyImpulse(response.NetImpulse, response.ApplicationPoint);
-		//}
-
-		////event dispatch
-		//FCollisionEventData collisionEvent;
-		//collisionEvent.CollisionResult = result;
-
-		//ECollisionState state = ECollisionState::None;
-
-		//if (result.bCollided)
-		//{
-		//	if (!bPreviousCollision)
-		//	{
-		//		state = ECollisionState::Enter;
-		//	}
-		//	else
-		//	{
-		//		state = ECollisionState::Stay;
-		//	}
-		//}
-		//else
-		//{
-		//	if (bPreviousCollision)
-		//	{
-		//		state = ECollisionState::Exit;
-		//	}
-		//}
-
-		//bPreviousCollision = result.bCollided;
-
-		//collisionEvent.OtherComponent = CollisionComp2;
-		//CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp1, collisionEvent, state);
-		//collisionEvent.OtherComponent = CollisionComp1;
-		//CollisioEventDispatcher->DispatchCollisionEvents(CollisionComp2, collisionEvent, state);
+		if (Camera)
+			Camera->Tick(deltaTime);
 
 		if(Character)
 			Character->Tick(deltaTime);
 		if(Character2)
 			Character2->Tick(deltaTime);
-		if(Camera)
-			Camera->Tick(deltaTime);
+	
 		UCollisionManager::Get()->Tick(deltaTime);
 
 #pragma endregion 
@@ -581,12 +526,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			ImGui::Begin("Camera", nullptr, UIWindowFlags);
 			ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Camera->GetTransform()->GetPosition().x,
-						Camera->GetTransform()->GetPosition().y,
-						Camera->GetTransform()->GetPosition().z);
-			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Camera->GetTransform()->GetEulerRotation().x,
-						Camera->GetTransform()->GetEulerRotation().y,
-						Camera->GetTransform()->GetEulerRotation().z);
+			ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
+			ImGui::Text(Utils::ToString(*Camera->GetTransform()));
 			ImGui::End();
 		}
 		
