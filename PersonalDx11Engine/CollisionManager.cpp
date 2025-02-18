@@ -439,8 +439,8 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
 
-	RigidPtrA->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-	RigidPtrB->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 }
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
