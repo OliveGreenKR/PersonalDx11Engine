@@ -51,20 +51,21 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	// 각운동 마찰력 처리
 	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
 	{
+		//각 축별로 정적 마찰 검사
+		bool bStaticFrictionX = std::abs(AngularVelocity.x) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.x) <= FrictionStatic * RotationalInertia.x;
+		bool bStaticFrictionY = std::abs(AngularVelocity.y) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.y) <= FrictionStatic * RotationalInertia.y;
+		bool bStaticFrictionZ = std::abs(AngularVelocity.z) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.z) <= FrictionStatic * RotationalInertia.z;
 
-		//정적 마찰 비교
-		if (AngularVelocity.Length() < KINDA_SMALL && 
-			AccumulatedTorque.Length() <= FrictionStatic * RotationalInertia.Length())
-		{
-			// 정적 마찰 토크가 외부 토크를 상쇄
-			AccumulatedTorque = Vector3::Zero;
-		}
-		else
-		{
-			// 운동 마찰 토크 적용
-			Vector3 frictionAccel = -AngularVelocity * FrictionKinetic;
-			TotalAngularAcceleration += frictionAccel;
-		}
+		// 축별로 정적/운동 마찰 적용
+		Vector3 frictionAccel;
+		frictionAccel.x = bStaticFrictionX ? -AccumulatedTorque.x : -AngularVelocity.x * FrictionKinetic;
+		frictionAccel.y = bStaticFrictionY ? -AccumulatedTorque.y : -AngularVelocity.y * FrictionKinetic;
+		frictionAccel.z = bStaticFrictionZ ? -AccumulatedTorque.z : -AngularVelocity.z * FrictionKinetic;
+
+		TotalAngularAcceleration += frictionAccel;
 	}
 
 
