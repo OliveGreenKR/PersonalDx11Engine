@@ -46,7 +46,7 @@ public:
 	const FTransform& GetPreviousTransform() const { return PrevTransform; }
 
 	//Setter
-	void SetCollisionShape(const FCollisionShapeData& InShape) { Shape = InShape; }
+	void SetCollisionShape(const FCollisionShapeData& InShape);
 	
 public:
 	bool bCollisionEnabled : 1;
@@ -72,6 +72,7 @@ public:
 
 private:
 	void OnOwnerTransformChanged(const FTransform& InChanged);
+	Vector3 CalculateRotationalInerteria(const float InMass);
 
 private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;

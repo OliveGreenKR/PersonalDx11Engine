@@ -44,8 +44,8 @@ struct FCollisionResponseParameters
 {
     //if negative mass, it means invalied params
     float Mass = -1.0f;  
-    float RotationalInertia = 0.0f;
-    
+
+    Vector3 RotationalInertia = Vector3::Zero;
     Vector3 Position = Vector3::Zero;
     Vector3 Velocity = Vector3::Zero;
     Vector3 AngularVelocity = Vector3::Zero;

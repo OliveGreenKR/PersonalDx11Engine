@@ -54,7 +54,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 		//정적 마찰 비교
 		if (AngularVelocity.Length() < KINDA_SMALL && 
-			AccumulatedTorque.Length() <= FrictionStatic * RotationalInertia)
+			AccumulatedTorque.Length() <= FrictionStatic * RotationalInertia.Length())
 		{
 			// 정적 마찰 토크가 외부 토크를 상쇄
 			AccumulatedTorque = Vector3::Zero;
@@ -70,7 +70,10 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 	// 저장된 충격량 처리 (순간적인 속도 변화)
 	Velocity += AccumulatedInstantForce / Mass;
-	AngularVelocity += AccumulatedInstantTorque / RotationalInertia;
+	AngularVelocity += Vector3(
+		AccumulatedInstantTorque.x / RotationalInertia.x,
+		AccumulatedInstantTorque.y / RotationalInertia.y,
+		AccumulatedInstantTorque.z / RotationalInertia.z);
 
 	// 충격량 초기화
 	AccumulatedInstantForce = Vector3::Zero;
@@ -78,7 +81,10 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 	// 외부에서 적용된 힘에 의한 가속도 추가
 	TotalAcceleration += AccumulatedForce / Mass;
-	TotalAngularAcceleration += AccumulatedTorque / RotationalInertia;
+	TotalAngularAcceleration += Vector3(
+		AccumulatedTorque.x / RotationalInertia.x,
+		AccumulatedTorque.y / RotationalInertia.y,
+		AccumulatedTorque.z / RotationalInertia.z);
 
 	// 통합된 가속도로 속도 업데이트
 	Velocity += TotalAcceleration * DeltaTime;
@@ -158,7 +164,7 @@ void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);
 	// 회전 관성도 질량에 따라 갱신
-	RotationalInertia = 1.0f * Mass; //근사
+	RotationalInertia = 4.0f * Mass * Vector3::One; //근사
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)

@@ -96,14 +96,28 @@ XMVECTOR FCollisionResponseCalculator::CalculateNormalImpulse(
     XMVECTOR vCrossA = XMVector3Cross(vRadiusA, vNormal);
     XMVECTOR vCrossB = XMVector3Cross(vRadiusB, vNormal);
 
-    XMVECTOR vAngularEffectA = XMVectorScale(
-        XMVector3Cross(vCrossA, vRadiusA),
-        1.0f / ParameterA.RotationalInertia
+    XMVECTOR vInvInertiaA = XMVectorSet(
+        1.0f / ParameterA.RotationalInertia.x,
+        1.0f / ParameterA.RotationalInertia.y,
+        1.0f / ParameterA.RotationalInertia.z,
+        0.0f
     );
 
-    XMVECTOR vAngularEffectB = XMVectorScale(
+    XMVECTOR vInvInertiaB = XMVectorSet(
+        1.0f / ParameterB.RotationalInertia.x,
+        1.0f / ParameterB.RotationalInertia.y,
+        1.0f / ParameterB.RotationalInertia.z,
+        0.0f
+    );
+
+    XMVECTOR vAngularEffectA = XMVectorMultiply(
+        XMVector3Cross(vCrossA, vRadiusA),
+        vInvInertiaA
+    );
+
+    XMVECTOR vAngularEffectB = XMVectorMultiply(
         XMVector3Cross(vCrossB, vRadiusB),
-        1.0f / ParameterB.RotationalInertia
+        vInvInertiaB
     );
 
     // 충격량 분모 계산

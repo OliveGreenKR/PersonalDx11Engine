@@ -14,6 +14,15 @@ enum class ERigidBodyType
 class URigidBodyComponent : public UActorComponent
 {
 public:
+    // 회전관성 접근제어 토근
+    class RotationalInertiaToken
+    {
+        friend class UCollisionComponent;
+    private:
+        RotationalInertiaToken() = default;
+    };
+
+public:
     URigidBodyComponent() = default;
 
     void Reset();
@@ -36,7 +45,7 @@ public:
     inline const Vector3& GetAngularVelocity() const { return AngularVelocity; }
     inline float GetSpeed() const { return Velocity.Length(); }
     inline float GetMass() const { return Mass; }
-    inline float GetRotationalInertia() const { return RotationalInertia; }
+    inline Vector3 GetRotationalInertia() const { return RotationalInertia; }
     inline float GetRestitution() const { return Restitution; }
     inline float GetFrictionKinetic() const { return FrictionKinetic; }
     inline float GetFrictionStatic() const { return FrictionStatic; }
@@ -51,9 +60,9 @@ public:
     inline void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
     inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
     inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
+    //토큰소유자만 접근 가능
+    void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { RotationalInertia = Value; } 
 
-    ////Owner설정
-    //inline void SetOwner(std::shared_ptr<UGameObject>& InOwner) { Owner = InOwner; }
 public:
     // 시뮬레이션 플래그
     bool bGravity  =  false;
@@ -80,8 +89,8 @@ private:
 
     // 물리 속성
     float Mass = 1.0f;
-    float RotationalInertia = 1.0f;
-    float MaxSpeed = 5.0f;
+    Vector3 RotationalInertia = Vector3::One;
+    float MaxSpeed = 4.0f;
     float MaxAngularSpeed = 6.0f * PI;
     float FrictionKinetic = 0.3f;
     float FrictionStatic = 0.5f;
@@ -91,9 +100,4 @@ private:
 
     float GravityScale = 9.81f;
     Vector3 GravityDirection = -Vector3::Up;
-
-
-    //std::weak_ptr<UGameObject> Owner;
-
-
 };

@@ -48,12 +48,54 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		RigidPtr->AddChild(shared_from_this());
+		Vector3 NewInerteria = CalculateRotationalInerteria(RigidPtr->GetMass());
+		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
 	}
+}
+
+void UCollisionComponent::SetCollisionShape(const FCollisionShapeData& InShape)
+{
+	Shape = InShape;
+
+	if (auto RigidPtr = RigidBody.lock())
+	{
+		Vector3 NewInerteria = CalculateRotationalInerteria(RigidPtr->GetMass());
+		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
+	}
+	
 }
 
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
 	bIsTransformDirty = true;
+}
+
+Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
+{
+
+	switch (Shape.Type)
+	{
+		case ECollisionShapeType::Box : 
+		{
+			Vector3 Result;
+			Result.x = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.y * 4 + Shape.HalfExtent.z * 4);
+			Result.y = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.x * 4 + Shape.HalfExtent.z * 4);
+			Result.z = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.x * 4 + Shape.HalfExtent.y * 4);
+			return Result;
+		}
+		break;
+		case ECollisionShapeType::Sphere : 
+		{
+			float radius = Shape.GetSphereRadius();
+			return InMass * (0.4f) * radius * radius * Vector3::One;
+		}
+		break;
+		default :
+		{
+			return InMass * 5.0f * Vector3::One;
+		}
+		break;
+	}
 }
 
 
