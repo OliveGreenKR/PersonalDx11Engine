@@ -7,11 +7,11 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponse(
 {
      FCollisionResponseResult ResponseData;
 
-    if (!DetectionResult.bCollided)
+    if (!DetectionResult.bCollided || ParameterA.Mass < 0.0f || ParameterB.Mass < 0.0f )
         return ResponseData;
 
     // 접촉점과 법선 벡터 로드
-    XMVECTOR vContactPoint = XMLoadFloat3(&DetectionResult.Point);
+    ResponseData.ApplicationPoint = DetectionResult.Point;
     XMVECTOR vNormal = XMLoadFloat3(&DetectionResult.Normal);
 
     // 충돌 지점에서의 상대 속도 계산
@@ -34,7 +34,6 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponse(
 
     // 응답 데이터 설정
     XMStoreFloat3(&ResponseData.NetImpulse, vNetImpulse);
-    XMStoreFloat3(&ResponseData.ApplicationPoint, vContactPoint);
 
     return ResponseData;
 }

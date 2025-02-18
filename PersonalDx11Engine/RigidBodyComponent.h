@@ -37,6 +37,10 @@ public:
     inline float GetSpeed() const { return Velocity.Length(); }
     inline float GetMass() const { return Mass; }
     inline float GetRotationalInertia() const { return RotationalInertia; }
+    inline float GetRestitution() const { return Restitution; }
+    inline float GetFrictionKinetic() const { return FrictionKinetic; }
+    inline float GetFrictionStatic() const { return FrictionStatic; }
+
     const struct FTransform* GetTransform() const;
 
     // 물리 속성 설정

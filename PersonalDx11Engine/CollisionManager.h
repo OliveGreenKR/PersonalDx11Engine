@@ -117,10 +117,8 @@ private:
     void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
 
     //검색 헬퍼
-    //UCollisionComponent* FindComponentByTreeNodeId(size_t TreeNodeId) const = delete;
     size_t FindComponentIndex(size_t TreeNodeId) const;
 
-private:
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
 
@@ -140,6 +138,8 @@ private:
     FCollisionDetectionResult DetectDCDCollision(
         const FCollisionPair& InPair,
         const float DeltaTime);
+
+    void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
 
     void HandleCollision(
         const std::shared_ptr<UCollisionComponent>& ComponentA,

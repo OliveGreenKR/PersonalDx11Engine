@@ -36,11 +36,11 @@ public:
 public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
+
 private:
 	void OnTransformChanged(const FTransform& Changed);
 	void UpdateProjectionMatrix();
 
-private:
 	//logical const
 	void UpdatDirtyView();
 	void UpdateViewMatrix();

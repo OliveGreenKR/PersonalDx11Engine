@@ -224,4 +224,3 @@ void UCamera::CalculateFrustum(Matrix& InViewProj) const
 	ViewFrustum.NormalizeAll();
 }
 
-

@@ -42,7 +42,8 @@ struct FCollisionDetectionResult
 // 충돌 응답 계산을 위한 매개변수, 충돌 반응에 필요한 물리 속성 정보
 struct FCollisionResponseParameters
 {
-    float Mass = 0.0f;
+    //if negative mass, it means invalied params
+    float Mass = -1.0f;  
     float RotationalInertia = 0.0f;
     
     Vector3 Position = Vector3::Zero;

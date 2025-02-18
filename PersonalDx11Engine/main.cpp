@@ -140,10 +140,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(Renderer->GetDevice(), Renderer->GetDeviceContext());
 	//ImGui set
-	const float UIPaddingX = 10.0f / (float)SCREEN_WIDTH; //NDC Coordinates
-	const float UIPaddingY = 10.0f / (float)SCREEN_HEIGHT;
-
-	ImGui::SetNextWindowPos(ImVec2(UIPaddingX, UIPaddingY), ImGuiCond_FirstUseEver);//영구위치설정
+	ImGui::SetNextWindowPos(ImVec2(2.0f, 2.0f), ImGuiCond_FirstUseEver);//영구위치설정
 	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //자동조절
 
 	const ImGuiWindowFlags UIWindowFlags =
@@ -218,49 +215,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//콜리전 컴포넌트 등록
 	UCollisionManager::Get()->RegisterCollision(CollisionComp1);
 	UCollisionManager::Get()->RegisterCollision(CollisionComp2);
-
-	/*FCollisionShapeData ShapeData1;
-	ShapeData1.Type = ECollisionShapeType::Box;
-	ShapeData1.HalfExtent = Character->GetTransform()->Scale * 0.5f;
-
-	FCollisionShapeData ShapeData2;
-	ShapeData2.Type = ECollisionShapeType::Sphere;
-	ShapeData2.HalfExtent = Character2->GetTransform()->Scale * 0.5f;
-
-	auto CollisionComp1 = make_shared<UCollisionComponent>(Character->GetSharedRigidBody());
-	CollisionComp1.get()->SetCollisionShape(ShapeData1);
-	auto CollisionComp2 = make_shared<UCollisionComponent>(Character2->GetSharedRigidBody());
-	CollisionComp2.get()->SetCollisionShape(ShapeData2);
-
-	CollisionComp1->BindOnCollisionEnter(Character, [&Character](const FCollisionEventData& EventData) 
-										 {
-											 if (!EventData.CollisionResult.bCollided)
-												 return;
-											 Character->SetDebugColor(Color::Red());
-
-										 }, "OnCollisionEnter");
-	CollisionComp2->BindOnCollisionEnter(Character2, [&Character2](const FCollisionEventData& EventData)
-										 {
-											 if (!EventData.CollisionResult.bCollided)
-												 return;
-											 Character2->SetDebugColor(Color::Red());
-										 }, "OnCollisionEnter");
-
-	CollisionComp1->BindOnCollisionExit(Character, [&Character](const FCollisionEventData& EventData)
-										 {
-											 Character->SetDebugColor(Color::White());
-
-										 }, "OnCollisionExit");
-	CollisionComp2->BindOnCollisionExit(Character2, [&Character2](const FCollisionEventData& EventData)
-										 {
-											 Character2->SetDebugColor(Color::White());
-										 }, "OnCollisionExit");
-
-	auto CollisionDetector = make_unique<FCollisionDetector>();
-	auto CollisionCalculator = make_unique<FCollisionResponseCalculator>();
-	auto CollisioEventDispatcher = make_unique<FCollisionEventDispatcher>();
-
-	bool bPreviousCollision = false;*/
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
@@ -518,10 +472,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
 #pragma region UI
+		// ImGui UI 
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		// ImGui UI 
+		ImGui::SetNextWindowSize(ImVec2(150, 20));
+		ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 150,0));
+		ImGui::Begin("##DebugText", nullptr,
+					 ImGuiWindowFlags_NoTitleBar |
+					 ImGuiWindowFlags_NoResize |
+					 ImGuiWindowFlags_NoMove |
+					 ImGuiWindowFlags_NoInputs |
+					 ImGuiWindowFlags_NoBackground |
+					 ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("FPS : %.2f", 1.0f/deltaTime);
+		ImGui::End();
+
+
 		if (Camera)
 		{
 			ImGui::Begin("Camera", nullptr, UIWindowFlags);
@@ -533,12 +500,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 		if (Character)
 		{
-			
 			Vector3 CurrentVelo = Character->GetCurrentVelocity();
 			bool bGravity = Character->IsGravity();
 			bool bPhysics = Character->IsPhysicsSimulated();
 			ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-			ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 			ImGui::Checkbox("bIsMove", &Character->bIsMoving);
 			ImGui::Checkbox("bDebug", &Character->bDebug);
 			ImGui::Checkbox("bPhysicsBased", &bPhysics);
@@ -564,7 +529,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			bool bGravity2 = Character2->IsGravity();
 			bool bPhysics2 = Character2->IsPhysicsSimulated();
 			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-			ImGui::Text("FPS : %.2f", 1.0f / deltaTime);
 			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
 			ImGui::Checkbox("bDebug", &Character2->bDebug);
 			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
@@ -587,7 +551,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #pragma endregion
-
 		//end render
 		Renderer->EndRender();
 #pragma endregion

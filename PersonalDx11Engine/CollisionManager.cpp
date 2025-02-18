@@ -338,19 +338,6 @@ FCollisionDetectionResult UCollisionManager::DetectCCDCollision(const FCollision
 	return DectectionResult;
 }
 
-
-//UCollisionComponent* UCollisionManager::FindComponentByTreeNodeId(size_t TreeNodeId) const
-//{
-//	for (const auto& Data : RegisteredComponents)
-//	{
-//		if (Data.TreeNodeId == TreeNodeId)
-//		{
-//			return Data.Component.get();
-//		}
-//	}
-//	return nullptr;
-//}
-
 size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 {
 	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
@@ -374,8 +361,8 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		auto CompA = CompAData.Component;
 		auto CompB = CompBData.Component;
 
+		//Collision detection
 		FCollisionDetectionResult detectResult;
-
 		if (CompA && CompB)
 		{
 			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
@@ -383,6 +370,8 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 				//ccd
 				detectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
 															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
+				/*detectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(),*CompA->GetTransform(),
+																 CompB->GetCollisionShape(),*CompB->GetTransform());*/
 			}
 			else
 			{
@@ -393,16 +382,12 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		if (!detectResult.bCollided)
-		{
-			ActivePair.bPrevCollided = detectResult.bCollided;
 			return;
-		}
-			
 
-
-		//TODO : ColliisionResponse
+		//Apply  Collision Response
+		ApplyCollisionResponse(CompA, CompB, detectResult);
 		
-		//TODO : RecordPrevCollisionState
+		//Dispatch Collision Event
 		BroadcastCollisionEvents(ActivePair, detectResult);
 
 		//record PrevCollided
@@ -415,12 +400,47 @@ FCollisionDetectionResult UCollisionManager::DetectDCDCollision(const FCollision
 	return FCollisionDetectionResult();
 }
 
+void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result ) const
+{
+	auto CompPtr = InComp.get();
+	if (!CompPtr)
+		return;
+	auto RigidPtr = CompPtr->GetRigidBody();
+	if (!RigidPtr)
+		return;
+
+	Result.Mass = RigidPtr->GetMass();
+	Result.RotationalInertia = RigidPtr->GetRotationalInertia();
+	Result.Position = RigidPtr->GetTransform()->GetPosition();
+	Result.Velocity = RigidPtr->GetVelocity();
+	Result.AngularVelocity = RigidPtr->GetAngularVelocity();
+	Result.Restitution = RigidPtr->GetRestitution();
+	Result.FrictionKinetic = RigidPtr->GetFrictionKinetic();
+	Result.FrictionStatic = RigidPtr->GetFrictionStatic();
+
+	return;
+}
+
 void UCollisionManager::HandleCollision(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult, const float DeltaTime)
 {
 }
 
 void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult)
 {
+	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
+		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
+		return;
+
+	FCollisionResponseParameters ParamsA, ParamsB;
+	GetCollisionDetectionParams(ComponentA, ParamsA);
+	GetCollisionDetectionParams(ComponentB , ParamsB);
+	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponse(DetectionResult, ParamsA, ParamsB);
+
+	auto RigidPtrA = ComponentA.get()->GetRigidBody();
+	auto RigidPtrB = ComponentB.get()->GetRigidBody();
+
+	RigidPtrA->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrB->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 }
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
