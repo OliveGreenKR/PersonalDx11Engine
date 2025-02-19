@@ -80,28 +80,27 @@ void FTransform::AddRotation(const Quaternion& InQuaternion)
 
 void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
 {
-    // 축 벡터 검사
-    if (InAxis.LengthSquared() < KINDA_SMALL || std::abs(AngleDegrees) < KINDA_SMALL)
+    if (InAxis.LengthSquared() < KINDA_SMALL)
         return;
 
-    // 현재 회전 로드
-    XMVECTOR CurrentRotation = XMLoadFloat4(&Rotation);
+    // 현재 회전 행렬
+    Matrix CurrentRotation = GetRotationMatrix();
 
-    // 축 정규화 및 각도를 라디안으로 변환
-    XMVECTOR NormalizedAxis = XMVector3Normalize(XMLoadFloat3(&InAxis));
-    float AngleRadians = XMConvertToRadians(AngleDegrees);
+    // 월드 공간 회전축을 로컬 공간으로 변환
+    XMVECTOR LocalAxis = XMVector3TransformNormal(XMLoadFloat3(&InAxis), CurrentRotation);
+    LocalAxis = XMVector3Normalize(LocalAxis);
 
-    // 축과 각도로부터 회전 쿼터니온 생성
-    XMVECTOR DeltaRotation = XMQuaternionRotationNormal(NormalizedAxis, AngleRadians);
+    // 회전 쿼터니온 생성
+    float AngleRadians = Math::DegreeToRad(AngleDegrees);
+    XMVECTOR DeltaRotation = XMQuaternionRotationAxis(LocalAxis, AngleRadians);
 
-    // 현재 회전에 새로운 회전 결합
-    XMVECTOR ResultRotation = XMQuaternionMultiply(CurrentRotation, DeltaRotation);
+    // 기존 회전에 새 회전 결합
+    XMVECTOR CurrentQuat = XMLoadFloat4(&Rotation);
+    XMVECTOR FinalQuat = XMQuaternionMultiply(DeltaRotation, CurrentQuat);
 
     // 정규화 및 저장
-    ResultRotation = XMQuaternionNormalize(ResultRotation);
-    XMStoreFloat4(&Rotation, ResultRotation);
-
-    NotifyTransformChanged();
+    FinalQuat = XMQuaternionNormalize(FinalQuat);
+    XMStoreFloat4(&Rotation, FinalQuat);
 }
 
 FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha)

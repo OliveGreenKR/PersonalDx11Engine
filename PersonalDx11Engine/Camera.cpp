@@ -155,7 +155,7 @@ void UCamera::UpdateViewMatrix()
 	XMVECTOR vUp = XMVector::XMUp();
 
 	//현재 상태
-	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->GetQuaternionRotation());
+	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->GetRotation());
 	XMVECTOR vPosition = XMLoadFloat3(&GetTransform()->GetPosition());
 
 	XMVECTOR currentLookAt = XMVector3Rotate(vLookAt, vRotation);

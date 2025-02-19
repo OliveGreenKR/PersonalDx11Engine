@@ -388,6 +388,7 @@ void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UColli
 	Result.Restitution = RigidPtr->GetRestitution();
 	Result.FrictionKinetic = RigidPtr->GetFrictionKinetic();
 	Result.FrictionStatic = RigidPtr->GetFrictionStatic();
+	Result.Rotation = RigidPtr->GetTransform()->GetRotation();
 
 	return;
 }

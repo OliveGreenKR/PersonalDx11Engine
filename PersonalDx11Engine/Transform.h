@@ -74,7 +74,7 @@ public:
 	const Vector3& GetPosition() const { return Position; }
 	const Vector3& GetScale() const { return Scale; }
 	const Vector3 GetEulerRotation() const { return Math::QuaternionToEuler(Rotation);}
-	const Quaternion& GetQuaternionRotation() const { return Rotation; }
+	const Quaternion& GetRotation() const { return Rotation; }
 	const uint32_t GetVersion() const { return TransformVersion; }
 
 	Matrix GetTranslationMatrix() const;

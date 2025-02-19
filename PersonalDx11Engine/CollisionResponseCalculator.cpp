@@ -96,43 +96,35 @@ XMVECTOR FCollisionResponseCalculator::CalculateNormalImpulse(
     XMVECTOR vCrossA = XMVector3Cross(vRadiusA, vNormal);
     XMVECTOR vCrossB = XMVector3Cross(vRadiusB, vNormal);
 
-    XMVECTOR vInvInertiaA = XMVectorSet(
-        1.0f / ParameterA.RotationalInertia.x,
-        1.0f / ParameterA.RotationalInertia.y,
-        1.0f / ParameterA.RotationalInertia.z,
-        0.0f
-    );
+    // 회전 관성 계산
+    Matrix RotA = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterA.Rotation));
+    Matrix RotB = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterB.Rotation));
 
-    XMVECTOR vInvInertiaB = XMVectorSet(
-        1.0f / ParameterB.RotationalInertia.x,
-        1.0f / ParameterB.RotationalInertia.y,
-        1.0f / ParameterB.RotationalInertia.z,
-        0.0f
-    );
+    XMVECTOR vInertiaA = XMLoadFloat3(&ParameterA.RotationalInertia);
+    XMVECTOR vInertiaB = XMLoadFloat3(&ParameterB.RotationalInertia);
 
-    XMVECTOR vAngularEffectA = XMVectorMultiply(
-        XMVector3Cross(vCrossA, vRadiusA),
-        vInvInertiaA
-    );
+    // 월드 공간으로 회전 관성 변환
+    vInertiaA = XMVector3Transform(vInertiaA, RotA);
+    vInertiaB = XMVector3Transform(vInertiaB, RotB);
 
-    XMVECTOR vAngularEffectB = XMVectorMultiply(
-        XMVector3Cross(vCrossB, vRadiusB),
-        vInvInertiaB
-    );
 
-    // 충격량 분모 계산
+    //각운동량 효과 계산
+    XMVECTOR vAngularEffectA = XMVector3Cross(vCrossA,
+                                              XMVector3Cross(vRadiusA, vNormal) / vInertiaA);
+    XMVECTOR vAngularEffectB = XMVector3Cross(vCrossB,
+                                              XMVector3Cross(vRadiusB, vNormal) / vInertiaB);
+
+    //충격량 분모 계산
     XMVECTOR vAngularSum = XMVectorAdd(vAngularEffectA, vAngularEffectB);
     float impulseDenominator = invMassA + invMassB +
         XMVectorGetX(XMVector3Dot(vAngularSum, vNormal));
 
+    //반발계수 평균으로 근사
     float Restitution = (ParameterA.Restitution + ParameterB.Restitution) * 0.5f;
 
-    // 충격량 계산
-    float impulseMagnitude = -(1.0f + Restitution) *
-        normalVelocity / impulseDenominator;
-
-    XMVECTOR vImpulse = XMVectorScale(vNormal, impulseMagnitude);
-    return vImpulse;
+    //최종 충격량 계산
+    float impulseMagnitude = -(1.0f + Restitution) * normalVelocity / impulseDenominator;
+    return XMVectorScale(vNormal, impulseMagnitude);
 }
 
 XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(

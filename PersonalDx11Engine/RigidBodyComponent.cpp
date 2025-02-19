@@ -130,13 +130,31 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	TargetTransform->SetPosition(NewPosition);
 
 	// 회전 업데이트
-	float AngularSpeed = AngularVelocity.Length();
+	Matrix WorldRotation = TargetTransform->GetRotationMatrix();
+	XMVECTOR WorldAngularVel = XMLoadFloat3(&AngularVelocity);
+
+	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
 	if (AngularSpeed > KINDA_SMALL)
 	{
-		Vector3 RotationAxis = AngularVelocity.GetNormalized();
-		float AngleDegrees = Math::RadToDegree(AngularSpeed * DeltaTime);
-		TargetTransform->RotateAroundAxis(RotationAxis, AngleDegrees);
+		XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
+		float Angle = AngularSpeed * DeltaTime;
+		TargetTransform->RotateAroundAxis(
+			Vector3(
+				XMVectorGetX(RotationAxis),
+				XMVectorGetY(RotationAxis),
+				XMVectorGetZ(RotationAxis)
+			),
+			Math::RadToDegree(Angle)
+		);
 	}
+
+	//float AngularSpeed = AngularVelocity.Length();
+	//if (AngularSpeed > KINDA_SMALL)
+	//{
+	//	Vector3 RotationAxis = AngularVelocity.GetNormalized();
+	//	float AngleDegrees = Math::RadToDegree(AngularSpeed * DeltaTime);
+	//	TargetTransform->RotateAroundAxis(RotationAxis, AngleDegrees);
+	//}
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)

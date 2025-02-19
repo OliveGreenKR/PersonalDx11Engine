@@ -412,9 +412,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		[&Character2](const FKeyEventData& EventData) {
 			if (EventData.KeyCode == ACTION_DEBUG_1)
 			{
+				//회전 관성 테스트
 				if (Character2.get())
 				{
-					Character2.reset();
+					Vector3 TargetPos = Character2->GetTransform()->GetPosition();
+
+					TargetPos += Vector3::Right * 0.15f;
+					TargetPos += Vector3::Up * 0.15f;
+					Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyForce(
+						Vector3::Right * 100.0f,
+						TargetPos);
 				}
 			}
 		},
