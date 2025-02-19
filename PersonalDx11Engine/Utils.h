@@ -18,6 +18,12 @@ namespace Utils
 
 		return buffer;
 	}
+
+	void DrawDebugArrow()
+	{
+
+	}
+
 #else
 	const char* ToString(const FTransform& InTransform)
 	{

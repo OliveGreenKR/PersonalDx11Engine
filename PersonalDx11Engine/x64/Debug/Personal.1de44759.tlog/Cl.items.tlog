@@ -8,6 +8,7 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionManager.cp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\CollisionResponseCalculator.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\CollisionResponseCalculator.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3D.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\D3D.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\D3DShader.obj
+C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\DebugDrawManager.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\DebugDrawManager.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\DynamicAABBTree.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\DynamicAABBTree.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\ImGui\imgui.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\imgui.obj
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\ImGui\imgui_demo.cpp;C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\x64\Debug\imgui_demo.obj

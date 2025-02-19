@@ -77,6 +77,9 @@
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Components\ActorComponent</Filter>
     </ClCompile>
+    <ClCompile Include="DebugDrawManager.cpp">
+      <Filter>Engine\Managers\DebugDrawer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -138,6 +141,9 @@
     </Filter>
     <Filter Include="Engine\Components\ActorComponent">
       <UniqueIdentifier>{31f86bb6-e4bf-499d-8b15-d73ae7bd0585}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\DebugDrawer">
+      <UniqueIdentifier>{a63c0d29-4c39-40b1-8c53-f9e7d2d88ede}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -241,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="PrimitiveComponent.h">
       <Filter>Engine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugDrawManager.h">
+      <Filter>Engine\Managers\DebugDrawer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

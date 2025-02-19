@@ -7,6 +7,7 @@
 #include "imGui/imgui_impl_win32.h"
 
 #include "Utils.h"
+#include "DebugDrawManager.h"
 
 #include <memory>
 #include "define.h"
@@ -419,8 +420,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					TargetPos += Vector3::Right * 0.15f;
 					TargetPos += Vector3::Up * 0.15f;
-					Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyForce(
-						Vector3::Right * 100.0f,
+					Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
+						Vector3::Right *1.0f,
 						TargetPos);
 				}
 			}
@@ -438,7 +439,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//record deltaTime
 		QueryPerformanceCounter(&currentTime);
-		float deltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
+		float DeltaTime = static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
 		lastTime = currentTime;
 
 #pragma region WinMsgProc
@@ -458,15 +459,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		if (Camera)
-			Camera->Tick(deltaTime);
 
+		FDebugDrawManager::Get().Tick(DeltaTime);
+
+		if (Camera)
+			Camera->Tick(DeltaTime);
 		if(Character)
-			Character->Tick(deltaTime);
+			Character->Tick(DeltaTime);
 		if(Character2)
-			Character2->Tick(deltaTime);
-	
-		UCollisionManager::Get()->Tick(deltaTime);
+			Character2->Tick(DeltaTime);
+
+
+		//Draw Debug
+		UCollisionManager::Get()->Tick(DeltaTime);
 
 #pragma endregion 
 		
@@ -478,6 +483,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
+
 #pragma region UI
 		// ImGui UI 
 		ImGui_ImplDX11_NewFrame();
@@ -492,7 +498,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					 ImGuiWindowFlags_NoInputs |
 					 ImGuiWindowFlags_NoBackground |
 					 ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::Text("FPS : %.2f", 1.0f/deltaTime);
+		ImGui::Text("FPS : %.2f", 1.0f/DeltaTime);
 		ImGui::End();
 
 
@@ -555,9 +561,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::End();
 		}
 
+
+		FDebugDrawManager::Get().DrawAll(Camera.get());
+
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #pragma endregion
+
 		//end render
 		Renderer->EndRender();
 #pragma endregion
