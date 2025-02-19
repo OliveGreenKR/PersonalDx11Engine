@@ -5,26 +5,24 @@
 #include "Transform.h"
 #include "CollisionDefines.h"
 #include "DynamicBoundableInterface.h"
-#include "ActorComponent.h"
+#include "PrimitiveComponent.h"
 
 class URigidBodyComponent;
 class UGameObject;
 
 // 충돌 응답에 필요한 속성 관리
-class UCollisionComponent : public UActorComponent, public IDynamicBoundable
+class UCollisionComponent : public UPrimitiveComponent, public IDynamicBoundable
 {
 	friend class UCollisionManager;
 public:
-	//UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-	//UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
 	UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
 	~UCollisionComponent() = default;
 private:
-	UCollisionComponent() = default;
+	UCollisionComponent();
 public:
 	// Inherited via IDynamicBoundable
 	Vector3 GetHalfExtent() const override;
-	const FTransform* GetTransform() const override;
+	virtual const FTransform* GetTransform() const override;
 	bool IsStatic() const override;
 	bool IsTransformChanged() const override { return bIsTransformDirty; }
 	void SetTransformChagedClean() override { bIsTransformDirty = false; }
@@ -49,7 +47,6 @@ public:
 	void SetCollisionShape(const FCollisionShapeData& InShape);
 	
 public:
-	bool bCollisionEnabled : 1;
 	bool bDestroyed : 1;
 public:
 	// 충돌 이벤트 델리게이트

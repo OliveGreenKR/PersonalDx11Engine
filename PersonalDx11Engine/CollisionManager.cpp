@@ -245,7 +245,7 @@ void UCollisionManager::UpdateCollisionPairs()
 		auto* Component = ComponentData.Component.get();
 
 		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
-		if (!Component || Component->bDestroyed || !Component->bCollisionEnabled)
+		if (!Component || Component->bDestroyed || !Component->GetCollisionEnabled())
 		{
 			continue;
 		}
@@ -275,7 +275,7 @@ void UCollisionManager::UpdateCollisionPairs()
 
 				const auto& OtherComponent = RegisteredComponents[OtherIndex].Component;
 				if (!OtherComponent || OtherComponent->bDestroyed ||
-					!OtherComponent->bCollisionEnabled)
+					!OtherComponent->GetCollisionEnabled())
 				{
 					return;
 				}
@@ -295,7 +295,7 @@ void UCollisionManager::UpdateCollisionTransform()
 		auto* Component = ComponentData.Component.get();
 
 		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
-		if (!Component || Component->bDestroyed || !Component->bCollisionEnabled || Component->GetRigidBody()->IsStatic())
+		if (!Component || Component->bDestroyed || !Component->GetCollisionEnabled() || Component->GetRigidBody()->IsStatic())
 		{
 			continue;
 		}
@@ -360,16 +360,6 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 
 		if (!detectResult.bCollided)
 			return;
-
-		FDebugDrawManager::Get().DrawArrow(
-			detectResult.Point,          // 시작점
-			detectResult.Normal,          // 방향
-			2.0f,                      // 길이
-			2.0f,                      // 두께
-			Vector4(1,0,1,0.5f),       // 색상 
-			0.3f                       // 지속 시간
-		);
-
 
 		//Apply  Collision Response
 		ApplyCollisionResponse(CompA, CompB, detectResult);

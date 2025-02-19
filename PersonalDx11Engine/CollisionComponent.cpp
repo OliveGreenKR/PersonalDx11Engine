@@ -4,22 +4,16 @@
 #include "RigidBodyComponent.h"
 
 
-
-//UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
-//{
-//	RigidBody = InRigidBody;
-//}
-//
-//UCollisionComponent::UCollisionComponent(const std::shared_ptr<URigidBodyComponent>& InRigidBody, const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
-//{
-//	RigidBody = InRigidBody;
-//	
-//}
-
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false), bCollisionEnabled(true)
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
 {
+	SetCollisionEnabled(true);
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
+}
+
+UCollisionComponent::UCollisionComponent() :  bDestroyed(false)
+{
+	SetCollisionEnabled(true);
 }
 
 Vector3 UCollisionComponent::GetHalfExtent() const

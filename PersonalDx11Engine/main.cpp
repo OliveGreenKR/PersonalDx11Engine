@@ -175,13 +175,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 
 	auto Character = UGameObject::Create(CubeModel);
-	Character->SetScale({ 0.5f,0.5f,0.5f });
+	Character->SetScale(0.25f * Vector3::One);
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
 	
 
 	auto Character2 = UGameObject::Create(SphereModel);
-	Character2->SetScale({ 0.5f,0.5f,0.5f });
+	Character2->SetScale(0.75f * Vector3::One);
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->bDebug = true;
 #pragma endregion
@@ -205,6 +205,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Collision
 	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());
 	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, 0.5f * Character2->GetTransform()->GetScale());
+
+	CollisionComp2->OnCollisionEnter.BindSystem([](const FCollisionEventData& InColliision)
+												{
+													FDebugDrawManager::Get().DrawArrow(
+														InColliision.CollisionDetectResult.Point,
+														InColliision.CollisionDetectResult.Normal,
+														0.5f,
+														2.0f,
+														Vector4(1,0,1,0.5f),
+														0.3f
+														);
+												}, "OnCollisionBegin_Sys_Comp2");
 	
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);

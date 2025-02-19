@@ -147,14 +147,6 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 			Math::RadToDegree(Angle)
 		);
 	}
-
-	//float AngularSpeed = AngularVelocity.Length();
-	//if (AngularSpeed > KINDA_SMALL)
-	//{
-	//	Vector3 RotationAxis = AngularVelocity.GetNormalized();
-	//	float AngleDegrees = Math::RadToDegree(AngularSpeed * DeltaTime);
-	//	TargetTransform->RotateAroundAxis(RotationAxis, AngleDegrees);
-	//}
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -178,9 +170,7 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
-	auto OwnerPtr = GetOwner();
-	assert(OwnerPtr);
-	return OwnerPtr->GetTransform()->GetPosition();
+	return GetTransform()->GetPosition();
 }
 
 const FTransform* URigidBodyComponent::GetTransform() const
