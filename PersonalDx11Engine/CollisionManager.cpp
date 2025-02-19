@@ -317,27 +317,6 @@ bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
 	return RigidBody->GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
-FCollisionDetectionResult UCollisionManager::DetectCCDCollision(const FCollisionPair& InPair, const float DeltaTime)
-{
-	FCollisionDetectionResult DectectionResult;
-
-	FComponentData& CompAData = RegisteredComponents[InPair.IndexA];
-	FComponentData& CompBData = RegisteredComponents[InPair.IndexB];
-
-	auto CompA = CompAData.Component.get();
-	auto CompB = CompBData.Component.get();
-	if (!CompA || !CompB)
-		return DectectionResult;
-
-	size_t NodeIdA = CompAData.TreeNodeId;
-	size_t NodeIdB = CompBData.TreeNodeId;
-
-	DectectionResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
-								 CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
-
-	return DectectionResult;
-}
-
 size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 {
 	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
@@ -350,7 +329,6 @@ size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 	return SIZE_MAX;
 }
 
-//----------------------------not imple yet
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
 	for (auto ActivePair : ActiveCollisionPairs)
@@ -370,8 +348,6 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 				//ccd
 				detectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
 															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
-				/*detectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(),*CompA->GetTransform(),
-																 CompB->GetCollisionShape(),*CompB->GetTransform());*/
 			}
 			else
 			{
@@ -395,11 +371,6 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 	}
 }
 
-FCollisionDetectionResult UCollisionManager::DetectDCDCollision(const FCollisionPair& InPair, const float DeltaTime)
-{
-	return FCollisionDetectionResult();
-}
-
 void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result ) const
 {
 	auto CompPtr = InComp.get();
@@ -421,10 +392,6 @@ void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UColli
 	return;
 }
 
-void UCollisionManager::HandleCollision(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult, const float DeltaTime)
-{
-}
-
 void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult)
 {
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
@@ -439,6 +406,7 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
 
+	//DX 규칙에따른 법선으로 계산한 임펄스이므로 방향을 반대로 적용해야함
 	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 }

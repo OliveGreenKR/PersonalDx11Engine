@@ -131,21 +131,8 @@ private:
     //컴포넌트 트랜스폼 업데이트
     void UpdateCollisionTransform();
 
-    FCollisionDetectionResult DetectCCDCollision(
-        const FCollisionPair& InPair,
-        const float DeltaTime);
-
-    FCollisionDetectionResult DetectDCDCollision(
-        const FCollisionPair& InPair,
-        const float DeltaTime);
-
     void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
 
-    void HandleCollision(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
-        const FCollisionDetectionResult& DetectionResult,
-        const float DeltaTime);
 
     void ApplyCollisionResponse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
