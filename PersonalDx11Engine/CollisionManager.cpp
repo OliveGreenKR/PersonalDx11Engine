@@ -359,7 +359,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		if (!detectResult.bCollided)
-			return;
+			continue;
 
 		//Apply  Collision Response
 		ApplyCollisionResponse(CompA, CompB, detectResult);

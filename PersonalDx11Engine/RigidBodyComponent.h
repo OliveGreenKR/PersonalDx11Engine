@@ -47,7 +47,7 @@ public:
 	inline const Vector3& GetVelocity() const { return Velocity; }
 	inline const Vector3& GetAngularVelocity() const { return AngularVelocity; }
 	inline float GetSpeed() const { return Velocity.Length(); }
-	inline float GetMass() const { return Mass; }
+	inline float GetMass() const { return IsStatic() ? 1 / KINDA_SMALL : Mass; }
 	inline Vector3 GetRotationalInertia() const { return RotationalInertia; }
 	inline float GetRestitution() const { return Restitution; }
 	inline float GetFrictionKinetic() const { return FrictionKinetic; }
@@ -61,6 +61,9 @@ public:
 	inline void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
 	inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
 	inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
+
+	inline void SetRigidType(ERigidBodyType&& InType) { RigidType = InType; }
+
 	//토큰소유자만 접근 가능
 	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { RotationalInertia = Value; } 
 
@@ -69,7 +72,7 @@ public:
 	bool bGravity  =  false;
 	bool bSyncWithOwner = true;
 
-	bool IsStatic() { return RigidType == ERigidBodyType::Static; }
+	bool IsStatic() const { return RigidType == ERigidBodyType::Static; }
 
 private:
 	void UpdateTransform(float DeltaTime);

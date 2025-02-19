@@ -197,14 +197,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//rigid
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
+	auto RigidComp3 = UActorComponent::Create<URigidBodyComponent>();
+	RigidComp3->SetRigidType(ERigidBodyType::Static);
 
 	//rigid attach
 	Character->AddActorComponent(RigidComp1);
 	Character2->AddActorComponent(RigidComp2);
+	Floor->AddActorComponent(RigidComp3);
 
 	//Collision
 	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());
 	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, 0.5f * Character2->GetTransform()->GetScale());
+	auto CollisionComp3 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Floor->GetTransform()->GetScale());
 
 	CollisionComp2->OnCollisionEnter.BindSystem([](const FCollisionEventData& InColliision)
 												{
@@ -221,6 +225,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);
 	CollisionComp2->BindRigidBody(RigidComp2);
+	CollisionComp3->BindRigidBody(RigidComp3);
 #pragma endregion
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
@@ -229,6 +234,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//콜리전 컴포넌트 등록
 	UCollisionManager::Get()->RegisterCollision(CollisionComp1);
 	UCollisionManager::Get()->RegisterCollision(CollisionComp2);
+	UCollisionManager::Get()->RegisterCollision(CollisionComp3);
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
