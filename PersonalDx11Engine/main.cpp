@@ -166,6 +166,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
+	//Camera->SetPosition({ 0,0.0f,-12.0f });
 	Camera->SetPosition({ 0,5.0f,-7.0f });
 
 	auto Floor = UGameObject::Create(CubeModel);
@@ -202,8 +203,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->AddActorComponent(RigidComp2);
 
 	//Collision
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, Vector3(0.25f, 0.25f, 0.25f));
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, Vector3(0.25f, 0.25f, 0.25f));
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, 0.5f * Character2->GetTransform()->GetScale());
 	
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);
@@ -238,7 +239,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	constexpr WPARAM ACTION_CAMERA_LEFT = VK_LEFT;
 	constexpr WPARAM ACTION_CAMERA_FOLLOWOBJECT = 'V';
 	constexpr WPARAM ACTION_CAMERA_LOOKTO = VK_F2;
-
 
 	constexpr WPARAM ACTION_DEBUG_1 = VK_F1;
 

@@ -366,7 +366,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			detectResult.Normal,          // 방향
 			2.0f,                      // 길이
 			2.0f,                      // 두께
-			Vector4(1, 0, 0, 1),       // 색상 (빨간색)
+			Vector4(1,0,1,0.5f),       // 색상 
 			0.3f                       // 지속 시간
 		);
 
