@@ -8,6 +8,10 @@ private:
 	bool bCollisionEnabled = false;
 
 public:
+	virtual void Tick(const float DeltaTime) override
+	{
+		USceneComponent::Tick(DeltaTime);
+	}
 	void SetSimulatePhysics(const bool bSimulate) { bSimulatePhysics = bSimulate; }
 	void SetCollisionEnabled(const bool bEnabled) { bCollisionEnabled = bEnabled; }
 

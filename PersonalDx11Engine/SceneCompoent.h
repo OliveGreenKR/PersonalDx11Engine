@@ -5,8 +5,12 @@
 class USceneComponent : public UActorComponent
 {
 protected:
-    FTransform ComponentTransform;
+	FTransform ComponentTransform;
 
 public:
-    virtual const FTransform* GetTransform() const { return &ComponentTransform; }
+	virtual void Tick(const float DeltaTime) override
+	{
+		UActorComponent::Tick(DeltaTime);
+	}
+	virtual const FTransform* GetTransform() const { return &ComponentTransform; }
 };

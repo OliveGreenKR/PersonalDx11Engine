@@ -2,6 +2,11 @@
 #include "Transform.h"
 #include "GameObject.h"
 
+URigidBodyComponent::URigidBodyComponent()
+{
+	SetSimulatePhysics(true);
+}
+
 void URigidBodyComponent::Reset()
 {
 	Velocity = Vector3::Zero;
@@ -14,9 +19,9 @@ void URigidBodyComponent::Reset()
 
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
-	UActorComponent::Tick(DeltaTime);
+	UPrimitiveComponent::Tick(DeltaTime);
 
-	if (!bIsSimulatedPhysics)
+	if (!GetSimulatePhysics())
 		return;
 
 	// 모든 힘을 가속도로 변환
@@ -109,26 +114,34 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 		return;
 	}
 
-	if (auto OwnerPtr = GetOwner())
+	FTransform* TargetTransform = nullptr;
+	if (bSyncWithOwner || GetOwner())
 	{
-		// 위치 업데이트
-		Vector3 NewPosition = OwnerPtr->GetTransform()->GetPosition() + Velocity * DeltaTime;
-		OwnerPtr->SetPosition(NewPosition);
+		TargetTransform = GetOwner()->GetTransform();
+	}
+	else
+	{
+		TargetTransform = &ComponentTransform;
+	}
+	
 
-		// 회전 업데이트
-		float AngularSpeed = AngularVelocity.Length();
-		if (AngularSpeed > KINDA_SMALL)
-		{
-			Vector3 RotationAxis = AngularVelocity.GetNormalized();
-			float AngleDegrees = Math::RadToDegree(AngularSpeed * DeltaTime);
-			OwnerPtr->GetTransform()->RotateAroundAxis(RotationAxis, AngleDegrees);
-		}
+	// 위치 업데이트
+	Vector3 NewPosition = TargetTransform->GetPosition() + Velocity * DeltaTime;
+	TargetTransform->SetPosition(NewPosition);
+
+	// 회전 업데이트
+	float AngularSpeed = AngularVelocity.Length();
+	if (AngularSpeed > KINDA_SMALL)
+	{
+		Vector3 RotationAxis = AngularVelocity.GetNormalized();
+		float AngleDegrees = Math::RadToDegree(AngularSpeed * DeltaTime);
+		TargetTransform->RotateAroundAxis(RotationAxis, AngleDegrees);
 	}
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!bIsSimulatedPhysics)
+	if (!GetSimulatePhysics())
 		return;
 
 	AccumulatedForce += Force;
@@ -137,7 +150,7 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!bIsSimulatedPhysics)
+	if (!GetSimulatePhysics())
 		return;
 
 	AccumulatedInstantForce += Impulse;
