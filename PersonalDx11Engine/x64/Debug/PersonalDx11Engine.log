@@ -1,45 +1,5 @@
-﻿  ActorComponent.cpp
-  BaseModel.cpp
-  Camera.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'BaseModel.cpp')
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\BaseModel.cpp(14,9):
-          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexData>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexData
-          ]
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
-          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexData
-          ]
-  
-  CollisionComponent.cpp
-  CollisionDetector.cpp
-  CollisionEventDispatcher.cpp
+﻿  CollisionComponent.cpp
   CollisionManager.cpp
-  CollisionResponseCalculator.cpp
-  D3D.cpp
-  D3DShader.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(19,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(21,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(24,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(27,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(31,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\D3DShader.cpp(64,4): warning C4002: too many arguments for function-like macro invocation 'assert'
-  DynamicAABBTree.cpp
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_impl_dx11.cpp
-  imgui_impl_win32.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  InputManager.cpp
   main.cpp
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\RscUtil.h(88,57): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
   (compiling source file 'main.cpp')
@@ -48,30 +8,7 @@ C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(106,2): wa
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(109,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(112,2): warning C4002: too many arguments for function-like macro invocation 'assert'
 C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\main.cpp(115,2): warning C4002: too many arguments for function-like macro invocation 'assert'
-  Generating Code...
-  Compiling...
-  Math.cpp
-  Model.cpp
-C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
-  (compiling source file 'Model.cpp')
-      C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(100,33):
-      the template instantiation context (the oldest one first) is
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.cpp(16,8):
-          see reference to function template instantiation 'const bool UModel::Initialize<UModel::FVertexSimple>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexSimple
-          ]
-          C:\Users\Jeong\Desktop\PersonalDx11Engine\PersonalDx11Engine\Model.h(73,17):
-          see reference to function template instantiation 'const bool UModel::CreateVertexBuffer<T>(ID3D11Device *,const T *,const size_t)' being compiled
-          with
-          [
-              T=UModel::FVertexSimple
-          ]
-  
   GameObject.cpp
-  Renderer.cpp
   RigidBodyComponent.cpp
-  Transform.cpp
   Generating Code...
   PersonalDx11Engine.vcxproj -> C:\Users\Jeong\Desktop\PersonalDx11Engine\x64\Debug\PersonalDx11Engine.exe

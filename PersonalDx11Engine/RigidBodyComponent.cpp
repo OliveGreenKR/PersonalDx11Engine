@@ -154,11 +154,14 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 
 const FTransform* URigidBodyComponent::GetTransform() const
 {
-	if (auto OwnerPtr = GetOwner())
+	if (bSyncWithOwner || GetOwner())
 	{
-		return  OwnerPtr->GetTransform();
+		return  GetOwner()->GetTransform();
 	}
-	return nullptr;
+	else
+	{
+		return &ComponentTransform;
+	}
 }
 
 void URigidBodyComponent::SetMass(float InMass)

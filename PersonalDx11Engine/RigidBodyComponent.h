@@ -2,6 +2,7 @@
 #include "Math.h"
 #include <memory>
 #include "ActorComponent.h"
+#include "PrimitiveComponent.h"
 
 class UGameObject;
 
@@ -11,7 +12,7 @@ enum class ERigidBodyType
     Static
 };
 
-class URigidBodyComponent : public UActorComponent
+class URigidBodyComponent : public UPrimitiveComponent
 {
 public:
     // 회전관성 접근제어 토근
@@ -27,6 +28,8 @@ public:
 
     void Reset();
     virtual void Tick(const float DeltaTime) override;
+
+    virtual const FTransform* GetTransform() const override;
 
     // 속도 기반 인터페이스
     void SetVelocity(const Vector3& InVelocity);
@@ -50,8 +53,6 @@ public:
     inline float GetFrictionKinetic() const { return FrictionKinetic; }
     inline float GetFrictionStatic() const { return FrictionStatic; }
 
-    const struct FTransform* GetTransform() const;
-
     // 물리 속성 설정
     void SetMass(float InMass);
     inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
@@ -67,6 +68,8 @@ public:
     // 시뮬레이션 플래그
     bool bGravity  =  false;
     bool bIsSimulatedPhysics  = true;
+    bool bSyncWithOwner = true;
+
     bool IsStatic() { return RigidType == ERigidBodyType::Static; }
 
 private:

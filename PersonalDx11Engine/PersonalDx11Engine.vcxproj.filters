@@ -75,7 +75,7 @@
       <Filter>Engine\DataStructure</Filter>
     </ClCompile>
     <ClCompile Include="ActorComponent.cpp">
-      <Filter>Engine\Components</Filter>
+      <Filter>Engine\Components\ActorComponent</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +135,9 @@
     </Filter>
     <Filter Include="Engine\DataStructure">
       <UniqueIdentifier>{3789f00b-54d1-4c05-b63f-fa85424a14d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\ActorComponent">
+      <UniqueIdentifier>{31f86bb6-e4bf-499d-8b15-d73ae7bd0585}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -227,11 +230,17 @@
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="ActorComponent.h">
-      <Filter>Engine\Components</Filter>
-    </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneCompoent.h">
+      <Filter>Engine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorComponent.h">
+      <Filter>Engine\Components\ActorComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimitiveComponent.h">
+      <Filter>Engine\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
