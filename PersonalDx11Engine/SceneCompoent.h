@@ -13,4 +13,5 @@ public:
 		UActorComponent::Tick(DeltaTime);
 	}
 	virtual const FTransform* GetTransform() const { return &ComponentTransform; }
+	virtual FTransform* GetTransform() { return &ComponentTransform; }
 };

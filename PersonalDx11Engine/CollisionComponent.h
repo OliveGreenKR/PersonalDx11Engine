@@ -20,9 +20,13 @@ public:
 private:
 	UCollisionComponent();
 public:
+	//Scene Comp
+	virtual const FTransform* GetTransform() const override;
+	virtual FTransform* GetTransform() override;
+
 	// Inherited via IDynamicBoundable
 	Vector3 GetHalfExtent() const override;
-	virtual const FTransform* GetTransform() const override;
+	
 	bool IsStatic() const override;
 	bool IsTransformChanged() const override { return bIsTransformDirty; }
 	void SetTransformChagedClean() override { bIsTransformDirty = false; }

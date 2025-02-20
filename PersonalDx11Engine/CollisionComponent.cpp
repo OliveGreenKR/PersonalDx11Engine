@@ -23,14 +23,30 @@ Vector3 UCollisionComponent::GetHalfExtent() const
 
 const FTransform* UCollisionComponent::GetTransform() const
 {
-	return GetOwner()->GetTransform();
+	auto RigidPtr = RigidBody.lock();
+
+	if (RigidPtr)
+	{
+		return RigidPtr->GetTransform();
+	}
+	return &ComponentTransform;
+}
+
+FTransform* UCollisionComponent::GetTransform()
+{
+	auto RigidPtr = RigidBody.lock();
+
+	if (RigidPtr)
+	{
+		return RigidPtr->GetTransform();
+	}
+	return &ComponentTransform;
 }
 
 bool UCollisionComponent::IsStatic() const
 {
 	return RigidBody.lock()->IsStatic();
 }
-
 
 void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {

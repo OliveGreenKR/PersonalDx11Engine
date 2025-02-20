@@ -185,6 +185,18 @@ const FTransform* URigidBodyComponent::GetTransform() const
 	}
 }
 
+FTransform* URigidBodyComponent::GetTransform()
+{
+	if (bSyncWithOwner || GetOwner())
+	{
+		return  GetOwner()->GetTransform();
+	}
+	else
+	{
+		return &ComponentTransform;
+	}
+}
+
 void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);

@@ -30,6 +30,7 @@ public:
 	virtual void Tick(const float DeltaTime) override;
 
 	virtual const FTransform* GetTransform() const override;
+	virtual FTransform* GetTransform() override;
 
 	// 속도 기반 인터페이스
 	void SetVelocity(const Vector3& InVelocity);

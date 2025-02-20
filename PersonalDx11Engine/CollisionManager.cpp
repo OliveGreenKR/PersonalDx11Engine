@@ -372,7 +372,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 	}
 }
 
-void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result ) const
+void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& DetectResult ) const
 {
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
@@ -381,20 +381,20 @@ void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UColli
 	if (!RigidPtr)
 		return;
 
-	Result.Mass = RigidPtr->GetMass();
-	Result.RotationalInertia = RigidPtr->GetRotationalInertia();
-	Result.Position = RigidPtr->GetTransform()->GetPosition();
-	Result.Velocity = RigidPtr->GetVelocity();
-	Result.AngularVelocity = RigidPtr->GetAngularVelocity();
-	Result.Restitution = RigidPtr->GetRestitution();
-	Result.FrictionKinetic = RigidPtr->GetFrictionKinetic();
-	Result.FrictionStatic = RigidPtr->GetFrictionStatic();
-	Result.Rotation = RigidPtr->GetTransform()->GetRotation();
+	DetectResult.Mass = RigidPtr->GetMass();
+	DetectResult.RotationalInertia = RigidPtr->GetRotationalInertia();
+	DetectResult.Position = RigidPtr->GetTransform()->GetPosition();
+	DetectResult.Velocity = RigidPtr->GetVelocity();
+	DetectResult.AngularVelocity = RigidPtr->GetAngularVelocity();
+	DetectResult.Restitution = RigidPtr->GetRestitution();
+	DetectResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
+	DetectResult.FrictionStatic = RigidPtr->GetFrictionStatic();
+	DetectResult.Rotation = RigidPtr->GetTransform()->GetRotation();
 
 	return;
 }
 
-void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectionResult)
+void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
 {
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
@@ -403,7 +403,7 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	FCollisionResponseParameters ParamsA, ParamsB;
 	GetCollisionDetectionParams(ComponentA, ParamsA);
 	GetCollisionDetectionParams(ComponentB , ParamsB);
-	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponse(DetectionResult, ParamsA, ParamsB);
+	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponse(DetectResult, ParamsA, ParamsB);
 
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
@@ -411,6 +411,45 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	//DX 규칙에따른 법선으로 계산한 임펄스이므로 방향을 반대로 적용해야함
 	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+}
+
+void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponent>& CompA, const std::shared_ptr<UCollisionComponent>& CompB, const FCollisionDetectionResult& DetectResult)
+{
+	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
+		return;
+
+	auto RigidA = CompA->GetRigidBody();
+	auto RigidB = CompB->GetRigidBody();
+
+	if (!RigidA || !RigidB)
+		return;
+
+	// 정적/동적 상태에 따른 보정 비율 결정
+	float ratioA = RigidA->IsStatic() ? 0.0f : 1.0f;
+	float ratioB = RigidB->IsStatic() ? 0.0f : 1.0f;
+
+	if (ratioA + ratioB > 0.0f)
+	{
+		if (ratioA > 0.0f) ratioA /= (ratioA + ratioB);
+		if (ratioB > 0.0f) ratioB /= (ratioA + ratioB);
+
+		Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
+
+		// 각 물체를 반대 방향으로 밀어냄
+		if (!RigidA->IsStatic())
+		{
+			auto TransA = RigidA->GetTransform();
+			Vector3 newPos = TransA->GetPosition() - correction * ratioA;
+			TransA->SetPosition(newPos);
+		}
+
+		if (!RigidB->IsStatic())
+		{
+			auto TransB = RigidB->GetTransform();
+			Vector3 newPos = TransB->GetPosition() + correction * ratioB;
+			TransB->SetPosition(newPos);
+		}
+	}
 }
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)

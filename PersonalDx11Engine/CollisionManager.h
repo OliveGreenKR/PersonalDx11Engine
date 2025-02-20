@@ -137,11 +137,18 @@ private:
     void ApplyCollisionResponse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
-        const FCollisionDetectionResult& DetectionResult);
+        const FCollisionDetectionResult& DetectResult);
+
+    void ApplyPositionCorrection(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const FCollisionDetectionResult& DetectResult);
 
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
-        const FCollisionDetectionResult& DetectionResult);
+        const FCollisionDetectionResult& DetectResult);
+
+ 
 
 private:
     // 하부 시스템 클래스들
