@@ -167,7 +167,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	//Camera->SetPosition({ 0,0.0f,-12.0f });
-	Camera->SetPosition({ 0,5.0f,-7.0f });
+	Camera->SetPosition({ 0,3.0f,-7.0f });
 
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
@@ -480,13 +480,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		FDebugDrawManager::Get().Tick(DeltaTime);
 
-		if (Camera)
-			Camera->Tick(DeltaTime);
-		if(Character)
+		if (Character)
+		{
 			Character->Tick(DeltaTime);
-		if(Character2)
+		}
+			
+		if (Character2)
+		{
 			Character2->Tick(DeltaTime);
+		}
 
+		if (Camera)
+		{
+			Camera->Tick(DeltaTime);
+		}
 
 		//Draw Debug
 		UCollisionManager::Get()->Tick(DeltaTime);
