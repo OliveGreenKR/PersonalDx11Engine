@@ -365,7 +365,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		ApplyCollisionResponse(CompA, CompB, detectResult);
 
 		//Position Correction
-		ApplyCollisionResponse(CompA, CompB, detectResult);
+		ApplyPositionCorrection(CompA, CompB, detectResult);
 		
 		//Dispatch Collision Event
 		BroadcastCollisionEvents(ActivePair, detectResult);
