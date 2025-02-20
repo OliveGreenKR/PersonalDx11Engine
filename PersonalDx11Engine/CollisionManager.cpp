@@ -340,6 +340,8 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		auto CompA = CompAData.Component;
 		auto CompB = CompBData.Component;
 
+		const float PersistentThreshold = 0.1f;
+
 		//Collision detection
 		FCollisionDetectionResult detectResult;
 		if (CompA && CompB)
@@ -358,20 +360,33 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			}
 		}
 
-		if (!detectResult.bCollided)
-			continue;
+		if (detectResult.bCollided)
+		{
+			if (!ActivePair.bPrevCollided || ActivePair.ContactTime < PersistentThreshold)
+			{
+				// 일반적인 충돌 응답
+				ApplyCollisionResponse(CompA, CompB, detectResult);
+			}
+			else
+			{
+				// 지속적인 충돌
+				ActivePair.ContactTime += DeltaTime;
+				HandlePersistentCollision(ActivePair, detectResult, DeltaTime);
+			}
 
-		//Apply  Collision Response
-		ApplyCollisionResponse(CompA, CompB, detectResult);
+		}
 
 		//Position Correction
-		ApplyPositionCorrection(CompA, CompB, detectResult);
+		ApplyPositionCorrection(CompA, CompB, detectResult, DeltaTime);
 		
 		//Dispatch Collision Event
 		BroadcastCollisionEvents(ActivePair, detectResult);
 
-		//record PrevCollided
+		// 현재 충돌 정보 저장
 		ActivePair.bPrevCollided = detectResult.bCollided;
+		ActivePair.LastNormal = detectResult.Normal;
+		ActivePair.LastPenetration = detectResult.PenetrationDepth;
+		ActivePair.ContactTime += DeltaTime;
 	}
 }
 
@@ -416,7 +431,70 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 }
 
-void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponent>& CompA, const std::shared_ptr<UCollisionComponent>& CompB, const FCollisionDetectionResult& DetectResult)
+void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
+{
+	auto CompA = RegisteredComponents[InPair.IndexA].Component;
+	auto CompB = RegisteredComponents[InPair.IndexB].Component;
+
+	auto RigidA = CompA->GetRigidBody();
+	auto RigidB = CompB->GetRigidBody();
+
+	if (!RigidA || !RigidB) return;
+
+	const float BiasFactor = 0.2f;
+	const float AngularBiasFactor = 0.2f;
+	const float Slop = 0.005f;
+
+	// 목표 : 상대속도 0으로 만들기
+
+	// 선형 속도 처리
+	Vector3 RelativeVel = RigidB->GetVelocity() - RigidA->GetVelocity();
+	float NormalVelocity = Vector3::Dot(RelativeVel, DetectResult.Normal);
+
+	float desiredDeltaVelocity = 0.0f;
+	if (DetectResult.PenetrationDepth > Slop)
+	{
+		desiredDeltaVelocity = (DetectResult.PenetrationDepth - Slop) * BiasFactor;
+	}
+
+	// 선형 속도 보정
+	float velocityError = -NormalVelocity + desiredDeltaVelocity;
+
+	float invMassA = RigidA->IsStatic() ? 0.0f : 1.0f / RigidA->GetMass();
+	float invMassB = RigidB->IsStatic() ? 0.0f : 1.0f / RigidB->GetMass();
+
+	if (invMassA + invMassB > 0.0f)
+	{
+		Vector3 velocityChange = DetectResult.Normal * velocityError;
+
+		if (!RigidA->IsStatic())
+		{
+			RigidA->SetVelocity(RigidA->GetVelocity() - velocityChange * (invMassA / (invMassA + invMassB)));
+		}
+
+		if (!RigidB->IsStatic())
+		{
+			RigidB->SetVelocity(RigidB->GetVelocity() + velocityChange * (invMassB / (invMassA + invMassB)));
+		}
+	}
+
+	// 각속도 처리
+	Vector3 RelativeAngularVel = RigidB->GetAngularVelocity() - RigidA->GetAngularVelocity();
+
+	// 각속도 보정
+	if (!RigidA->IsStatic())
+	{
+		RigidA->SetAngularVelocity(RigidA->GetAngularVelocity() - RelativeAngularVel * AngularBiasFactor);
+	}
+
+	if (!RigidB->IsStatic())
+	{
+		RigidB->SetAngularVelocity(RigidB->GetAngularVelocity() + RelativeAngularVel * AngularBiasFactor);
+	}
+}
+
+void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponent>& CompA, const std::shared_ptr<UCollisionComponent>& CompB, 
+												const FCollisionDetectionResult& DetectResult, const float DeltaTime)
 {
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
 		return;
@@ -443,13 +521,16 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 		{
 			auto TransA = RigidA->GetTransform();
 			Vector3 newPos = TransA->GetPosition() - correction * ratioA;
+			//TransA->SetPosition(Math::Lerp(TransA->GetPosition(), newPos,DeltaTime));
 			TransA->SetPosition(newPos);
+
 		}
 
 		if (!RigidB->IsStatic())
 		{
 			auto TransB = RigidB->GetTransform();
 			Vector3 newPos = TransB->GetPosition() + correction * ratioB;
+			//TransB->SetPosition(Math::Lerp(TransB->GetPosition(), newPos, DeltaTime));
 			TransB->SetPosition(newPos);
 		}
 	}

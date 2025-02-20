@@ -24,7 +24,11 @@ struct FCollisionPair
 
     size_t IndexA;
     size_t IndexB;
-    bool bPrevCollided : 1;
+    float ContactTime = 0.0f;   //추돌 지속 시간
+    Vector3 LastNormal;         //이전 충돌 노말 
+    float LastPenetration;      //이전 침투 깊이 
+
+    bool bPrevCollided : 1;     //이전 충돌 여부
 
     bool operator==(const FCollisionPair& Other) const
     {
@@ -133,16 +137,23 @@ private:
 
     void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
 
-
+    //일반적인 충돌반응 (충격량기반 속도 변화)
     void ApplyCollisionResponse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectResult);
 
+    //연속적인 충돌 반응 (속도 기반)
+    void HandlePersistentCollision(
+        const FCollisionPair& InPair,
+        const FCollisionDetectionResult& DetectResult,
+        const float DeltaTime);
+
     void ApplyPositionCorrection(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
-        const FCollisionDetectionResult& DetectResult);
+        const FCollisionDetectionResult& DetectResult,
+        const float DeltaTime);
 
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
