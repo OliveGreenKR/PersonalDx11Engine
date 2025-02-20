@@ -523,7 +523,6 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 			Vector3 newPos = TransA->GetPosition() - correction * ratioA;
 			//TransA->SetPosition(Math::Lerp(TransA->GetPosition(), newPos,DeltaTime));
 			TransA->SetPosition(newPos);
-
 		}
 
 		if (!RigidB->IsStatic())
