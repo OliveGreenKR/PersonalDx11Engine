@@ -168,15 +168,92 @@ XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(
 
 XMVECTOR FCollisionResponseCalculator::CalculateContraintSolve(const FCollisionDetectionResult& DetectionResult, const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB)
 {
-    struct FContactPoint
-    {
-        Vector3 Position;        // 접촉점 위치
-        Vector3 Normal;         // 접촉면 노말
-        float Penetration;      // 침투 깊이
-        float AccumulatedNormalImpulse;   // 누적된 수직 충격량
-        float AccumulatedTangentImpulse;  // 누적된 접선 충격량
-    };
+    //struct FContactPoint
+    //{
+    //    Vector3 Position;        // 접촉점 위치
+    //    Vector3 Normal;         // 접촉면 노말
+    //    float Penetration;      // 침투 깊이
+    //    float AccumulatedNormalImpulse;   // 누적된 수직 충격량
+    //    float AccumulatedTangentImpulse;  // 누적된 접선 충격량
+    //};
 
-    return XMVECTOR();
+    XMVECTOR vContactPoint = XMLoadFloat3(&DetectionResult.Point);
+    XMVECTOR vPosA = XMLoadFloat3(&ParameterA.Position);
+    XMVECTOR vPosB = XMLoadFloat3(&ParameterB.Position);
+
+    XMVECTOR vRadiusA = XMVectorSubtract(vContactPoint, vPosA);
+    XMVECTOR vRadiusB = XMVectorSubtract(vContactPoint, vPosB);
+
+    XMVECTOR vAngVelA = XMLoadFloat3(&ParameterA.AngularVelocity);
+    XMVECTOR vAngVelB = XMLoadFloat3(&ParameterB.AngularVelocity);
+    XMVECTOR vVelA = XMLoadFloat3(&ParameterA.Velocity);
+    XMVECTOR vVelB = XMLoadFloat3(&ParameterB.Velocity);
+
+    // 각속도에 의한 선속도 계산
+    XMVECTOR vPointVelA = XMVector3Cross(vAngVelA, vRadiusA);
+    XMVECTOR vPointVelB = XMVector3Cross(vAngVelB, vRadiusB);
+
+    // 전체 속도 계산
+    XMVECTOR vTotalVelA = XMVectorAdd(vVelA, vPointVelA);
+    XMVECTOR vTotalVelB = XMVectorAdd(vVelB, vPointVelB);
+
+    // 1. 상대 속도 계산
+    XMVECTOR vRelativeVel = XMVectorSubtract(vTotalVelB, vTotalVelA);
+
+    // 2. J 계산
+    //J = [-n, -(r × n), n, (r × n)]
+    XMVECTOR vNormal = XMLoadFloat3(&DetectionResult.Normal);
+    XMMATRIX J;
+
+    XMVECTOR vJA_Angular = XMVector3Cross(vRadiusA, vNormal);
+    XMVECTOR vJB_Angular = XMVector3Cross(vRadiusB, vNormal);
+
+    J.r[0] = -vNormal;                          //JA_Linear  - 반응력
+    J.r[1] = vJA_Angular;                        //JA_Angular - 각속도에의한 영향
+    J.r[2] = vNormal;                           //JB_Linear  
+    J.r[3] = vJB_Angular;                       //JB_Angular
+
+    float invMassA = ParameterA.Mass > KINDA_SMALL ? 1.0f / ParameterA.Mass : 0.0f;
+    float invMassB = ParameterB.Mass > KINDA_SMALL ? 1.0f / ParameterB.Mass : 0.0f;
+
+    // 회전 관성 계산
+    Matrix RotA = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterA.Rotation));
+    Matrix RotB = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterB.Rotation));
+
+    XMVECTOR vInertiaA = XMLoadFloat3(&ParameterA.RotationalInertia);
+    XMVECTOR vInertiaB = XMLoadFloat3(&ParameterB.RotationalInertia);
+
+    // 월드 공간 회전 관성 텐서
+    XMMATRIX InertiaTensorA_W = RotA * XMMatrixScalingFromVector(vInertiaA) * XMMatrixTranspose(RotA);
+    XMMATRIX InertiaTensorB_W = RotB * XMMatrixScalingFromVector(vInertiaB) * XMMatrixTranspose(RotB);
+
+    // 회전 관성 역행렬 계산
+    XMMATRIX mInvInertiaA = XMMatrixInverse(nullptr, InertiaTensorA_W);
+    XMMATRIX mInvInertiaB = XMMatrixInverse(nullptr, InertiaTensorB_W);
+
+    XMVECTOR JA_Angular_Inertia = XMVector3Transform(vJA_Angular, mInvInertiaA);
+    XMVECTOR JB_Angular_Inertia = XMVector3Transform(vJB_Angular, mInvInertiaB);
+
+    // 3. 유효질량 계산
+    float effectiveMass =
+        invMassA + invMassB +
+        XMVectorGetX(XMVector3Dot(vJA_Angular, JA_Angular_Inertia)) +
+        XMVectorGetX(XMVector3Dot(vJB_Angular, JB_Angular_Inertia));
+
+
+    // 4. 라그랑주 승수 계산
+    float velocityError = XMVectorGetX(XMVector3Dot(vRelativeVel, vNormal));
+    float positionError = -DetectionResult.PenetrationDepth;
+    float baumgarte = 0.1f; // 위치 오차 보정 계수
+
+    float lambda = -(velocityError + baumgarte * positionError) / effectiveMass;
+
+    //// 5. 제약조건 범위 제한 (비침투 조건)
+    //float oldAccumulatedLambda = contact.accumulatedLambda;
+    //contact.accumulatedLambda = Max(0.0f, oldAccumulatedLambda + lambda);
+    //lambda = contact.accumulatedLambda - oldAccumulatedLambda;
+
+    // 6. 제약조건 힘 계산
+    return vNormal * lambda;
 }
 
