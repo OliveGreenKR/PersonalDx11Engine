@@ -10,6 +10,8 @@ class FDynamicAABBTree;
 class URigidBodyComponent;
 struct FTransform;
 
+
+
 #pragma region CollisionPair
 struct FCollisionPair
 {
@@ -60,6 +62,15 @@ struct FCollisionSystemConfig
     float AABBMargin = 0.1f;             // AABB 여유 공간
 };
 
+struct FContactPoint
+{
+    Vector3 Position;        // 접촉점 위치
+    Vector3 Normal;         // 접촉면 노말
+    float Penetration;      // 침투 깊이
+    float AccumulatedNormalImpulse;   // 누적된 수직 충격량
+    float AccumulatedTangentImpulse;  // 누적된 접선 충격량
+};
+
 /// <summary>
 /// 등록된 컴포넌들의 충돌 현상을 관리
 /// DynamicAABBTree를 이용해 객체의 충돌쌍을 관리하고
@@ -84,6 +95,14 @@ private:
     {
         std::shared_ptr<UCollisionComponent> Component;
         size_t TreeNodeId;
+
+        // 다중 접촉 매니폴드 추가
+        struct FManifoldData
+        {
+            std::vector<FContactPoint> ContactPoints;
+            Vector3 AccumulatedImpulse = Vector3::Zero;
+            Vector3 AccumulatedTorque = Vector3::Zero;
+        } ContactManifold;
     };
 
 public:
@@ -159,7 +178,16 @@ private:
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult);
 
- 
+
+    
+
+    void AccumulateContactPoint(
+        FComponentData& CompAData,
+        FComponentData& CompBData,
+        const FCollisionDetectionResult& DetectResult);
+
+    void ProcessAccumulatedContacts(
+        const std::unordered_set<size_t>& ContactComponents);
 
 private:
     // 하부 시스템 클래스들

@@ -164,3 +164,19 @@ XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(
     XMVECTOR vFrictionImpulse = XMVectorScale(vTangentDir, -frictionMagnitude);
     return vFrictionImpulse;
 }
+
+
+XMVECTOR FCollisionResponseCalculator::CalculateContraintSolve(const FCollisionDetectionResult& DetectionResult, const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB)
+{
+    struct FContactPoint
+    {
+        Vector3 Position;        // 접촉점 위치
+        Vector3 Normal;         // 접촉면 노말
+        float Penetration;      // 침투 깊이
+        float AccumulatedNormalImpulse;   // 누적된 수직 충격량
+        float AccumulatedTangentImpulse;  // 누적된 접선 충격량
+    };
+
+    return XMVECTOR();
+}
+

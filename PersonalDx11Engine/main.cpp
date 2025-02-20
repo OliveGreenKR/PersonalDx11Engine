@@ -171,7 +171,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
-	Floor->SetPosition({ 0,-0.2f,0 });
+	Floor->SetPosition({ 0,-1.0f,0 });
 	
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale(0.25f * Vector3::One);
