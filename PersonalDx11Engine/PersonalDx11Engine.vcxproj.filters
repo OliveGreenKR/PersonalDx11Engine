@@ -263,4 +263,7 @@
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.gitignore" />
+  </ItemGroup>
 </Project>
