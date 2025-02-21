@@ -2,6 +2,12 @@
 #include "Math.h"
 #include "CollisionDefines.h"
 
+struct FAccumulatedConstraint
+{
+    float normalLambda = 0.0f;
+    float frictionLambda = 0.0f;
+};
+
 class FCollisionResponseCalculator
 {
 public:
@@ -15,7 +21,8 @@ public:
     FCollisionResponseResult CalculateResponseByContraints(
         const FCollisionDetectionResult& DetectionResult,
         const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FCollisionResponseParameters& ParameterB,
+        FAccumulatedConstraint& Accumulation
     );
 private:
     struct FConstraintSolverCache
@@ -57,14 +64,14 @@ private:
     XMVECTOR SolveNormalConstraint(
         const FCollisionDetectionResult& DetectionResult,
         const FConstraintSolverCache& ConstraintCache,
-        float& OutNormalLamda);
+        FAccumulatedConstraint& Accumulation);
 
     //제약조건 기반 마찰력 
     XMVECTOR SolveFrictionConstraint(
         const FConstraintSolverCache& ConstraintCache,
         const float StaticFriction,
         const float KineticFriction,
-        const float NormalLamda);
+        FAccumulatedConstraint& Accumulation);
 
  
 };

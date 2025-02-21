@@ -55,7 +55,7 @@ struct FCollisionSystemConfig
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
     
-    int PhysicsIteration = 10;
+    int ConstraintInterations = 15;
     // AABB Tree 관련 설정
     size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간

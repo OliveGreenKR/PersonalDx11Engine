@@ -527,10 +527,11 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr
 	GetCollisionDetectionParams(ComponentA, ParamsA);
 	GetCollisionDetectionParams(ComponentB, ParamsB);
 
+	FAccumulatedConstraint Accumulation;
 
-	for (int i = 0; i < Config.PhysicsIteration ; ++i)
+	for (int i = 0; i < Config.ConstraintInterations ; ++i)
 	{
-		FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB);
+		FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
 
 		auto RigidPtrA = ComponentA.get()->GetRigidBody();
 		auto RigidPtrB = ComponentB.get()->GetRigidBody();

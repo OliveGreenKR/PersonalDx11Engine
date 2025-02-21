@@ -39,7 +39,8 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByImpuls
 }
 
 FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContraints(const FCollisionDetectionResult& DetectionResult, 
-                                                                                     const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB)
+                                                                                     const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB,
+                                                                                     FAccumulatedConstraint& Accumulation)
 {
     FCollisionResponseResult ResponseData;
 
@@ -50,12 +51,12 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 
     //수직 충격량
     float NormalLamda;
-    XMVECTOR vNormalImpulse = SolveNormalConstraint(DetectionResult, ConstraintCache, NormalLamda);
+    XMVECTOR vNormalImpulse = SolveNormalConstraint(DetectionResult, ConstraintCache, Accumulation);
 
     //마찰 충격량
     float StaticFriction = (ParameterA.FrictionStatic + ParameterB.FrictionStatic) * 0.5f;
     float KineticFriction = (ParameterA.FrictionKinetic + ParameterB.FrictionKinetic) * 0.5f;
-    XMVECTOR vFrictionImpulse = SolveFrictionConstraint(ConstraintCache, StaticFriction, KineticFriction, NormalLamda);
+    XMVECTOR vFrictionImpulse = SolveFrictionConstraint(ConstraintCache, StaticFriction, KineticFriction, Accumulation);
 
     // 최종 충격량 계산
     XMVECTOR vNetImpulse = XMVectorAdd(vNormalImpulse, vFrictionImpulse);
@@ -257,7 +258,7 @@ XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(
 
 XMVECTOR FCollisionResponseCalculator::SolveNormalConstraint(const FCollisionDetectionResult& DetectionResult, 
                                                              const FConstraintSolverCache& ConstraintCache,
-                                                             float& OutNormalLamda)
+                                                             FAccumulatedConstraint& Accumulation)
 {
     // 라그랑주 승수 계산
     float velocityError = XMVectorGetX(XMVector3Dot(ConstraintCache.vRelativeVel, ConstraintCache.vNormal));
@@ -265,38 +266,47 @@ XMVECTOR FCollisionResponseCalculator::SolveNormalConstraint(const FCollisionDet
     float baumgarte = 0.1f; // 위치 오차 보정 계수
 
 
-    //라그랑주 승수 누
-    OutNormalLamda = -(velocityError + baumgarte * positionError) / ConstraintCache.effectiveMass;
+    //라그랑주 승수 누적
+    float deltaLambda = -(velocityError + baumgarte * positionError) / ConstraintCache.effectiveMass;
+    float oldLambda = Accumulation.normalLambda;
+    Accumulation.normalLambda = Math::Max(oldLambda + deltaLambda, 0.0f); //음수 제한
+
+    // 실제 적용될 델타 람다
+    float appliedDelta = Accumulation.normalLambda - oldLambda;
 
     // 제약조건 힘 계산
-    return ConstraintCache.vNormal * OutNormalLamda;
+    return ConstraintCache.vNormal * appliedDelta;
 }
 
 XMVECTOR FCollisionResponseCalculator::SolveFrictionConstraint(const FConstraintSolverCache& ConstraintCache,
                                                                const float StaticFriction,
                                                                const float KineticFriction,
-                                                               const float NormalLamda)
+                                                               FAccumulatedConstraint& Accumulation)
 {
-    // 접선 방향 계산
+    // 접선 방향 계산 
     XMVECTOR vTangent = XMVector3Normalize(
         XMVectorSubtract(ConstraintCache.vRelativeVel,
-                         XMVectorMultiply(ConstraintCache.vNormal, XMVector3Dot(ConstraintCache.vRelativeVel, ConstraintCache.vNormal)))
+                         XMVectorMultiply(ConstraintCache.vNormal,
+                                          XMVector3Dot(ConstraintCache.vRelativeVel, ConstraintCache.vNormal)))
     );
 
-    // 접선 방향 속도 계산 필요
     float tangentialVelocity = XMVectorGetX(XMVector3Dot(ConstraintCache.vRelativeVel, vTangent));
 
-    // 마찰 계수 설정
-
-    float maxFriction = std::abs(NormalLamda) *
+    // 최대 마찰력 계산
+    float maxFriction = std::abs(Accumulation.normalLambda) *
         (std::abs(tangentialVelocity) < KINDA_SMALL ? StaticFriction : KineticFriction);
 
+    // 델타 람다 계산
+    float deltaLambda = -tangentialVelocity / ConstraintCache.effectiveMass;
+    float oldLambda = Accumulation.frictionLambda;
 
-    // 마찰력 라그랑주 승수 계산
-    float frictionLambda = -tangentialVelocity / ConstraintCache.effectiveMass;
-    frictionLambda = std::max(-maxFriction, std::min(maxFriction, frictionLambda));
+    // 마찰력 제한
+    Accumulation.frictionLambda = std::max(-maxFriction,
+                                           std::min(maxFriction, oldLambda + deltaLambda));
 
-    // 마찰력 임펄스 반환
-    return XMVectorScale(vTangent, frictionLambda);
+    // 실제 적용될 델타
+    float appliedDelta = Accumulation.frictionLambda - oldLambda;
+
+    return XMVectorScale(vTangent, appliedDelta);
 }
 
