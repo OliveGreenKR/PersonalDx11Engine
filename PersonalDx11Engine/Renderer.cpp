@@ -64,12 +64,8 @@ void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject,
 	Vector4 Color;
 	Color = InObject->bDebug ? InObject->GetDebugColor() : Color::White();
 	FDebugBufferData DebugBufferData(Color);
-
 	InShader->BindColor(GetDeviceContext(), DebugBufferData);
-	if (InTexture)
-	{
-		InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
-	}
+	InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
 	RenderGameObject(InCamera, InObject, InShader, InCustomSampler);
 }
 

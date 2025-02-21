@@ -372,8 +372,6 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 	}
 }
 
-
-
 void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& DetectResult ) const
 {
 	auto CompPtr = InComp.get();

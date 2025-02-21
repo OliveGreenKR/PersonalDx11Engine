@@ -1,6 +1,7 @@
 #pragma once
 #include "GameObject.h"
 #include "Frustum.h"
+#include "Delegate.h"
 
 class UCamera : public UGameObject
 {
@@ -81,8 +82,5 @@ private:
 
 	// 최대  속도 추적 각도(degree)
 	float MaxTrackAngleSpeed = MaxTrackAngle*0.6f;
-#pragma endregion
-
-#pragma region DEBUG
 #pragma endregion
 };

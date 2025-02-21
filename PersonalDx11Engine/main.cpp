@@ -115,7 +115,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto TRock = make_shared<ID3D11ShaderResourceView*>();
 	assert(LoadTextureFromFile(Renderer->GetDevice(), TEXTURE04, TRock.get()), "Texture Load Failed");
 	
-	auto TDefault = TAbstract;
+	ID3D11ShaderResourceView* TDefault = nullptr;
 	
 	//Shader
 	auto Shader = make_unique<UShader>();
@@ -132,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, textureShaderLayout, ARRAYSIZE(textureShaderLayout));
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
-	Shader->BindTexture(Renderer->GetDeviceContext(), *TDefault.get(), ETextureSlot::Albedo); //defaultTexure
+	//Shader->BindTexture(Renderer->GetDeviceContext(), *TDefault.get(), ETextureSlot::Albedo); //defaultTexure
 
 	// 여기에서 ImGui를 생성합니다.
 	IMGUI_CHECKVERSION();
@@ -175,6 +175,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
 	Floor->SetPosition({ 0,-0.5f,0 });
+	Floor->bDebug = true;
+	Floor->SetDebugColor(Vector4(0, 0, 0, 0));
 	
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale(0.25f * Vector3::One);
@@ -511,9 +513,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
+		Renderer->RenderGameObject(Camera.get(), Floor.get(), Shader.get(), (ID3D11ShaderResourceView*)nullptr);
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
-		Renderer->RenderGameObject(Camera.get(),Floor.get(), Shader.get(), *TRock.get());
 
 #pragma region UI
 		// ImGui UI 

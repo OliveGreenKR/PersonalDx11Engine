@@ -20,8 +20,6 @@ struct FCollisionPair
         , IndexB(InIndexA < InIndexB ? InIndexB : InIndexA)
         , bPrevCollided(false)
     {}
-
-    //FCollisionPair(const FCollisionPair& Other) : bPrevCollided(false) {};
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
 
     size_t IndexA;

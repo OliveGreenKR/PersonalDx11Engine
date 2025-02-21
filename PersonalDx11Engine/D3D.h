@@ -41,6 +41,7 @@ private:
     bool CreateDpethStencilBuffer();
     bool CreateDepthStencilState();
     bool CreateDepthStencillView();
+    bool CreateBlendState();
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
@@ -55,6 +56,7 @@ private:
     ID3D11DepthStencilView* DepthStencilView = nullptr;
     ID3D11Texture2D* DepthStencilBuffer = nullptr;
     ID3D11DepthStencilState* DepthStencilState = nullptr;
+    ID3D11BlendState* BlendState = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
     //RenderTargetView는 렌더링 결과물을 저장할 메모리 영역 지정, 
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
