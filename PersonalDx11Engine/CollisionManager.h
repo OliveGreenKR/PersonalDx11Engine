@@ -165,7 +165,7 @@ private:
         const FCollisionDetectionResult& DetectResult,
         const float DeltaTime);
 
-    //제약조건 기반
+    //제약조건 기반 반복적 해결
     void ApplyCollisionResponseByContraints(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,

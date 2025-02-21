@@ -362,10 +362,11 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 
 		//response
 		ApplyCollisionResponseByContraints(CompA, CompB, DetectResult);
+
 		//position correction
-
+		ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 		//dispatch event
-
+		BroadcastCollisionEvents(ActivePair, DetectResult);
 	}
 	
 }
@@ -531,12 +532,13 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr
 
 	for (int i = 0; i < Config.ConstraintInterations ; ++i)
 	{
-		FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
+		FCollisionResponseResult collisionResponse = 
+			ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
 
 		auto RigidPtrA = ComponentA.get()->GetRigidBody();
 		auto RigidPtrB = ComponentB.get()->GetRigidBody();
 
-		//DX 규칙에따른 법선으로 계산한 임펄스이므로 방향을 반대로 적용해야함
+		//중간단계 적용
 		RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 		RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	}

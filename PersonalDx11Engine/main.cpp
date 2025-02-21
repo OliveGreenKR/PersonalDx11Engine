@@ -169,9 +169,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Camera->SetPosition({ 0,0.0f,-12.0f });
 	Camera->SetPosition({ 0,3.0f,-7.0f });
 
+	float CharacterMass = 5.0f;
+	float Character2Mass = 15.0f;
+
 	auto Floor = UGameObject::Create(CubeModel);
 	Floor->SetScale({ 5.0f,0.1f,5.0f });
-	Floor->SetPosition({ 0,-1.0f,0 });
+	Floor->SetPosition({ 0,-0.5f,0 });
 	
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale(0.25f * Vector3::One);
@@ -196,7 +199,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp3 = UActorComponent::Create<URigidBodyComponent>();
-	RigidComp2->SetMass(15.0f);
+	RigidComp1->SetMass(CharacterMass);
+	RigidComp2->SetMass(Character2Mass);
 	RigidComp3->SetRigidType(ERigidBodyType::Static);
 
 	//rigid attach
@@ -263,7 +267,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UInputManager::Get()->BindKeyEvent(
 		EKeyEvent::Pressed,
 		Character,
-		[&Character](const FKeyEventData& EventData) {
+		[&Character,&CharacterMass](const FKeyEventData& EventData) {
+			float InForceMagnitude = CharacterMass * 100.0f;
 			switch (EventData.KeyCode)
 			{
 				case(ACTION_MOVE_UP_P1) :
@@ -274,7 +279,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->ApplyForce(Vector3::Forward * 100.0f);
+						Character->ApplyForce(Vector3::Forward * InForceMagnitude);
 					}
 					break;
 				}
@@ -286,7 +291,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->ApplyForce(-Vector3::Forward * 100.0f);
+						Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
 					}
 					break;
 				}
@@ -298,7 +303,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->ApplyForce(Vector3::Right * 100.0f);
+						Character->ApplyForce(Vector3::Right * InForceMagnitude);
 					}
 					break;
 				}
@@ -310,7 +315,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character->ApplyForce(-Vector3::Right * 100.0f);
+						Character->ApplyForce(-Vector3::Right * InForceMagnitude);
 					}
 					break;
 				}
@@ -326,7 +331,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UInputManager::Get()->BindKeyEvent(
 		EKeyEvent::Pressed,
 		Character2,
-		[&Character2](const FKeyEventData& EventData) {
+		[&Character2,&Character2Mass](const FKeyEventData& EventData) {
+			float InForceMagnitude = Character2Mass * 100.0f;
+
 			switch (EventData.KeyCode)
 			{
 				case(ACTION_MOVE_UP_P2):
@@ -337,7 +344,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(Vector3::Forward * 100.0f);
+						Character2->ApplyForce(Vector3::Forward * InForceMagnitude);
 					}
 					break;
 				}
@@ -349,7 +356,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(-Vector3::Forward * 100.0f);
+						Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
 					}
 					break;
 				}
@@ -361,7 +368,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(Vector3::Right * 100.0f);
+						Character2->ApplyForce(Vector3::Right * InForceMagnitude);
 					}
 					break;
 				}
@@ -373,7 +380,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else
 					{
-						Character2->ApplyForce(-Vector3::Right * 100.0f);
+						Character2->ApplyForce(-Vector3::Right * InForceMagnitude);
 					}
 					break;
 				}
