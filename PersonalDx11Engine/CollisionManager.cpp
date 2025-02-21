@@ -4,7 +4,6 @@
 #include <algorithm>
 #include "DynamicAABBTree.h"
 #include "CollisionComponent.h"
-#include "CollisionDefines.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventDispatcher.h"
@@ -332,7 +331,7 @@ size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
-	for (const auto& ActivePair : ActiveCollisionPairs)
+	for (auto& ActivePair : ActiveCollisionPairs)
 	{
 		auto& CompAData = RegisteredComponents[ActivePair.IndexA];
 		auto& CompBData = RegisteredComponents[ActivePair.IndexB];
@@ -361,14 +360,16 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		//response
-		ApplyCollisionResponseByContraints(CompA, CompB, DetectResult);
-
+		ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 		//position correction
 		ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
+
+		//충돌정보 저장
+		ActivePair.bPrevCollided = DetectResult.bCollided;
+
 	}
-	
 }
 
 
@@ -518,8 +519,12 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 	}
 }
 
-void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
+void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
+
+	auto ComponentA = RegisteredComponents[CollisionPair.IndexA].Component;
+	auto ComponentB = RegisteredComponents[CollisionPair.IndexB].Component;
+
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
 		return;
@@ -529,6 +534,13 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr
 	GetCollisionDetectionParams(ComponentB, ParamsB);
 
 	FAccumulatedConstraint Accumulation;
+
+	// Warm Starting - 이전 프레임 람다 재사용
+	if (CollisionPair.bPrevCollided)
+	{
+		Accumulation = CollisionPair.PrevConstraints;
+		Accumulation.Scale(0.65f);  // 안정성을 위한 스케일링
+	}
 
 	for (int i = 0; i < Config.ConstraintInterations ; ++i)
 	{
@@ -543,6 +555,7 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr
 		RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	}
 
+	CollisionPair.PrevConstraints = Accumulation;
 }
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)

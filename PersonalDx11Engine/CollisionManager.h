@@ -4,11 +4,13 @@
 #include <vector>
 #include <unordered_set>
 #include "CollisionComponent.h"
+#include "CollisionDefines.h";
 
 
 class FDynamicAABBTree;
 class URigidBodyComponent;
 struct FTransform;
+
 
 #pragma region CollisionPair
 struct FCollisionPair
@@ -19,16 +21,15 @@ struct FCollisionPair
         , bPrevCollided(false)
     {}
 
-    FCollisionPair(const FCollisionPair& Other) = default;
+    //FCollisionPair(const FCollisionPair& Other) : bPrevCollided(false) {};
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
 
     size_t IndexA;
     size_t IndexB;
-    float ContactTime = 0.0f;   //추돌 지속 시간
-    Vector3 LastNormal;         //이전 충돌 노말 
-    float LastPenetration;      //이전 침투 깊이 
+   
+    mutable FAccumulatedConstraint PrevConstraints;
+    mutable bool bPrevCollided : 1;                     //이전 충돌 여부
 
-    bool bPrevCollided : 1;     //이전 충돌 여부
 
     bool operator==(const FCollisionPair& Other) const
     {
@@ -54,8 +55,7 @@ struct FCollisionSystemConfig
     float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
-    
-    int ConstraintInterations = 15;
+    int ConstraintInterations = 5;
     // AABB Tree 관련 설정
     size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간
@@ -166,10 +166,8 @@ private:
         const float DeltaTime);
 
     //제약조건 기반 반복적 해결
-    void ApplyCollisionResponseByContraints(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
-        const FCollisionDetectionResult& DetectResult);
+    void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
+                                            const FCollisionDetectionResult& DetectResult);
 
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
@@ -183,7 +181,7 @@ private:
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
 
     // 컴포넌트 관리
-    std::vector<FComponentData> RegisteredComponents; //순차 접근-캐시효율성 을 위한 벡터 사용
+    std::vector<FComponentData> RegisteredComponents; 
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 

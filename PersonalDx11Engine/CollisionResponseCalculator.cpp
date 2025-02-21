@@ -263,7 +263,7 @@ XMVECTOR FCollisionResponseCalculator::SolveNormalConstraint(const FCollisionDet
     // 라그랑주 승수 계산
     float velocityError = XMVectorGetX(XMVector3Dot(ConstraintCache.vRelativeVel, ConstraintCache.vNormal));
     float positionError = -DetectionResult.PenetrationDepth;
-    float baumgarte = 0.1f; // 위치 오차 보정 계수
+    float baumgarte = 0.05f; // 위치 오차 보정 계수
 
 
     //라그랑주 승수 누적

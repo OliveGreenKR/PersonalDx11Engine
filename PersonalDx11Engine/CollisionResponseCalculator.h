@@ -2,12 +2,6 @@
 #include "Math.h"
 #include "CollisionDefines.h"
 
-struct FAccumulatedConstraint
-{
-    float normalLambda = 0.0f;
-    float frictionLambda = 0.0f;
-};
-
 class FCollisionResponseCalculator
 {
 public:

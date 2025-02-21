@@ -56,6 +56,19 @@ struct FCollisionResponseParameters
 	float FrictionKinetic = 0.5f;
 };
 
+//제한조건 충돌 검사 람다 누적
+struct FAccumulatedConstraint
+{
+	float normalLambda = 0.0f;
+	float frictionLambda = 0.0f;
+
+	inline void Scale(const float InScale)
+	{
+		normalLambda *= InScale;
+		frictionLambda *= InScale;
+	}
+};
+
 struct FCollisionResponseResult
 {
 	Vector3 NetImpulse = Vector3::Zero; // 모든 물리적 효과를 통합한 최종 충격량
