@@ -57,7 +57,7 @@ private :
 
 	Matrix ProjectionMatrix;
 
-	mutable bool bIsViewDirty = false;
+	mutable bool bIsViewDirty = true; //첫 일회 갱신필요
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
 

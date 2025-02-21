@@ -50,18 +50,9 @@ float4 mainPS(PS_INPUT input) : SV_TARGET
     float4 outputColor;
     float4 color = input.debugValues;
     
-    float4 textureColor;
-    if(color.a < 0.001f)
-    {
-        textureColor = float4(0, 0, 0, 0);
-    }
-    else
-    {
-        textureColor = shaderTexture.Sample(SampleType, input.tex);
-    }
-   
+    float4 textureColor = shaderTexture.Sample(SampleType, input.tex);
     // 디버그 컬러와 텍스처 색상을 혼합
     outputColor = textureColor * color ;
-    
+  
     return outputColor;
 }

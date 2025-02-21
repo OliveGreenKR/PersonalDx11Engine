@@ -53,8 +53,6 @@ public:
 	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
 	UModel* GetModel() const;
 
-
-	void AddActorComponent(shared_ptr<UActorComponent>& InActorComp);
 protected:
 	virtual void UpdateComponents(const float DeltaTime);
 
@@ -85,7 +83,10 @@ private:
 #pragma region Physics
 public:
 	void ApplyForce(const Vector3&& InForce);
+	void ApplyImpulse(const Vector3&& InImpulse);
+
 	Vector3 GetCurrentVelocity() const;
+	float GetMass() const;
 
 	bool IsGravity() const;
 	bool IsPhysicsSimulated() const;
@@ -95,6 +96,8 @@ public:
 #pragma endregion
 #pragma region ActorComp
 public:
+
+	//void AddActorComponent(shared_ptr<UActorComponent>& InActorComp);
 	void AddActorComponent(const shared_ptr<UActorComponent>& InActorComp);
 	UActorComponent* GetRootActorComp() { return RootActorComp.get(); }
 

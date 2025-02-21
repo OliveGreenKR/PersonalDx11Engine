@@ -96,7 +96,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
-
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);
@@ -167,16 +166,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
 	//Camera->SetPosition({ 0,0.0f,-12.0f });
-	Camera->SetPosition({ 0,3.0f,-7.0f });
+	Camera->SetPosition({ 0,0.0f,-10.0f });
 
 	float CharacterMass = 5.0f;
 	float Character2Mass = 15.0f;
-
-	auto Floor = UGameObject::Create(CubeModel);
-	Floor->SetScale({ 5.0f,0.1f,5.0f });
-	Floor->SetPosition({ 0,-0.5f,0 });
-	Floor->bDebug = true;
-	Floor->SetDebugColor(Vector4(0, 0, 0, 0));
 	
 	auto Character = UGameObject::Create(CubeModel);
 	Character->SetScale(0.25f * Vector3::One);
@@ -189,7 +182,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->bDebug = true;
 #pragma endregion
 	Camera->PostInitialized();
-	Floor->PostInitialized();
 	Character->PostInitialized();
 	Character2->PostInitialized();
 
@@ -208,12 +200,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//rigid attach
 	Character->AddActorComponent(RigidComp1);
 	Character2->AddActorComponent(RigidComp2);
-	Floor->AddActorComponent(RigidComp3);
 
 	//Collision
 	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());
 	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, 0.5f * Character2->GetTransform()->GetScale());
-	auto CollisionComp3 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Floor->GetTransform()->GetScale());
 
 	CollisionComp2->OnCollisionEnter.BindSystem([](const FCollisionEventData& InColliision)
 												{
@@ -230,16 +220,109 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);
 	CollisionComp2->BindRigidBody(RigidComp2);
-	CollisionComp3->BindRigidBody(RigidComp3);
 #pragma endregion
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();
 
+#pragma region Border Restitution Trigger 
+	//Border
+	const float XBorder = 3.0f;
+	const float YBorder = 5.0f;
+	const float ZBorder = 5.0f;
+
+	auto IsInBorder = [XBorder, YBorder, ZBorder](const Vector3& Position)
+		{
+			return  std::abs(Position.x) < XBorder &&
+				std::abs(Position.y) < YBorder &&
+				std::abs(Position.z) < ZBorder;
+		};
+
+	Character->GetTransform()->OnTransformChangedDelegate.Bind(Character,
+															  [&IsInBorder, &Character, XBorder, YBorder, ZBorder](const FTransform& InTransform)
+															  {
+																   if (!IsInBorder(InTransform.GetPosition()))
+																   {
+																	   const Vector3 Position = InTransform.GetPosition();
+																	   Vector3 Normal = Vector3::Zero;
+																	   Vector3 NewPosition = Position;
+
+																	   // 충돌한 면의 법선 계산과 위치 보정
+																	   if (std::abs(Position.x) >= XBorder)
+																	   {
+																		   Normal.x = Position.x > 0 ? -1.0f : 1.0f;
+																		   NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+																	   }
+																	   if (std::abs(Position.y) >= YBorder)
+																	   {
+																		   Normal.y = Position.y > 0 ? -1.0f : 1.0f;
+																		   NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
+																	   }
+																	   if (std::abs(Position.z) >= ZBorder)
+																	   {
+																		   Normal.z = Position.z > 0 ? -1.0f : 1.0f;
+																		   NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
+																	   }
+
+																	   Normal.Normalize();
+																	   //Position correction
+																	   Character->GetTransform()->SetPosition(NewPosition);
+
+																	   const Vector3 CurrentVelo = Character->GetCurrentVelocity();
+																	   const float Restitution = 0.8f;
+																	   const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+																	   Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character->GetMass();
+
+																	   Character->ApplyImpulse(std::move(NewImpulse));
+																   }
+															  },
+															  "BorderCheck");
+
+	Character2->GetTransform()->OnTransformChangedDelegate.Bind(Character2,
+															   [&IsInBorder, &Character2, XBorder, YBorder, ZBorder](const FTransform& InTransform)
+															   {
+																	if (!IsInBorder(InTransform.GetPosition()))
+																	{
+																		const Vector3 Position = InTransform.GetPosition();
+																		Vector3 Normal = Vector3::Zero;
+																		Vector3 NewPosition = Position;
+
+																		// 충돌한 면의 법선 계산과 위치 보정
+																		if (std::abs(Position.x) >= XBorder)
+																		{
+																			Normal.x = Position.x > 0 ? -1.0f : 1.0f;
+																			NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+																		}
+																		if (std::abs(Position.y) >= YBorder)
+																		{
+																			Normal.y = Position.y > 0 ? -1.0f : 1.0f;
+																			NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
+																		}
+																		if (std::abs(Position.z) >= ZBorder)
+																		{
+																			Normal.z = Position.z > 0 ? -1.0f : 1.0f;
+																			NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
+																		}
+
+																		Normal.Normalize();
+																		//Position correction
+																		Character2->GetTransform()->SetPosition(NewPosition);
+
+																		const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+																		const float Restitution = 0.8f;
+																		const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+																		Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
+
+																		Character2->ApplyImpulse(std::move(NewImpulse));
+																	}
+															   },
+															   "BorderCheck");
+
+#pragma endregion
+
 	//콜리전 컴포넌트 등록
 	UCollisionManager::Get()->RegisterCollision(CollisionComp1);
 	UCollisionManager::Get()->RegisterCollision(CollisionComp2);
-	UCollisionManager::Get()->RegisterCollision(CollisionComp3);
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
@@ -513,7 +596,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeforeRender();
 
 		//Render
-		Renderer->RenderGameObject(Camera.get(), Floor.get(), Shader.get(), (ID3D11ShaderResourceView*)nullptr);
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 
@@ -600,7 +682,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #pragma endregion
-
 		//end render
 		Renderer->EndRender();
 #pragma endregion

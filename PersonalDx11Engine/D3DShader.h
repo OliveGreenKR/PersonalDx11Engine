@@ -24,8 +24,6 @@ struct alignas(16) FMatrixBufferData
 struct alignas(16) FDebugBufferData
 {
 	XMFLOAT4 DebugColor = XMFLOAT4(1, 1, 1, 1);
-	int bUseTexture = true;
-	XMFLOAT3 Padding;
 
 	FDebugBufferData() = default;
 	FDebugBufferData(const XMFLOAT4 InColor) : DebugColor(InColor) {}

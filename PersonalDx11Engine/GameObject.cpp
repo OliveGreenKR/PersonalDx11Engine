@@ -108,11 +108,6 @@ UModel* UGameObject::GetModel() const
 	return nullptr;
 }
 
-void UGameObject::AddActorComponent(shared_ptr<UActorComponent>& InActorComp)
-{
-	RootActorComp->AddChild(InActorComp);
-}
-
 void UGameObject::UpdateComponents(const float DeltaTime)
 {
 	//find all Tickable compo and call Tick
@@ -201,6 +196,17 @@ void UGameObject::ApplyForce(const Vector3&& InForce)
 	}
 }
 
+void UGameObject::ApplyImpulse(const Vector3&& InImpulse)
+{
+	if (!IsPhysicsSimulated())
+		return;
+
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		return RigidComp->ApplyImpulse(InImpulse);
+	}
+}
+
 Vector3 UGameObject::GetCurrentVelocity() const
 {
 	if (!IsPhysicsSimulated())
@@ -212,6 +218,17 @@ Vector3 UGameObject::GetCurrentVelocity() const
 	}
 
 	return Vector3::Zero;
+}
+
+float UGameObject::GetMass() const
+{
+	if (!IsPhysicsSimulated())
+		return 0.0f;
+
+	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	{
+		return RigidComp->GetMass();
+	}
 }
 
 bool UGameObject::IsGravity() const
