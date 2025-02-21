@@ -196,6 +196,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp3 = UActorComponent::Create<URigidBodyComponent>();
+	RigidComp2->SetMass(15.0f);
 	RigidComp3->SetRigidType(ERigidBodyType::Static);
 
 	//rigid attach

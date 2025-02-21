@@ -332,64 +332,6 @@ size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
 
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
-	//for (auto ActivePair : ActiveCollisionPairs)
-	//{
-	//	auto CompAData = RegisteredComponents[ActivePair.IndexA];
-	//	auto CompBData = RegisteredComponents[ActivePair.IndexB];
-
-	//	auto CompA = CompAData.Component;
-	//	auto CompB = CompBData.Component;
-
-	//	const float PersistentThreshold = 0.1f;
-
-	//	//Collision detection
-	//	FCollisionDetectionResult detectResult;
-	//	if (CompA && CompB)
-	//	{
-	//		if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
-	//		{
-	//			//ccd
-	//			detectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
-	//														CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
-	//		}
-	//		else
-	//		{
-	//			//dcd
-	//			detectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(),*CompA->GetTransform(),
-	//															 CompB->GetCollisionShape(),*CompB->GetTransform());
-	//		}
-	//	}
-
-	//	if (detectResult.bCollided)
-	//	{
-	//		if (!ActivePair.bPrevCollided || ActivePair.ContactTime < PersistentThreshold)
-	//		{
-	//			// 일반적인 충돌 응답
-	//			ApplyCollisionResponse(CompA, CompB, detectResult);
-	//		}
-	//		else
-	//		{
-	//			// 지속적인 충돌
-	//			ActivePair.ContactTime += DeltaTime;
-	//			HandlePersistentCollision(ActivePair, detectResult, DeltaTime);
-	//		}
-
-	//	}
-
-	//	//Position Correction
-	//	ApplyPositionCorrection(CompA, CompB, detectResult, DeltaTime);
-	//	
-	//	//Dispatch Collision Event
-	//	BroadcastCollisionEvents(ActivePair, detectResult);
-
-	//	// 현재 충돌 정보 저장
-	//	ActivePair.bPrevCollided = detectResult.bCollided;
-	//	ActivePair.LastNormal = detectResult.Normal;
-	//	ActivePair.LastPenetration = detectResult.PenetrationDepth;
-	//	ActivePair.ContactTime += DeltaTime;
-	//}
-	std::unordered_set<size_t> CollisionComponentIndices;
-
 	for (const auto& ActivePair : ActiveCollisionPairs)
 	{
 		auto& CompAData = RegisteredComponents[ActivePair.IndexA];
@@ -418,79 +360,17 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			}
 		}
 
-		if (DetectResult.bCollided)
-		{
-			AccumulateContactPoint(CompAData, CompBData, DetectResult);
-			CollisionComponentIndices.insert(ActivePair.IndexA);
-			CollisionComponentIndices.insert(ActivePair.IndexB);
-		}
+		//response
+		ApplyCollisionResponseByContraints(CompA, CompB, DetectResult);
+		//position correction
+
+		//dispatch event
+
 	}
-
-	ProcessAccumulatedContacts(CollisionComponentIndices);
+	
 }
 
 
-void UCollisionManager::AccumulateContactPoint(
-	FComponentData& CompAData,
-	FComponentData& CompBData,
-	const FCollisionDetectionResult& DetectResult)
-{
-	// 접촉점 정보 생성
-	FContactPoint NewPoint;
-	NewPoint.Position = DetectResult.Point;
-	NewPoint.Normal = DetectResult.Normal;
-	NewPoint.Penetration = DetectResult.PenetrationDepth;
-
-	// A의 매니폴드에 추가
-	CompAData.ContactManifold.ContactPoints.push_back(NewPoint);
-
-	// B의 매니폴드에 추가 (노말 방향 반전)
-	NewPoint.Normal = -NewPoint.Normal;
-	CompBData.ContactManifold.ContactPoints.push_back(NewPoint);
-
-	// 충돌 응답 계산
-	FCollisionResponseParameters ParamsA, ParamsB;
-	GetCollisionDetectionParams(CompAData.Component, ParamsA);
-	GetCollisionDetectionParams(CompBData.Component, ParamsB);
-
-	FCollisionResponseResult Response =
-		ResponseCalculator->CalculateResponse(DetectResult, ParamsA, ParamsB);
-
-	// 임펄스 누적
-	CompAData.ContactManifold.AccumulatedImpulse -= Response.NetImpulse;
-	CompBData.ContactManifold.AccumulatedImpulse += Response.NetImpulse;
-
-	// 토크 누적
-	Vector3 rA = DetectResult.Point - ParamsA.Position;
-	Vector3 rB = DetectResult.Point - ParamsB.Position;
-	CompAData.ContactManifold.AccumulatedTorque +=
-		Vector3::Cross(rA, -Response.NetImpulse);
-	CompBData.ContactManifold.AccumulatedTorque +=
-		Vector3::Cross(rB, Response.NetImpulse);
-}
-
-void UCollisionManager::ProcessAccumulatedContacts(
-	const std::unordered_set<size_t>& ContactComponents)
-{
-	// 각 컴포넌트의 누적된 응답 처리
-	for (const auto& ComponentIndex : ContactComponents)
-	{
-		auto& CompData = RegisteredComponents[ComponentIndex];
-		auto RigidBody = CompData.Component->GetRigidBody();
-
-		if (!RigidBody || RigidBody->IsStatic())
-			continue;
-
-		// 누적된 임펄스와 토크 적용
-		RigidBody->ApplyImpulse(
-			CompData.ContactManifold.AccumulatedImpulse);
-		RigidBody->AddAngularVelocity(
-			CompData.ContactManifold.AccumulatedTorque);
-
-		// 매니폴드 초기화
-		CompData.ContactManifold = FComponentData::FManifoldData();
-	}
-}
 
 void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& DetectResult ) const
 {
@@ -514,7 +394,7 @@ void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UColli
 	return;
 }
 
-void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
+void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
 {
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
@@ -523,7 +403,7 @@ void UCollisionManager::ApplyCollisionResponse(const std::shared_ptr<UCollisionC
 	FCollisionResponseParameters ParamsA, ParamsB;
 	GetCollisionDetectionParams(ComponentA, ParamsA);
 	GetCollisionDetectionParams(ComponentB , ParamsB);
-	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponse(DetectResult, ParamsA, ParamsB);
+	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByImpulse(DetectResult, ParamsA, ParamsB);
 
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
@@ -635,6 +515,31 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 			TransB->SetPosition(newPos);
 		}
 	}
+}
+
+void UCollisionManager::ApplyCollisionResponseByContraints(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
+{
+	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
+		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
+		return;
+
+	FCollisionResponseParameters ParamsA, ParamsB;
+	GetCollisionDetectionParams(ComponentA, ParamsA);
+	GetCollisionDetectionParams(ComponentB, ParamsB);
+
+
+	for (int i = 0; i < Config.PhysicsIteration ; ++i)
+	{
+		FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB);
+
+		auto RigidPtrA = ComponentA.get()->GetRigidBody();
+		auto RigidPtrB = ComponentB.get()->GetRigidBody();
+
+		//DX 규칙에따른 법선으로 계산한 임펄스이므로 방향을 반대로 적용해야함
+		RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+		RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	}
+
 }
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)

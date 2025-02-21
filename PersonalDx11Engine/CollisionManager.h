@@ -10,8 +10,6 @@ class FDynamicAABBTree;
 class URigidBodyComponent;
 struct FTransform;
 
-
-
 #pragma region CollisionPair
 struct FCollisionPair
 {
@@ -56,7 +54,8 @@ struct FCollisionSystemConfig
     float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
-
+    
+    int PhysicsIteration = 10;
     // AABB Tree 관련 설정
     size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간
@@ -95,14 +94,6 @@ private:
     {
         std::shared_ptr<UCollisionComponent> Component;
         size_t TreeNodeId;
-
-        // 다중 접촉 매니폴드 추가
-        struct FManifoldData
-        {
-            std::vector<FContactPoint> ContactPoints;
-            Vector3 AccumulatedImpulse = Vector3::Zero;
-            Vector3 AccumulatedTorque = Vector3::Zero;
-        } ContactManifold;
     };
 
 public:
@@ -157,7 +148,7 @@ private:
     void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
 
     //일반적인 충돌반응 (충격량기반 속도 변화)
-    void ApplyCollisionResponse(
+    void ApplyCollisionResponseByImpulse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectResult);
@@ -174,20 +165,16 @@ private:
         const FCollisionDetectionResult& DetectResult,
         const float DeltaTime);
 
+    //제약조건 기반
+    void ApplyCollisionResponseByContraints(
+        const std::shared_ptr<UCollisionComponent>& ComponentA,
+        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const FCollisionDetectionResult& DetectResult);
+
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult);
 
-
-    
-
-    void AccumulateContactPoint(
-        FComponentData& CompAData,
-        FComponentData& CompBData,
-        const FCollisionDetectionResult& DetectResult);
-
-    void ProcessAccumulatedContacts(
-        const std::unordered_set<size_t>& ContactComponents);
 
 private:
     // 하부 시스템 클래스들
