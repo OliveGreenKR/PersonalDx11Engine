@@ -122,8 +122,6 @@ void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)
 {
 	if (!InCollision.CollisionDetectResult.bCollided)
 		return;
-
-	DebugColor = Color::Green();
 }
 
 void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)

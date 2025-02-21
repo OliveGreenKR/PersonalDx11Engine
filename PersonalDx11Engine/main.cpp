@@ -225,11 +225,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();
 
-#pragma region Border Restitution Trigger 
 	//Border
 	const float XBorder = 3.0f;
-	const float YBorder = 5.0f;
-	const float ZBorder = 5.0f;
+	const float YBorder = 3.0f;
+	const float ZBorder = 3.0f;
+#pragma region Border Restitution Trigger 
+
 
 	auto IsInBorder = [XBorder, YBorder, ZBorder](const Vector3& Position)
 		{
@@ -641,12 +642,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 						CurrentVelo.y,
 						CurrentVelo.z);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Character->GetTransform()->GetPosition().x,
-						Character->GetTransform()->GetPosition().y,
-						Character->GetTransform()->GetPosition().z);
-			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character->GetTransform()->GetEulerRotation().x,
-						Character->GetTransform()->GetEulerRotation().y,
-						Character->GetTransform()->GetEulerRotation().z);
 			ImGui::Text(Utils::ToString(CollisionComp1->GetPreviousTransform()));
 			ImGui::End();
 		}

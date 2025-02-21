@@ -127,16 +127,6 @@ void UCollisionComponent::Tick(const float DeltaTime)
 {
 	UActorComponent::Tick(DeltaTime);
 
-	//test
-	if (bIsTransformDirty)
-	{
-		GetOwner()->SetDebugColor(Color::Red());
-	}
-	else
-	{
-		GetOwner()->SetDebugColor(Color::White());
-	}
-
 	//이전 트랜스폼 저장
 	PrevTransform = *GetTransform();
 }
