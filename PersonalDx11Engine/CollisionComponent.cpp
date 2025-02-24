@@ -64,7 +64,7 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 	}
 }
 
-void UCollisionComponent::SetCollisionShape(const FCollisionShapeData& InShape)
+void UCollisionComponent::SetCollisionShapeData(const FCollisionShapeData& InShape)
 {
 	Shape = InShape;
 
@@ -74,6 +74,11 @@ void UCollisionComponent::SetCollisionShape(const FCollisionShapeData& InShape)
 		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
 	}
 	
+}
+
+void UCollisionComponent::SetHalfExtent(const Vector3&& InHalfExtent)
+{
+	Shape.HalfExtent = InHalfExtent;
 }
 
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)

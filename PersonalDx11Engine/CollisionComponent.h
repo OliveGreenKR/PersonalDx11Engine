@@ -47,7 +47,8 @@ public:
 	const FTransform& GetPreviousTransform() const { return PrevTransform; }
 
 	//Setter
-	void SetCollisionShape(const FCollisionShapeData& InShape);
+	void SetCollisionShapeData(const FCollisionShapeData& InShape);
+	void SetHalfExtent(const Vector3&& InHalfExtent);
 	
 public:
 	bool bDestroyed : 1;

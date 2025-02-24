@@ -3,6 +3,8 @@
 #include "D3D.h"
 #include <type_traits>
 #include <memory>
+#include <unordered_map>
+#include <mutex>
 
 using namespace DirectX;
 
@@ -31,6 +33,14 @@ public:
 		XMFLOAT3 Position;    // Position
 		XMFLOAT4 Color;       // Color
 	};
+
+private:
+	// 버퍼의 고유 식별자 생성
+	static size_t GenerateBufferHash(const void* vertices, size_t vertexCount, size_t stride) {
+		return std::hash<const void*>{}(vertices) ^
+			std::hash<size_t>{}(vertexCount) ^
+			std::hash<size_t>{}(stride);
+	}
 
 public:
 	UModel() = default;
