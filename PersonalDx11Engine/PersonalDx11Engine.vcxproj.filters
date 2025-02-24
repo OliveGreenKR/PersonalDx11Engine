@@ -80,6 +80,9 @@
     <ClCompile Include="DebugDrawManager.cpp">
       <Filter>Engine\Managers\DebugDrawer</Filter>
     </ClCompile>
+    <ClCompile Include="ElasticBody.cpp">
+      <Filter>Contents\ElasticBody</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -144,6 +147,12 @@
     </Filter>
     <Filter Include="Engine\Managers\DebugDrawer">
       <UniqueIdentifier>{a63c0d29-4c39-40b1-8c53-f9e7d2d88ede}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents">
+      <UniqueIdentifier>{59fe685c-6920-4443-bf8d-3ab9ea70edbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\ElasticBody">
+      <UniqueIdentifier>{888872cb-8e27-40c9-9d75-e730af1aa8b8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -251,15 +260,15 @@
     <ClInclude Include="DebugDrawManager.h">
       <Filter>Engine\Managers\DebugDrawer</Filter>
     </ClInclude>
+    <ClInclude Include="ElasticBody.h">
+      <Filter>Contents\ElasticBody</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="ShaderMy00.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="PBRShader00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

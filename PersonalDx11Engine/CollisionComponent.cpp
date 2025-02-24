@@ -2,6 +2,7 @@
 #include <memory>
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
+#include "CollisionManager.h"
 
 
 UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
@@ -109,13 +110,11 @@ Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
 }
 
 
-void UCollisionComponent::PostOwnerInitialized()
-{
-	UActorComponent::PostOwnerInitialized();
-}
-
 void UCollisionComponent::PostTreeInitialized()
 {
+	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
+	UCollisionManager::Get()->RegisterCollision(shared);
+
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		GetOwner()->GetTransform()->

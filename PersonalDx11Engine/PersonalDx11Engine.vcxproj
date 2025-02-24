@@ -139,6 +139,7 @@
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="DebugDrawManager.cpp" />
     <ClCompile Include="DynamicAABBTree.cpp" />
+    <ClCompile Include="ElasticBody.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
+    <ClInclude Include="ElasticBody.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="InputManager.h" />
@@ -194,13 +196,6 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="PBRShader00.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </FxCompile>
     <FxCompile Include="ShaderMy00.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>

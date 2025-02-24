@@ -1,8 +1,6 @@
 #pragma once
 #include "Math.h"
 
-
-
 namespace Color
 {
 	static const Vector4 Red()

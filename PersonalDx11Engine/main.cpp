@@ -216,7 +216,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														0.3f
 														);
 												}, "OnCollisionBegin_Sys_Comp2");
-	
+
 	//Collision Attach
 	CollisionComp1->BindRigidBody(RigidComp1);
 	CollisionComp2->BindRigidBody(RigidComp2);
@@ -228,7 +228,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Border
 	const float XBorder = 3.0f;
 	const float YBorder = 3.0f;
-	const float ZBorder = 3.0f;
+	const float ZBorder = 5.0f;
 #pragma region Border Restitution Trigger 
 
 
@@ -321,9 +321,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma endregion
 
-	//콜리전 컴포넌트 등록
-	UCollisionManager::Get()->RegisterCollision(CollisionComp1);
-	UCollisionManager::Get()->RegisterCollision(CollisionComp2);
+
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'

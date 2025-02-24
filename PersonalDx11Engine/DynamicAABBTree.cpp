@@ -22,7 +22,19 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
 {
     if (!Object)
         return NULL_NODE;
-
+    // 중복 검사
+    for (size_t i = 0; i < NodePool.size(); ++i)
+    {
+        const Node& ExistingNode = NodePool[i];
+        // FreeNodes에 포함되지 않은 노드 중에서만 검사
+        if (std::find(FreeNodes.begin(), FreeNodes.end(), i) == FreeNodes.end())
+        {
+            if (ExistingNode.BoundableObject == Object.get())
+            {
+                return FDynamicAABBTree::NULL_NODE; // 이미 존재하는 객체면 추가 실패
+            }
+        }
+    }
     size_t NodeId = AllocateNode();
     Node& NewNode = NodePool[NodeId];
 

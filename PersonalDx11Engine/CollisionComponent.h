@@ -32,7 +32,6 @@ public:
 	void SetTransformChagedClean() override { bIsTransformDirty = false; }
 
 protected:
-	virtual void PostOwnerInitialized() override;
 	virtual void PostTreeInitialized() override;
 	virtual void Tick(const float DeltaTime) override;
 
