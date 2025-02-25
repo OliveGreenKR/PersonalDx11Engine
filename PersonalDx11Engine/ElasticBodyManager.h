@@ -12,6 +12,10 @@ public:
     static UElasticBodyManager* Get()
     {
         static UElasticBodyManager Instance;
+        if (!Instance.bIsInitialized)
+        {
+            Instance.Initialize();
+        }
         return &Instance;
     }
 
@@ -19,6 +23,7 @@ public:
     std::shared_ptr<UElasticBody> SpawnBody(EShape Shape = EShape::Sphere);
     void DespawnBody(const std::shared_ptr<UElasticBody>& Body);
     void DespawnRandomBodies(size_t Count);
+    void ResetBody(std::shared_ptr<UElasticBody>& Body);
 
     // 물리 속성 관리
     void ApplyRandomPhysicsProperties(const std::shared_ptr<UElasticBody>& Body);
@@ -32,7 +37,8 @@ public:
         Light,
         Medium,
         Heavy,
-        VeryHeavy
+        VeryHeavy,
+        Max
     };
 
     // 질량 범주 결정 메서드
@@ -40,18 +46,24 @@ public:
     Vector4 GetColorForMassCategory(EMassCategory Category) const;
 
     // 풀링 관리
-    void PrewarmPool(size_t Count);
+    void PrewarmPool(size_t Count); //최소 Count만큼의 Pool 미리 준비
     void UpdateBodies(float DeltaTime);
+    void ClearAllActiveBodies();
 
     // 상태 조회
     size_t GetActiveBodyCount() const { return ActiveBodies.size(); }
     size_t GetPooledBodyCount() const { return PooledBodies.size(); }
 
 private:
-    UElasticBodyManager() = default;
-    ~UElasticBodyManager() = default;
+    UElasticBodyManager();
+    ~UElasticBodyManager();
 
-    // 객체 관리
+    void Initialize(size_t InitialPoolSize = 128);
+    void Release();
+
+    bool bIsInitialized = false;
+
+    // 객체 관리 Pool
     std::vector<std::shared_ptr<UElasticBody>> ActiveBodies;
     std::vector<std::shared_ptr<UElasticBody>> PooledBodies;
 
@@ -63,16 +75,16 @@ private:
     {
         float MinMass = 0.1f;
         float MaxMass = 10.0f;
-        float MinSize = 0.3f;
-        float MaxSize = 2.0f;
+        float MinSize = 0.1f;
+        float MaxSize = 1.0f;
         float MinRestitution = 0.3f;
         float MaxRestitution = 0.9f;
         float MinFriction = 0.1f;
         float MaxFriction = 0.8f;
 
         // 위치 범위
-        Vector3 MinPosition{ -20.0f, 0.0f, -20.0f };
-        Vector3 MaxPosition{ 20.0f, 10.0f, 20.0f };
+        Vector3 MinPosition{ -3.0f, -3.0f, -5.0f };
+        Vector3 MaxPosition{ 3.0f, 3.0f, 5.0f };
     } PropertyRanges;
 
     // 질량-색상 매핑

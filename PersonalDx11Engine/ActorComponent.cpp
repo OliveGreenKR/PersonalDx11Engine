@@ -3,9 +3,9 @@
 
 void UActorComponent::BraodcastPostTreeInitialized()
 {
-    // 비활성화된 경우 전파하지 않음
-    if (!bIsActive)
-        return;
+    //초기화는 활성화여부와 관계업싱 동작하도록 변경
+    //if (!bIsActive)
+    //    return;
 
     // 자신의 PostInitialized 호출
     PostTreeInitialized();
@@ -13,7 +13,7 @@ void UActorComponent::BraodcastPostTreeInitialized()
     // 모든 자식 컴포넌트에 대해 PostInitialized 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child && Child->IsActive())
+        if (Child)
         {
             Child->BraodcastPostTreeInitialized();
         }
@@ -29,7 +29,7 @@ void UActorComponent::BroadcastTick(float DeltaTime)
     // 자신의 Tick 호출
     Tick(DeltaTime);
 
-    // 모든 자식 컴포넌트에 대해 Tick 전파
+    // 모든 활성화 자식 컴포넌트에 대해 Tick 전파
     for (const auto& Child : ChildComponents)
     {
         if (Child && Child->IsActive())
