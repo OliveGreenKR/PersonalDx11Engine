@@ -55,7 +55,6 @@ public:
         }
     };
 
-    // 캐시 정렬을 고려한 노드 구조체
     struct alignas(16) Node
     {
         // 24바이트 정렬 데이터

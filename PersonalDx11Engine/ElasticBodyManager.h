@@ -2,6 +2,7 @@
 #include "ElasticBody.h"
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 using EShape = UElasticBody::EShape;
 

@@ -87,18 +87,18 @@ void FDynamicAABBTree::UpdateTree()
         if (!Node.IsLeaf() || !Node.BoundableObject)
             continue;
 
-        //const Vector3& CurrentPos = Node.BoundableObject->GetTransform()->GetPosition();
-        //const Vector3& CurrentExtent = Node.BoundableObject->GetHalfExtent();
+        const Vector3& CurrentPos = Node.BoundableObject->GetTransform()->GetPosition();
+        const Vector3& CurrentExtent = Node.BoundableObject->GetHalfExtent();
 
-        //if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
-        //{
-        //    NodesToUpdate.push_back(i);
-        //}
-
-        if (Node.BoundableObject->IsTransformChanged())
+        if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
         {
             NodesToUpdate.push_back(i);
         }
+
+        //if (Node.BoundableObject->IsTransformChanged())
+        //{
+        //    NodesToUpdate.push_back(i);
+        //}
     }
 
     // 수집된 노드들 업데이트
