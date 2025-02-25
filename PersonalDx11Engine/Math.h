@@ -721,6 +721,9 @@ namespace Math
 	inline static float Max(const float a, const float b) {
 		return a > b ? a : b;
 	}
+	inline static float Min(const float a, const float b) {
+		return a > b ? b : a;
+	}
 
 	static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
 	{
