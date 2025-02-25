@@ -83,6 +83,9 @@
     <ClCompile Include="ElasticBody.cpp">
       <Filter>Contents\ElasticBody</Filter>
     </ClCompile>
+    <ClCompile Include="ElasticBodyManager.cpp">
+      <Filter>Contents\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -153,6 +156,9 @@
     </Filter>
     <Filter Include="Contents\ElasticBody">
       <UniqueIdentifier>{888872cb-8e27-40c9-9d75-e730af1aa8b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Managers">
+      <UniqueIdentifier>{ea48cdc0-321a-4a02-ae35-1fa39caa3176}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -262,6 +268,9 @@
     </ClInclude>
     <ClInclude Include="ElasticBody.h">
       <Filter>Contents\ElasticBody</Filter>
+    </ClInclude>
+    <ClInclude Include="ElasticBodyManager.h">
+      <Filter>Contents\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

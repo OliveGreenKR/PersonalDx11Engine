@@ -13,7 +13,7 @@ void UActorComponent::BraodcastPostTreeInitialized()
     // 모든 자식 컴포넌트에 대해 PostInitialized 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child && Child->IsActive())
         {
             Child->BraodcastPostTreeInitialized();
         }
@@ -32,7 +32,7 @@ void UActorComponent::BroadcastTick(float DeltaTime)
     // 모든 자식 컴포넌트에 대해 Tick 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child && Child->IsActive())
         {
             Child->BroadcastTick(DeltaTime);
         }

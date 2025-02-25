@@ -125,13 +125,10 @@ ECollisionShapeType UElasticBody::GetCollisionShape(EShape Shape)
 }
 #pragma endregion
 
-//UElasticBody::UElasticBody(const EShape & InShape, const Vector4 & InColor)
-//{
-//	//무게에 따라 색을 조정할 예정..
-//	Shape = InShape;
-//	DebugColor = InColor;
-//	bDebug = true;
-//}
+UElasticBody::UElasticBody()
+{
+
+}
 
 void UElasticBody::Tick(const float DeltaTime)
 {
@@ -147,18 +144,31 @@ void UElasticBody::PostInitialized()
 	{
 		//rigid body 추가 및 초기화
 		auto RigidBodyComp = UActorComponent::Create<URigidBodyComponent>();
-		Rigid = RigidBodyComp;
-		AddActorComponent(RigidBodyComp);
+		if (RigidBodyComp.get())
+		{
+			Rigid = RigidBodyComp;
+			AddActorComponent(RigidBodyComp);
+		}
 
 		//collsion body 추가 및 초기화
-		auto ColllsionComp = UActorComponent::Create<UCollisionComponent>(GetCollisionShape(Shape), Vector3::Zero);
-		ColllsionComp->BindRigidBody(RigidBodyComp);
-		ColllsionComp->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+		auto CollisionComp = UActorComponent::Create<UCollisionComponent>(GetCollisionShape(Shape), Vector3::Zero);
+		if (CollisionComp.get())
+		{
+			Collision = CollisionComp;
+			CollisionComp->BindRigidBody(RigidBodyComp);
+			CollisionComp->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+		}
 	}
 }
 
 void UElasticBody::PostInitializedComponents()
 {
 	UGameObject::PostInitializedComponents();
+}
+
+void UElasticBody::SetActive(bool bActive)
+{
+	bIsActive = bActive;
+	RootActorComp->SetActive(bIsActive);
 }
 
