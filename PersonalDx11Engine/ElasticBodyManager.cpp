@@ -1,11 +1,21 @@
 #include "ElasticBodyManager.h"
 #include "Math.h"
 
-std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnBody(EShape Shape)
+UElasticBodyManager::UElasticBodyManager()
+{
+	Initialize();
+}
+
+UElasticBodyManager::~UElasticBodyManager()
+{
+	Release();
+
+}
+
+
+std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnBody(const EShape Shape)
 {
 	auto body = GetBodyFromPool();
-
-	ResetBody(body);
 
 	//상태 설정
 	ApplyRandomPhysicsProperties(body);
@@ -21,29 +31,17 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnBody(EShape Shape)
 	return body;
 }
 
-void UElasticBodyManager::ApplyRandomPhysicsProperties(const std::shared_ptr<UElasticBody>& Body)
+void UElasticBodyManager::DespawnBody(std::shared_ptr<UElasticBody>& Body)
 {
-
-
+	ReturnBodyToPool(Body);
 }
 
 
-UElasticBodyManager::UElasticBodyManager()
-{
-	Initialize();
-}
-
-UElasticBodyManager::~UElasticBodyManager()
-{
-	Release();
-}
 
 void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 {
 	// 풀 예약 및 미리 생성
 	PrewarmPool(InitialPoolSize);
-
-
 	bIsInitialized = true;
 }
 
@@ -97,6 +95,28 @@ void UElasticBodyManager::PrewarmPool(size_t Count)
 	}
 }
 
+void UElasticBodyManager::ClearAllActiveBodies()
+{
+	// 모든 활성 객체를 비활성화하고 초기화
+	for (auto& body : ActiveBodies)
+	{
+		DeactivateBody(body);
+	}
+
+	// 활성 객체들을 한 번에 풀로 이동
+	if (!ActiveBodies.empty())
+	{
+		// 풀에 공간이 충분한지 확인하고 필요시 확장
+		PooledBodies.reserve(PooledBodies.size() + ActiveBodies.size());
+
+		// std::move를 사용하여 벡터 내용을 효율적으로 이동
+		std::move(std::begin(ActiveBodies), std::end(ActiveBodies),
+				  std::back_inserter(PooledBodies));
+
+		 // 활성 객체 컨테이너 비우기
+		ActiveBodies.clear();
+	}
+}
 
 std::shared_ptr<UElasticBody> UElasticBodyManager::CreateNewBody()
 {
@@ -110,7 +130,6 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	// 풀이 비어있으면 추가 객체 생성
 	if (PooledBodies.empty())
 	{
-
 		const size_t BatchSize = ActiveBodies.size() * 0.5f;
 		PrewarmPool(BatchSize);
 
@@ -126,5 +145,43 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	std::shared_ptr<UElasticBody> body = PooledBodies.back();
 	PooledBodies.pop_back();
 
+	//바디 객체 활성화
+	body->SetActive(true);
+
 	return body;
 }
+
+void UElasticBodyManager::DeactivateBody(std::shared_ptr<UElasticBody>& Body)
+{
+	if (!Body.get())
+	{
+		return;
+	}
+	//객체 상태 초기화
+	Body->Reset();
+	//비활성화
+	Body->SetActive(false);
+}
+
+void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
+{
+	// 유효성 검사
+	if (!Body.get())
+	{
+		return;
+	}
+
+	// 활성 목록에서 제거 (이미 호출자에서 처리했을 수도 있음)
+	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
+	if (it != ActiveBodies.end())
+	{
+		ActiveBodies.erase(it);
+	}
+
+	// 객체 비활성화
+	DeactivateBody(Body);
+
+	// 풀에 반환
+	PooledBodies.push_back(Body);
+}
+

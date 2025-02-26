@@ -181,6 +181,7 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="PrimitiveComponent.h" />
+    <ClInclude Include="Random.h" />
     <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />

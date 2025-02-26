@@ -125,10 +125,7 @@ ECollisionShapeType UElasticBody::GetCollisionShape(EShape Shape)
 }
 #pragma endregion
 
-UElasticBody::UElasticBody()
-{
-
-}
+UElasticBody::UElasticBody() {}
 
 void UElasticBody::Tick(const float DeltaTime)
 {
@@ -172,3 +169,16 @@ void UElasticBody::SetActive(bool bActive)
 	RootActorComp->SetActive(bIsActive);
 }
 
+void UElasticBody::Reset()
+{
+	// 컴포넌트 상태 초기화
+	if (auto rigid = Rigid.lock())
+	{
+		// 물리 상태 초기화
+		rigid->Reset();
+	}
+
+	// 위치 및 회전 초기화 
+	GetTransform()->SetPosition(Vector3::Zero);
+	GetTransform()->SetRotation(Quaternion::Identity);
+}

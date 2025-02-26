@@ -28,6 +28,11 @@ public:
     class URigidBodyComponent* GetRigidBody() const { return Rigid.lock().get(); }
     class UCollisionComponent* GetCollisionComponent() const { return Collision.lock().get(); }
 
+    /// <summary>
+    /// 인스턴스 상태 초기화
+    /// </summary>
+    virtual void Reset();
+
     // 충돌 이벤트 핸들러
     //void OnCollisionBegin(const FCollisionEventData& InCollision);
     //void OnCollisionStay(const FCollisionEventData& InCollision);

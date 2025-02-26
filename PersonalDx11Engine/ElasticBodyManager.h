@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include "Random.h"
 
 using EShape = UElasticBody::EShape;
 
@@ -20,19 +21,21 @@ public:
 	}
 
 	// 객체 생성 및 설정
-	std::shared_ptr<UElasticBody> SpawnBody(EShape Shape = EShape::Sphere);
-	void DespawnBody(const std::shared_ptr<UElasticBody>& Body);
+
+	std::shared_ptr<UElasticBody> SpawnBody(const EShape Shape = EShape::Sphere);
+	void DespawnBody(std::shared_ptr<UElasticBody>& Body);
 	void DespawnRandomBodies(size_t Count);
-	void ResetBody(std::shared_ptr<UElasticBody>& Body);
 
 	// 물리 속성 관리
-	void ApplyRandomPhysicsProperties(const std::shared_ptr<UElasticBody>& Body);
-	void ApplyRandomTransform(const std::shared_ptr<UElasticBody>& Body);
-	void SetColorBasedOnMass(const std::shared_ptr<UElasticBody>& Body);
+
+	void ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body);
+	void ApplyRandomTransform(std::shared_ptr<UElasticBody>& Body);
+	void SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Body);
 
 	//최소 Count만큼의 Pool 미리 준비
 	void PrewarmPool(size_t Count); 
-	void UpdateBodies(float DeltaTime);
+
+	void UpdateActiveBodies(float DeltaTime);
 	void ClearAllActiveBodies();
 
 	// 상태 조회
@@ -48,6 +51,9 @@ private:
 
 	bool bIsInitialized = false;
 
+	//객체 비활성화
+	void DeactivateBody(std::shared_ptr<UElasticBody>& Body);
+
 	// 질량 카테고리 구분
 	enum EMassCategory
 	{
@@ -60,16 +66,12 @@ private:
 	};
 
 	// 질량 범주 결정 메서드
-	EMassCategory CategorizeMass(float Mass) const;
-	Vector4 GetColorForMassCategory(EMassCategory Category) const;
-
+	EMassCategory CategorizeMass(const float Mass) const;
+	Vector4 GetColorForMassCategory(const EMassCategory Category) const;
 
 	// 객체 관리 Pool
 	std::vector<std::shared_ptr<UElasticBody>> ActiveBodies;
 	std::vector<std::shared_ptr<UElasticBody>> PooledBodies;
-
-	// 랜덤 생성기
-	std::mt19937 RandomGenerator{ std::random_device{}() };
 
 	// 속성 범위 설정
 	struct FPropertyRanges
@@ -100,5 +102,5 @@ private:
 	// 유틸리티 메서드
 	std::shared_ptr<UElasticBody> CreateNewBody();
 	std::shared_ptr<UElasticBody> GetBodyFromPool();
-	void ReturnBodyToPool(const std::shared_ptr<UElasticBody>& Body);
+	void ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body);
 };

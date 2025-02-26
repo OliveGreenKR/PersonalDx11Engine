@@ -81,4 +81,4 @@ private:
 	FTransform PrevTransform = FTransform();    // CCD를 위한 이전 프레임 트랜스폼
 
 	bool bIsTransformDirty = false;
-};
+}; 
