@@ -49,6 +49,8 @@ public:
 	//Setter
 	void SetCollisionShapeData(const FCollisionShapeData& InShape);
 	void SetHalfExtent(const Vector3&& InHalfExtent);
+
+	virtual bool IsEffective() override;
 	
 public:
 	bool bDestroyed : 1;

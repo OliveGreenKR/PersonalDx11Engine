@@ -243,8 +243,8 @@ void UCollisionManager::UpdateCollisionPairs()
 		const auto& ComponentData = RegisteredComponents[i];
 		auto* Component = ComponentData.Component.get();
 
-		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
-		if (!Component || Component->bDestroyed || !Component->GetCollisionEnabled())
+		// 유효성 검사
+		if (!Component && !Component->IsEffective())
 		{
 			continue;
 		}

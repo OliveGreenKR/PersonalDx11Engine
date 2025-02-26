@@ -81,6 +81,12 @@ void UCollisionComponent::SetHalfExtent(const Vector3&& InHalfExtent)
 	Shape.HalfExtent = InHalfExtent;
 }
 
+bool UCollisionComponent::IsEffective()
+{
+	bool result = UPrimitiveComponent::IsEffective();
+	return  result && !bDestroyed || GetCollisionEnabled();
+}
+
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
 	bIsTransformDirty = true;

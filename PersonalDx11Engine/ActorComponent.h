@@ -39,6 +39,8 @@ public:
     // Tick 전파
     void BroadcastTick(float DeltaTime);
 
+    virtual bool IsEffective() { return  this != nullptr && IsActive(); }
+
     // 컴포넌트 활성화 상태
     void SetActive(bool bNewActive) { bIsActive = bNewActive; }
     bool IsActive() const { return bIsActive; }

@@ -21,13 +21,13 @@ public:
 	}
 
 	// 按眉 积己 棺 汲沥
-
 	std::shared_ptr<UElasticBody> SpawnBody(const EShape Shape = EShape::Sphere);
 	void DespawnBody(std::shared_ptr<UElasticBody>& Body);
-	void DespawnRandomBodies(size_t Count);
+
+	void SpawnRandomBodies(const size_t Count);
+	void DespawnRandomBodies(const size_t Count);
 
 	// 拱府 加己 包府
-
 	void ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body);
 	void ApplyRandomTransform(std::shared_ptr<UElasticBody>& Body);
 	void SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Body);

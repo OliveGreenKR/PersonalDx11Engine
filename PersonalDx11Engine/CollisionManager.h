@@ -104,6 +104,7 @@ public:
         return &Instance;
     }
 
+    [[deprecated("Use Another signature of RegisterCollision")]]
     void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent,
                               const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
