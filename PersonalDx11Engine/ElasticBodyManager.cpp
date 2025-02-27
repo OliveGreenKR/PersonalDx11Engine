@@ -1,5 +1,8 @@
 #include "ElasticBodyManager.h"
 #include "Math.h"
+#include "Random.h"
+#include "ElasticBody.h"
+
 
 UElasticBodyManager::UElasticBodyManager()
 {
@@ -12,10 +15,15 @@ UElasticBodyManager::~UElasticBodyManager()
 
 }
 
-
-std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnBody(const EShape Shape)
+std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 {
 	auto body = GetBodyFromPool();
+
+	if (!body.get())
+		return nullptr;
+
+	//형태 결정
+	ApplyRandomCollisionShape(body);
 
 	//상태 설정
 	ApplyRandomPhysicsProperties(body);
@@ -25,8 +33,8 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnBody(const EShape Shape)
 	SetColorBasedOnMass(body);
 
 	//객체 초기화 마무리
-	body->SetActive(true);
-	body->PostInitializedComponents();
+	body.get()->SetActive(true);
+	body.get()->PostInitializedComponents();
 
 	return body;
 }
@@ -36,7 +44,36 @@ void UElasticBodyManager::DespawnBody(std::shared_ptr<UElasticBody>& Body)
 	ReturnBodyToPool(Body);
 }
 
+void UElasticBodyManager::ApplyRandomCollisionShape(std::shared_ptr<UElasticBody>& Body)
+{
+	UElasticBody::EShape randShape = (UElasticBody::EShape)FRandom::RandI(0, (int)UElasticBody::EShape::Count);
+	Body->SetShape(randShape);
+}
 
+void UElasticBodyManager::ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body)
+{
+	if (!Body.get())
+		return;
+	Body->SetMaxSpeed(PropertyRanges.MaxSpeed);
+	Body->SetMaxAngularSpeed(PropertyRanges.MaxAngularSpeed);
+	Body->SetMass(FRandom::RandF(PropertyRanges.MinMass, PropertyRanges.MaxMass));
+	Body->SetRestitution(FRandom::RandF(PropertyRanges.MinRestitution, PropertyRanges.MaxRestitution));
+	Body->SetFrictionKinetic(FRandom::RandF(PropertyRanges.MinFriction, PropertyRanges.MaxFriction));
+	Body->SetFrictionStatic(FRandom::RandF(PropertyRanges.MinFriction, PropertyRanges.MaxFriction));
+}
+
+void UElasticBodyManager::ApplyRandomTransform(std::shared_ptr<UElasticBody>& Body)
+{
+	if (!Body.get())
+		return;
+
+	Vector3 RandPos = FRandom::RandVector(PropertyRanges.MinPosition, PropertyRanges.MaxPosition);
+	Vector3 RandScale = Vector3::One * FRandom::RandF(PropertyRanges.MinSize, PropertyRanges.MaxSize);
+	Quaternion RandQuat = FRandom::RandQuat();
+	Body->GetTransform()->SetPosition(RandPos);
+	Body->GetTransform()->SetScale(RandScale);
+	Body->GetTransform()->SetRotation(RandQuat);
+}
 
 void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 {

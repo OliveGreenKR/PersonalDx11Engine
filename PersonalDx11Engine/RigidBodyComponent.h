@@ -81,6 +81,9 @@ private:
 	void ApplyDrag(float DeltaTime) {}//todo
 	Vector3 GetCenterOfMass() const;
 
+	__forceinline bool IsSpeedRestricted() { return !(MaxSpeed < 0.0f); }
+	__forceinline bool IsAngularSpeedRestricted() { return !(MaxAngularSpeed < 0.0f); }
+
 private:
 	// 물리 객체 상태
 	ERigidBodyType RigidType = ERigidBodyType::Dynamic;

@@ -1,11 +1,9 @@
 #pragma once
-#include "ElasticBody.h"
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "Random.h"
 
-using EShape = UElasticBody::EShape;
+class ElasticBody;
 
 class UElasticBodyManager
 {
@@ -21,11 +19,14 @@ public:
 	}
 
 	// 객체 생성 및 설정
-	std::shared_ptr<UElasticBody> SpawnBody(const EShape Shape = EShape::Sphere);
+	std::shared_ptr<class UElasticBody> SpawnRandomBody();
 	void DespawnBody(std::shared_ptr<UElasticBody>& Body);
 
-	void SpawnRandomBodies(const size_t Count);
-	void DespawnRandomBodies(const size_t Count);
+	//활성화 개체 수 제한
+	void LimitActiveObjectCount(size_t Count);
+
+	//충돌체 속성 관리
+	void ApplyRandomCollisionShape(std::shared_ptr<UElasticBody>& Body);
 
 	// 물리 속성 관리
 	void ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body);
@@ -84,6 +85,8 @@ private:
 		float MaxRestitution = 0.9f;
 		float MinFriction = 0.1f;
 		float MaxFriction = 0.8f;
+		float MaxSpeed = 100.0f; 
+		float MaxAngularSpeed = 6.0f * PI;
 
 		// 위치 범위
 		Vector3 MinPosition{ -3.0f, -3.0f, -5.0f };
@@ -103,4 +106,6 @@ private:
 	std::shared_ptr<UElasticBody> CreateNewBody();
 	std::shared_ptr<UElasticBody> GetBodyFromPool();
 	void ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body);
+
+
 };

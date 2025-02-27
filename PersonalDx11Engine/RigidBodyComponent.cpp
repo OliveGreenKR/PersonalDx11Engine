@@ -231,24 +231,30 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 void URigidBodyComponent::ClampVelocities()
 {
 	// 선형 속도 제한
-	float speedSq = Velocity.LengthSquared();
-	if (speedSq > MaxSpeed * MaxSpeed)
+	if (IsSpeedRestricted())
 	{
-		Velocity = Velocity.GetNormalized() * MaxSpeed;
+		float speedSq = Velocity.LengthSquared();
+		if (speedSq > MaxSpeed * MaxSpeed)
+		{
+			Velocity = Velocity.GetNormalized() * MaxSpeed;
+		}
+		else if (speedSq < KINDA_SMALL)
+		{
+			Velocity = Vector3::Zero;
+		}
 	}
-	else if (speedSq < KINDA_SMALL)
+	
+	if (IsAngularSpeedRestricted())
 	{
-		Velocity = Vector3::Zero;
-	}
-
-	// 각속도 제한
-	float angularSpeedSq = AngularVelocity.LengthSquared();
-	if (angularSpeedSq > MaxAngularSpeed * MaxAngularSpeed)
-	{
-		AngularVelocity = AngularVelocity.GetNormalized() * MaxAngularSpeed;
-	}
-	else if (angularSpeedSq < KINDA_SMALL)
-	{
-		AngularVelocity = Vector3::Zero;
+		// 각속도 제한
+		float angularSpeedSq = AngularVelocity.LengthSquared();
+		if (angularSpeedSq > MaxAngularSpeed * MaxAngularSpeed)
+		{
+			AngularVelocity = AngularVelocity.GetNormalized() * MaxAngularSpeed;
+		}
+		else if (angularSpeedSq < KINDA_SMALL)
+		{
+			AngularVelocity = Vector3::Zero;
+		}
 	}
 }

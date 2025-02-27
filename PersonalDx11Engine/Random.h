@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <chrono>
 #include <cstdint>
+#include "Math.h"
 
 /**
  * 프로젝트 전체에서 사용할 수 있는 랜덤 유틸리티 클래스
@@ -86,42 +87,62 @@ public:
         GetInstance().SetSeed(NewSeed);
     }
 
-    /**
-     * 정수형 범위에서 균일 분포의 랜덤값을 생성
-     *
-     * @param Min - 최소값 (포함)
-     * @param Max - 최대값 (포함)
-     * @return Min과 Max 사이의 랜덤 정수값
-     */
-    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-    static T RandI(T Min = 0, T Max = 1)
+    static float RandF(float Min = 0.0f, float Max = 1.0f)
     {
-        return GetInstance().GetInt<T>(Min, Max);
+        return GetInstance().GetFloat<float>(Min, Max);
     }
 
-    /**
-     * 실수형 범위에서 균일 분포의 랜덤값을 생성
-     *
-     * @param Min - 최소값 (포함)
-     * @param Max - 최대값 (미포함)
-     * @return Min과 Max 사이의 랜덤 실수값
-     */
-    template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
-    static T RandF(T Min = 0.0, T Max = 1.0)
+    static float RandNF(float Min = 0.0f, float Max = 1.0f)
     {
-        return GetInstance().GetFloat<T>(Min, Max);
+        return GetInstance().GetNomalFloat<float>(Min, Max);
     }
 
-    /**
-     * 정규 분포의 랜덤값을 생성
-     *
-     * @param Mean - 평균값
-     * @param StdDev - 표준 편차
-     * @return 정규 분포를 따르는 랜덤값
-     */
-    template <typename T = float, typename = std::enable_if_t<std::is_floating_point_v<T>>>
-    static T RandNF(T Mean = 0.0, T StdDev = 1.0)
+    static int RandI(int Min = 0, int Max = 1)
     {
-        return GetInstance().GetNomalFloat<T>(Mean, StdDev);
+        return GetInstance().GetInt<int>(Min, Max);
+    }
+
+    static Quaternion RandQuat()
+    {
+        // 구면 좌표에서 랜덤 포인트 생성
+        float u1 = RandF(0.0f, 1.0f);
+        float u2 = RandF(0.0f, 1.0f);
+        float u3 = RandF(0.0f, 1.0f);
+
+        // 균일 분포의 쿼터니언 생성
+        float sqrtOneMinusU1 = sqrt(1.0f - u1);
+        float sqrtU1 = sqrt(u1);
+        float twoPI_1 = 2.0f * PI * u2;
+        float twoPI_2 = 2.0f * PI * u3;
+
+        float x = sqrtOneMinusU1 * sin(twoPI_1);
+        float y = sqrtOneMinusU1 * cos(twoPI_1);
+        float z = sqrtU1 * sin(twoPI_2);
+        float w = sqrtU1 * cos(twoPI_2);
+
+        return Quaternion(x, y, z, w);
+    }
+
+    static Vector3 RandUnitVector()
+    {
+        // 균일 분포의 랜덤 방향 벡터
+        float theta = RandF(0.0f, PI * 2.0f);
+        float phi = acos(RandF(-1.0f, 1.0f)); // 균일한 구면 분포를 위해 acos 사용
+
+        float sinPhi = sin(phi);
+        float x = sinPhi * cos(theta);
+        float y = sinPhi * sin(theta);
+        float z = cos(phi);
+
+        return Vector3(x, y, z);
+    }
+
+    static Vector3 RandVector(const Vector3& MinVec, const Vector3& MaxVec)
+    {
+        return Vector3(
+            RandF(MinVec.x, MaxVec.x),
+            RandF(MinVec.y, MaxVec.y),
+            RandF(MinVec.z, MaxVec.z)
+        );
     }
 };

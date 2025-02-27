@@ -62,15 +62,6 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Engine\Managers</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionDetector.cpp">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionResponseCalculator.cpp">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionEventDispatcher.cpp">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClCompile>
     <ClCompile Include="DynamicAABBTree.cpp">
       <Filter>Engine\DataStructure</Filter>
     </ClCompile>
@@ -85,6 +76,15 @@
     </ClCompile>
     <ClCompile Include="ElasticBodyManager.cpp">
       <Filter>Contents\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionDetector.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionEventDispatcher.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionResponseCalculator.cpp">
+      <Filter>Engine\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +160,9 @@
     <Filter Include="Contents\Managers">
       <UniqueIdentifier>{ea48cdc0-321a-4a02-ae35-1fa39caa3176}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Physics">
+      <UniqueIdentifier>{54ddae73-1854-40a2-8f83-9ad503b0471a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -227,23 +230,11 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionDefines.h">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="CollisionManager.h">
       <Filter>Engine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionDetector.h">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionResponseCalculator.h">
-      <Filter>Engine\Components\Collision</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionEventDispatcher.h">
-      <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
     <ClInclude Include="DynamicAABBTree.h">
       <Filter>Engine\DataStructure</Filter>
@@ -271,6 +262,19 @@
     </ClInclude>
     <ClInclude Include="ElasticBodyManager.h">
       <Filter>Contents\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Random.h" />
+    <ClInclude Include="CollisionDetector.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionEventDispatcher.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionResponseCalculator.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDefines.h">
+      <Filter>Engine\Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

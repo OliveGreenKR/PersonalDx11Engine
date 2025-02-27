@@ -50,7 +50,13 @@ public:
 	void SetCollisionShapeData(const FCollisionShapeData& InShape);
 	void SetHalfExtent(const Vector3&& InHalfExtent);
 
+	// 유효성 검사
 	virtual bool IsEffective() override;
+
+	//형태 지정
+	void SetShape(const ECollisionShapeType InShape);
+	void SetShapeSphere();
+	void SetShapeBox();
 	
 public:
 	bool bDestroyed : 1;

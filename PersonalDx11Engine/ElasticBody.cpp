@@ -3,6 +3,7 @@
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
+#include "Model.h"
 
 #pragma region Getter Setter
 const Vector3& UElasticBody::GetVelocity() const {
@@ -105,23 +106,31 @@ void UElasticBody::SetRestitution(float InRestitution) {
 	}
 }
 
-ECollisionShapeType UElasticBody::GetCollisionShape(EShape Shape)
+inline void UElasticBody::SetShape(EShape InShape)
 {
-	switch (Shape)
+	if (auto CollisionPtr = Collision.lock())
 	{
-		case EShape::Sphere:
+		CollisionPtr->SetShape(GetCollisionShape(InShape));
+	}
+
+	//TODO : 형태에 따른 모델 설정
+	switch (InShape)
+	{
+		case EShape::Box : 
 		{
-			return ECollisionShapeType::Sphere;
-			break;
-		}
-		case EShape::Box:
-		{
-			return ECollisionShapeType::Box;
 			break;
 		}
 	}
+}
 
-	return ECollisionShapeType::Sphere;
+inline void UElasticBody::SetShapeSphere()
+{
+	SetShape(EShape::Sphere);
+}
+
+inline void UElasticBody::SetShapeBox()
+{
+	SetShape(EShape::Box);
 }
 #pragma endregion
 
@@ -181,4 +190,26 @@ void UElasticBody::Reset()
 	// 위치 및 회전 초기화 
 	GetTransform()->SetPosition(Vector3::Zero);
 	GetTransform()->SetRotation(Quaternion::Identity);
+}
+
+ECollisionShapeType UElasticBody::GetCollisionShape(const EShape InShape) const
+{
+	switch (InShape)
+	{
+		case EShape::Box:
+		{
+			return ECollisionShapeType::Box;
+			break;
+		}
+		case EShape::Sphere:
+		{
+			return ECollisionShapeType::Sphere;
+			break;
+		}
+		default:
+		{
+			return ECollisionShapeType::Sphere;
+			break;
+		}
+	}
 }

@@ -87,6 +87,21 @@ bool UCollisionComponent::IsEffective()
 	return  result && !bDestroyed || GetCollisionEnabled();
 }
 
+void UCollisionComponent::SetShape(const ECollisionShapeType InShape)
+{
+	Shape.Type = InShape;
+}
+
+void UCollisionComponent::SetShapeSphere()
+{
+	Shape.Type = ECollisionShapeType::Sphere;
+}
+
+void UCollisionComponent::SetShapeBox()
+{
+	Shape.Type = ECollisionShapeType::Box;
+}
+
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
 {
 	bIsTransformDirty = true;

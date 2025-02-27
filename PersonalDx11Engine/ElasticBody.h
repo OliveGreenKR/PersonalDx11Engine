@@ -3,17 +3,18 @@
 #include "Color.h"
 #include "Model.h"
 #include <random>
-
 enum class ECollisionShapeType;
-
 
 class UElasticBody : public UGameObject
 {
+    friend class UElasticBodyManager;
+
 public:
     enum class EShape
     {
         Box,
-        Sphere
+        Sphere,
+        Count
     };
 
     UElasticBody();
@@ -57,22 +58,26 @@ public:
     void SetFrictionStatic(float InFriction);
     void SetRestitution(float InRestitution);
 
+    //충돌체 설정
+    inline void SetShape(EShape InShape);
+    inline void SetShapeSphere();
+    inline void SetShapeBox();
 
     // 활성화/비활성화
     void SetActive(bool bActive);
     bool IsActive() const { return bIsActive; }
 
-    // 외부 접근 방지를 위한 friend 선언
-    friend class UElasticBodyManager;
+private:
+    // 내부 유틸리티 메서드
+    enum class ECollisionShapeType GetCollisionShape(const EShape Shape) const;
 
 private:
     bool bIsActive = true;
     EShape Shape = EShape::Sphere;
 
+
     // 컴포넌트 참조
     std::weak_ptr<class URigidBodyComponent> Rigid;
     std::weak_ptr<class UCollisionComponent> Collision;
 
-    // 내부 유틸리티 메서드
-    ECollisionShapeType GetCollisionShape(EShape Shape);
 };
