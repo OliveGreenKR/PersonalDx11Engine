@@ -29,7 +29,7 @@ public:
 	void BeforeRender();
 	void EndRender();
 
-	void RenderModel(const UModel* InModel,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
+	void RenderModel(UModel* InModel,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
 
 	void RenderGameObject(UCamera* InCamera, const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
 	void RenderGameObject(UCamera* InCamera, const UGameObject* InObject,  UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);

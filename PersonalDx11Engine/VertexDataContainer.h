@@ -51,6 +51,29 @@ public:
     uint32_t GetIndexCount() const { return IndexCount; }
     uint32_t GetStride() const { return Format->GetStride(); }
 
+public:
+    ID3D11InputLayout* GetOrCreateInputLayout(ID3D11Device* device, const void* shaderBytecode, size_t bytecodeLength) const {
+        // 각 컨테이너 인스턴스는 동일한 정점 형식을 가지므로
+        // 해당 형식에 대한 입력 레이아웃만 필요함
+        static ID3D11InputLayout* cachedLayout = nullptr;
+        static bool initialized = false;
+
+        if (!initialized) {
+            HRESULT hr = device->CreateInputLayout(
+                Format->GetInputLayoutDesc(),
+                Format->GetInputLayoutElementCount(),
+                shaderBytecode,
+                bytecodeLength,
+                &cachedLayout
+            );
+
+            initialized = SUCCEEDED(hr);
+        }
+
+        return cachedLayout;
+    }
+
+public:
     // 입력 레이아웃 생성 지원
     HRESULT CreateInputLayout(ID3D11Device* device, const void* shaderBytecode,
                               size_t bytecodeLength, ID3D11InputLayout** inputLayout) const
@@ -63,6 +86,7 @@ public:
             inputLayout
         );
     }
+
 
 private:
     void CalculateHash() {

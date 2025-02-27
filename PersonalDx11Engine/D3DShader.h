@@ -69,6 +69,11 @@ public:
 	void BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& Data);
 	__forceinline const bool IsInitialized() const { return bIsInitialized; }
 
+	ID3D11InputLayout* GetInputLayout() const { return InputLayout;}
+
+	//쉐이더 바이트 코드 접근자
+	void GetShaderBytecode(const void** bytecode, size_t* length) const;
+
 public:
 	template<typename T>
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
@@ -81,6 +86,8 @@ private:
 
 	vector<ID3D11Buffer*> ConstantBuffers;
 	ID3D11SamplerState* SamplerState = nullptr;
+
+	ID3DBlob* VSByteCode = nullptr; // 컴파일된 버텍스 셰이더 바이트코드 저장
 
 	bool bIsInitialized = false;
 };

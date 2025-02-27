@@ -14,7 +14,9 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
+
 #include "Model.h"
+
 #include "D3DShader.h"
 #include "RscUtil.h"
 #include "GameObject.h"
@@ -96,10 +98,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
+
+
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);
 	Renderer->SetVSync(true);
+
+	//ModelBufferManager Init
+	UModelBufferManager::Get()->Initialize(Renderer->GetDevice());
 
 	//LoadTexture
 	auto TAbstract = make_shared<ID3D11ShaderResourceView*>();
@@ -118,6 +125,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	//Shader
 	auto Shader = make_unique<UShader>();
+	//D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
+	//{
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "NORMAL0", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "TEXCOORD0", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
 	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
 	{
 		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
@@ -159,9 +172,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceCounter(&lastTime);
 
 	//Model Data
-	auto TriModel = UModel::GetDefaultTriangle(Renderer->GetDevice());
-	auto CubeModel = UModel::GetDefaultCube(Renderer->GetDevice());
-	auto SphereModel = UModel::GetDefaultSphere(Renderer->GetDevice());
+	auto CubeModel = std::make_shared<UModel>();
+	CubeModel->InitializeAsCube();
+	auto SphereModel = std::make_shared<UModel>();
+	SphereModel->InitializeAsSphere();
 
 #pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);

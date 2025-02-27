@@ -1,112 +1,66 @@
 #pragma once
-#include "Math.h"
-#include "D3D.h"
-#include <type_traits>
-#include <memory>
-#include <unordered_map>
-#include <mutex>
+#include "VertexDataContainer.h"
+#include "ModelBufferManager.h"
 
-using namespace DirectX;
-
-struct VertexBufferInfo
-{
-	ID3D11Buffer* Buffer = nullptr;
-	UINT NumVertices = 0;
-	UINT Stride = 0;
-};
-
-/// <summary>
-/// load model and make VertexBuffer?
-/// </summary>
+// 개선된 모델 클래스
 class UModel
 {
 public:
+    UModel() = default;
+    ~UModel() = default;
 
-	struct FVertexData
-	{
-		XMFLOAT3 Position;
-		XMFLOAT2 TexCoord;    
-	};
+    // 다양한 초기화 옵션
+    template<typename T>
+    bool Initialize(const T* vertices, uint32_t count, const TVertexFormat<T>& format);
 
-	struct FVertexSimple 
-	{
-		XMFLOAT3 Position;    // Position
-		XMFLOAT4 Color;       // Color
-	};
+    // 인덱스 버퍼 포함 초기화
+    template<typename T>
+    bool Initialize(const T* vertices, uint32_t vertexCount,
+                    const uint32_t* indices, uint32_t indexCount,
+                    const TVertexFormat<T>& format);
 
-private:
-	// 버퍼의 고유 식별자 생성
-	static size_t GenerateBufferHash(const void* vertices, size_t vertexCount, size_t stride) {
-		return std::hash<const void*>{}(vertices) ^
-			std::hash<size_t>{}(vertexCount) ^
-			std::hash<size_t>{}(stride);
-	}
+    // 미리 정의된 형상으로 초기화
+    bool InitializeAsCube();
+    bool InitializeAsSphere();
+    bool InitializeAsPlane();
 
-public:
-	UModel() = default;
-	~UModel();
+    // 정보 접근
+    FBufferResource* GetBufferResource();
 
-	void Release();
-
-public:
-
-	const static UModel GetSimpleTriangle(ID3D11Device* InDevice);
-	static std::shared_ptr<UModel> GetDefaultTriangle(ID3D11Device* InDevice);
-	static std::shared_ptr<UModel> GetDefaultCube(ID3D11Device* InDevice);
-	static std::shared_ptr<UModel> GetDefaultSphere(ID3D11Device* InDevice);
-
-
-
-public:
-	template<typename T>
-	const bool Initialize(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices);
-	
-	__forceinline const VertexBufferInfo GetVertexBufferInfo() const { return VertexBufferInfo; }
-	__forceinline const bool IsIntialized() const { return bIsInitialized; }
+    bool IsInitialized() const { return bIsInitialized; }
+    size_t GetDataHash() const { return DataHash; }
 
 private:
-	template<typename T>
-	const bool CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices);
-
-private:
-	bool bIsInitialized = false;
-	VertexBufferInfo VertexBufferInfo;
+    size_t DataHash = 0;
+    bool bIsInitialized = false;
 };
 
-
-/// <summary>
-/// T : must be  the base of 'UModel::FVertexData'
-/// </summary>
 template<typename T>
-inline const bool UModel::Initialize(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices)
-{
-	bool result  = CreateVertexBuffer(InDevice, InVertices, InNumVertices);
-	return bIsInitialized = result;
+bool UModel::Initialize(const T* vertices, uint32_t count, const TVertexFormat<T>& format) {
+    auto vertexData = std::make_unique<FVertexDataContainer>(vertices, count, format);
+    auto manager = UModelBufferManager::Get();
+
+    DataHash = manager->RegisterVertexData(std::move(vertexData));
+    bIsInitialized = (DataHash != 0);
+
+    return bIsInitialized;
 }
 
 template<typename T>
-inline const bool UModel::CreateVertexBuffer(ID3D11Device* InDevice, const T* InVertices, const size_t InNumVertices)
-{
-	if (!InDevice || !InVertices || InNumVertices == 0)
-	{
-		return false;
-	}
+bool UModel::Initialize(const T* vertices, uint32_t vertexCount,
+                        const uint32_t* indices, uint32_t indexCount,
+                        const TVertexFormat<T>& format) {
+    auto vertexData = std::make_unique<FVertexDataContainer>(
+        vertices, vertexCount, sizeof(T),
+        indices, indexCount,
+        format.Clone()
+    );
 
-	D3D11_BUFFER_DESC BufferDesc = {};
-	BufferDesc.ByteWidth = static_cast<UINT>(InNumVertices * sizeof(T));
-	BufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	BufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    auto manager = UModelBufferManager::Get();
+    DataHash = manager->RegisterVertexData(std::move(vertexData));
+    bIsInitialized = (DataHash != 0);
 
-	//Buffer SubResource
-	D3D11_SUBRESOURCE_DATA BufferSRD = {};
-	BufferSRD.pSysMem = InVertices;
-
-	//create buffer
-	HRESULT result = InDevice->CreateBuffer(&BufferDesc, &BufferSRD, &VertexBufferInfo.Buffer);
-	if (FAILED(result))
-		return false;
-
-	VertexBufferInfo.Stride = sizeof(T);
-	VertexBufferInfo.NumVertices = InNumVertices;
-	return true;
+    return bIsInitialized;
 }
+
+

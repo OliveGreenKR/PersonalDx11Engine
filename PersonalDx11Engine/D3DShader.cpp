@@ -70,7 +70,9 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 		Reflector->Release();
 	}
 
-	VSBlob->Release();
+	//VSBlob->Release();
+	// VSBlob 저장
+	VSByteCode = VSBlob;
 	PSBlob->Release();
 }
 
@@ -80,6 +82,12 @@ void UShader::Release()
 	{
 		SamplerState->Release();
 		SamplerState = nullptr;
+	}
+
+	if (VSByteCode)
+	{
+		VSByteCode->Release();
+		VSByteCode = nullptr;
 	}
 
 	for (ID3D11Buffer* Buffer : ConstantBuffers)
@@ -150,6 +158,19 @@ void UShader::BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& 
 void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& BufferData)
 {
 	UpdateConstantBuffer<FDebugBufferData>(DeviceContext, BufferData, EBufferSlot::DebugColor);
+}
+
+void UShader::GetShaderBytecode(const void** bytecode, size_t* length) const
+{
+	// 컴파일된 셰이더 바이트코드 저장 필요
+		if (VSByteCode) {
+			*bytecode = VSByteCode->GetBufferPointer();
+			*length = VSByteCode->GetBufferSize();
+		}
+		else {
+			*bytecode = nullptr;
+			*length = 0;
+		}
 }
 
 void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)

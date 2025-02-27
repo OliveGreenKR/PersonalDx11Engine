@@ -128,7 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActorComponent.cpp" />
-    <ClCompile Include="BaseModel.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
@@ -155,9 +154,9 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="NewModel.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ModelBufferManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
@@ -191,7 +190,6 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ModelBufferManager.h" />
-    <ClInclude Include="NewModel.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RigidBodyComponent.h" />

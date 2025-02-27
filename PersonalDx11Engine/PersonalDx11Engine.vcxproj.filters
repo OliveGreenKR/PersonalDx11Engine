@@ -29,9 +29,6 @@
     <ClCompile Include="D3D.cpp">
       <Filter>D3D</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>Engine\Model</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Engine\GameObject\Camera</Filter>
     </ClCompile>
@@ -46,9 +43,6 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Engine\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseModel.cpp">
-      <Filter>Engine\Model</Filter>
     </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>Engine\Input</Filter>
@@ -86,9 +80,10 @@
     <ClCompile Include="CollisionResponseCalculator.cpp">
       <Filter>Engine\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="NewModel.cpp">
+    <ClCompile Include="Model.cpp">
       <Filter>Engine\Model</Filter>
     </ClCompile>
+    <ClCompile Include="ModelBufferManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -296,9 +291,6 @@
     </ClInclude>
     <ClInclude Include="ModelBufferManager.h">
       <Filter>Engine\Managers</Filter>
-    </ClInclude>
-    <ClInclude Include="NewModel.h">
-      <Filter>Engine\Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

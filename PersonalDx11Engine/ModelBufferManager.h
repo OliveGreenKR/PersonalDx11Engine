@@ -15,8 +15,6 @@ public:
     }
 
     void Initialize(ID3D11Device* device, uint32_t maxBuffers = 1024) {
-        std::lock_guard<std::mutex> lock(Mutex);
-
         Device = device;
         MaxBuffers = maxBuffers;
 
@@ -63,7 +61,7 @@ public:
     }
 
     // 키로 버퍼 접근
-    const FBufferResource* GetBufferByHash(size_t hash) {
+    FBufferResource* GetBufferByHash(size_t hash) {
         std::lock_guard<std::mutex> lock(Mutex);
 
         auto it = BufferCache.find(hash);
@@ -76,6 +74,8 @@ public:
 
         return &it->second;
     }
+
+    const FVertexDataContainer* GetVertexDataByHash(size_t hash);
 
     // 미리 정의된 메쉬 접근
     size_t GetCubeHash() const { return PredefinedMeshes.count("Cube") ? PredefinedMeshes.at("Cube") : 0; }

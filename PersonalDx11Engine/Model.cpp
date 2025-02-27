@@ -1,28 +1,28 @@
 #include "Model.h"
+#include "D3DShader.h"
 
-UModel::~UModel()
-{
-	Release();
+bool UModel::InitializeAsCube() {
+    auto manager = UModelBufferManager::Get();
+    DataHash = manager->GetCubeHash();
+    bIsInitialized = (DataHash != 0);
+    return bIsInitialized;
 }
 
-const UModel UModel::GetSimpleTriangle(ID3D11Device* InDevice)
-{
-	const static FVertexSimple triangle_vertices[] = {
-	{ {  0.0f,  1.0f, 0.0f }, {  1.0f, 0.0f, 0.0f, 1.0f } }, // Top vertex (red)
-	{ {  1.0f, -1.0f, 0.0f }, {  0.0f, 1.0f, 0.0f, 1.0f } }, // Bottom-right vertex (green)
-	{ { -1.0f, -1.0f, 0.0f }, {  0.0f, 0.0f, 1.0f, 1.0f } }  // Bottom-left vertex (blue)
-	};
-	UModel model;
-	model.Initialize<FVertexSimple>(InDevice, triangle_vertices, 3);
-	return model;
+bool UModel::InitializeAsSphere() {
+    auto manager = UModelBufferManager::Get();
+    DataHash = manager->GetSphereHash();
+    bIsInitialized = (DataHash != 0);
+    return bIsInitialized;
 }
 
-void UModel::Release()
-{
-	if (VertexBufferInfo.Buffer)
-	{
-		VertexBufferInfo.Buffer->Release();
-	}
+bool UModel::InitializeAsPlane() {
+    auto manager = UModelBufferManager::Get();
+    DataHash = manager->GetPlaneHash();
+    bIsInitialized = (DataHash != 0);
+    return bIsInitialized;
 }
 
-
+FBufferResource* UModel::GetBufferResource() {
+    if (!bIsInitialized) return nullptr;
+    return UModelBufferManager::Get()->GetBufferByHash(DataHash);
+}
