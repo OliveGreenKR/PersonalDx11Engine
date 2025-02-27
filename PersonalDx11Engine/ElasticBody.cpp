@@ -106,7 +106,7 @@ void UElasticBody::SetRestitution(float InRestitution) {
 	}
 }
 
-inline void UElasticBody::SetShape(EShape InShape)
+void UElasticBody::SetShape(EShape InShape)
 {
 	if (auto CollisionPtr = Collision.lock())
 	{
@@ -123,12 +123,12 @@ inline void UElasticBody::SetShape(EShape InShape)
 	}
 }
 
-inline void UElasticBody::SetShapeSphere()
+void UElasticBody::SetShapeSphere()
 {
 	SetShape(EShape::Sphere);
 }
 
-inline void UElasticBody::SetShapeBox()
+void UElasticBody::SetShapeBox()
 {
 	SetShape(EShape::Box);
 }

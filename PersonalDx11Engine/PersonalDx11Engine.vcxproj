@@ -139,8 +139,12 @@
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="DebugDrawManager.cpp" />
     <ClCompile Include="DynamicAABBTree.cpp" />
-    <ClCompile Include="ElasticBody.cpp" />
-    <ClCompile Include="ElasticBodyManager.cpp" />
+    <ClCompile Include="ElasticBody.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ElasticBodyManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -153,12 +157,14 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="NewModel.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorComponent.h" />
+    <ClInclude Include="BufferResource.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetector.h" />
@@ -173,13 +179,19 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
-    <ClInclude Include="ElasticBody.h" />
-    <ClInclude Include="ElasticBodyManager.h" />
+    <ClInclude Include="ElasticBody.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ElasticBodyManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="ModelBufferManager.h" />
+    <ClInclude Include="NewModel.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RigidBodyComponent.h" />
@@ -197,6 +209,8 @@
     <ClInclude Include="SceneCompoent.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="VertexDataContainer.h" />
+    <ClInclude Include="VertexFormat.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

@@ -59,9 +59,9 @@ public:
     void SetRestitution(float InRestitution);
 
     //충돌체 설정
-    inline void SetShape(EShape InShape);
-    inline void SetShapeSphere();
-    inline void SetShapeBox();
+    void SetShape(EShape InShape);
+    void SetShapeSphere();
+    void SetShapeBox();
 
     // 활성화/비활성화
     void SetActive(bool bActive);

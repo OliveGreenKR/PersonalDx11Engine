@@ -222,3 +222,18 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 	PooledBodies.push_back(Body);
 }
 
+
+
+//toto imple
+void UElasticBodyManager::SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Body)
+{
+}
+
+void UElasticBodyManager::LimitActiveObjectCount(size_t Count)
+{
+}
+void UElasticBodyManager::UpdateActiveBodies(float DeltaTime)
+{
+}
+
+

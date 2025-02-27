@@ -70,7 +70,7 @@ private:
     T GetNomalFloat(T Mean = 0.0, T StdDev = 1.0)
     {
         static std::normal_distribution<T> Distribution;
-        Distribution.param(typename std::normal_distribution<T>::param_type(Min, Max));
+        Distribution.param(typename std::normal_distribution<T>::param_type(Mean, StdDev));
         return Distribution(Generator);
     }
 

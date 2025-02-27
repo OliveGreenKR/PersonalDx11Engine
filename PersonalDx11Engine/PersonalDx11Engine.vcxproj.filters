@@ -86,6 +86,9 @@
     <ClCompile Include="CollisionResponseCalculator.cpp">
       <Filter>Engine\Physics</Filter>
     </ClCompile>
+    <ClCompile Include="NewModel.cpp">
+      <Filter>Engine\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -162,6 +165,12 @@
     </Filter>
     <Filter Include="Engine\Physics">
       <UniqueIdentifier>{54ddae73-1854-40a2-8f83-9ad503b0471a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Model\Vertex">
+      <UniqueIdentifier>{9ce88f28-62b5-4c33-8d44-9b50a670ef8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D\Buffer">
+      <UniqueIdentifier>{4c3ccda6-25fe-4d99-9400-97d9cebbabe6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +284,21 @@
     </ClInclude>
     <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexFormat.h">
+      <Filter>Engine\Model\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexDataContainer.h">
+      <Filter>Engine\Model\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferResource.h">
+      <Filter>D3D\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelBufferManager.h">
+      <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="NewModel.h">
+      <Filter>Engine\Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
