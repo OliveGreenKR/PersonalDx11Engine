@@ -1,7 +1,10 @@
 #pragma once
 #include "D3D.h"
 
-// GPU 버퍼 자원 관리 클래스
+/// <summary>
+/// GPU Buffer 관리 클래스
+/// 
+/// </summary>
 class FBufferResource
 {
 public:

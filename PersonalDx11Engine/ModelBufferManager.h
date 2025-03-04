@@ -91,12 +91,16 @@ private:
     // 해시 계산 헬퍼 메서드
     size_t CalculateHash(const FVertexDataContainer& InVertexData) const;
 
+    //LRU 비교 함수 (Is A more Recently used than B)
+    bool IsMoreRecentlyUsed(size_t tickA, size_t tickB);
+
     // 버퍼 풀 관리 메서드
     bool AddBufferToPool(size_t InHash, const FVertexDataContainer& InVertexData);
     void ReplaceBufferInPool();
 
     // 멤버 변수
     ID3D11Device* Device = nullptr;
+    //클수록 최근에 사용된것
     size_t CurrentTick = 0;
 
     // 기본 프리미티브 모델 해시

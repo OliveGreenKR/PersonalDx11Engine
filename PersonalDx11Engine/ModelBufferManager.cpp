@@ -302,6 +302,11 @@ size_t UModelBufferManager::CalculateHash(const FVertexDataContainer& InVertexDa
     return hash;
 }
 
+bool UModelBufferManager::IsMoreRecentlyUsed(size_t tickA, size_t tickB)
+{
+    return (tickA - tickB) < (size_t(-1) / 2);
+}
+
 size_t UModelBufferManager::RegisterVertexData(const FVertexDataContainer& InVertexData)
 {
     // 해시 계산
@@ -385,7 +390,7 @@ void UModelBufferManager::ReplaceBufferInPool()
             continue;
         }
 
-        if (pair.second->GetLastAccessTick() < oldestTick)
+        if (!IsMoreRecentlyUsed(pair.second->GetLastAccessTick(), oldestTick))
         {
             oldestTick = pair.second->GetLastAccessTick();
             lruHash = pair.first;
