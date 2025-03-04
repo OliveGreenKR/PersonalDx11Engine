@@ -1,66 +1,35 @@
 #pragma once
-#include "VertexDataContainer.h"
 #include "ModelBufferManager.h"
 
-// 개선된 모델 클래스
 class UModel
 {
 public:
     UModel() = default;
     ~UModel() = default;
 
-    // 다양한 초기화 옵션
-    template<typename T>
-    bool Initialize(const T* vertices, uint32_t count, const TVertexFormat<T>& format);
-
-    // 인덱스 버퍼 포함 초기화
-    template<typename T>
-    bool Initialize(const T* vertices, uint32_t vertexCount,
-                    const uint32_t* indices, uint32_t indexCount,
-                    const TVertexFormat<T>& format);
-
-    // 미리 정의된 형상으로 초기화
+    // 기본 프리미티브 모델 초기화 메서드
     bool InitializeAsCube();
     bool InitializeAsSphere();
     bool InitializeAsPlane();
 
-    // 정보 접근
+    // 커스텀 정점 데이터로 초기화하는 메서드
+    bool InitializeFromVertexData(const FVertexDataContainer& InVertexData)
+    {
+        if (InVertexData.Vertices.empty())
+            return false;
+
+        DataHash = UModelBufferManager::Get()->RegisterVertexData(InVertexData);
+        bIsInitialized = (DataHash != 0);
+        return bIsInitialized;
+    }
+
+    // 버퍼 리소스 접근자
     FBufferResource* GetBufferResource();
 
+    // 초기화 여부 확인
     bool IsInitialized() const { return bIsInitialized; }
-    size_t GetDataHash() const { return DataHash; }
 
 private:
-    size_t DataHash = 0;
-    bool bIsInitialized = false;
+    size_t DataHash = 0;           // 정점 데이터의 해시 (모델 식별자)
+    bool bIsInitialized = false;   // 초기화 여부 플래그
 };
-
-template<typename T>
-bool UModel::Initialize(const T* vertices, uint32_t count, const TVertexFormat<T>& format) {
-    auto vertexData = std::make_unique<FVertexDataContainer>(vertices, count, format);
-    auto manager = UModelBufferManager::Get();
-
-    DataHash = manager->RegisterVertexData(std::move(vertexData));
-    bIsInitialized = (DataHash != 0);
-
-    return bIsInitialized;
-}
-
-template<typename T>
-bool UModel::Initialize(const T* vertices, uint32_t vertexCount,
-                        const uint32_t* indices, uint32_t indexCount,
-                        const TVertexFormat<T>& format) {
-    auto vertexData = std::make_unique<FVertexDataContainer>(
-        vertices, vertexCount, sizeof(T),
-        indices, indexCount,
-        format.Clone()
-    );
-
-    auto manager = UModelBufferManager::Get();
-    DataHash = manager->RegisterVertexData(std::move(vertexData));
-    bIsInitialized = (DataHash != 0);
-
-    return bIsInitialized;
-}
-
-

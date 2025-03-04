@@ -1,196 +1,116 @@
 #pragma once
-#include "BufferResource.h"
-#include <set>
-#include <mutex>
-#include <unordered_map>
+#include "D3D.h"
 #include "VertexDataContainer.h"
+#include <unordered_map>
+#include <memory>
+#include <vector>
+#include <string>
 
-// 버퍼 매니저 (확장된 버전)
+// 버퍼 리소스 클래스 (정점 버퍼와 인덱스 버퍼를 함께 관리)
+class FBufferResource
+{
+public:
+    FBufferResource() = default;
+    ~FBufferResource();
+
+    // 버퍼 초기화 메서드
+    bool Initialize(ID3D11Device* InDevice, const FVertexDataContainer& InVertexData);
+    void Release();
+
+    // 게터 메서드
+    ID3D11Buffer* GetVertexBuffer() const { return VertexBuffer; }
+    ID3D11Buffer* GetIndexBuffer() const { return IndexBuffer; }
+    UINT GetVertexCount() const { return VertexCount; }
+    UINT GetIndexCount() const { return IndexCount; }
+    UINT GetStride() const { return Stride; }
+    UINT GetOffset() const { return Offset; }
+    size_t GetLastAccessTick() const { return LastAccessTick; }
+
+    // 마지막 접근 시간 업데이트
+    void UpdateAccessTick(size_t InTick) { LastAccessTick = InTick; }
+
+private:
+    ID3D11Buffer* VertexBuffer = nullptr;
+    ID3D11Buffer* IndexBuffer = nullptr;
+    UINT VertexCount = 0;
+    UINT IndexCount = 0;
+    UINT Stride = 0;
+    UINT Offset = 0;
+    size_t LastAccessTick = 0; // LRU 알고리즘에 사용될 마지막 접근 시간
+};
+
+// 모델 버퍼 매니저 클래스 (싱글톤 패턴)
 class UModelBufferManager
 {
 public:
-    static UModelBufferManager* Get() {
-        static UModelBufferManager instance;
-        return &instance;
-    }
-
-    void Initialize(ID3D11Device* device, uint32_t maxBuffers = 1024) {
-        Device = device;
-        MaxBuffers = maxBuffers;
-
-        // 미리 정의된 메쉬 초기화
-        InitializePredefinedMeshes();
-    }
-
-    void Release() {
-        std::lock_guard<std::mutex> lock(Mutex);
-
-        for (auto& pair : BufferCache) {
-            pair.second.Release();
+    // 싱글톤 인스턴스 접근자
+    static UModelBufferManager* Get()
+    {
+        // 싱글톤 인스턴스
+        static UModelBufferManager* Instance = new UModelBufferManager();
+        if (!Instance->bInitialized)
+        {
+            Instance->Initialize();
         }
-
-        BufferCache.clear();
-        VertexDataCache.clear();
-        LRUList.clear();
-        LastUsedTime.clear();
-
-        PredefinedMeshes.clear();
-        Device = nullptr;
+        return Instance;
     }
 
-    // 정점 데이터 등록
-    size_t RegisterVertexData(std::unique_ptr<FVertexDataContainer> vertexData) {
-        std::lock_guard<std::mutex> lock(Mutex);
+    // 디바이스 설정
+    void SetDevice(ID3D11Device* InDevice) { Device = InDevice; }
 
-        if (!vertexData) return 0;
+    // 기본 프리미티브 모델 해시 접근자
+    size_t GetCubeHash() const { return CubeModelHash; }
+    size_t GetSphereHash() const { return SphereModelHash; }
+    size_t GetPlaneHash() const { return PlaneModelHash; }
 
-        size_t hash = vertexData->GetHash();
+    // 초기화 및 해제
+    bool Initialize();
+    void Release();
 
-        // 이미 등록된 데이터인지 확인
-        if (VertexDataCache.find(hash) != VertexDataCache.end()) {
-            return hash;
-        }
+    // 버퍼 리소스 접근자
+    FBufferResource* GetBufferByHash(size_t InHash);
 
-        // 새 데이터 등록
-        VertexDataCache[hash] = std::move(vertexData);
+    // 정점 데이터로부터 해시 생성 또는 접근
+    size_t RegisterVertexData(const FVertexDataContainer& InVertexData);
 
-        // 버퍼 생성
-        CreateBufferForData(hash);
-
-        return hash;
-    }
-
-    // 키로 버퍼 접근
-    FBufferResource* GetBufferByHash(size_t hash) {
-        std::lock_guard<std::mutex> lock(Mutex);
-
-        auto it = BufferCache.find(hash);
-        if (it == BufferCache.end()) {
-            return nullptr;
-        }
-
-        // LRU 업데이트
-        UpdateLRUCache(hash);
-
-        return &it->second;
-    }
-
-    const FVertexDataContainer* GetVertexDataByHash(size_t hash);
-
-    // 미리 정의된 메쉬 접근
-    size_t GetCubeHash() const { return PredefinedMeshes.count("Cube") ? PredefinedMeshes.at("Cube") : 0; }
-    size_t GetSphereHash() const { return PredefinedMeshes.count("Sphere") ? PredefinedMeshes.at("Sphere") : 0; }
-    size_t GetPlaneHash() const { return PredefinedMeshes.count("Plane") ? PredefinedMeshes.at("Plane") : 0; }
+    // 해시로부터 정점 데이터 접근
+    const FVertexDataContainer* GetVertexDataByHash(size_t InHash) const;
 
 private:
     UModelBufferManager() = default;
-    ~UModelBufferManager() { Release(); }
+    ~UModelBufferManager();
 
-    // 미리 정의된 메쉬 초기화
-    void InitializePredefinedMeshes() {
-        // 큐브 메쉬
-        auto cubeData = CreateCubeMesh();
-        size_t cubeHash = RegisterVertexData(std::move(cubeData));
-        PredefinedMeshes["Cube"] = cubeHash;
+    bool bInitialized = false;
 
-        // 구 메쉬
-        auto sphereData = CreateSphereMesh(32, 32);
-        size_t sphereHash = RegisterVertexData(std::move(sphereData));
-        PredefinedMeshes["Sphere"] = sphereHash;
+    // 기본 프리미티브 모델 생성 메서드
+    void CreateDefaultPrimitives();
+    FVertexDataContainer CreateCubeVertexData();
+    FVertexDataContainer CreateSphereVertexData(int InSegments = 32);
+    FVertexDataContainer CreatePlaneVertexData();
 
-        // 평면 메쉬
-        auto planeData = CreatePlaneMesh();
-        size_t planeHash = RegisterVertexData(std::move(planeData));
-        PredefinedMeshes["Plane"] = planeHash;
-    }
+    // 해시 계산 헬퍼 메서드
+    size_t CalculateHash(const FVertexDataContainer& InVertexData) const;
 
-    // 버퍼 생성 로직
-    bool CreateBufferForData(size_t hash) {
-        if (!Device) return false;
+    // 버퍼 풀 관리 메서드
+    bool AddBufferToPool(size_t InHash, const FVertexDataContainer& InVertexData);
+    void ReplaceBufferInPool();
 
-        auto it = VertexDataCache.find(hash);
-        if (it == VertexDataCache.end()) return false;
-
-        const FVertexDataContainer* data = it->second.get();
-
-        // 버퍼 캐시가 최대 용량에 도달했는지 확인
-        if (BufferCache.size() >= MaxBuffers) {
-            // LRU 버퍼 찾아서 교체
-            size_t lruHash = FindLRUBufferToReplace();
-            if (lruHash != 0 && lruHash != hash) {
-                BufferCache.erase(lruHash);
-            }
-        }
-
-        // 새 버퍼 생성
-        FBufferResource bufferResource;
-        bufferResource.CreateVertexBuffer(
-            Device,
-            data->GetVertexData(),
-            data->GetVertexCount() * data->GetStride()
-        );
-
-        // 인덱스가 있으면 인덱스 버퍼도 생성
-        if (data->GetIndexCount() > 0 && data->GetIndexData()) {
-            bufferResource.CreateIndexBuffer(
-                Device,
-                data->GetIndexData(),
-                data->GetIndexCount()
-            );
-        }
-
-        // 캐시에 추가
-        BufferCache[hash] = std::move(bufferResource);
-        UpdateLRUCache(hash);
-
-        return true;
-    }
-
-    // LRU 캐시 업데이트
-    void UpdateLRUCache(size_t hash) {
-        // 현재 시간 기록
-        LastUsedTime[hash] = std::time(nullptr);
-
-        // LRU 리스트에서 제거 후 앞에 추가
-        auto it = std::find(LRUList.begin(), LRUList.end(), hash);
-        if (it != LRUList.end()) {
-            LRUList.erase(it);
-        }
-        LRUList.push_front(hash);
-    }
-
-    // LRU 버퍼 찾기
-    size_t FindLRUBufferToReplace() {
-        // 미리 정의된 메쉬는 교체하지 않음
-        std::set<size_t> predefinedHashes;
-        for (const auto& pair : PredefinedMeshes) {
-            predefinedHashes.insert(pair.second);
-        }
-
-        // LRU 리스트에서 미리 정의되지 않은 가장 오래된 버퍼 찾기
-        for (auto it = LRUList.rbegin(); it != LRUList.rend(); ++it) {
-            if (predefinedHashes.find(*it) == predefinedHashes.end()) {
-                return *it;
-            }
-        }
-
-        return 0; // 대체할 버퍼 없음
-    }
-
-    // 미리 정의된 메쉬 생성 함수들
-    std::unique_ptr<FVertexDataContainer> CreateCubeMesh();
-    std::unique_ptr<FVertexDataContainer> CreateSphereMesh(uint32_t slices, uint32_t stacks);
-    std::unique_ptr<FVertexDataContainer> CreatePlaneMesh();
-
-private:
+    // 멤버 변수
     ID3D11Device* Device = nullptr;
-    uint32_t MaxBuffers = 1024;
+    size_t CurrentTick = 0;
 
-    std::unordered_map<size_t, std::unique_ptr<FVertexDataContainer>> VertexDataCache;
-    std::unordered_map<size_t, FBufferResource> BufferCache;
-    std::unordered_map<size_t, std::time_t> LastUsedTime;
-    std::unordered_map<std::string, size_t> PredefinedMeshes;
-    std::list<size_t> LRUList;
+    // 기본 프리미티브 모델 해시
+    size_t CubeModelHash = 0;
+    size_t SphereModelHash = 0;
+    size_t PlaneModelHash = 0;
 
-    std::mutex Mutex;
+    // 풀 관리 상수
+    const size_t MAX_BUFFER_POOL_SIZE = 100;
+
+    // 정점 데이터 컨테이너 및 버퍼 풀 맵
+    std::unordered_map<size_t, FVertexDataContainer> VertexDataMap;
+    std::unordered_map<size_t, std::unique_ptr<FBufferResource>> BufferPool;
+
+    // 기본 모델 플래그 (기본 모델은 LRU에서 제외)
+    std::unordered_map<size_t, bool> DefaultModelFlags;
 };

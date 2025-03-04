@@ -35,18 +35,14 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 	if (!InModel || !InModel->IsInitialized()|| !InShader)
 		return;
 
-	//정점 정보
-	const FVertexDataContainer* vertexData = UModelBufferManager::Get()->GetVertexDataByHash(InModel->GetDataHash());
-	
-	//모델 정점  입력 레이아웃 쉐이더 설정
-	ID3D11InputLayout** outLayout;
-	const void* shaderBytecode;
-	size_t bytecodeLength;
-	InShader->GetShaderBytecode(&shaderBytecode, &bytecodeLength);
-	vertexData->GetOrCreateInputLayout(GetDevice(), shaderBytecode, bytecodeLength);
+	////모델 정점  입력 레이아웃 쉐이더 설정
+	//ID3D11InputLayout** outLayout;
+	//const void* shaderBytecode;
+	//size_t bytecodeLength;
+	//InShader->GetShaderBytecode(&shaderBytecode, &bytecodeLength);
 
 	// 버퍼 매니저에서 해당 모델의 버퍼 리소스 가져오기
-	const FBufferResource* bufferResource = UModelBufferManager::Get()->GetBufferByHash(InModel->GetDataHash());
+	FBufferResource* bufferResource = InModel->GetBufferResource();
 	if (!bufferResource || !bufferResource->GetVertexBuffer())
 		return;
 
@@ -58,8 +54,8 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 		return;
 	}
 
-	UINT stride = vertexData->GetStride();
-	UINT offset = 0;
+	UINT stride = bufferResource->GetStride();
+	UINT offset = bufferResource->GetOffset();
 
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
@@ -68,18 +64,19 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 	GetDeviceContext()->PSSetSamplers(0, 1, &samplerState);
 
 	// 인덱스 버퍼가 있는 경우 인덱스 버퍼 설정 및 DrawIndexed 호출
-	if (bufferResource->HasIndexBuffer()) {
+	if (auto indexBuffer = bufferResource->GetIndexBuffer()) {
 		GetDeviceContext()->IASetIndexBuffer(
-			bufferResource->GetIndexBuffer(),
+			indexBuffer,
 			DXGI_FORMAT_R32_UINT,
 			0
 		);
-		GetDeviceContext()->DrawIndexed(vertexData->GetIndexCount(), 0, 0);
+		GetDeviceContext()->DrawIndexed(bufferResource->GetIndexCount(), 0, 0);
 	}
 	// 인덱스 버퍼가 없는 경우 일반 Draw 호출
 	else {
-		GetDeviceContext()->Draw(vertexData->GetVertexCount(), 0);
+		GetDeviceContext()->Draw(bufferResource->GetVertexCount(), 0);
 	}
+	
 }
 
 void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)

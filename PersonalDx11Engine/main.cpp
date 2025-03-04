@@ -106,7 +106,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer->SetVSync(true);
 
 	//ModelBufferManager Init
-	UModelBufferManager::Get()->Initialize(Renderer->GetDevice());
+	UModelBufferManager::Get()->SetDevice(Renderer->GetDevice());
+	assert(UModelBufferManager::Get()->Initialize());
 
 	//LoadTexture
 	auto TAbstract = make_shared<ID3D11ShaderResourceView*>();
@@ -125,12 +126,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	//Shader
 	auto Shader = make_unique<UShader>();
-	//D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "NORMAL0", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD0", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
 	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
 	{
 		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
@@ -241,11 +236,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//Border
 	const float XBorder = 3.0f;
-	const float YBorder = 3.0f;
+	const float YBorder = 2.0f;
 	const float ZBorder = 5.0f;
 #pragma region Border Restitution Trigger 
-
-
 	auto IsInBorder = [XBorder, YBorder, ZBorder](const Vector3& Position)
 		{
 			return  std::abs(Position.x) < XBorder &&
@@ -334,8 +327,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 															   "BorderCheck");
 
 #pragma endregion
-
-
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
