@@ -27,10 +27,6 @@
 
 #include "CollisionComponent.h"
 #include "CollisionManager.h"
-//#include "CollisionDetector.h"
-//#include "CollisionResponseCalculator.h"
-//#include "CollisionEventDispatcher.h"
-
 
 #define KEY_UP 'W'
 #define KEY_DOWN 'S'

@@ -35,12 +35,6 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 	if (!InModel || !InModel->IsInitialized()|| !InShader)
 		return;
 
-	////모델 정점  입력 레이아웃 쉐이더 설정
-	//ID3D11InputLayout** outLayout;
-	//const void* shaderBytecode;
-	//size_t bytecodeLength;
-	//InShader->GetShaderBytecode(&shaderBytecode, &bytecodeLength);
-
 	// 버퍼 매니저에서 해당 모델의 버퍼 리소스 가져오기
 	FBufferResource* bufferResource = InModel->GetBufferResource();
 	if (!bufferResource || !bufferResource->GetVertexBuffer())

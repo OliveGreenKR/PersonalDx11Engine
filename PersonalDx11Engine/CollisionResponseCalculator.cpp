@@ -50,7 +50,6 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     FConstraintSolverCache ConstraintCache = PrepareConstraintCache(DetectionResult, ParameterA, ParameterB);
 
     //수직 충격량
-    float NormalLamda;
     XMVECTOR vNormalImpulse = SolveNormalConstraint(DetectionResult, ConstraintCache, Accumulation);
 
     //마찰 충격량
