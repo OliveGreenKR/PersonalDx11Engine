@@ -1,6 +1,7 @@
 #include "ModelBufferManager.h"
 #include "Math.h"
 #include <functional>
+#include "Model.h"
 
 // FBufferResource 메서드 구현
 FBufferResource::~FBufferResource()
@@ -80,6 +81,36 @@ bool FBufferResource::Initialize(ID3D11Device* InDevice, const FVertexDataContai
 UModelBufferManager::~UModelBufferManager()
 {
     Release();
+}
+
+std::shared_ptr<class UModel> UModelBufferManager::GetCubeModel()
+{
+    static std::shared_ptr<UModel> CubeModel = nullptr;
+    if (!CubeModel) {
+        CubeModel = std::make_shared<UModel>();
+        CubeModel->InitializeAsCube();
+    }
+    return CubeModel;
+}
+
+std::shared_ptr<class UModel> UModelBufferManager::GetSphereModel()
+{
+    static std::shared_ptr<UModel> CubeModel = nullptr;
+    if (!CubeModel) {
+        CubeModel = std::make_shared<UModel>();
+        CubeModel->InitializeAsSphere();
+    }
+    return CubeModel;
+}
+
+std::shared_ptr<class UModel> UModelBufferManager::GetPlaneModel()
+{
+    static std::shared_ptr<UModel> CubeModel = nullptr;
+    if (!CubeModel) {
+        CubeModel = std::make_shared<UModel>();
+        CubeModel->InitializeAsPlane();
+    }
+    return CubeModel;
 }
 
 bool UModelBufferManager::Initialize()

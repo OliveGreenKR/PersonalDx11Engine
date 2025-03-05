@@ -4,6 +4,7 @@
 #include "DynamicBoundableInterface.h"
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <functional>
 
@@ -129,9 +130,18 @@ private:
     float ComputeCost(const AABB& Bounds) const;
     float ComputeInheritedCost(size_t NodeId) const;
 
+    bool IsValidId(const size_t NodeId) const;
+
+    //트리 무결성 검사
+    bool ValidateTree() const;
+    //트리 재생성
+    void ReBuildTree();
+    //트리 초기화
+    void ClearTree(const size_t InitialCapacity = 1024);
+
 private:
     std::vector<Node> NodePool;           // 노드 메모리 풀 - 모든 노드를 보관
-    std::vector<size_t> FreeNodes;        // 재사용 가능한 노드 인덱스만 보관
+    std::unordered_set<size_t> FreeNodes; // 재사용 가능한 노드 인덱스만 보관
     size_t RootId = NULL_NODE;            // 루트 노드 인덱스
     size_t NodeCount = 0;                 // 현재 사용 중인 노드 수
 };

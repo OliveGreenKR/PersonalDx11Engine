@@ -1,5 +1,6 @@
 #include "DynamicAABBTree.h"
 
+
 FDynamicAABBTree::FDynamicAABBTree(size_t InitialCapacity)
 {
     NodePool.resize(InitialCapacity);
@@ -8,7 +9,7 @@ FDynamicAABBTree::FDynamicAABBTree(size_t InitialCapacity)
     // 초기 free list 구성
     for (size_t i = 0; i < InitialCapacity - 1; ++i)
     {
-        FreeNodes.push_back(i);
+        FreeNodes.insert(i);
     }
 }
 
@@ -27,7 +28,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
     {
         const Node& ExistingNode = NodePool[i];
         // FreeNodes에 포함되지 않은 노드 중에서만 검사
-        if (std::find(FreeNodes.begin(), FreeNodes.end(), i) == FreeNodes.end())
+        if (FreeNodes.find(i) == FreeNodes.end())
         {
             if (ExistingNode.BoundableObject == Object.get())
             {
@@ -64,7 +65,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
 
 void FDynamicAABBTree::Remove(size_t NodeId)
 {
-    if (NodeId >= NodePool.size() || NodeId == NULL_NODE)
+    if (!IsValidId(NodeId))
         return;
 
     RemoveLeaf(NodeId);
@@ -123,12 +124,13 @@ size_t FDynamicAABBTree::AllocateNode()
         FreeNodes.reserve(NewSize - OldSize);
         for (size_t i = OldSize; i < NewSize; ++i)
         {
-            FreeNodes.push_back(i);
+            FreeNodes.insert(i);
         }
     }
 
-    size_t NodeId = FreeNodes.back();
-    FreeNodes.pop_back();
+    auto it = FreeNodes.begin();
+    size_t NodeId = *it;
+    FreeNodes.erase(it);
     NodePool[NodeId] = Node();  // 초기화
     NodeCount++;
     return NodeId;
@@ -140,7 +142,7 @@ void FDynamicAABBTree::FreeNode(size_t NodeId)
         return;
 
     NodePool[NodeId] = Node();  // 재설정
-    FreeNodes.push_back(NodeId);
+    FreeNodes.insert(NodeId);
     NodeCount--;
 }
 
@@ -153,6 +155,10 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         NodePool[RootId].Parent = NULL_NODE;
         return;
     }
+
+    //FreeNode에 없는 경우 이미 트리에 포함되어 있음
+    if (FreeNodes.find(LeafId) == FreeNodes.end())
+        return;
 
     // 삽입 위치 찾기
     Node& Leaf = NodePool[LeafId];
@@ -194,8 +200,9 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         {
             CurrentId = RightId;
         }
-        else
+        else 
         {
+            // 현재 노드에 직접 합치는 것이 가장 효율적인 경우
             break;
         }
     }
@@ -262,12 +269,24 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
         return;
     }
 
+    if (!IsValidId(LeafId))
+        return;
+
+    if (!IsValidId(LeafId))
+        return;
+
     size_t ParentId = NodePool[LeafId].Parent;
+    if (!IsValidId(ParentId))
+        return;  
+
     size_t GrandParentId = NodePool[ParentId].Parent;
     size_t SiblingId = (NodePool[ParentId].Left == LeafId) ?
         NodePool[ParentId].Right : NodePool[ParentId].Left;
 
-    if (GrandParentId != NULL_NODE)
+    if (!IsValidId(SiblingId))
+        return;  // 형제가 유효하지 않으면 종료
+
+    if (IsValidId(GrandParentId))
     {
         // 형제를 조부모에 직접 연결
         if (NodePool[GrandParentId].Left == ParentId)
@@ -311,12 +330,18 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
 
 size_t FDynamicAABBTree::Rebalance(size_t NodeId)
 {
+    if (!IsValidId(NodeId))
+        return NULL_NODE;
+
     Node& N = NodePool[NodeId];
     if (N.IsLeaf() || N.Height < 2)
         return NodeId;
 
     size_t LeftId = N.Left;
     size_t RightId = N.Right;
+    if (!IsValidId(LeftId) || !IsValidId(RightId))
+        return NodeId;
+
     Node& LeftChild = NodePool[LeftId];
     Node& RightChild = NodePool[RightId];
 
@@ -362,6 +387,7 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
     {
         size_t LeftLeftId = LeftChild.Left;
         size_t LeftRightId = LeftChild.Right;
+
         Node& LeftLeft = NodePool[LeftLeftId];
         Node& LeftRight = NodePool[LeftRightId];
 
@@ -438,9 +464,60 @@ float FDynamicAABBTree::ComputeInheritedCost(size_t NodeId) const
     return Cost;
 }
 
+bool FDynamicAABBTree::IsValidId(const size_t NodeId) const
+{
+    return NodeId < NodePool.size() 
+        && NodeId != NULL_NODE
+        && FreeNodes.find(NodeId) == FreeNodes.end();
+}
+
+void FDynamicAABBTree::ReBuildTree()
+{
+    // 현재 활성 노드 백업
+    std::vector<std::shared_ptr<IDynamicBoundable>> activeObjects;
+
+    for (size_t i = 0; i < NodePool.size(); i++)
+    {
+        if (FreeNodes.find(i) == FreeNodes.end() && NodePool[i].BoundableObject)
+        {
+            activeObjects.push_back(std::shared_ptr<IDynamicBoundable>(
+                const_cast<IDynamicBoundable*>(NodePool[i].BoundableObject),
+                [](IDynamicBoundable*) {} //임시 참조 shared_ptr
+            ));
+        }
+    }
+
+    // 트리 초기화
+    ClearTree();
+
+    // 활성 객체 다시 삽입
+    for (const auto& obj : activeObjects)
+    {
+        Insert(obj);
+    }
+}
+
+void FDynamicAABBTree::ClearTree(const size_t InitialCapacity)
+{
+    NodePool.clear();
+    FreeNodes.clear();
+    RootId = NULL_NODE;
+    NodeCount = 0;
+
+    // 초기 용량으로 다시 초기화
+    NodePool.resize(InitialCapacity);
+    FreeNodes.reserve(InitialCapacity);
+
+    for (size_t i = 0; i < InitialCapacity; i++)
+    {
+        FreeNodes.insert(i);
+    }
+}
+
 void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func)
 {
     std::vector<size_t> Stack;
+    std::unordered_set<size_t> visited;
     Stack.reserve(NodeCount);
 
     // 루트부터 시작
@@ -451,6 +528,17 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
     {
         size_t NodeId = Stack.back();
         Stack.pop_back();
+        if (visited.find(NodeId) == visited.end())
+        {
+            visited.insert(NodeId);
+        }
+        else
+        {
+            continue;
+        }
+
+        if (!IsValidId(NodeId))
+            continue;
 
         const Node& CurrentNode = NodePool[NodeId];
 
@@ -469,8 +557,12 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
         else
         {
             // 내부 노드면 자식들을 스택에 추가
-            Stack.push_back(CurrentNode.Left);
-            Stack.push_back(CurrentNode.Right);
+            if (CurrentNode.Left != NULL_NODE && CurrentNode.Left < NodePool.size()) {
+                Stack.push_back(CurrentNode.Left);
+            }
+            if (CurrentNode.Right != NULL_NODE && CurrentNode.Right < NodePool.size()) {
+                Stack.push_back(CurrentNode.Right);
+            }
         }
     }
 }

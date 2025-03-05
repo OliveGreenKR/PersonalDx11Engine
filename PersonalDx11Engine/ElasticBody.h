@@ -17,7 +17,7 @@ public:
         Count
     };
 
-    UElasticBody();
+    UElasticBody() = default;
     virtual ~UElasticBody() = default;
 
     // 기본 수명 주기 메서드

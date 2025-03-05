@@ -134,8 +134,6 @@ void UElasticBody::SetShapeBox()
 }
 #pragma endregion
 
-UElasticBody::UElasticBody() {}
-
 void UElasticBody::Tick(const float DeltaTime)
 {
 	UGameObject::Tick(DeltaTime);

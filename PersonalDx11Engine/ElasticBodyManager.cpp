@@ -2,6 +2,9 @@
 #include "Math.h"
 #include "Random.h"
 #include "ElasticBody.h"
+#include "Renderer.h"
+#include "Model.h"
+#include "ModelBufferManager.h"
 
 
 UElasticBodyManager::UElasticBodyManager()
@@ -23,7 +26,7 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 		return nullptr;
 
 	//형태 결정
-	ApplyRandomCollisionShape(body);
+	ApplyRandomShape(body);
 
 	//상태 설정
 	ApplyRandomPhysicsProperties(body);
@@ -39,15 +42,18 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 	return body;
 }
 
-void UElasticBodyManager::DespawnBody(std::shared_ptr<UElasticBody>& Body)
+void UElasticBodyManager::DespawnRandomBody()
 {
-	ReturnBodyToPool(Body);
+	const size_t count = ActiveBodies.size();
+	size_t dltIndex = FRandom::RandI(0, count - 1);
+	ReturnBodyToPool(ActiveBodies[dltIndex]);
 }
 
-void UElasticBodyManager::ApplyRandomCollisionShape(std::shared_ptr<UElasticBody>& Body)
+void UElasticBodyManager::ApplyRandomShape(std::shared_ptr<UElasticBody>& Body)
 {
 	UElasticBody::EShape randShape = (UElasticBody::EShape)FRandom::RandI(0, (int)UElasticBody::EShape::Count);
 	Body->SetShape(randShape);
+	Body->SetModel(ModelMap[(int)randShape]);
 }
 
 void UElasticBodyManager::ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body)
@@ -77,6 +83,19 @@ void UElasticBodyManager::ApplyRandomTransform(std::shared_ptr<UElasticBody>& Bo
 
 void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 {
+	using EShape = UElasticBody::EShape;
+	//멤버 초기화
+	MassColorMap = {
+		{EMassCategory::VeryLight,  Vector4(1.0f, 1.0f, 1.0f, 1.0f)},  // White
+		{EMassCategory::Light,      Vector4(1.0f, 1.0f, 0.0f, 1.0f)},  // Yellow
+		{EMassCategory::Medium,     Vector4(0.0f, 1.0f, 0.0f, 1.0f)},  // Green
+		{EMassCategory::Heavy,      Vector4(0.0f, 0.0f, 0.5f, 1.0f)},  // Dark Blue
+		{EMassCategory::VeryHeavy,  Vector4(0.3f, 0.3f, 0.3f, 1.0f)}   // Dark Gray
+	};
+
+	ModelMap[(int)EShape::Box] = UModelBufferManager::Get()->GetCubeModel();
+	ModelMap[(int)EShape::Sphere] = UModelBufferManager::Get()->GetSphereModel();
+
 	// 풀 예약 및 미리 생성
 	PrewarmPool(InitialPoolSize);
 }
@@ -103,7 +122,7 @@ UElasticBodyManager::EMassCategory UElasticBodyManager::CategorizeMass(const flo
 	return static_cast<EMassCategory>(Category);
 }
 
-Vector4 UElasticBodyManager::GetColorForMassCategory(const EMassCategory Category) const
+Vector4 UElasticBodyManager::GetColorFromMassCategory(const EMassCategory Category) const
 {
 	auto it = MassColorMap.find(Category);
 	if (it != MassColorMap.end())
@@ -180,8 +199,11 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	std::shared_ptr<UElasticBody> body = PooledBodies.back();
 	PooledBodies.pop_back();
 
+	ActiveBodies.push_back(body);
 	//바디 객체 활성화
 	body->SetActive(true);
+	//바디 초기화 마무리
+	body->PostInitializedComponents();
 
 	return body;
 }
@@ -206,7 +228,7 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 		return;
 	}
 
-	// 활성 목록에서 제거 (이미 호출자에서 처리했을 수도 있음)
+	// 활성 목록에서 제거 
 	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
 	if (it != ActiveBodies.end())
 	{
@@ -220,18 +242,47 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 	PooledBodies.push_back(Body);
 }
 
-
-
-//toto imple
 void UElasticBodyManager::SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Body)
 {
+	if (!Body.get())
+		return;
+	EMassCategory Category = CategorizeMass(Body->GetMass());
+	Body->SetDebugColor(GetColorFromMassCategory(Category));
 }
 
-void UElasticBodyManager::LimitActiveObjectCount(size_t Count)
+void UElasticBodyManager::Tick(float DeltaTime)
 {
+	for (auto body : ActiveBodies)
+	{
+		if (!body.get())
+		{
+			continue;
+		}
+		body->Tick(DeltaTime);
+	}
 }
-void UElasticBodyManager::UpdateActiveBodies(float DeltaTime)
+
+void UElasticBodyManager::Render(URenderer* InRenderer, UCamera* InCamera, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 {
+	if (!InRenderer || !InCamera || !InTexture)
+		return;
+	
+	for (auto body : ActiveBodies)
+	{
+		if (!body.get())
+			continue;
+		InRenderer->RenderGameObject(InCamera, body.get(), InShader, InCustomSampler);
+	}
 }
+
+
+//to imple
+void UElasticBodyManager::LimitActiveObjectCount(const size_t Count)
+{
+	//Count 개수로 활성화 객체 강제 조정(추가 및 삭제)
+	const size_t targetCount = Math::Max(0, Count);
+
+}
+
 
 

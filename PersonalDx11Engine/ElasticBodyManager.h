@@ -34,13 +34,13 @@ public:
 
 	// 객체 생성 및 설정
 	std::shared_ptr<class UElasticBody> SpawnRandomBody();
-	void DespawnBody(std::shared_ptr<UElasticBody>& Body);
+	void DespawnRandomBody();
 
 	//활성화 개체 수 제한
-	void LimitActiveObjectCount(size_t Count);
+	void LimitActiveObjectCount(const size_t Count);
 
 	//충돌체 속성 관리
-	void ApplyRandomCollisionShape(std::shared_ptr<UElasticBody>& Body);
+	void ApplyRandomShape(std::shared_ptr<UElasticBody>& Body);
 
 	// 물리 속성 관리
 	void ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body);
@@ -50,16 +50,22 @@ public:
 	//최소 Count만큼의 Pool 미리 준비
 	void PrewarmPool(size_t Count); 
 
-	void UpdateActiveBodies(float DeltaTime);
+	void Tick(float DeltaTime);
+	void Render(class URenderer* InRenderer, 
+				class UCamera* InCamera, 
+				class UShader* InShader, 
+				class ID3D11ShaderResourceView* InTexture, 
+				class ID3D11SamplerState* InCustomSampler = nullptr);
+
 	void ClearAllActiveBodies();
 
 	// 상태 조회
 	size_t GetActiveBodyCount() const { return ActiveBodies.size(); }
 	size_t GetPooledBodyCount() const { return PooledBodies.size(); }
-
 private:
-
+	//초기화 
 	void Initialize(size_t InitialPoolSize = 128);
+	//자원 회수
 	void Release();
 
 	//객체 비활성화
@@ -78,7 +84,7 @@ private:
 
 	// 질량 범주 결정 메서드
 	EMassCategory CategorizeMass(const float Mass) const;
-	Vector4 GetColorForMassCategory(const EMassCategory Category) const;
+	Vector4 GetColorFromMassCategory(const EMassCategory Category) const;
 
 	// 객체 관리 Pool
 	std::vector<std::shared_ptr<UElasticBody>> ActiveBodies;
@@ -89,7 +95,7 @@ private:
 	{
 		float MinMass = 0.1f;
 		float MaxMass = 10.0f;
-		float MinSize = 0.1f;
+		float MinSize = 0.3f;
 		float MaxSize = 1.0f;
 		float MinRestitution = 0.3f;
 		float MaxRestitution = 0.9f;
@@ -104,13 +110,10 @@ private:
 	} PropertyRanges;
 
 	// 질량-색상 매핑
-	const std::unordered_map<EMassCategory, Vector4> MassColorMap = {
-		{EMassCategory::VeryLight,  Vector4(1.0f, 1.0f, 1.0f, 1.0f)},  // White
-		{EMassCategory::Light,      Vector4(1.0f, 1.0f, 0.0f, 1.0f)},  // Yellow
-		{EMassCategory::Medium,     Vector4(0.0f, 1.0f, 0.0f, 1.0f)},  // Green
-		{EMassCategory::Heavy,      Vector4(0.0f, 0.0f, 0.5f, 1.0f)},  // Dark Blue
-		{EMassCategory::VeryHeavy,  Vector4(0.3f, 0.3f, 0.3f, 1.0f)}   // Dark Gray
-	};
+	std::unordered_map<EMassCategory, Vector4> MassColorMap;
+
+	// 형태 - 모델 매핑
+	std::unordered_map<int, std::shared_ptr<class UModel>> ModelMap;
 
 	// 유틸리티 메서드
 	std::shared_ptr<UElasticBody> CreateNewBody();

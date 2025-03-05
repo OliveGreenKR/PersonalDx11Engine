@@ -68,6 +68,11 @@ public:
     // 디바이스 설정
     void SetDevice(ID3D11Device* InDevice) { Device = InDevice; }
 
+    //기본 프리미티브 모델 제공
+    std::shared_ptr<class UModel> GetCubeModel();
+    std::shared_ptr<class UModel> GetSphereModel();
+    std::shared_ptr<class UModel> GetPlaneModel();
+
     // 기본 프리미티브 모델 해시 접근자
     size_t GetCubeHash() const { return CubeModelHash; }
     size_t GetSphereHash() const { return SphereModelHash; }
