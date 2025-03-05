@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_set>
 #include "CollisionComponent.h"
-#include "CollisionDefines.h";
+#include "CollisionDefines.h"
 
 
 class FDynamicAABBTree;
@@ -95,13 +95,16 @@ private:
     };
 
 public:
-    static UCollisionManager* Get() {
-        static UCollisionManager Instance;
-        if (!Instance.bIsInitialized)
-        {
-            Instance.Initialize();
-        }
-        return &Instance;
+    static UCollisionManager* Get()
+    {
+        // 포인터를 static으로 선언
+        static UCollisionManager* instance = []() {
+            UCollisionManager* manager = new UCollisionManager();
+            manager->Initialize();
+            return manager;
+            }();
+
+        return instance;
     }
 
     [[deprecated("Use Another signature of RegisterCollision")]]
@@ -112,7 +115,6 @@ public:
 
     void Tick(const float DeltaTime);
     void UnRegisterAll();
-    bool IsInitialized() const { return bIsInitialized; }
 
     size_t GetRegisterComponentsCount() { return RegisteredComponents.size(); }
 
@@ -183,6 +185,4 @@ private:
     std::vector<FComponentData> RegisteredComponents; 
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
-
-    bool bIsInitialized = false;
 };

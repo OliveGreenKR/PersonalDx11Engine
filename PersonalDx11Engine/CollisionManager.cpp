@@ -16,7 +16,7 @@ UCollisionManager::~UCollisionManager()
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
-	if (!bIsInitialized || !InRigidBody)
+	if (!InRigidBody)
 	{
 		return;
 	}
@@ -29,11 +29,6 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent)
 {
-	if (!bIsInitialized)
-	{
-		return;
-	}
-
 	// AABB 트리에 등록
 	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
 	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
@@ -59,7 +54,7 @@ void UCollisionManager::Tick(const float DeltaTime)
 
 void UCollisionManager::UnRegisterAll()
 {
-	if (!bIsInitialized || !CollisionTree)
+	if (!CollisionTree)
 		return;
 
 	for (const auto& Registered : RegisteredComponents)
@@ -72,9 +67,6 @@ void UCollisionManager::UnRegisterAll()
 
 void UCollisionManager::Initialize()
 {
-	if (bIsInitialized)
-		return;
-
 	try
 	{
 		Detector = nullptr;
@@ -89,8 +81,6 @@ void UCollisionManager::Initialize()
 
 		RegisteredComponents.reserve(Config.InitialCapacity);
 		ActiveCollisionPairs.reserve(Config.InitialCapacity);
-
-		bIsInitialized = true;
 	}
 	catch (...)
 	{
@@ -100,9 +90,6 @@ void UCollisionManager::Initialize()
 
 void UCollisionManager::Release()
 {
-	if (!bIsInitialized)
-		return;
-
 	UnRegisterAll();
 
 	delete CollisionTree;
@@ -114,13 +101,11 @@ void UCollisionManager::Release()
 	EventDispatcher = nullptr;
 	ResponseCalculator = nullptr;
 	Detector = nullptr;
-
-	bIsInitialized = false;
 }
 
 void UCollisionManager::CleanupDestroyedComponents()
 {
-	if (!bIsInitialized || RegisteredComponents.empty())
+	if (RegisteredComponents.empty())
 	{
 		return;
 	}
@@ -225,7 +210,7 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 
 void UCollisionManager::UpdateCollisionPairs()
 {
-	if (!bIsInitialized || !CollisionTree || RegisteredComponents.empty())
+	if (!CollisionTree || RegisteredComponents.empty())
 	{
 		ActiveCollisionPairs.clear();
 		return;

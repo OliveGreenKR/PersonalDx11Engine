@@ -56,10 +56,23 @@ struct FDebugDrawArrow : public FDebugDrawElement
 // 디버그 드로잉 매니저
 class FDebugDrawManager
 {
+private:
+    FDebugDrawManager() = default;
+    ~FDebugDrawManager() = default;
+
+    // 복사/이동 및 대입 연산자 삭제
+    FDebugDrawManager(const FDebugDrawManager&) = delete;
+    FDebugDrawManager& operator=(const FDebugDrawManager&) = delete;
+    FDebugDrawManager(FDebugDrawManager&&) = delete;
+    FDebugDrawManager& operator=(FDebugDrawManager&&) = delete;
+
 public:
-    static FDebugDrawManager& Get()
+    static FDebugDrawManager* Get()
     {
-        static FDebugDrawManager Instance;
+        static FDebugDrawManager* Instance = []() {
+            FDebugDrawManager* Manager = new FDebugDrawManager();
+            return Manager;
+            }();
         return Instance;
     }
 
@@ -76,7 +89,6 @@ public:
     void DrawAll(UCamera* Camera);
 
 private:
-    FDebugDrawManager() = default;
     std::vector<std::unique_ptr<FDebugDrawElement>> Elements;
 };
 

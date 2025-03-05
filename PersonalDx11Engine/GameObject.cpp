@@ -223,6 +223,8 @@ float UGameObject::GetMass() const
 	{
 		return RigidComp->GetMass();
 	}
+
+	return 0.0f;
 }
 
 bool UGameObject::IsGravity() const

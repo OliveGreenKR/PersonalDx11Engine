@@ -42,17 +42,27 @@ private:
 // 모델 버퍼 매니저 클래스 (싱글톤 패턴)
 class UModelBufferManager
 {
+private:
+    UModelBufferManager() = default;
+    ~UModelBufferManager();
+
+    // 복사/이동 및 대입 연산자 삭제
+    UModelBufferManager(const UModelBufferManager&) = delete;
+    UModelBufferManager& operator=(const UModelBufferManager&) = delete;
+    UModelBufferManager(UModelBufferManager&&) = delete;
+    UModelBufferManager& operator=(UModelBufferManager&&) = delete;
+
 public:
-    // 싱글톤 인스턴스 접근자
     static UModelBufferManager* Get()
     {
-        // 싱글톤 인스턴스
-        static UModelBufferManager* Instance = new UModelBufferManager();
-        if (!Instance->bInitialized)
-        {
-            Instance->Initialize();
-        }
-        return Instance;
+        // 포인터를 static으로 선언
+        static UModelBufferManager* instance = []() {
+            UModelBufferManager* manager = new UModelBufferManager();
+            manager->Initialize();
+            return manager;
+            }();
+
+        return instance;
     }
 
     // 디바이스 설정
@@ -77,11 +87,6 @@ public:
     const FVertexDataContainer* GetVertexDataByHash(size_t InHash) const;
 
 private:
-    UModelBufferManager() = default;
-    ~UModelBufferManager();
-
-    bool bInitialized = false;
-
     // 기본 프리미티브 모델 생성 메서드
     void CreateDefaultPrimitives();
     FVertexDataContainer CreateCubeVertexData();

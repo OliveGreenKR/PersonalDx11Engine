@@ -8,15 +8,28 @@ class ElasticBody;
 
 class UElasticBodyManager
 {
+private:
+	UElasticBodyManager();
+	~UElasticBodyManager();
+
+	// 복사/이동 및 대입 연산자 삭제
+	UElasticBodyManager(const UElasticBodyManager&) = delete;
+	UElasticBodyManager& operator=(const UElasticBodyManager&) = delete;
+	UElasticBodyManager(UElasticBodyManager&&) = delete;
+	UElasticBodyManager& operator=(UElasticBodyManager&&) = delete;
+
+
 public:
 	static UElasticBodyManager* Get()
 	{
-		static UElasticBodyManager Instance;
-		if (!Instance.bIsInitialized)
-		{
-			Instance.Initialize();
-		}
-		return &Instance;
+		// 포인터를 static으로 선언
+		static UElasticBodyManager* instance = []() {
+			UElasticBodyManager* manager = new UElasticBodyManager();
+			manager->Initialize();
+			return manager;
+			}();
+
+		return instance;
 	}
 
 	// 객체 생성 및 설정
@@ -45,13 +58,9 @@ public:
 	size_t GetPooledBodyCount() const { return PooledBodies.size(); }
 
 private:
-	UElasticBodyManager();
-	~UElasticBodyManager();
 
 	void Initialize(size_t InitialPoolSize = 128);
 	void Release();
-
-	bool bIsInitialized = false;
 
 	//객체 비활성화
 	void DeactivateBody(std::shared_ptr<UElasticBody>& Body);

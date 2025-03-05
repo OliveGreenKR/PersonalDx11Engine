@@ -1,4 +1,4 @@
-#include "D3DShader.h"
+ï»¿#include "D3DShader.h"
 #include "d3d11shader.h"
 
 
@@ -40,7 +40,7 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 		D3D11_SHADER_DESC ShaderDesc;
 		Reflector->GetDesc(&ShaderDesc);
 
-		// »ó¼ö ¹öÆÛ »ı¼º
+		// ìƒìˆ˜ ë²„í¼ ìƒì„±
 		for (unsigned int i = 0; i < ShaderDesc.ConstantBuffers; i++)
 		{
 			ID3D11ShaderReflectionConstantBuffer* CBReflection =
@@ -71,7 +71,7 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 	}
 
 	//VSBlob->Release();
-	// VSBlob ÀúÀå
+	// VSBlob ì €ì¥
 	VSByteCode = VSBlob;
 	PSBlob->Release();
 }
@@ -162,7 +162,7 @@ void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& Bu
 
 void UShader::GetShaderBytecode(const void** bytecode, size_t* length) const
 {
-	// ÄÄÆÄÀÏµÈ ¼ÎÀÌ´õ ¹ÙÀÌÆ®ÄÚµå ÀúÀå ÇÊ¿ä
+	// ì»´íŒŒì¼ëœ ì…°ì´ë” ë°”ì´íŠ¸ì½”ë“œ ì €ì¥ í•„ìš”
 		if (VSByteCode) {
 			*bytecode = VSByteCode->GetBufferPointer();
 			*length = VSByteCode->GetBufferSize();
@@ -175,8 +175,8 @@ void UShader::GetShaderBytecode(const void** bytecode, size_t* length) const
 
 void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
 {
-	// »õ·Î¿î »ùÇÃ·¯ ¼³Á¤
-		//COM°´Ã¼ÀÌ¹Ç·Î ÂüÁ¶ Ä«¿îÆ® °ü¸® ÇÊ¿ä
+	// ìƒˆë¡œìš´ ìƒ˜í”ŒëŸ¬ ì„¤ì •
+		//COMê°ì²´ì´ë¯€ë¡œ ì°¸ì¡° ì¹´ìš´íŠ¸ ê´€ë¦¬ í•„ìš”
 	if (SamplerState)
 	{
 		SamplerState->Release();

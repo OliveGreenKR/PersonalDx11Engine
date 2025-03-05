@@ -33,7 +33,7 @@
       <Filter>Engine\GameObject\Camera</Filter>
     </ClCompile>
     <ClCompile Include="D3DShader.cpp">
-      <Filter>Engine\Shader</Filter>
+      <Filter>D3D\Shader</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\GameObject</Filter>
@@ -83,7 +83,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Engine\Model</Filter>
     </ClCompile>
-    <ClCompile Include="ModelBufferManager.cpp" />
+    <ClCompile Include="ModelBufferManager.cpp">
+      <Filter>Engine\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -103,9 +105,6 @@
     </Filter>
     <Filter Include="Engine\Math">
       <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Shader">
-      <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\UI">
       <UniqueIdentifier>{bbd1ef54-7752-42b6-b184-2bf9e9e65a21}</UniqueIdentifier>
@@ -167,6 +166,9 @@
     <Filter Include="D3D\Buffer">
       <UniqueIdentifier>{4c3ccda6-25fe-4d99-9400-97d9cebbabe6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D\Shader">
+      <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -202,12 +204,11 @@
     <ClInclude Include="Model.h">
       <Filter>Engine\Model</Filter>
     </ClInclude>
-    <ClInclude Include="define.h" />
     <ClInclude Include="Camera.h">
       <Filter>Engine\GameObject\Camera</Filter>
     </ClInclude>
     <ClInclude Include="D3DShader.h">
-      <Filter>Engine\Shader</Filter>
+      <Filter>D3D\Shader</Filter>
     </ClInclude>
     <ClInclude Include="Math.h">
       <Filter>Engine\Math</Filter>
@@ -218,7 +219,6 @@
     <ClInclude Include="GameObject.h">
       <Filter>Engine\GameObject</Filter>
     </ClInclude>
-    <ClInclude Include="RscUtil.h" />
     <ClInclude Include="Frustum.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
@@ -267,7 +267,6 @@
     <ClInclude Include="ElasticBodyManager.h">
       <Filter>Contents\Managers</Filter>
     </ClInclude>
-    <ClInclude Include="Random.h" />
     <ClInclude Include="CollisionDetector.h">
       <Filter>Engine\Physics</Filter>
     </ClInclude>
@@ -291,6 +290,15 @@
     </ClInclude>
     <ClInclude Include="ModelBufferManager.h">
       <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Random.h">
+      <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="define.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="RscUtil.h">
+      <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

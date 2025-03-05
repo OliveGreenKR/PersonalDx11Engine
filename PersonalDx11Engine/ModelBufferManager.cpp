@@ -89,7 +89,6 @@ bool UModelBufferManager::Initialize()
 
     // 기본 프리미티브 모델 생성
     CreateDefaultPrimitives();
-    bInitialized = true;
     return true;
 }
 

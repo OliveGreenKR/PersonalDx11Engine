@@ -212,7 +212,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	CollisionComp2->OnCollisionEnter.BindSystem([](const FCollisionEventData& InColliision)
 												{
-													FDebugDrawManager::Get().DrawArrow(
+													FDebugDrawManager::Get()->DrawArrow(
 														InColliision.CollisionDetectResult.Point,
 														InColliision.CollisionDetectResult.Normal,
 														0.5f,
@@ -569,7 +569,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 
-		FDebugDrawManager::Get().Tick(DeltaTime);
+		FDebugDrawManager::Get()->Tick(DeltaTime);
 
 		if (Character)
 		{
@@ -671,7 +671,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 
-		FDebugDrawManager::Get().DrawAll(Camera.get());
+		FDebugDrawManager::Get()->DrawAll(Camera.get());
 
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

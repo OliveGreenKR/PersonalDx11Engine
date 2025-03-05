@@ -79,7 +79,6 @@ void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 {
 	// 풀 예약 및 미리 생성
 	PrewarmPool(InitialPoolSize);
-	bIsInitialized = true;
 }
 
 void UElasticBodyManager::Release()
@@ -87,7 +86,6 @@ void UElasticBodyManager::Release()
 	//객체 정리
 	ClearAllActiveBodies();
 	PooledBodies.clear();
-	bIsInitialized = false;
 }
 
 UElasticBodyManager::EMassCategory UElasticBodyManager::CategorizeMass(const float Mass) const

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "D3D.h"
 #include <vector>
@@ -8,9 +8,9 @@ using namespace std;
 
 struct alignas(16) FMatrixBufferData
 {
-	XMMATRIX World;      // ¿ùµå º¯È¯ Çà·Ä
-	XMMATRIX View;       // ºä º¯È¯ Çà·Ä 
-	XMMATRIX Projection; // Åõ¿µ º¯È¯ Çà·Ä
+	XMMATRIX World;      // ì›”ë“œ ë³€í™˜ í–‰ë ¬
+	XMMATRIX View;       // ë·° ë³€í™˜ í–‰ë ¬ 
+	XMMATRIX Projection; // íˆ¬ì˜ ë³€í™˜ í–‰ë ¬
 
 	FMatrixBufferData()
 		: World(XMMatrixIdentity())
@@ -48,7 +48,7 @@ enum class EBufferSlot
 	Max
 };
 /// <summary>
-/// ´ÜÀÏ SamplerState, º¹¼öÀÇ cBuffer¸¦ Áö¿øÇÏ´Â ½¦ÀÌ´õ ÆÄÀÏ °ü¸®
+/// ë‹¨ì¼ SamplerState, ë³µìˆ˜ì˜ cBufferë¥¼ ì§€ì›í•˜ëŠ” ì‰ì´ë” íŒŒì¼ ê´€ë¦¬
 /// </summary>
 class UShader
 {
@@ -62,7 +62,7 @@ public:
 public:
 	void Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
 	void Release();
-	//ÆÄÀÌÇÁ¶óÀÎ »óÅÂ ¼³Á¤, vs, ps, samplerstate
+	//íŒŒì´í”„ë¼ì¸ ìƒíƒœ ì„¤ì •, vs, ps, samplerstate
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
 	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
 	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
@@ -71,7 +71,7 @@ public:
 
 	ID3D11InputLayout* GetInputLayout() const { return InputLayout;}
 
-	//½¦ÀÌ´õ ¹ÙÀÌÆ® ÄÚµå Á¢±ÙÀÚ
+	//ì‰ì´ë” ë°”ì´íŠ¸ ì½”ë“œ ì ‘ê·¼ì
 	void GetShaderBytecode(const void** bytecode, size_t* length) const;
 
 public:
@@ -87,7 +87,7 @@ private:
 	vector<ID3D11Buffer*> ConstantBuffers;
 	ID3D11SamplerState* SamplerState = nullptr;
 
-	ID3DBlob* VSByteCode = nullptr; // ÄÄÆÄÀÏµÈ ¹öÅØ½º ¼ÎÀÌ´õ ¹ÙÀÌÆ®ÄÚµå ÀúÀå
+	ID3DBlob* VSByteCode = nullptr; // ì»´íŒŒì¼ëœ ë²„í…ìŠ¤ ì…°ì´ë” ë°”ì´íŠ¸ì½”ë“œ ì €ì¥
 
 	bool bIsInitialized = false;
 };
