@@ -330,6 +330,7 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
 
 size_t FDynamicAABBTree::Rebalance(size_t NodeId)
 {
+    // 기본 ID 검증
     if (!IsValidId(NodeId))
         return NULL_NODE;
 
@@ -339,6 +340,8 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
 
     size_t LeftId = N.Left;
     size_t RightId = N.Right;
+
+    // 자식 노드 유효성 검사
     if (!IsValidId(LeftId) || !IsValidId(RightId))
         return NodeId;
 
@@ -352,68 +355,78 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
     {
         size_t RightLeftId = RightChild.Left;
         size_t RightRightId = RightChild.Right;
+
+        // 추가 자식 노드 유효성 검사
+        if (!IsValidId(RightLeftId) || !IsValidId(RightRightId))
+            return NodeId;
+
         Node& RightLeft = NodePool[RightLeftId];
         Node& RightRight = NodePool[RightRightId];
 
-        // RightChild를 새로운 루트로
-        RightChild.Left = NodeId;
-        RightChild.Parent = N.Parent;
-        N.Parent = RightId;
+        // 부모-자식 관계 업데이트
+        N.Right = RightLeftId;              // 1. N의 오른쪽 자식을 RightChild의 왼쪽 자식으로 변경
+        if (IsValidId(RightLeftId))
+            RightLeft.Parent = NodeId;      // 2. RightLeft의 부모를 N으로 설정
 
+        RightChild.Left = NodeId;           // 3. RightChild의 왼쪽 자식을 N으로 설정
+        RightChild.Parent = N.Parent;       // 4. RightChild의 부모를 N의 부모로 설정
+        N.Parent = RightId;                 // 5. N의 부모를 RightChild로 설정
+
+        // 루트 노드 업데이트
         if (RightChild.Parent != NULL_NODE)
         {
             if (NodePool[RightChild.Parent].Left == NodeId)
-            {
                 NodePool[RightChild.Parent].Left = RightId;
-            }
             else
-            {
                 NodePool[RightChild.Parent].Right = RightId;
-            }
         }
         else
-        {
             RootId = RightId;
-        }
 
         // 높이 조정
-        N.Height = 1 + std::max(LeftChild.Height, RightLeft.Height);
+        N.Height = 1 + std::max(LeftChild.Height,
+                                IsValidId(RightLeftId) ? RightLeft.Height : 0);
         RightChild.Height = 1 + std::max(N.Height, RightRight.Height);
 
         return RightId;
     }
+
     // 왼쪽이 더 깊은 경우
     if (Balance < -1)
     {
         size_t LeftLeftId = LeftChild.Left;
         size_t LeftRightId = LeftChild.Right;
 
+        // 추가 자식 노드 유효성 검사
+        if (!IsValidId(LeftLeftId) || !IsValidId(LeftRightId))
+            return NodeId;
+
         Node& LeftLeft = NodePool[LeftLeftId];
         Node& LeftRight = NodePool[LeftRightId];
 
-        // LeftChild를 새로운 루트로
-        LeftChild.Right = NodeId;
-        LeftChild.Parent = N.Parent;
-        N.Parent = LeftId;
+        // 부모-자식 관계 업데이트
+        N.Left = LeftRightId;               // 1. N의 왼쪽 자식을 LeftChild의 오른쪽 자식으로 변경
+        if (IsValidId(LeftRightId))
+            LeftRight.Parent = NodeId;      // 2. LeftRight의 부모를 N으로 설정
 
+        LeftChild.Right = NodeId;           // 3. LeftChild의 오른쪽 자식을 N으로 설정
+        LeftChild.Parent = N.Parent;        // 4. LeftChild의 부모를 N의 부모로 설정
+        N.Parent = LeftId;                  // 5. N의 부모를 LeftChild로 설정
+
+        // 루트 노드 업데이트
         if (LeftChild.Parent != NULL_NODE)
         {
             if (NodePool[LeftChild.Parent].Left == NodeId)
-            {
                 NodePool[LeftChild.Parent].Left = LeftId;
-            }
             else
-            {
                 NodePool[LeftChild.Parent].Right = LeftId;
-            }
         }
         else
-        {
             RootId = LeftId;
-        }
 
         // 높이 조정
-        N.Height = 1 + std::max(RightChild.Height, LeftRight.Height);
+        N.Height = 1 + std::max(RightChild.Height,
+                                IsValidId(LeftRightId) ? LeftRight.Height : 0);
         LeftChild.Height = 1 + std::max(LeftLeft.Height, N.Height);
 
         return LeftId;
