@@ -1,4 +1,6 @@
 #include "DynamicAABBTree.h"
+#include <iostream>
+#include <queue>
 
 
 FDynamicAABBTree::FDynamicAABBTree(size_t InitialCapacity)
@@ -552,6 +554,11 @@ void FDynamicAABBTree::ClearTree(const size_t InitialCapacity)
     }
 }
 
+void FDynamicAABBTree::PrintTreeStructure() const
+{
+    PrintBinaryTree(RootId);
+}
+
 void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func)
 {
     std::vector<size_t> Stack;
@@ -603,4 +610,32 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
             }
         }
     }
+}
+
+
+void FDynamicAABBTree::PrintBinaryTree(size_t root, std::string prefix, bool isLeft) const
+{
+    using namespace std;
+
+    if (!IsValidId(root)) 
+        return;
+
+    cout << prefix;
+
+    cout << (isLeft ? "├── " : "└── ");
+
+    auto RootNode = NodePool[root];
+    // 노드 데이터 출력 및 부모 정보 추가
+    cout << root;
+    if (RootNode.Parent != NULL_NODE) {
+        cout << " (Parent: " << RootNode.Parent << ")";
+    }
+    cout << endl;
+
+    // 자식 노드에 대한 새 접두사 계산
+    string newPrefix = prefix + (isLeft ? "│   " : "    ");
+
+    // 왼쪽, 오른쪽 자식 출력 (왼쪽 먼저)
+    PrintBinaryTree(RootNode.Left, newPrefix, true);
+    PrintBinaryTree(RootNode.Right, newPrefix, false);
 }

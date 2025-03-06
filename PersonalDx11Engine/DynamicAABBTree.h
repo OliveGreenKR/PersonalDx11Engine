@@ -137,6 +137,11 @@ private:
     //트리 초기화
     void ClearTree(const size_t InitialCapacity = 1024);
 
+public:
+	void PrintTreeStructure() const;
+private:
+    void PrintBinaryTree(size_t root, std::string prefix = "", bool isLeft = false) const;
+
 private:
     std::vector<Node> NodePool;           // 노드 메모리 풀 - 모든 노드를 보관
     std::unordered_set<size_t> FreeNodes; // 재사용 가능한 노드 인덱스만 보관

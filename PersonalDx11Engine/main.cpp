@@ -233,6 +233,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Camera->PostInitializedComponents();
 
 	auto ElasticBody = UGameObject::Create<UElasticBody>();
+	ElasticBody->SetScale(0.5f * Vector3::One);
 	ElasticBody->SetShapeBox();
 	ElasticBody->SetActive(true);
 	ElasticBody->bDebug = true;
