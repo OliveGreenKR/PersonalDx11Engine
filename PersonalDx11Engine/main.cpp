@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <iostream>
 
 //ImGui
 #include "ImGui/imgui.h"
@@ -49,6 +50,17 @@ using namespace std;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+void CreateConsole()
+{
+	// 콘솔 할당
+	AllocConsole();
+
+	// 표준 입출력 스트림을 콘솔로 리다이렉션
+	FILE* pConsole;
+	freopen_s(&pConsole, "CONOUT$", "w", stdout);
+	freopen_s(&pConsole, "CONIN$", "r", stdin);
+}
+
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -98,6 +110,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
+
+	// 콘솔 생성
+	CreateConsole();
+
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd);
@@ -551,6 +567,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 #pragma endregion
+
 
 #pragma region MainLoop
 	while (bIsExit == false)

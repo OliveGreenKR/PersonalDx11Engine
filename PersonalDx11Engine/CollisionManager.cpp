@@ -43,6 +43,10 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 	// º¤ÅÍ¿¡ Ãß°¡
 	RegisteredComponents.push_back(std::move(ComponentData));
+#if defined(_DEBUG) || defined(DEBUG)
+	//test
+	CollisionTree->PrintTreeStructure();
+#endif
 }
 
 void UCollisionManager::Tick(const float DeltaTime)

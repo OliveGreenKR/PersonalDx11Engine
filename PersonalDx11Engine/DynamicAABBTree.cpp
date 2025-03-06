@@ -158,10 +158,6 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         return;
     }
 
-    //FreeNode에 없는 경우 이미 트리에 포함되어 있음
-    if (FreeNodes.find(LeafId) == FreeNodes.end())
-        return;
-
     // 삽입 위치 찾기
     Node& Leaf = NodePool[LeafId];
     size_t CurrentId = RootId;
@@ -626,6 +622,8 @@ void FDynamicAABBTree::PrintBinaryTree(size_t root, std::string prefix, bool isL
 
     auto RootNode = NodePool[root];
     // 노드 데이터 출력 및 부모 정보 추가
+    if (RootNode.IsLeaf())
+        cout << "*";//LEAF 표시
     cout << root;
     if (RootNode.Parent != NULL_NODE) {
         cout << " (Parent: " << RootNode.Parent << ")";
