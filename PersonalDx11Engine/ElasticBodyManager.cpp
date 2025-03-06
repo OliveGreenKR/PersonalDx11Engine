@@ -45,6 +45,8 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 void UElasticBodyManager::DespawnRandomBody()
 {
 	const size_t count = ActiveBodies.size();
+	if (count < 1)
+		return;
 	size_t dltIndex = FRandom::RandI(0, count - 1);
 	ReturnBodyToPool(ActiveBodies[dltIndex]);
 }
@@ -53,7 +55,6 @@ void UElasticBodyManager::ApplyRandomShape(std::shared_ptr<UElasticBody>& Body)
 {
 	UElasticBody::EShape randShape = (UElasticBody::EShape)FRandom::RandI(0, (int)UElasticBody::EShape::Count);
 	Body->SetShape(randShape);
-	Body->SetModel(ModelMap[(int)randShape]);
 }
 
 void UElasticBodyManager::ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body)
@@ -92,9 +93,6 @@ void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 		{EMassCategory::Heavy,      Vector4(0.0f, 0.0f, 0.5f, 1.0f)},  // Dark Blue
 		{EMassCategory::VeryHeavy,  Vector4(0.3f, 0.3f, 0.3f, 1.0f)}   // Dark Gray
 	};
-
-	ModelMap[(int)EShape::Box] = UModelBufferManager::Get()->GetCubeModel();
-	ModelMap[(int)EShape::Sphere] = UModelBufferManager::Get()->GetSphereModel();
 
 	// 풀 예약 및 미리 생성
 	PrewarmPool(InitialPoolSize);
@@ -214,10 +212,11 @@ void UElasticBodyManager::DeactivateBody(std::shared_ptr<UElasticBody>& Body)
 	{
 		return;
 	}
-	//객체 상태 초기화
-	Body->Reset();
 	//비활성화
 	Body->SetActive(false);
+	//객체 상태 초기화
+	Body->Reset();
+	
 }
 
 void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
@@ -271,7 +270,10 @@ void UElasticBodyManager::Render(URenderer* InRenderer, UCamera* InCamera, UShad
 	{
 		if (!body.get())
 			continue;
-		InRenderer->RenderGameObject(InCamera, body.get(), InShader, InCustomSampler);
+		if (body->bIsActive)
+		{
+			InRenderer->RenderGameObject(InCamera, body.get(), InShader, InCustomSampler);
+		}
 	}
 }
 

@@ -17,7 +17,6 @@ class UCollisionComponent : public UPrimitiveComponent, public IDynamicBoundable
 public:
 	UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
 	~UCollisionComponent() = default;
-private:
 	UCollisionComponent();
 public:
 	//Scene Comp
@@ -48,7 +47,7 @@ public:
 
 	//Setter
 	void SetCollisionShapeData(const FCollisionShapeData& InShape);
-	void SetHalfExtent(const Vector3&& InHalfExtent);
+	void SetHalfExtent(const Vector3& InHalfExtent);
 
 	// 유효성 검사
 	virtual bool IsEffective() override;

@@ -76,7 +76,7 @@ void UCollisionComponent::SetCollisionShapeData(const FCollisionShapeData& InSha
 	
 }
 
-void UCollisionComponent::SetHalfExtent(const Vector3&& InHalfExtent)
+void UCollisionComponent::SetHalfExtent(const Vector3& InHalfExtent)
 {
 	Shape.HalfExtent = InHalfExtent;
 }

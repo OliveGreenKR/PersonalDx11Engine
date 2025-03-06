@@ -272,9 +272,6 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
     if (!IsValidId(LeafId))
         return;
 
-    if (!IsValidId(LeafId))
-        return;
-
     size_t ParentId = NodePool[LeafId].Parent;
     if (!IsValidId(ParentId))
         return;  
@@ -364,7 +361,7 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
         Node& RightRight = NodePool[RightRightId];
 
         // 부모-자식 관계 업데이트
-        N.Right = RightLeftId;              // 1. N의 오른쪽 자식을 RightChild의 왼쪽 자식으로 변경
+        N.Right = RightLeftId;              // 1. N의 오른쪽 자식을  RightLeft로 변경
         if (IsValidId(RightLeftId))
             RightLeft.Parent = NodeId;      // 2. RightLeft의 부모를 N으로 설정
 
@@ -388,6 +385,20 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
                                 IsValidId(RightLeftId) ? RightLeft.Height : 0);
         RightChild.Height = 1 + std::max(N.Height, RightRight.Height);
 
+        //AABB 업데이트
+        // N의 새 AABB 계산 (LeftChild와 RightLeft의 조합)
+        if (IsValidId(RightLeftId)) {
+            N.Bounds.Min = Vector3::Min(LeftChild.Bounds.Min, RightLeft.Bounds.Min);
+            N.Bounds.Max = Vector3::Max(LeftChild.Bounds.Max, RightLeft.Bounds.Max);
+        }
+        else {
+            N.Bounds = LeftChild.Bounds; 
+        }
+
+        // RightChild의 새 AABB 계산 (N과 RightRight의 조합)
+        RightChild.Bounds.Min = Vector3::Min(N.Bounds.Min, RightRight.Bounds.Min);
+        RightChild.Bounds.Max = Vector3::Max(N.Bounds.Max, RightRight.Bounds.Max);
+
         return RightId;
     }
 
@@ -405,7 +416,7 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
         Node& LeftRight = NodePool[LeftRightId];
 
         // 부모-자식 관계 업데이트
-        N.Left = LeftRightId;               // 1. N의 왼쪽 자식을 LeftChild의 오른쪽 자식으로 변경
+        N.Left = LeftRightId;               // 1. N의 왼쪽 자식을 LeftRight으로 변경
         if (IsValidId(LeftRightId))
             LeftRight.Parent = NodeId;      // 2. LeftRight의 부모를 N으로 설정
 
@@ -428,6 +439,20 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
         N.Height = 1 + std::max(RightChild.Height,
                                 IsValidId(LeftRightId) ? LeftRight.Height : 0);
         LeftChild.Height = 1 + std::max(LeftLeft.Height, N.Height);
+
+        // AABB업데이트
+        // N의 새 AABB 계산 (RightChild와 LeftRight의 조합)
+        if (IsValidId(LeftRightId)) {
+            N.Bounds.Min = Vector3::Min(RightChild.Bounds.Min, LeftRight.Bounds.Min);
+            N.Bounds.Max = Vector3::Max(RightChild.Bounds.Max, LeftRight.Bounds.Max);
+        }
+        else {
+            N.Bounds = RightChild.Bounds; // 만약 LeftRight가 없다면
+        }
+
+        // LeftChild의 새 AABB 계산 (N과 LeftLeft의 조합)
+        LeftChild.Bounds.Min = Vector3::Min(N.Bounds.Min, LeftLeft.Bounds.Min);
+        LeftChild.Bounds.Max = Vector3::Max(N.Bounds.Max, LeftLeft.Bounds.Max);
 
         return LeftId;
     }
@@ -555,9 +580,9 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
 
         const Node& CurrentNode = NodePool[NodeId];
 
-        // AABB가 겹치지 않으면 스킵
-        if (!QueryBounds.Overlaps(CurrentNode.Bounds))
-            continue;
+		// AABB가 겹치지 않으면 스킵
+		if (!QueryBounds.Overlaps(CurrentNode.Bounds))
+			continue;
 
         if (CurrentNode.IsLeaf())
         {

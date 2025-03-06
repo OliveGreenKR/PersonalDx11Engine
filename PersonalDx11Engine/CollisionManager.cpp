@@ -218,7 +218,6 @@ void UCollisionManager::UpdateCollisionPairs()
 
 	// 새로운 충돌 쌍을 저장할 임시 컨테이너
 	std::unordered_set<FCollisionPair> NewCollisionPairs;
-	// TODO :: 초기 예약 크기 계산
 	size_t EstimatedPairs = std::min(ActiveCollisionPairs.size(),
 									 RegisteredComponents.size() * (RegisteredComponents.size() - 1) / 2);
 	NewCollisionPairs.reserve(EstimatedPairs);
@@ -240,34 +239,41 @@ void UCollisionManager::UpdateCollisionPairs()
 			continue;
 		}
 
-		const FDynamicAABBTree::AABB& TargetFatBounds = CollisionTree->GetFatBounds(ComponentData.TreeNodeId);
+		//const FDynamicAABBTree::AABB& TargetFatBounds = CollisionTree->GetFatBounds(ComponentData.TreeNodeId);
 
-		CollisionTree->QueryOverlap(
-			TargetFatBounds,
-			[this, i, &NewCollisionPairs](size_t OtherNodeId) {
-				if (OtherNodeId == FDynamicAABBTree::NULL_NODE ||
-					RegisteredComponents[i].TreeNodeId >= OtherNodeId)
-				{
-					return;
-				}
+		//CollisionTree->QueryOverlap(
+		//	TargetFatBounds,
+		//	[this, i, &NewCollisionPairs](size_t OtherNodeId) {
+		//		if (OtherNodeId == FDynamicAABBTree::NULL_NODE || i == OtherNodeId)
+		//		{
+		//			return;
+		//		}
 
-				size_t OtherIndex = FindComponentIndex(OtherNodeId);
-				if (OtherIndex == SIZE_MAX)
-				{
-					return;
-				}
+		//		size_t OtherIndex = FindComponentIndex(OtherNodeId);
+		//		if (OtherIndex == SIZE_MAX)
+		//		{
+		//			return;
+		//		}
 
-				const auto& OtherComponent = RegisteredComponents[OtherIndex].Component;
-				if (!OtherComponent || OtherComponent->bDestroyed ||
-					!OtherComponent->GetCollisionEnabled())
-				{
-					return;
-				}
+		//		const auto& OtherComponent = RegisteredComponents[OtherIndex].Component;
+		//		if (!OtherComponent || OtherComponent->bDestroyed ||
+		//			!OtherComponent->GetCollisionEnabled())
+		//		{
+		//			return;
+		//		}
 
-				NewCollisionPairs.insert(FCollisionPair(i, OtherIndex));
-			});
+		//		NewCollisionPairs.insert(FCollisionPair(i, OtherIndex));
+		//	});
+
+		for (size_t j = i; j < RegisteredComponents.size(); ++j)
+		{
+			//for test, push all pairs
+			if (i == j)
+				continue;
+			NewCollisionPairs.insert(FCollisionPair(i, j));
+		}
 	}
-
+	
 	ActiveCollisionPairs = std::move(NewCollisionPairs);
 }
 

@@ -178,12 +178,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float CharacterMass = 5.0f;
 	float Character2Mass = 15.0f;
 	
-	auto Character = UGameObject::Create(CubeModel);
+	auto Character = UGameObject::Create<UGameObject>(SphereModel);
 	Character->SetScale(0.25f * Vector3::One);
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
 	
-	auto Character2 = UGameObject::Create(SphereModel);
+	auto Character2 = UGameObject::Create<UGameObject>(SphereModel);
 	Character2->SetScale(0.75f * Vector3::One);
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->bDebug = true;
@@ -231,6 +231,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();
+
+	auto ElasticBody = UGameObject::Create<UElasticBody>();
+	ElasticBody->SetShapeBox();
+	ElasticBody->SetActive(true);
+	ElasticBody->bDebug = true;
+	ElasticBody->PostInitialized();
+	ElasticBody->SetMass(3.0f);
+	ElasticBody->PostInitializedComponents();
 
 	//Border
 	const float XBorder = 3.0f;
@@ -543,10 +551,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma endregion
 
-
-	const float coolTime = 1.0f;
-	float accumTick = 0.0f;
-
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -588,23 +592,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Character2->Tick(DeltaTime);
 		}
 
+		if (ElasticBody)
+		{
+			ElasticBody->Tick(DeltaTime);
+		}
+
 		if (Camera)
 		{
 			Camera->Tick(DeltaTime);
 		}
 
-	
 		UCollisionManager::Get()->Tick(DeltaTime);
-
-		accumTick += DeltaTime;
-		if (accumTick > coolTime)
-		{
-			auto body = UElasticBodyManager::Get()->SpawnRandomBody();
-			auto gameObjectBody = std::static_pointer_cast<UGameObject>(body);
-		/*	Camera.get()->bLookAtObject = true;
-			Camera.get()->SetLookAtObject(gameObjectBody);*/
-			accumTick = 0.0f;
-		}
 
 #pragma endregion 
 		
@@ -615,10 +613,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Render
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
+		Renderer->RenderGameObject(Camera.get(),ElasticBody.get(), Shader.get(), *TTile.get());
 
-		//contents
-		UElasticBodyManager::Get()->Render(Renderer.get(),
-										   Camera.get(), Shader.get(), *TPole.get());
 #pragma region UI
 		// ImGui UI 
 		ImGui_ImplDX11_NewFrame();
@@ -647,61 +643,60 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		//ImGui::Begin("Number Input Interface", nullptr, UIWindowFlags);
-		//ImGui::InputInt("##Value", &value); // 숫자 입력 필드
+		////ImGui::InputInt("##Value", &value); // 숫자 입력 필드
 		//ImGui::SameLine();
 		//if (ImGui::Button("-")) {
 		//	UElasticBodyManager::Get()->DespawnRandomBody();
 		//}
 		//ImGui::SameLine();
 		//if (ImGui::Button("+")) {
-		//	
+		//	UElasticBodyManager::Get()->SpawnRandomBody();
 		//}
 		//ImGui::End();
 
-		//if (Character)
-		//{
-		//	Vector3 CurrentVelo = Character->GetCurrentVelocity();
-		//	bool bGravity = Character->IsGravity();
-		//	bool bPhysics = Character->IsPhysicsSimulated();
-		//	ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-		//	ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-		//	ImGui::Checkbox("bDebug", &Character->bDebug);
-		//	ImGui::Checkbox("bPhysicsBased", &bPhysics);
-		//	ImGui::Checkbox("bGravity", &bGravity);
-		//	Character->SetGravity(bGravity);
-		//	Character->SetPhysics(bPhysics);
-		//	ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-		//				CurrentVelo.y,
-		//				CurrentVelo.z);
-		//	ImGui::Text(Utils::ToString(CollisionComp1->GetPreviousTransform()));
-		//	ImGui::End();
-		//}
-		//
-		//if (Character2)
-		//{
-		//	Vector3 CurrentVelo = Character2->GetCurrentVelocity();
-		//	bool bGravity2 = Character2->IsGravity();
-		//	bool bPhysics2 = Character2->IsPhysicsSimulated();
-		//	ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-		//	ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-		//	ImGui::Checkbox("bDebug", &Character2->bDebug);
-		//	ImGui::Checkbox("bPhysicsBased", &bPhysics2);
-		//	ImGui::Checkbox("bGravity", &bGravity2);
-		//	Character2->SetGravity(bGravity2);
-		//	Character2->SetPhysics(bPhysics2);
-		//	ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-		//				CurrentVelo.y,
-		//				CurrentVelo.z);
-		//	ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
-		//				Character2->GetTransform()->GetPosition().y,
-		//				Character2->GetTransform()->GetPosition().z);
-		//	ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
-		//				Character2->GetTransform()->GetEulerRotation().y,
-		//				Character2->GetTransform()->GetEulerRotation().z);
+		if (Character)
+		{
+			Vector3 CurrentVelo = Character->GetCurrentVelocity();
+			bool bGravity = Character->IsGravity();
+			bool bPhysics = Character->IsPhysicsSimulated();
+			ImGui::Begin("Charcter", nullptr, UIWindowFlags);
+			ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+			ImGui::Checkbox("bDebug", &Character->bDebug);
+			ImGui::Checkbox("bPhysicsBased", &bPhysics);
+			ImGui::Checkbox("bGravity", &bGravity);
+			Character->SetGravity(bGravity);
+			Character->SetPhysics(bPhysics);
+			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+						CurrentVelo.y,
+						CurrentVelo.z);
+			ImGui::Text(Utils::ToString(CollisionComp1->GetPreviousTransform()));
+			ImGui::End();
+		}
+		
+		if (Character2)
+		{
+			Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+			bool bGravity2 = Character2->IsGravity();
+			bool bPhysics2 = Character2->IsPhysicsSimulated();
+			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
+			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+			ImGui::Checkbox("bDebug", &Character2->bDebug);
+			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
+			ImGui::Checkbox("bGravity", &bGravity2);
+			Character2->SetGravity(bGravity2);
+			Character2->SetPhysics(bPhysics2);
+			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+						CurrentVelo.y,
+						CurrentVelo.z);
+			ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
+						Character2->GetTransform()->GetPosition().y,
+						Character2->GetTransform()->GetPosition().z);
+			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
+						Character2->GetTransform()->GetEulerRotation().y,
+						Character2->GetTransform()->GetEulerRotation().z);
 
-		//	ImGui::End();
-		//}
-
+			ImGui::End();
+		}
 
 		FDebugDrawManager::Get()->DrawAll(Camera.get());
 

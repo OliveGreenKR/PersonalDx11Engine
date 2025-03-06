@@ -17,7 +17,7 @@ public:
         Count
     };
 
-    UElasticBody() = default;
+    UElasticBody();
     virtual ~UElasticBody() = default;
 
     // 기본 수명 주기 메서드
@@ -26,8 +26,8 @@ public:
     virtual void PostInitializedComponents() override;
 
     // 컴포넌트 접근자
-    class URigidBodyComponent* GetRigidBody() const { return Rigid.lock().get(); }
-    class UCollisionComponent* GetCollisionComponent() const { return Collision.lock().get(); }
+    class URigidBodyComponent* GetRigidBody() const { return Rigid.get(); }
+    class UCollisionComponent* GetCollisionComponent() const { return Collision.get(); }
 
     /// <summary>
     /// 인스턴스 상태 초기화
@@ -75,9 +75,8 @@ private:
     bool bIsActive = true;
     EShape Shape = EShape::Sphere;
 
-
-    // 컴포넌트 참조
-    std::weak_ptr<class URigidBodyComponent> Rigid;
-    std::weak_ptr<class UCollisionComponent> Collision;
+    // 컴포넌트 소유
+    std::shared_ptr<class URigidBodyComponent> Rigid;
+    std::shared_ptr<class UCollisionComponent> Collision;
 
 };

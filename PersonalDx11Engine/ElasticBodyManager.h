@@ -8,7 +8,7 @@ class ElasticBody;
 
 class UElasticBodyManager
 {
-private:
+public:
 	UElasticBodyManager();
 	~UElasticBodyManager();
 
@@ -105,20 +105,15 @@ private:
 		float MaxAngularSpeed = 6.0f * PI;
 
 		// 위치 범위
-		Vector3 MinPosition{ -3.0f, -3.0f, -5.0f };
-		Vector3 MaxPosition{ 3.0f, 3.0f, 5.0f };
+		Vector3 MinPosition{ -3.0f, -1.0f, -5.0f };
+		Vector3 MaxPosition{ 3.0f, 1.0f, 5.0f };
 	} PropertyRanges;
 
 	// 질량-색상 매핑
 	std::unordered_map<EMassCategory, Vector4> MassColorMap;
 
-	// 형태 - 모델 매핑
-	std::unordered_map<int, std::shared_ptr<class UModel>> ModelMap;
-
 	// 유틸리티 메서드
 	std::shared_ptr<UElasticBody> CreateNewBody();
 	std::shared_ptr<UElasticBody> GetBodyFromPool();
 	void ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body);
-
-
 };

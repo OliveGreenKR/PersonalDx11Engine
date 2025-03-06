@@ -4,10 +4,12 @@
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
 #include "Model.h"
+#include "ModelBufferManager.h"
+
 
 #pragma region Getter Setter
 const Vector3& UElasticBody::GetVelocity() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetVelocity();
 	}
 	static Vector3 DefaultVelocity = Vector3::Zero;
@@ -15,7 +17,7 @@ const Vector3& UElasticBody::GetVelocity() const {
 }
 
 const Vector3& UElasticBody::GetAngularVelocity() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetAngularVelocity();
 	}
 	static Vector3 DefaultAngularVelocity = Vector3::Zero;
@@ -23,92 +25,92 @@ const Vector3& UElasticBody::GetAngularVelocity() const {
 }
 
 float UElasticBody::GetSpeed() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetSpeed();
 	}
 	return 0.0f;
 }
 
 float UElasticBody::GetMass() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetMass();
 	}
 	return 0.0f;
 }
 
 Vector3 UElasticBody::GetRotationalInertia() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetRotationalInertia();
 	}
 	return Vector3::Zero;
 }
 
 float UElasticBody::GetRestitution() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetRestitution();
 	}
 	return 0.0f;
 }
 
 float UElasticBody::GetFrictionKinetic() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetFrictionKinetic();
 	}
 	return 0.0f;
 }
 
 float UElasticBody::GetFrictionStatic() const {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		return RigidPtr->GetFrictionStatic();
 	}
 	return 0.0f;
 }
 
 void UElasticBody::SetMass(float InMass) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetMass(InMass);
 	}
 }
 
 void UElasticBody::SetMaxSpeed(float InSpeed) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetMaxSpeed(InSpeed);
 	}
 }
 
 void UElasticBody::SetMaxAngularSpeed(float InSpeed) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetMaxAngularSpeed(InSpeed);
 	}
 }
 
 void UElasticBody::SetGravityScale(float InScale) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetGravityScale(InScale);
 	}
 }
 
 void UElasticBody::SetFrictionKinetic(float InFriction) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetFrictionKinetic(InFriction);
 	}
 }
 
 void UElasticBody::SetFrictionStatic(float InFriction) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetFrictionStatic(InFriction);
 	}
 }
 
 void UElasticBody::SetRestitution(float InRestitution) {
-	if (auto RigidPtr = Rigid.lock()) {
+	if (auto RigidPtr = Rigid.get()) {
 		RigidPtr->SetRestitution(InRestitution);
 	}
 }
 
 void UElasticBody::SetShape(EShape InShape)
 {
-	if (auto CollisionPtr = Collision.lock())
+	if (auto CollisionPtr = Collision.get())
 	{
 		CollisionPtr->SetShape(GetCollisionShape(InShape));
 	}
@@ -118,6 +120,12 @@ void UElasticBody::SetShape(EShape InShape)
 	{
 		case EShape::Box : 
 		{
+			Model = UModelBufferManager::Get()->GetCubeModel();
+			break;
+		}
+		case EShape::Sphere:
+		{
+			Model = UModelBufferManager::Get()->GetSphereModel();
 			break;
 		}
 	}
@@ -134,6 +142,12 @@ void UElasticBody::SetShapeBox()
 }
 #pragma endregion
 
+UElasticBody::UElasticBody()
+{
+	Rigid = UActorComponent::Create< URigidBodyComponent>();
+	Collision = UActorComponent::Create<UCollisionComponent>();
+}
+
 void UElasticBody::Tick(const float DeltaTime)
 {
 	UGameObject::Tick(DeltaTime);
@@ -143,24 +157,25 @@ void UElasticBody::PostInitialized()
 {
 	UGameObject::PostInitialized();
 
+	bDebug = true;
+
 	//attach actor Comp
 	if (auto RootComp = RootActorComp.get())
 	{
 		//rigid body 추가 및 초기화
-		auto RigidBodyComp = UActorComponent::Create<URigidBodyComponent>();
-		if (RigidBodyComp.get())
+		if (Rigid.get())
 		{
-			Rigid = RigidBodyComp;
-			AddActorComponent(RigidBodyComp);
+			Rigid.get()->bGravity = false;
+			Rigid.get()->bSyncWithOwner = true;
+			Rigid.get()->SetSimulatePhysics(true);
+			AddActorComponent(Rigid);
 		}
 
 		//collsion body 추가 및 초기화
-		auto CollisionComp = UActorComponent::Create<UCollisionComponent>(GetCollisionShape(Shape), Vector3::Zero);
-		if (CollisionComp.get())
+		if (Collision.get())
 		{
-			Collision = CollisionComp;
-			CollisionComp->BindRigidBody(RigidBodyComp);
-			CollisionComp->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+			Collision->BindRigidBody(Rigid);
+			Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
 		}
 	}
 }
@@ -179,7 +194,7 @@ void UElasticBody::SetActive(bool bActive)
 void UElasticBody::Reset()
 {
 	// 컴포넌트 상태 초기화
-	if (auto rigid = Rigid.lock())
+	if (auto rigid = Rigid.get())
 	{
 		// 물리 상태 초기화
 		rigid->Reset();

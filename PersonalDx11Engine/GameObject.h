@@ -12,14 +12,20 @@ class UModel;
 class UGameObject : public std::enable_shared_from_this<UGameObject>
 {
 public:
-	static std::shared_ptr<UGameObject> Create()
+	template<typename T>
+	static std::shared_ptr<T> Create()
 	{
-		return std::shared_ptr<UGameObject>(new UGameObject());
+		static_assert(std::is_base_of_v<UGameObject,T> || std::is_same_v<UGameObject, T>,
+					  "T must be derived of UGmameObject");
+		return std::shared_ptr<T>(new T());
 	}
 
-	static std::shared_ptr<UGameObject> Create(const shared_ptr<UModel>& InModel)
+	template<typename T>
+	static std::shared_ptr<T> Create(const shared_ptr<UModel>& InModel)
 	{
-		return std::shared_ptr<UGameObject>(new UGameObject(InModel));
+		static_assert(std::is_base_of_v<UGameObject, T> || std::is_same_v<UGameObject, T>,
+					  "T must be derived of UGmameObject");
+		return std::shared_ptr<T>(new T(InModel));
 	}
 
 protected:

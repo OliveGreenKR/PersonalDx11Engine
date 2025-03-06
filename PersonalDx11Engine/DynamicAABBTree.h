@@ -132,8 +132,6 @@ private:
 
     bool IsValidId(const size_t NodeId) const;
 
-    //트리 무결성 검사
-    bool ValidateTree() const;
     //트리 재생성
     void ReBuildTree();
     //트리 초기화
