@@ -79,4 +79,8 @@ private:
     std::shared_ptr<class URigidBodyComponent> Rigid;
     std::shared_ptr<class UCollisionComponent> Collision;
 
+public:
+    class URigidBodyComponent* GetRigid();
+    class UCollisionComponent* GetCollision();
+
 };

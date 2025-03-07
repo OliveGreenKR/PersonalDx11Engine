@@ -227,3 +227,19 @@ ECollisionShapeType UElasticBody::GetCollisionShape(const EShape InShape) const
 		}
 	}
 }
+
+URigidBodyComponent* UElasticBody::GetRigid()
+{
+#if defined(_DEBUG) || defined(DEBUG)
+	return Rigid.get();
+#endif
+	return nullptr;
+}
+
+UCollisionComponent* UElasticBody::GetCollision()
+{
+#if defined(_DEBUG) || defined(DEBUG)
+	return Collision.get();
+#endif
+	return nullptr;
+}

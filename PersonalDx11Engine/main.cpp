@@ -199,12 +199,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
 	Character->SetMass(CharacterMass);
+	Character->SetShapeBox();
 	
-	auto Character2 = UGameObject::Create<UElasticBody>(SphereModel);
+	auto Character2 = UGameObject::Create<UElasticBody>();
 	Character2->SetScale(0.75f * Vector3::One);
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->bDebug = true;
-	Character->SetMass(Character2Mass);
+	Character2->SetMass(Character2Mass);
+	Character2->SetShapeSphere();
 #pragma endregion
 	Camera->PostInitialized();
 	Character->PostInitialized();
@@ -213,51 +215,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Camera->SetLookAtObject(Character.get());
 	Camera->LookTo(Character->GetTransform()->GetPosition());
 	Camera->bLookAtObject = false;
-#pragma region Actor Components Initialization
-	//rigid
-	//auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
-	//auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
-	auto RigidComp3 = UActorComponent::Create<URigidBodyComponent>();
-	//RigidComp1->SetMass(CharacterMass);
-	//RigidComp2->SetMass(Character2Mass);
-	RigidComp3->SetRigidType(ERigidBodyType::Static);
 
-	////rigid attach
-	//Character->AddActorComponent(RigidComp1);
-	//Character2->AddActorComponent(RigidComp2);
-
-	//Collision
-	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Sphere, 0.5f * Character2->GetTransform()->GetScale());
-
-	CollisionComp2->OnCollisionEnter.BindSystem([](const FCollisionEventData& InColliision)
-												{
-													FDebugDrawManager::Get()->DrawArrow(
-														InColliision.CollisionDetectResult.Point,
-														InColliision.CollisionDetectResult.Normal,
-														0.5f,
-														2.0f,
-														Vector4(1,0,1,0.5f),
-														0.3f
-														);
-												}, "OnCollisionBegin_Sys_Comp2");
-
-	//Collision Attach
-	CollisionComp1->BindRigidBody(RigidComp1);
-	CollisionComp2->BindRigidBody(RigidComp2);
-#pragma endregion
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();
 
-	auto ElasticBody = UGameObject::Create<UElasticBody>();
-	ElasticBody->SetScale(0.5f * Vector3::One);
-	ElasticBody->SetShapeBox();
-	ElasticBody->SetActive(true);
-	ElasticBody->bDebug = true;
-	ElasticBody->PostInitialized();
-	ElasticBody->SetMass(3.0f);
-	ElasticBody->PostInitializedComponents();
+	//auto ElasticBody = UGameObject::Create<UElasticBody>();
+	//ElasticBody->SetScale(0.5f * Vector3::One);
+	//ElasticBody->SetShapeBox();
+	//ElasticBody->SetActive(true);
+	//ElasticBody->bDebug = true;
+	//ElasticBody->PostInitialized();
+	//ElasticBody->SetMass(3.0f);
+	//ElasticBody->PostInitializedComponents();
 
 	//Border
 	const float XBorder = 3.0f;
@@ -612,11 +582,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Character2->Tick(DeltaTime);
 		}
 
-		if (ElasticBody)
-		{
-			ElasticBody->Tick(DeltaTime);
-		}
-
 		if (Camera)
 		{
 			Camera->Tick(DeltaTime);
@@ -633,7 +598,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Render
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
-		Renderer->RenderGameObject(Camera.get(),ElasticBody.get(), Shader.get(), *TTile.get());
+
 		UElasticBodyManager::Get()->Render(Renderer.get(), Camera.get(), Shader.get(), *TPole.get());
 #pragma region UI
 		// ImGui UI 
@@ -694,7 +659,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 						CurrentVelo.y,
 						CurrentVelo.z);
-			ImGui::Text(Utils::ToString(CollisionComp1->GetPreviousTransform()));
+			//ImGui::Text(Utils::ToString(Character->GetCollision()->GetPreviousTransform()));
 			ImGui::End();
 		}
 		
