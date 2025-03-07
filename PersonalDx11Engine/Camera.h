@@ -28,7 +28,7 @@ public:
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
 
 	bool IsInView(const Vector3& Position);
-	void SetLookAtObject(shared_ptr<UGameObject>& InTarget);
+	void SetLookAtObject(UGameObject* InTarget);
 
 	void LookTo(const Vector3& TargetPosition);
 	void LookTo();

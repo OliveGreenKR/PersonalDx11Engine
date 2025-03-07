@@ -93,20 +93,20 @@ private:
 	// 속성 범위 설정
 	struct FPropertyRanges
 	{
-		float MinMass = 0.1f;
+		float MinMass = 0.5f;
 		float MaxMass = 10.0f;
 		float MinSize = 0.3f;
 		float MaxSize = 1.0f;
 		float MinRestitution = 0.3f;
 		float MaxRestitution = 0.9f;
 		float MinFriction = 0.1f;
-		float MaxFriction = 0.8f;
+		float MaxFriction = 0.6f;
 		float MaxSpeed = 100.0f; 
 		float MaxAngularSpeed = 6.0f * PI;
 
 		// 위치 범위
-		Vector3 MinPosition{ -3.0f, -1.0f, -5.0f };
-		Vector3 MaxPosition{ 3.0f, 1.0f, 5.0f };
+		Vector3 MinPosition{ -1.0f, -1.0f, 0.0f };
+		Vector3 MaxPosition{ 1.0f, 1.0f, 0.0f };
 	} PropertyRanges;
 
 	// 질량-색상 매핑

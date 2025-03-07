@@ -194,35 +194,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float CharacterMass = 5.0f;
 	float Character2Mass = 15.0f;
 	
-	auto Character = UGameObject::Create<UGameObject>(SphereModel);
+	auto Character = UGameObject::Create<UElasticBody>();
 	Character->SetScale(0.25f * Vector3::One);
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
+	Character->SetMass(CharacterMass);
 	
-	auto Character2 = UGameObject::Create<UGameObject>(SphereModel);
+	auto Character2 = UGameObject::Create<UElasticBody>(SphereModel);
 	Character2->SetScale(0.75f * Vector3::One);
 	Character2->SetPosition({ 1.0f,0,0 });
 	Character2->bDebug = true;
+	Character->SetMass(Character2Mass);
 #pragma endregion
 	Camera->PostInitialized();
 	Character->PostInitialized();
 	Character2->PostInitialized();
 
-	Camera->SetLookAtObject(Character);
+	Camera->SetLookAtObject(Character.get());
 	Camera->LookTo(Character->GetTransform()->GetPosition());
 	Camera->bLookAtObject = false;
 #pragma region Actor Components Initialization
 	//rigid
-	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
-	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
+	//auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
+	//auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
 	auto RigidComp3 = UActorComponent::Create<URigidBodyComponent>();
-	RigidComp1->SetMass(CharacterMass);
-	RigidComp2->SetMass(Character2Mass);
+	//RigidComp1->SetMass(CharacterMass);
+	//RigidComp2->SetMass(Character2Mass);
 	RigidComp3->SetRigidType(ERigidBodyType::Static);
 
-	//rigid attach
-	Character->AddActorComponent(RigidComp1);
-	Character2->AddActorComponent(RigidComp2);
+	////rigid attach
+	//Character->AddActorComponent(RigidComp1);
+	//Character2->AddActorComponent(RigidComp2);
 
 	//Collision
 	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>(ECollisionShapeType::Box, 0.5f * Character->GetTransform()->GetScale());

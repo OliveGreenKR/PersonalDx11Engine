@@ -53,11 +53,11 @@ bool UCamera::IsInView(const Vector3& Position)
 	return true;
 }
 
-void UCamera::SetLookAtObject(shared_ptr<UGameObject>& InTarget)
+void UCamera::SetLookAtObject(UGameObject* InTarget)
 {
 	if (!InTarget)
 		return;
-	LookAtObject = InTarget;
+	LookAtObject = InTarget->shared_from_this();
 }
 
 void UCamera::LookTo(const Vector3& TargetPosition)
