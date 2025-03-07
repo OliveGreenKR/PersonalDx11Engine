@@ -84,7 +84,19 @@ void UCollisionComponent::SetHalfExtent(const Vector3& InHalfExtent)
 bool UCollisionComponent::IsEffective()
 {
 	bool result = UPrimitiveComponent::IsEffective();
-	return  result && !bDestroyed || GetCollisionEnabled();
+	return  result && !bDestroyed && IsCollisionEnabled();
+}
+
+void UCollisionComponent::Activate()
+{
+	UPrimitiveComponent::Activate();
+	ActivateColiision();
+}
+
+void UCollisionComponent::DeActivate()
+{
+	UPrimitiveComponent::DeActivate();
+	DeActivateCollision();
 }
 
 void UCollisionComponent::SetShape(const ECollisionShapeType InShape)
@@ -100,6 +112,18 @@ void UCollisionComponent::SetShapeSphere()
 void UCollisionComponent::SetShapeBox()
 {
 	Shape.Type = ECollisionShapeType::Box;
+}
+
+void UCollisionComponent::ActivateColiision()
+{
+	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
+	UCollisionManager::Get()->RegisterCollision(shared);
+}
+
+void UCollisionComponent::DeActivateCollision()
+{
+	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
+	UCollisionManager::Get()->UnRegisterCollision(shared);
 }
 
 void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
@@ -135,11 +159,9 @@ Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
 	}
 }
 
-
 void UCollisionComponent::PostTreeInitialized()
 {
-	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
-	UCollisionManager::Get()->RegisterCollision(shared);
+	Activate();
 
 	if (auto RigidPtr = RigidBody.lock())
 	{
@@ -151,6 +173,9 @@ void UCollisionComponent::PostTreeInitialized()
 void UCollisionComponent::Tick(const float DeltaTime)
 {
 	UActorComponent::Tick(DeltaTime);
+
+	if (!IsActive() && !IsCollisionEnabled())
+		return;
 
 	//이전 트랜스폼 저장
 	PrevTransform = *GetTransform();

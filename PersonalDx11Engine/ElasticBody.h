@@ -64,7 +64,7 @@ public:
     void SetShapeBox();
 
     // 활성화/비활성화
-    void SetActive(bool bActive);
+    void SetActive(const bool bActive);
     bool IsActive() const { return bIsActive; }
 
 private:

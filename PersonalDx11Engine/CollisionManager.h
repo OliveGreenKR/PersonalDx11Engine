@@ -112,6 +112,7 @@ public:
                               const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
     void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent);
+    void UnRegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent);
 
     void Tick(const float DeltaTime);
     void UnRegisterAll();
@@ -173,7 +174,8 @@ private:
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult);
-
+public:
+    void PrintTreeStructure();
 
 private:
     // 하부 시스템 클래스들

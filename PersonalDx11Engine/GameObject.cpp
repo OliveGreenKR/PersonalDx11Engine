@@ -244,7 +244,7 @@ bool UGameObject::IsPhysicsSimulated() const
 		return false;
 	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
 	{
-		return RigidComp->GetSimulatePhysics();
+		return RigidComp->IsSimulatePhysics();
 	}
 	return false;
 }

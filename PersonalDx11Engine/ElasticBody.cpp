@@ -167,7 +167,6 @@ void UElasticBody::PostInitialized()
 		{
 			Rigid.get()->bGravity = false;
 			Rigid.get()->bSyncWithOwner = true;
-			Rigid.get()->SetSimulatePhysics(true);
 			AddActorComponent(Rigid);
 		}
 
@@ -185,10 +184,12 @@ void UElasticBody::PostInitializedComponents()
 	UGameObject::PostInitializedComponents();
 }
 
-void UElasticBody::SetActive(bool bActive)
+void UElasticBody::SetActive(const bool bActive)
 {
+	Collision->SetActive(bActive);
+	Rigid->SetActive(bActive);
+	RootActorComp->SetActive(bActive);
 	bIsActive = bActive;
-	RootActorComp->SetActive(bIsActive);
 }
 
 void UElasticBody::Reset()

@@ -39,6 +39,16 @@ void UActorComponent::BroadcastTick(float DeltaTime)
     }
 }
 
+void UActorComponent::Activate()
+{
+    bIsActive = true;
+}
+
+void UActorComponent::DeActivate()
+{
+    bIsActive = false;
+}
+
 void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
 {
     // 자기 자신을 부모로 설정하는 것 방지

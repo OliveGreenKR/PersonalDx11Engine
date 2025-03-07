@@ -42,8 +42,12 @@ public:
     virtual bool IsEffective() { return  this != nullptr && IsActive(); }
 
     // 컴포넌트 활성화 상태
-    void SetActive(bool bNewActive) { bIsActive = bNewActive; }
+    void SetActive(bool bNewActive) { bNewActive ? Activate() : DeActivate(); }
     bool IsActive() const { return bIsActive; }
+
+protected:
+    virtual void Activate();
+    virtual void DeActivate();
 
 protected:
     // 컴포넌트 트리 구조 완성 후 초기화(오너 및 트리구조 접근 가능)

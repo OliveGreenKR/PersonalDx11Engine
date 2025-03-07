@@ -227,15 +227,15 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 		return;
 	}
 
+	// 객체 비활성화
+	DeactivateBody(Body);
+
 	// 활성 목록에서 제거 
 	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
 	if (it != ActiveBodies.end())
 	{
 		ActiveBodies.erase(it);
 	}
-
-	// 객체 비활성화
-	DeactivateBody(Body);
 
 	// 풀에 반환
 	PooledBodies.push_back(Body);

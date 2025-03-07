@@ -3,7 +3,7 @@
 
 void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UCollisionComponent>& InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
-    if (!InComponent.get() || !InComponent->GetCollisionEnabled())
+    if (!InComponent.get() || !InComponent->IsCollisionEnabled())
     {
         return;
     }
@@ -12,13 +12,13 @@ void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UC
 
 void FCollisionEventDispatcher::DispatchCollisionEvents(const UCollisionComponent* InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
-    if (!InComponent || !InComponent->GetCollisionEnabled())
+    if (!InComponent || !InComponent->IsCollisionEnabled())
     {
         return;
     }
 
     auto OtherComponent = EventData.OtherComponent.lock();
-    if (!OtherComponent || !OtherComponent->GetCollisionEnabled())
+    if (!OtherComponent || !OtherComponent->IsCollisionEnabled())
     {
         return;
     }

@@ -608,7 +608,6 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
     }
 }
 
-
 void FDynamicAABBTree::PrintBinaryTree(size_t root, std::string prefix, bool isLeft) const
 {
     using namespace std;

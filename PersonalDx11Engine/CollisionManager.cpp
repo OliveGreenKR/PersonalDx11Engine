@@ -43,10 +43,54 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 	// 벡터에 추가
 	RegisteredComponents.push_back(std::move(ComponentData));
-#if defined(_DEBUG) || defined(DEBUG)
-	//test
-	CollisionTree->PrintTreeStructure();
-#endif
+}
+
+void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>& InComponent)
+{
+	if (!InComponent || RegisteredComponents.empty())
+		return;
+
+	// 관리 중인 컴포넌트인지 확인
+	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
+								 [&InComponent](const FComponentData& CompData)
+								 {
+									 return CompData.Component.get() == InComponent.get();
+								 });
+
+	if (targetIt == RegisteredComponents.end())
+		return;
+
+	// 인덱스 및 데이터 저장
+	size_t targetIndex = targetIt - RegisteredComponents.begin();
+	size_t treeNodeId = targetIt->TreeNodeId;
+
+	// AABB 트리에서 제거
+	if (CollisionTree)
+		CollisionTree->Remove(treeNodeId);
+
+	// 충돌 쌍에서 해당 인덱스 관련 항목 제거
+	auto it = ActiveCollisionPairs.begin();
+	while (it != ActiveCollisionPairs.end())
+	{
+		const FCollisionPair& Pair = *it;
+		if (Pair.IndexA == targetIndex || Pair.IndexB == targetIndex)
+			it = ActiveCollisionPairs.erase(it);
+		else
+			++it;
+	}
+
+	// 컴포넌트 제거
+	if (targetIndex < RegisteredComponents.size() - 1)
+	{
+		// 마지막 요소와 교체 후 제거 (swap-and-pop)
+		std::swap(RegisteredComponents[targetIndex], RegisteredComponents.back());
+
+		// 교체된 컴포넌트의 인덱스 업데이트
+		UpdateCollisionPairIndices(RegisteredComponents.size() - 1, targetIndex);
+	}
+
+	// 마지막 요소 제거
+	RegisteredComponents.pop_back();
 }
 
 void UCollisionManager::Tick(const float DeltaTime)
@@ -274,6 +318,21 @@ void UCollisionManager::UpdateCollisionPairs()
 			//for test, push all pairs
 			if (i == j)
 				continue;
+
+			const auto& OtherComponentData = RegisteredComponents[j];
+			auto* OtherComponent = OtherComponentData.Component.get();
+
+			// 유효성 검사
+			if (!OtherComponent && !OtherComponent->IsEffective())
+			{
+				continue;
+			}
+
+			// 트리 노드 ID 유효성 검사 추가
+			if (OtherComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
+			{
+				continue;
+			}
 			NewCollisionPairs.insert(FCollisionPair(i, j));
 		}
 	}
@@ -289,7 +348,7 @@ void UCollisionManager::UpdateCollisionTransform()
 		auto* Component = ComponentData.Component.get();
 
 		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
-		if (!Component || Component->bDestroyed || !Component->GetCollisionEnabled() || Component->GetRigidBody()->IsStatic())
+		if (!Component || Component->bDestroyed || !Component->IsCollisionEnabled() || Component->GetRigidBody()->IsStatic())
 		{
 			continue;
 		}
@@ -594,4 +653,12 @@ void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, c
 	EventDispatcher->DispatchCollisionEvents(CompA, EventData, NowState);
 	EventData.OtherComponent = CompA;
 	EventDispatcher->DispatchCollisionEvents(CompB, EventData, NowState);
+}
+
+void UCollisionManager::PrintTreeStructure()
+{
+#if defined(_DEBUG) || defined(DEBUG)
+//test
+	CollisionTree->PrintTreeStructure();
+#endif
 }

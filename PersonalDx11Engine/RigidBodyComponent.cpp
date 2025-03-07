@@ -20,8 +20,7 @@ void URigidBodyComponent::Reset()
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
 	UPrimitiveComponent::Tick(DeltaTime);
-
-	if (!GetSimulatePhysics())
+	if (!IsActive() && !IsSimulatePhysics() )
 		return;
 
 	// 모든 힘을 가속도로 변환
@@ -151,7 +150,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!GetSimulatePhysics())
+	if (!IsSimulatePhysics())
 		return;
 
 	AccumulatedForce += Force;
@@ -160,7 +159,7 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!GetSimulatePhysics())
+	if (!IsSimulatePhysics())
 		return;
 
 	AccumulatedInstantForce += Impulse;

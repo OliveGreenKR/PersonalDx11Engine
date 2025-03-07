@@ -15,6 +15,21 @@ public:
 	void SetSimulatePhysics(const bool bSimulate) { bSimulatePhysics = bSimulate; }
 	void SetCollisionEnabled(const bool bEnabled) { bCollisionEnabled = bEnabled; }
 
-	bool GetSimulatePhysics() const		{ return bSimulatePhysics; }
-	bool GetCollisionEnabled() const	{ return bCollisionEnabled; }
+	bool IsSimulatePhysics() const		{ return bSimulatePhysics; }
+	bool IsCollisionEnabled() const	    { return bCollisionEnabled; }
+
+public:
+	virtual void Activate() override
+	{ 
+		USceneComponent::Activate(); 
+		SetSimulatePhysics(false);
+		SetCollisionEnabled(false);
+	}
+
+	virtual void DeActivate() override
+	{
+		USceneComponent::DeActivate();
+		SetSimulatePhysics(true);
+		SetCollisionEnabled(true);
+	}
 };

@@ -52,10 +52,17 @@ public:
 	// 유효성 검사
 	virtual bool IsEffective() override;
 
+	virtual void Activate() override;
+	virtual void DeActivate() override;
+
 	//형태 지정
 	void SetShape(const ECollisionShapeType InShape);
 	void SetShapeSphere();
 	void SetShapeBox();
+	
+private:
+	void ActivateColiision();
+	void DeActivateCollision();
 	
 public:
 	bool bDestroyed : 1;
