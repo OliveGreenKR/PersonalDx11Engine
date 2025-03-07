@@ -122,8 +122,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 #pragma region window init
 
-	WCHAR WindowClass[] = L"JungleWindowClass";
-	WCHAR Title[] = L"Game Tech Lab";
+	WCHAR WindowClass[] = L"MyPersonal11Engine";
+	WCHAR Title[] = L"Scene1";
 
 	// 각종 메시지를 처리할 함수인 WndProc의 함수 포인터를 WindowClass 구조체에 넣는다.
 	WNDCLASSW wndclass = { 0, WindowProc, 0, 0, 0, 0, 0, 0, 0, WindowClass };
@@ -209,7 +209,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region Object Initialization
 	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
-	//Camera->SetPosition({ 0,0.0f,-12.0f });
 	Camera->SetPosition({ 0,0.0f,-10.0f });
 
 	float CharacterMass = 5.0f;
@@ -230,20 +229,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Character->AddActorComponent(RigidComp1);
 
-	auto Character2 = UGameObject::Create<UGameObject>(SphereModel);
+	auto Character2 = UGameObject::Create<UElasticBody>();
 	Character2->SetScale(0.75f * Vector3::One);
 	Character2->SetPosition({ 1,0,0 });
+	Character2->SetShapeSphere();
 	Character2->bDebug = true;
 
-	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
-	RigidComp2->SetMass(Character2Mass);
+	//auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
+	//RigidComp2->SetMass(Character2Mass);
 
-	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>();
-	CollisionComp2->SetShapeSphere();
-	CollisionComp2->SetHalfExtent(0.5f * Character2->GetTransform()->GetScale());
-	CollisionComp2->BindRigidBody(RigidComp2);
+	//auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>();
+	//CollisionComp2->SetShapeSphere();
+	//CollisionComp2->SetHalfExtent(0.5f * Character2->GetTransform()->GetScale());
+	//CollisionComp2->BindRigidBody(RigidComp2);
 
-	Character2->AddActorComponent(RigidComp2);
+	//Character2->AddActorComponent(RigidComp2);
 	
 #pragma endregion
 	Camera->PostInitialized();
@@ -252,7 +252,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Camera->SetLookAtObject(Character.get());
 	Camera->LookTo(Character->GetTransform()->GetPosition());
-	Camera->bLookAtObject = true;
+	Camera->bLookAtObject = false;
 
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
@@ -597,7 +597,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-
 		//Draw Debug
 		FDebugDrawManager::Get()->Tick(DeltaTime);
 
