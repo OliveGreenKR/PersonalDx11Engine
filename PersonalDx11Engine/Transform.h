@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include "Delegate.h"
 
@@ -9,17 +9,17 @@ struct FTransform
 public:
 	FTransform() = default;
 
-	// º¹»ç »ı¼ºÀÚ
+	// ë³µì‚¬ ìƒì„±ì
 	FTransform(const FTransform& Other) :
 		Position(Other.Position),
 		Rotation(Other.Rotation),
 		Scale(Other.Scale),
 		TransformVersion(Other.TransformVersion)
 	{
-		// µ¨¸®°ÔÀÌÆ®´Â º¹»çÇÏÁö ¾ÊÀ½ - »õ·Î¿î °´Ã¼´Â ÀÚ½Å¸¸ÀÇ ÀÌº¥Æ® ¸®½º³Ê¸¦ °¡Á®¾ß ÇÔ
+		// ë¸ë¦¬ê²Œì´íŠ¸ëŠ” ë³µì‚¬í•˜ì§€ ì•ŠìŒ - ìƒˆë¡œìš´ ê°ì²´ëŠ” ìì‹ ë§Œì˜ ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆë¥¼ ê°€ì ¸ì•¼ í•¨
 	}
 
-	// ÀÌµ¿ »ı¼ºÀÚ
+	// ì´ë™ ìƒì„±ì
 	FTransform(FTransform&& Other) noexcept :
 		Position(std::move(Other.Position)),
 		Rotation(std::move(Other.Rotation)),
@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-	// º¹»ç ÇÒ´ç ¿¬»êÀÚ
+	// ë³µì‚¬ í• ë‹¹ ì—°ì‚°ì
 	FTransform& operator=(const FTransform& Other)
 	{
 		if (this != &Other)
@@ -39,14 +39,14 @@ public:
 			Scale = Other.Scale;
 			TransformVersion = Other.TransformVersion;
 
-			// µ¨¸®°ÔÀÌÆ®´Â º¹»çÇÏÁö ¾Ê°í À¯Áö
-			// ±âÁ¸ ¸®½º³Êµé¿¡°Ô º¯°æ ¾Ë¸²
+			// ë¸ë¦¬ê²Œì´íŠ¸ëŠ” ë³µì‚¬í•˜ì§€ ì•Šê³  ìœ ì§€
+			// ê¸°ì¡´ ë¦¬ìŠ¤ë„ˆë“¤ì—ê²Œ ë³€ê²½ ì•Œë¦¼
 			NotifyTransformChanged();
 		}
 		return *this;
 	}
 
-	// ÀÌµ¿ ÇÒ´ç ¿¬»êÀÚ
+	// ì´ë™ í• ë‹¹ ì—°ì‚°ì
 	FTransform& operator=(FTransform&& Other) noexcept
 	{
 		if (this != &Other)
@@ -97,8 +97,8 @@ private:
 
 private:
 	uint32_t TransformVersion = 0;
-	// ¼º´É ÃÖÀûÈ­¸¦ À§ÇÑ º¯È­ °¨Áö ÀÓ°è°ª
+	// ì„±ëŠ¥ ìµœì í™”ë¥¼ ìœ„í•œ ë³€í™” ê°ì§€ ì„ê³„ê°’
 	static constexpr float PositionThreshold = KINDA_SMALL;
-	static constexpr float RotationThreshold = KINDA_SMALL;
+	static constexpr float RotationThreshold = KINDA_SMALLER;
 	static constexpr float ScaleThreshold = KINDA_SMALL;
 };

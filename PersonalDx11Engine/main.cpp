@@ -7,7 +7,7 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
-#include "Utils.h"
+#include "Debug.h"
 #include "DebugDrawManager.h"
 
 #include <memory>
@@ -46,11 +46,14 @@
 constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 800;
 
+constexpr int CONSOLE_WIDTH = 500;
+constexpr int CONSOLE_HEIGHT = 300;
+
 using namespace std;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-void CreateConsole()
+void CreateConsole(int consoleWidth, int consoleHeight, int xPos, int yPos)
 {
 	// 콘솔 할당
 	AllocConsole();
@@ -59,6 +62,27 @@ void CreateConsole()
 	FILE* pConsole;
 	freopen_s(&pConsole, "CONOUT$", "w", stdout);
 	freopen_s(&pConsole, "CONIN$", "r", stdin);
+
+	// 콘솔 창의 핸들 가져오기
+	HWND consoleWindow = GetConsoleWindow();
+
+	// 콘솔 창의 크기와 위치 설정
+	RECT rect;
+	GetWindowRect(consoleWindow, &rect);
+	MoveWindow(consoleWindow, xPos, yPos, consoleWidth, consoleHeight, TRUE);
+
+	// 콘솔 버퍼 크기 설정
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(consoleHandle, &csbi);
+
+	COORD bufferSize;
+	bufferSize.X = static_cast<SHORT>(min(consoleWidth / 8, SHRT_MAX)); // 대략적인 문자 너비로 나눔
+	bufferSize.Y = static_cast<SHORT>(min(consoleHeight / 16, SHRT_MAX)); // 대략적인 문자 높이로 나눔
+	SetConsoleScreenBufferSize(consoleHandle, bufferSize);
+
+	// 콘솔 창 스타일 설정 (필요시)
+	// SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 }
 
 //struct for Processing Win Msgs
@@ -111,8 +135,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
 
+	RECT appRect;
+	GetWindowRect(hWnd, &appRect); //윈도우 크기 가져오기
+
 	// 콘솔 생성
-	CreateConsole();
+	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
 
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
@@ -205,7 +232,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	auto Character2 = UGameObject::Create<UGameObject>(SphereModel);
 	Character2->SetScale(0.75f * Vector3::One);
-	Character2->SetPosition({ 0,0,0 });
+	Character2->SetPosition({ 1,0,0 });
 	Character2->bDebug = true;
 
 	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
@@ -218,12 +245,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Character2->AddActorComponent(RigidComp2);
 	
-	//auto Character2 = UGameObject::Create<UGameObject>();
-	//Character2->SetScale(0.75f * Vector3::One);
-	//Character2->SetPosition({ 1.0f,0,0 });
-	//Character2->bDebug = true;
-	//Character2->SetMass(Character2Mass);
-	//Character2->SetShapeSphere();
 #pragma endregion
 	Camera->PostInitialized();
 	Character->PostInitialized();
@@ -231,20 +252,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	Camera->SetLookAtObject(Character.get());
 	Camera->LookTo(Character->GetTransform()->GetPosition());
-	Camera->bLookAtObject = false;
+	Camera->bLookAtObject = true;
 
 	Character->PostInitializedComponents();
 	Character2->PostInitializedComponents();
 	Camera->PostInitializedComponents();
-
-	//auto ElasticBody = UGameObject::Create<UElasticBody>();
-	//ElasticBody->SetScale(0.5f * Vector3::One);
-	//ElasticBody->SetShapeBox();
-	//ElasticBody->SetActive(true);
-	//ElasticBody->bDebug = true;
-	//ElasticBody->PostInitialized();
-	//ElasticBody->SetMass(3.0f);
-	//ElasticBody->PostInitializedComponents();
 
 	//Border
 	const float XBorder = 3.0f;
@@ -640,7 +652,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Begin("Camera", nullptr, UIWindowFlags);
 			ImGui::Checkbox("bIs2D", &Camera->bIs2D);
 			ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-			ImGui::Text(Utils::ToString(*Camera->GetTransform()));
+			ImGui::Text(Debug::ToString(*Camera->GetTransform()));
 			ImGui::End();
 		}
 
@@ -676,7 +688,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
 						CurrentVelo.y,
 						CurrentVelo.z);
-			//ImGui::Text(Utils::ToString(Character->GetCollision()->GetPreviousTransform()));
 			ImGui::End();
 		}
 		

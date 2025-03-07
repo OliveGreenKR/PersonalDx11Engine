@@ -1,4 +1,5 @@
-#include "Camera.h"
+ï»¿#include "Camera.h"
+#include "Debug.h"
 
 UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
 	: Fov(fov), AspectRatio(aspectRatio), NearZ(nearZ), FarZ(farZ)
@@ -42,7 +43,7 @@ bool UCamera::IsInView(const Vector3& Position)
 		UpdatDirtyView();
 	}
 
-	// ¸ğµç Æò¸é¿¡ ´ëÇØ Á¡ °Ë»ç
+	// ëª¨ë“  í‰ë©´ì— ëŒ€í•´ ì  ê²€ì‚¬
 	if (!ViewFrustum.Near.IsInFront(Position)) return false;
 	if (!ViewFrustum.Far.IsInFront(Position)) return false;
 	if (!ViewFrustum.Left.IsInFront(Position)) return false;
@@ -84,30 +85,30 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	if (!bLookAtObject || !TargetObject)
 		return;
 
-	// 1. ¸ñÇ¥ ¹æÇâ °è»ê
+	// 1. ëª©í‘œ ë°©í–¥ ê³„ì‚°
 	Vector3 TargetPosition = TargetObject->GetTransform()->GetPosition();
 	Vector3 CurrentPosition = GetTransform()->GetPosition();
 	Vector3 DesiredDirection = TargetPosition - CurrentPosition;
 	DesiredDirection.Normalize();
 	Vector3 CurrentForward = GetNormalizedForwardVector();
 
-	// 2. ÇöÀç ¹æÇâ¿¡¼­ ¸ñÇ¥ ¹æÇâÀ¸·ÎÀÇ È¸Àü °è»ê
+	// 2. í˜„ì¬ ë°©í–¥ì—ì„œ ëª©í‘œ ë°©í–¥ìœ¼ë¡œì˜ íšŒì „ ê³„ì‚°
 	Quaternion ToRotate = Math::GetRotationBetweenVectors(CurrentForward, DesiredDirection);
 
-	// 3. È¸Àü °¢µµ °è»ê
+	// 3. íšŒì „ ê°ë„ ê³„ì‚°
 	float DotProduct = Vector3::Dot(CurrentForward, DesiredDirection);
 	DotProduct = Math::Clamp(DotProduct, -1.0f, 1.0f);
 	float AngleDiff = Math::RadToDegree(std::acos(DotProduct)); //[0:180]
 
-	// 4. ÃÖ¼Ò °¢µµ Ã¼Å©
+	// 4. ìµœì†Œ ê°ë„ ì²´í¬
 	if (AngleDiff < MinTrackAngle)
 		return;
 
-	// 5. È¸Àü ¼Óµµ °è»ê (°¢µµ°¡ Å¬¼ö·Ï ºü¸£°Ô)
+	// 5. íšŒì „ ì†ë„ ê³„ì‚° (ê°ë„ê°€ í´ìˆ˜ë¡ ë¹ ë¥´ê²Œ)
 	float SpeedFactor = Math::Clamp(AngleDiff / MaxTrackAngleSpeed, 0.0f, 1.0f);
 	float CurrentRotationSpeed = MaxRotationSpeed * SpeedFactor * DeltaTime;
 
-	// 6. ÃÖÁ¾ È¸Àü °è»ê
+	// 6. ìµœì¢… íšŒì „ ê³„ì‚°
 	Quaternion StepRotation;
 	if (AngleDiff > MaxTrackAngle)
 	{
@@ -120,7 +121,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
 	}
 
-	// 7. È¸Àü Àû¿ë
+	// 7. íšŒì „ ì ìš©
 	AddRotationQuaternion(StepRotation);
 }
 void UCamera::UpdatDirtyView() 
@@ -150,11 +151,11 @@ void UCamera::UpdateProjectionMatrix()
 
 void UCamera::UpdateViewMatrix()
 {
-	//º£ÀÌ½º »óÅÂ
+	//ë² ì´ìŠ¤ ìƒíƒœ
 	XMVECTOR vLookAt = XMVector::XMForward();
 	XMVECTOR vUp = XMVector::XMUp();
 
-	//ÇöÀç »óÅÂ
+	//í˜„ì¬ ìƒíƒœ
 	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->GetRotation());
 	XMVECTOR vPosition = XMLoadFloat3(&GetTransform()->GetPosition());
 
@@ -163,7 +164,7 @@ void UCamera::UpdateViewMatrix()
 
 	XMVECTOR currentUp = XMVector3Rotate(vUp, vRotation);
 
-	// ºä Çà·Ä °è»ê
+	// ë·° í–‰ë ¬ ê³„ì‚°
 	ViewMatrix = XMMatrixLookAtLH(vPosition, currentLookAt, currentUp);
 }
 
@@ -175,7 +176,7 @@ void UCamera::UpdateFrustum() const
 
 void UCamera::CalculateFrustum(Matrix& InViewProj) const 
 {
-	// Çà·Ä¿¡¼­ ÇÁ·¯½ºÅÒ Æò¸é ÃßÃâ
+	// í–‰ë ¬ì—ì„œ í”„ëŸ¬ìŠ¤í…€ í‰ë©´ ì¶”ì¶œ
 	XMFLOAT4X4 M;
 	XMStoreFloat4x4(&M, XMMatrixTranspose(InViewProj));
 

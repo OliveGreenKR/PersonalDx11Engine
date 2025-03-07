@@ -173,6 +173,7 @@
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="DebugDrawManager.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
@@ -206,7 +207,6 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SceneCompoent.h" />
     <ClInclude Include="Transform.h" />
-    <ClInclude Include="Utils.h" />
     <ClInclude Include="VertexDataContainer.h" />
     <ClInclude Include="VertexFormat.h" />
   </ItemGroup>

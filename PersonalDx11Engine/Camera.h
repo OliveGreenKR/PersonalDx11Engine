@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "GameObject.h"
 #include "Frustum.h"
 #include "Delegate.h"
@@ -57,7 +57,7 @@ private :
 
 	Matrix ProjectionMatrix;
 
-	mutable bool bIsViewDirty = true; //Ã¹ ÀÏÈ¸ °»½ÅÇÊ¿ä
+	mutable bool bIsViewDirty = true; //ì²« ì¼íšŒ ê°±ì‹ í•„ìš”
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
 
@@ -69,18 +69,18 @@ private:
 	//TODO : Camera Follow with Position? -> 'Camera Spring Arm'
 	weak_ptr<UGameObject> LookAtObject;
 
-	// È¸Àü º¸°£ ¼Óµµ Á¦¾î
+	// íšŒì „ ë³´ê°„ ì†ë„ ì œì–´
 	float RotationDampingSpeed = 5.0f;
 
-	// °Å¸®¿¡ µû¸¥ ¼Óµµ Á¶ÀıÀ» À§ÇÑ º¯¼öµé
-	float MaxRotationSpeed = 30.0f;
+	// ê±°ë¦¬ì— ë”°ë¥¸ ì†ë„ ì¡°ì ˆì„ ìœ„í•œ ë³€ìˆ˜ë“¤
+	float MaxRotationSpeed = 50.0f;
 	float DistanceSpeedScale = 1.0f;
 
-	//¸ñÇ¥¿ÍÀÇ °¢µµÂ÷ÀÌ
+	//ëª©í‘œì™€ì˜ ê°ë„ì°¨ì´
 	float MinTrackAngle = KINDA_SMALL;
 	float MaxTrackAngle = 15.0f;
 
-	// ÃÖ´ë  ¼Óµµ ÃßÀû °¢µµ(degree)
+	// ìµœëŒ€  ì†ë„ ì¶”ì  ê°ë„(degree)
 	float MaxTrackAngleSpeed = MaxTrackAngle*0.6f;
 #pragma endregion
 };

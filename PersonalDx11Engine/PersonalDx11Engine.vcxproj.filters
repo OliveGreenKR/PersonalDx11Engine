@@ -246,9 +246,6 @@
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="SceneCompoent.h">
       <Filter>Engine\Components</Filter>
     </ClInclude>
@@ -298,6 +295,9 @@
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="RscUtil.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Debug.h">
       <Filter>Engine</Filter>
     </ClInclude>
   </ItemGroup>
