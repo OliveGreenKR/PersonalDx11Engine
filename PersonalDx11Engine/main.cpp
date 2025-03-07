@@ -1,4 +1,4 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 #include <iostream>
 
 //ImGui
@@ -52,10 +52,10 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam
 
 void CreateConsole()
 {
-	// ÄÜ¼Ö ÇÒ´ç
+	// ì½˜ì†” í• ë‹¹
 	AllocConsole();
 
-	// Ç¥ÁØ ÀÔÃâ·Â ½ºÆ®¸²À» ÄÜ¼Ö·Î ¸®´ÙÀÌ·º¼Ç
+	// í‘œì¤€ ì…ì¶œë ¥ ìŠ¤íŠ¸ë¦¼ì„ ì½˜ì†”ë¡œ ë¦¬ë‹¤ì´ë ‰ì…˜
 	FILE* pConsole;
 	freopen_s(&pConsole, "CONOUT$", "w", stdout);
 	freopen_s(&pConsole, "CONIN$", "r", stdin);
@@ -101,17 +101,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WCHAR WindowClass[] = L"JungleWindowClass";
 	WCHAR Title[] = L"Game Tech Lab";
 
-	// °¢Á¾ ¸Ş½ÃÁö¸¦ Ã³¸®ÇÒ ÇÔ¼öÀÎ WndProcÀÇ ÇÔ¼ö Æ÷ÀÎÅÍ¸¦ WindowClass ±¸Á¶Ã¼¿¡ ³Ö´Â´Ù.
+	// ê°ì¢… ë©”ì‹œì§€ë¥¼ ì²˜ë¦¬í•  í•¨ìˆ˜ì¸ WndProcì˜ í•¨ìˆ˜ í¬ì¸í„°ë¥¼ WindowClass êµ¬ì¡°ì²´ì— ë„£ëŠ”ë‹¤.
 	WNDCLASSW wndclass = { 0, WindowProc, 0, 0, 0, 0, 0, 0, 0, WindowClass };
 	RegisterClassW(&wndclass);
 
-	//À©µµ¿ì »ı¼º
+	//ìœˆë„ìš° ìƒì„±
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 								CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT,
 								nullptr, nullptr, hInstance, nullptr);
 #pragma endregion
 
-	// ÄÜ¼Ö »ı¼º
+	// ì½˜ì†” ìƒì„±
 	CreateConsole();
 
 	//Renderer
@@ -153,19 +153,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
 	//Shader->BindTexture(Renderer->GetDeviceContext(), *TDefault.get(), ETextureSlot::Albedo); //defaultTexure
 
-	// ¿©±â¿¡¼­ ImGui¸¦ »ı¼ºÇÕ´Ï´Ù.
+	// ì—¬ê¸°ì—ì„œ ImGuië¥¼ ìƒì„±í•©ë‹ˆë‹¤.
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(Renderer->GetDevice(), Renderer->GetDeviceContext());
 	//ImGui set
-	ImGui::SetNextWindowPos(ImVec2(2.0f, 2.0f), ImGuiCond_FirstUseEver);//¿µ±¸À§Ä¡¼³Á¤
-	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //ÀÚµ¿Á¶Àı
+	ImGui::SetNextWindowPos(ImVec2(2.0f, 2.0f), ImGuiCond_FirstUseEver);//ì˜êµ¬ìœ„ì¹˜ì„¤ì •
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //ìë™ì¡°ì ˆ
 
 	const ImGuiWindowFlags UIWindowFlags =
-		ImGuiWindowFlags_NoResize |      // Å©±â Á¶Àı ºñÈ°¼ºÈ­
-		ImGuiWindowFlags_AlwaysAutoResize;  // Ç×»ó ³»¿ë¿¡ ¸Â°Ô Å©±â Á¶Àı
+		ImGuiWindowFlags_NoResize |      // í¬ê¸° ì¡°ì ˆ ë¹„í™œì„±í™”
+		ImGuiWindowFlags_AlwaysAutoResize;  // í•­ìƒ ë‚´ìš©ì— ë§ê²Œ í¬ê¸° ì¡°ì ˆ
 
 	bool bIsExit = false;
 
@@ -176,12 +176,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
-
-	//Model Data
-	//auto CubeModel = std::make_shared<UModel>();
-	//CubeModel->InitializeAsCube();
-	//auto SphereModel = std::make_shared<UModel>();
-	//SphereModel->InitializeAsSphere();
 
 	auto CubeModel = UModelBufferManager::Get()->GetCubeModel();
 	auto SphereModel = UModelBufferManager::Get()->GetSphereModel();
@@ -194,19 +188,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float CharacterMass = 5.0f;
 	float Character2Mass = 15.0f;
 	
-	auto Character = UGameObject::Create<UElasticBody>();
+	auto Character = UGameObject::Create<UGameObject>(CubeModel);
 	Character->SetScale(0.25f * Vector3::One);
 	Character->SetPosition({ 0,0,0 });
 	Character->bDebug = true;
-	Character->SetMass(CharacterMass);
-	Character->SetShapeBox();
-	
-	auto Character2 = UGameObject::Create<UElasticBody>();
+
+	auto RigidComp1 = UActorComponent::Create<URigidBodyComponent>();
+	RigidComp1->SetMass(CharacterMass);
+
+	auto CollisionComp1 = UActorComponent::Create<UCollisionComponent>();
+	CollisionComp1->SetShapeBox();
+	CollisionComp1->SetHalfExtent(0.5f * Character->GetTransform()->GetScale());
+	CollisionComp1->BindRigidBody(RigidComp1);
+
+	Character->AddActorComponent(RigidComp1);
+
+	auto Character2 = UGameObject::Create<UGameObject>(SphereModel);
 	Character2->SetScale(0.75f * Vector3::One);
-	Character2->SetPosition({ 1.0f,0,0 });
+	Character2->SetPosition({ 0,0,0 });
 	Character2->bDebug = true;
-	Character2->SetMass(Character2Mass);
-	Character2->SetShapeSphere();
+
+	auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
+	RigidComp2->SetMass(Character2Mass);
+
+	auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>();
+	CollisionComp2->SetShapeSphere();
+	CollisionComp2->SetHalfExtent(0.5f * Character2->GetTransform()->GetScale());
+	CollisionComp2->BindRigidBody(RigidComp2);
+
+	Character2->AddActorComponent(RigidComp2);
+	
+	//auto Character2 = UGameObject::Create<UGameObject>();
+	//Character2->SetScale(0.75f * Vector3::One);
+	//Character2->SetPosition({ 1.0f,0,0 });
+	//Character2->bDebug = true;
+	//Character2->SetMass(Character2Mass);
+	//Character2->SetShapeSphere();
 #pragma endregion
 	Camera->PostInitialized();
 	Character->PostInitialized();
@@ -250,7 +267,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 																	   Vector3 Normal = Vector3::Zero;
 																	   Vector3 NewPosition = Position;
 
-																	   // Ãæµ¹ÇÑ ¸éÀÇ ¹ı¼± °è»ê°ú À§Ä¡ º¸Á¤
+																	   // ì¶©ëŒí•œ ë©´ì˜ ë²•ì„  ê³„ì‚°ê³¼ ìœ„ì¹˜ ë³´ì •
 																	   if (std::abs(Position.x) >= XBorder)
 																	   {
 																		   Normal.x = Position.x > 0 ? -1.0f : 1.0f;
@@ -290,7 +307,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 																		Vector3 Normal = Vector3::Zero;
 																		Vector3 NewPosition = Position;
 
-																		// Ãæµ¹ÇÑ ¸éÀÇ ¹ı¼± °è»ê°ú À§Ä¡ º¸Á¤
+																		// ì¶©ëŒí•œ ë©´ì˜ ë²•ì„  ê³„ì‚°ê³¼ ìœ„ì¹˜ ë³´ì •
 																		if (std::abs(Position.x) >= XBorder)
 																		{
 																			Normal.x = Position.x > 0 ? -1.0f : 1.0f;
@@ -325,7 +342,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region  InputBind
 	//input Action Bind - TODO::  Abstactionize 'Input Action'
-	//ÇöÀç´Â °´Ã¼°¡ Á÷Á¢ º»ÀÎÀÌ ¹İÀÀÇÒ Å° ÀÌº¥Æ®¸¦ °ü¸®..
+	//í˜„ì¬ëŠ” ê°ì²´ê°€ ì§ì ‘ ë³¸ì¸ì´ ë°˜ì‘í•  í‚¤ ì´ë²¤íŠ¸ë¥¼ ê´€ë¦¬..
 	constexpr WPARAM ACTION_MOVE_UP_P1 = 'W';
 	constexpr WPARAM ACTION_MOVE_DOWN_P1 = 'S';
 	constexpr WPARAM ACTION_MOVE_RIGHT_P1 = 'D';
@@ -521,7 +538,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		[&Character2](const FKeyEventData& EventData) {
 			if (EventData.KeyCode == ACTION_DEBUG_1)
 			{
-				//È¸Àü °ü¼º Å×½ºÆ®
+				//íšŒì „ ê´€ì„± í…ŒìŠ¤íŠ¸
 				if (Character2.get())
 				{
 					Vector3 TargetPos = Character2->GetTransform()->GetPosition();
@@ -554,9 +571,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region WinMsgProc
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			// Å° ÀÔ·Â ¸Ş½ÃÁö¸¦ ¹ø¿ª
+			// í‚¤ ì…ë ¥ ë©”ì‹œì§€ë¥¼ ë²ˆì—­
 			TranslateMessage(&msg);
-			// ¸Ş½ÃÁö¸¦ ÀûÀıÇÑ À©µµ¿ì ÇÁ·Î½ÃÀú¿¡ Àü´Ş
+			// ë©”ì‹œì§€ë¥¼ ì ì ˆí•œ ìœˆë„ìš° í”„ë¡œì‹œì €ì— ì „ë‹¬
 			DispatchMessage(&msg);
 
 			if (msg.message == WM_QUIT)
@@ -586,7 +603,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			Camera->Tick(DeltaTime);
 		}
-		UElasticBodyManager::Get()->Tick(DeltaTime);
+		//UElasticBodyManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
 
 #pragma endregion 
@@ -599,7 +616,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
 
-		UElasticBodyManager::Get()->Render(Renderer.get(), Camera.get(), Shader.get(), *TPole.get());
+		//UElasticBodyManager::Get()->Render(Renderer.get(), Camera.get(), Shader.get(), *TPole.get());
 #pragma region UI
 		// ImGui UI 
 		ImGui_ImplDX11_NewFrame();
@@ -628,8 +645,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		ImGui::Begin("Number Input Interface", nullptr, UIWindowFlags);
-		//ImGui::InputInt("##Value", &value); // ¼ıÀÚ ÀÔ·Â ÇÊµå
-		ImGui::SameLine();
+		//ImGui::InputInt("##Value", &value); // ìˆ«ì ì…ë ¥ í•„ë“œ
+		/*ImGui::SameLine();
 		if (ImGui::Button("-")) {
 			UElasticBodyManager::Get()->DespawnRandomBody();
 			UCollisionManager::Get()->PrintTreeStructure();
@@ -638,7 +655,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (ImGui::Button("+")) {
 			UElasticBodyManager::Get()->SpawnRandomBody();
 			UCollisionManager::Get()->PrintTreeStructure();
-		}
+		}*/
 		if (ImGui::Button("Print")) {
 			UCollisionManager::Get()->PrintTreeStructure();
 		}
@@ -700,7 +717,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}//end main Loop
 #pragma endregion 
 
-	// ¿©±â¿¡¼­ ImGui ¼Ò¸ê
+	// ì—¬ê¸°ì—ì„œ ImGui ì†Œë©¸
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();

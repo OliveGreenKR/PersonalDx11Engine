@@ -1,10 +1,9 @@
-#include "RigidBodyComponent.h"
+ï»¿#include "RigidBodyComponent.h"
 #include "Transform.h"
 #include "GameObject.h"
 
 URigidBodyComponent::URigidBodyComponent()
 {
-	SetSimulatePhysics(true);
 }
 
 void URigidBodyComponent::Reset()
@@ -20,42 +19,42 @@ void URigidBodyComponent::Reset()
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
 	UPrimitiveComponent::Tick(DeltaTime);
-	if (!IsActive() && !IsSimulatePhysics() )
+	if (!IsActive())
 		return;
 
-	// ¸ðµç ÈûÀ» °¡¼Óµµ·Î º¯È¯
+	// ëª¨ë“  íž˜ì„ ê°€ì†ë„ë¡œ ë³€í™˜
 	Vector3 TotalAcceleration = Vector3::Zero;
 	Vector3 TotalAngularAcceleration = Vector3::Zero;
 
-	// Áß·Â °¡¼Óµµ Ãß°¡
+	// ì¤‘ë ¥ ê°€ì†ë„ ì¶”ê°€
 	if (bGravity)
 	{
 		TotalAcceleration += GravityDirection * GravityScale;
 	}
 
-	//¸¶Âû·Â
+	//ë§ˆì°°ë ¥
 	if (Velocity.LengthSquared() > KINDA_SMALL)
 	{
 
-		// Á¤Àû ¸¶Âû·Â ¿µ¿ª¿¡¼­ ¿îµ¿ ¸¶Âû·Â ¿µ¿ªÀ¸·ÎÀÇ ÀüÈ¯ È®ÀÎ
+		// ì •ì  ë§ˆì°°ë ¥ ì˜ì—­ì—ì„œ ìš´ë™ ë§ˆì°°ë ¥ ì˜ì—­ìœ¼ë¡œì˜ ì „í™˜ í™•ì¸
 		if (Velocity.Length() < KINDA_SMALL &&
 			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityScale )
 		{
-			// Á¤Àû ¸¶Âû·ÂÀÌ ¿Ü·ÂÀ» »ó¼â
+			// ì •ì  ë§ˆì°°ë ¥ì´ ì™¸ë ¥ì„ ìƒì‡„
 			AccumulatedForce = Vector3::Zero;
 		}
 		else
 		{
-			// ¿îµ¿ ¸¶Âû·Â Àû¿ë
+			// ìš´ë™ ë§ˆì°°ë ¥ ì ìš©
 			Vector3 frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityScale;
 			TotalAcceleration += frictionAccel;
 		}
 	}
 
-	// °¢¿îµ¿ ¸¶Âû·Â Ã³¸®
+	// ê°ìš´ë™ ë§ˆì°°ë ¥ ì²˜ë¦¬
 	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
 	{
-		//°¢ Ãàº°·Î Á¤Àû ¸¶Âû °Ë»ç
+		//ê° ì¶•ë³„ë¡œ ì •ì  ë§ˆì°° ê²€ì‚¬
 		bool bStaticFrictionX = std::abs(AngularVelocity.x) < KINDA_SMALL &&
 			std::abs(AccumulatedTorque.x) <= FrictionStatic * RotationalInertia.x;
 		bool bStaticFrictionY = std::abs(AngularVelocity.y) < KINDA_SMALL &&
@@ -63,7 +62,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		bool bStaticFrictionZ = std::abs(AngularVelocity.z) < KINDA_SMALL &&
 			std::abs(AccumulatedTorque.z) <= FrictionStatic * RotationalInertia.z;
 
-		// Ãàº°·Î Á¤Àû/¿îµ¿ ¸¶Âû Àû¿ë
+		// ì¶•ë³„ë¡œ ì •ì /ìš´ë™ ë§ˆì°° ì ìš©
 		Vector3 frictionAccel;
 		frictionAccel.x = bStaticFrictionX ? -AccumulatedTorque.x : -AngularVelocity.x * FrictionKinetic;
 		frictionAccel.y = bStaticFrictionY ? -AccumulatedTorque.y : -AngularVelocity.y * FrictionKinetic;
@@ -73,35 +72,35 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	}
 
 
-	// ÀúÀåµÈ Ãæ°Ý·® Ã³¸® (¼ø°£ÀûÀÎ ¼Óµµ º¯È­)
+	// ì €ìž¥ëœ ì¶©ê²©ëŸ‰ ì²˜ë¦¬ (ìˆœê°„ì ì¸ ì†ë„ ë³€í™”)
 	Velocity += AccumulatedInstantForce / Mass;
 	AngularVelocity += Vector3(
 		AccumulatedInstantTorque.x / RotationalInertia.x,
 		AccumulatedInstantTorque.y / RotationalInertia.y,
 		AccumulatedInstantTorque.z / RotationalInertia.z);
 
-	// Ãæ°Ý·® ÃÊ±âÈ­
+	// ì¶©ê²©ëŸ‰ ì´ˆê¸°í™”
 	AccumulatedInstantForce = Vector3::Zero;
 	AccumulatedInstantTorque = Vector3::Zero;
 
-	// ¿ÜºÎ¿¡¼­ Àû¿ëµÈ Èû¿¡ ÀÇÇÑ °¡¼Óµµ Ãß°¡
+	// ì™¸ë¶€ì—ì„œ ì ìš©ëœ íž˜ì— ì˜í•œ ê°€ì†ë„ ì¶”ê°€
 	TotalAcceleration += AccumulatedForce / Mass;
 	TotalAngularAcceleration += Vector3(
 		AccumulatedTorque.x / RotationalInertia.x,
 		AccumulatedTorque.y / RotationalInertia.y,
 		AccumulatedTorque.z / RotationalInertia.z);
 
-	// ÅëÇÕµÈ °¡¼Óµµ·Î ¼Óµµ ¾÷µ¥ÀÌÆ®
+	// í†µí•©ëœ ê°€ì†ë„ë¡œ ì†ë„ ì—…ë°ì´íŠ¸
 	Velocity += TotalAcceleration * DeltaTime;
 	AngularVelocity += TotalAngularAcceleration * DeltaTime;
 
-	// ¼Óµµ Á¦ÇÑ
+	// ì†ë„ ì œí•œ
 	ClampVelocities();
 
-	// À§Ä¡ ¾÷µ¥ÀÌÆ®
+	// ìœ„ì¹˜ ì—…ë°ì´íŠ¸
 	UpdateTransform(DeltaTime);
 
-	// ¿ÜºÎ Èû ÃÊ±âÈ­
+	// ì™¸ë¶€ íž˜ ì´ˆê¸°í™”
 	AccumulatedForce = Vector3::Zero;
 	AccumulatedTorque = Vector3::Zero;
 }
@@ -124,11 +123,11 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	}
 	
 
-	// À§Ä¡ ¾÷µ¥ÀÌÆ®
+	// ìœ„ì¹˜ ì—…ë°ì´íŠ¸
 	Vector3 NewPosition = TargetTransform->GetPosition() + Velocity * DeltaTime;
 	TargetTransform->SetPosition(NewPosition);
 
-	// È¸Àü ¾÷µ¥ÀÌÆ®
+	// íšŒì „ ì—…ë°ì´íŠ¸
 	Matrix WorldRotation = TargetTransform->GetRotationMatrix();
 	XMVECTOR WorldAngularVel = XMLoadFloat3(&AngularVelocity);
 
@@ -150,7 +149,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!IsSimulatePhysics())
+	if (!IsActive())
 		return;
 
 	AccumulatedForce += Force;
@@ -159,7 +158,7 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!IsSimulatePhysics())
+	if (!IsActive())
 		return;
 
 	AccumulatedInstantForce += Impulse;
@@ -186,7 +185,7 @@ const FTransform* URigidBodyComponent::GetTransform() const
 
 FTransform* URigidBodyComponent::GetTransform()
 {
-	if (bSyncWithOwner || GetOwner())
+	if (bSyncWithOwner && GetOwner())
 	{
 		return  GetOwner()->GetTransform();
 	}
@@ -199,8 +198,8 @@ FTransform* URigidBodyComponent::GetTransform()
 void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);
-	// È¸Àü °ü¼ºµµ Áú·®¿¡ µû¶ó °»½Å
-	RotationalInertia = 4.0f * Mass * Vector3::One; //±Ù»ç
+	// íšŒì „ ê´€ì„±ë„ ì§ˆëŸ‰ì— ë”°ë¼ ê°±ì‹ 
+	RotationalInertia = 4.0f * Mass * Vector3::One; //ê·¼ì‚¬
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
@@ -229,7 +228,7 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 
 void URigidBodyComponent::ClampVelocities()
 {
-	// ¼±Çü ¼Óµµ Á¦ÇÑ
+	// ì„ í˜• ì†ë„ ì œí•œ
 	if (IsSpeedRestricted())
 	{
 		float speedSq = Velocity.LengthSquared();
@@ -245,7 +244,7 @@ void URigidBodyComponent::ClampVelocities()
 	
 	if (IsAngularSpeedRestricted())
 	{
-		// °¢¼Óµµ Á¦ÇÑ
+		// ê°ì†ë„ ì œí•œ
 		float angularSpeedSq = AngularVelocity.LengthSquared();
 		if (angularSpeedSq > MaxAngularSpeed * MaxAngularSpeed)
 		{

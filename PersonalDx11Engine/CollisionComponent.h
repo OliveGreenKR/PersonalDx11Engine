@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include <memory>
 #include "Delegate.h"
@@ -10,7 +10,7 @@
 class URigidBodyComponent;
 class UGameObject;
 
-// Ãæµ¹ ÀÀ´ä¿¡ ÇÊ¿äÇÑ ¼Ó¼º °ü¸®
+// ì¶©ëŒ ì‘ë‹µì— í•„ìš”í•œ ì†ì„± ê´€ë¦¬
 class UCollisionComponent : public UPrimitiveComponent, public IDynamicBoundable
 {
 	friend class UCollisionManager;
@@ -35,11 +35,10 @@ protected:
 	virtual void Tick(const float DeltaTime) override;
 
 public:
-	// ÃÊ±âÈ­
+	// ì´ˆê¸°í™”
 	void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
 public:
-
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 	const FCollisionShapeData& GetCollisionShape() const { return Shape; }
@@ -49,30 +48,27 @@ public:
 	void SetCollisionShapeData(const FCollisionShapeData& InShape);
 	void SetHalfExtent(const Vector3& InHalfExtent);
 
-	// À¯È¿¼º °Ë»ç
-	virtual bool IsEffective() override;
 
-	virtual void Activate() override;
-	virtual void DeActivate() override;
-
-	//ÇüÅÂ ÁöÁ¤
+	//í˜•íƒœ ì§€ì •
 	void SetShape(const ECollisionShapeType InShape);
 	void SetShapeSphere();
 	void SetShapeBox();
 	
 private:
+	virtual void Activate() override;
+	virtual void DeActivate() override;
 	void ActivateColiision();
 	void DeActivateCollision();
-	
+
 public:
 	bool bDestroyed : 1;
 public:
-	// Ãæµ¹ ÀÌº¥Æ® µ¨¸®°ÔÀÌÆ®
+	// ì¶©ëŒ ì´ë²¤íŠ¸ ë¸ë¦¬ê²Œì´íŠ¸
 	FDelegate<const FCollisionEventData&> OnCollisionEnter;
 	FDelegate<const FCollisionEventData&> OnCollisionStay;
 	FDelegate<const FCollisionEventData&> OnCollisionExit;
 
-	// Ãæµ¹ ÀÌº¥Æ® publish
+	// ì¶©ëŒ ì´ë²¤íŠ¸ publish
 	void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
 		OnCollisionEnter.Broadcast(CollisionInfo);
 	}
@@ -92,7 +88,7 @@ private:
 private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
 	FCollisionShapeData Shape;
-	FTransform PrevTransform = FTransform();    // CCD¸¦ À§ÇÑ ÀÌÀü ÇÁ·¹ÀÓ Æ®·£½ºÆû
+	FTransform PrevTransform = FTransform();    // CCDë¥¼ ìœ„í•œ ì´ì „ í”„ë ˆì„ íŠ¸ëœìŠ¤í¼
 
 	bool bIsTransformDirty = false;
 }; 

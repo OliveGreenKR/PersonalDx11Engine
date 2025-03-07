@@ -1,4 +1,4 @@
-#include "CollisionManager.h"
+ï»¿#include "CollisionManager.h"
 #include "RigidBodyComponent.h"
 #include "Transform.h"
 #include <algorithm>
@@ -29,19 +29,19 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent)
 {
-	// AABB Æ®¸®¿¡ µî·Ï
+	// AABB íŠ¸ë¦¬ì— ë“±ë¡
 	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
 	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
 	{
 		return;
 	}
 
-	// ÄÄÆ÷³ÍÆ® µ¥ÀÌÅÍ »ı¼º ¹× µî·Ï
+	// ì»´í¬ë„ŒíŠ¸ ë°ì´í„° ìƒì„± ë° ë“±ë¡
 	FComponentData ComponentData;
 	ComponentData.Component = NewComponent;
 	ComponentData.TreeNodeId = TreeNodeId;
 
-	// º¤ÅÍ¿¡ Ãß°¡
+	// ë²¡í„°ì— ì¶”ê°€
 	RegisteredComponents.push_back(std::move(ComponentData));
 }
 
@@ -50,7 +50,7 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>
 	if (!InComponent || RegisteredComponents.empty())
 		return;
 
-	// °ü¸® ÁßÀÎ ÄÄÆ÷³ÍÆ®ÀÎÁö È®ÀÎ
+	// ê´€ë¦¬ ì¤‘ì¸ ì»´í¬ë„ŒíŠ¸ì¸ì§€ í™•ì¸
 	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
 								 [&InComponent](const FComponentData& CompData)
 								 {
@@ -60,15 +60,15 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>
 	if (targetIt == RegisteredComponents.end())
 		return;
 
-	// ÀÎµ¦½º ¹× µ¥ÀÌÅÍ ÀúÀå
+	// ì¸ë±ìŠ¤ ë° ë°ì´í„° ì €ì¥
 	size_t targetIndex = targetIt - RegisteredComponents.begin();
 	size_t treeNodeId = targetIt->TreeNodeId;
 
-	// AABB Æ®¸®¿¡¼­ Á¦°Å
+	// AABB íŠ¸ë¦¬ì—ì„œ ì œê±°
 	if (CollisionTree)
 		CollisionTree->Remove(treeNodeId);
 
-	// Ãæµ¹ ½Ö¿¡¼­ ÇØ´ç ÀÎµ¦½º °ü·Ã Ç×¸ñ Á¦°Å
+	// ì¶©ëŒ ìŒì—ì„œ í•´ë‹¹ ì¸ë±ìŠ¤ ê´€ë ¨ í•­ëª© ì œê±°
 	auto it = ActiveCollisionPairs.begin();
 	while (it != ActiveCollisionPairs.end())
 	{
@@ -79,17 +79,17 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>
 			++it;
 	}
 
-	// ÄÄÆ÷³ÍÆ® Á¦°Å
+	// ì»´í¬ë„ŒíŠ¸ ì œê±°
 	if (targetIndex < RegisteredComponents.size() - 1)
 	{
-		// ¸¶Áö¸· ¿ä¼Ò¿Í ±³Ã¼ ÈÄ Á¦°Å (swap-and-pop)
+		// ë§ˆì§€ë§‰ ìš”ì†Œì™€ êµì²´ í›„ ì œê±° (swap-and-pop)
 		std::swap(RegisteredComponents[targetIndex], RegisteredComponents.back());
 
-		// ±³Ã¼µÈ ÄÄÆ÷³ÍÆ®ÀÇ ÀÎµ¦½º ¾÷µ¥ÀÌÆ®
+		// êµì²´ëœ ì»´í¬ë„ŒíŠ¸ì˜ ì¸ë±ìŠ¤ ì—…ë°ì´íŠ¸
 		UpdateCollisionPairIndices(RegisteredComponents.size() - 1, targetIndex);
 	}
 
-	// ¸¶Áö¸· ¿ä¼Ò Á¦°Å
+	// ë§ˆì§€ë§‰ ìš”ì†Œ ì œê±°
 	RegisteredComponents.pop_back();
 }
 
@@ -158,7 +158,7 @@ void UCollisionManager::CleanupDestroyedComponents()
 		return;
 	}
 
-	// 1. Á¦°ÅµÉ ÄÄÆ÷³ÍÆ®ÀÇ ÀÎµ¦½ºµéÀ» ¼öÁı
+	// 1. ì œê±°ë  ì»´í¬ë„ŒíŠ¸ì˜ ì¸ë±ìŠ¤ë“¤ì„ ìˆ˜ì§‘
 	std::vector<size_t> DestroyedIndices;
 	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
 	{
@@ -173,18 +173,18 @@ void UCollisionManager::CleanupDestroyedComponents()
 		return;
 	}
 
-	// 2. AABB Æ®¸®¿¡¼­ Á¦°Å
+	// 2. AABB íŠ¸ë¦¬ì—ì„œ ì œê±°
 	for (size_t Index : DestroyedIndices)
 	{
 		size_t TreeNodeId = RegisteredComponents[Index].TreeNodeId;
 		CollisionTree->Remove(TreeNodeId);
 	}
 
-	// 3. È°¼º Ãæµ¹ ½Ö¿¡¼­ Á¦°Å
+	// 3. í™œì„± ì¶©ëŒ ìŒì—ì„œ ì œê±°
 	for (auto it = ActiveCollisionPairs.begin(); it != ActiveCollisionPairs.end();)
 	{
 		const FCollisionPair& Pair = *it;
-		// Æä¾îÀÇ µÑ Áß ÇÏ³ª¶óµµ Á¦°ÅµÉ ÀÎµ¦½º¿¡ Æ÷ÇÔµÇ¸é Á¦°Å
+		// í˜ì–´ì˜ ë‘˜ ì¤‘ í•˜ë‚˜ë¼ë„ ì œê±°ë  ì¸ë±ìŠ¤ì— í¬í•¨ë˜ë©´ ì œê±°
 		if (std::find(DestroyedIndices.begin(), DestroyedIndices.end(), Pair.IndexA) != DestroyedIndices.end() ||
 			std::find(DestroyedIndices.begin(), DestroyedIndices.end(), Pair.IndexB) != DestroyedIndices.end())
 		{
@@ -196,19 +196,19 @@ void UCollisionManager::CleanupDestroyedComponents()
 		}
 	}
 
-	// 4. RegisteredComponents º¤ÅÍ¿¡¼­ Á¦°Å
-	// ÁÖÀÇ: µÚ¿¡¼­ºÎÅÍ Á¦°ÅÇÏ¿© ÀÎµ¦½º º¯È­ ÃÖ¼ÒÈ­
+	// 4. RegisteredComponents ë²¡í„°ì—ì„œ ì œê±°
+	// ì£¼ì˜: ë’¤ì—ì„œë¶€í„° ì œê±°í•˜ì—¬ ì¸ë±ìŠ¤ ë³€í™” ìµœì†Œí™”
 	std::sort(DestroyedIndices.begin(), DestroyedIndices.end(), std::greater<size_t>());
 	for (size_t Index : DestroyedIndices)
 	{
 		if (Index < RegisteredComponents.size())
 		{
-			// ¸¶Áö¸· ¿ä¼Ò¿Í ±³Ã¼ ÈÄ Á¦°Å (swap and pop)
+			// ë§ˆì§€ë§‰ ìš”ì†Œì™€ êµì²´ í›„ ì œê±° (swap and pop)
 			if (Index < RegisteredComponents.size() - 1)
 			{
 				std::swap(RegisteredComponents[Index], RegisteredComponents.back());
 
-				// ±³Ã¼µÈ ÄÄÆ÷³ÍÆ®ÀÇ »õ ÀÎµ¦½º¿¡ ´ëÇÑ Ãæµ¹ ½Ö ¾÷µ¥ÀÌÆ®
+				// êµì²´ëœ ì»´í¬ë„ŒíŠ¸ì˜ ìƒˆ ì¸ë±ìŠ¤ì— ëŒ€í•œ ì¶©ëŒ ìŒ ì—…ë°ì´íŠ¸
 				size_t OldIndex = RegisteredComponents.size() - 1;
 				UpdateCollisionPairIndices(OldIndex, Index);
 			}
@@ -221,7 +221,7 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 {
 	std::vector<FCollisionPair> UpdatedPairs;
 
-	// ÀÌÀü ÀÎµ¦½º¸¦ »ç¿ëÇÏ´Â ¸ğµç ½ÖÀ» Ã£¾Æ »õ ÀÎµ¦½º·Î ¾÷µ¥ÀÌÆ®
+	// ì´ì „ ì¸ë±ìŠ¤ë¥¼ ì‚¬ìš©í•˜ëŠ” ëª¨ë“  ìŒì„ ì°¾ì•„ ìƒˆ ì¸ë±ìŠ¤ë¡œ ì—…ë°ì´íŠ¸
 	for (auto it = ActiveCollisionPairs.begin(); it != ActiveCollisionPairs.end();)
 	{
 		FCollisionPair CurrentPair = *it;
@@ -249,7 +249,7 @@ void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIn
 		}
 	}
 
-	// ¾÷µ¥ÀÌÆ®µÈ ½ÖµéÀ» ´Ù½Ã »ğÀÔ
+	// ì—…ë°ì´íŠ¸ëœ ìŒë“¤ì„ ë‹¤ì‹œ ì‚½ì…
 	for (const auto& Pair : UpdatedPairs)
 	{
 		ActiveCollisionPairs.insert(Pair);
@@ -264,7 +264,7 @@ void UCollisionManager::UpdateCollisionPairs()
 		return;
 	}
 
-	// »õ·Î¿î Ãæµ¹ ½ÖÀ» ÀúÀåÇÒ ÀÓ½Ã ÄÁÅ×ÀÌ³Ê
+	// ìƒˆë¡œìš´ ì¶©ëŒ ìŒì„ ì €ì¥í•  ì„ì‹œ ì»¨í…Œì´ë„ˆ
 	std::unordered_set<FCollisionPair> NewCollisionPairs;
 	size_t EstimatedPairs = std::min(ActiveCollisionPairs.size(),
 									 RegisteredComponents.size() * (RegisteredComponents.size() - 1) / 2);
@@ -275,13 +275,13 @@ void UCollisionManager::UpdateCollisionPairs()
 		const auto& ComponentData = RegisteredComponents[i];
 		auto* Component = ComponentData.Component.get();
 
-		// À¯È¿¼º °Ë»ç
-		if (!Component && !Component->IsEffective())
+		// ìœ íš¨ì„± ê²€ì‚¬
+		if (!Component || !Component->IsActive())
 		{
 			continue;
 		}
 
-		// Æ®¸® ³ëµå ID À¯È¿¼º °Ë»ç Ãß°¡
+		// íŠ¸ë¦¬ ë…¸ë“œ ID ìœ íš¨ì„± ê²€ì‚¬ ì¶”ê°€
 		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
 		{
 			continue;
@@ -322,13 +322,13 @@ void UCollisionManager::UpdateCollisionPairs()
 			const auto& OtherComponentData = RegisteredComponents[j];
 			auto* OtherComponent = OtherComponentData.Component.get();
 
-			// À¯È¿¼º °Ë»ç
-			if (!OtherComponent && !OtherComponent->IsEffective())
+			// ìœ íš¨ì„± ê²€ì‚¬
+			if (!OtherComponent || !OtherComponent->IsActive())
 			{
 				continue;
 			}
 
-			// Æ®¸® ³ëµå ID À¯È¿¼º °Ë»ç Ãß°¡
+			// íŠ¸ë¦¬ ë…¸ë“œ ID ìœ íš¨ì„± ê²€ì‚¬ ì¶”ê°€
 			if (OtherComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
 			{
 				continue;
@@ -347,18 +347,18 @@ void UCollisionManager::UpdateCollisionTransform()
 		const auto& ComponentData = RegisteredComponents[i];
 		auto* Component = ComponentData.Component.get();
 
-		// nullptr Ã¼Å©¸¦ ¸ÕÀúÇÏ¿© ºÒÇÊ¿äÇÑ ¸â¹ö Á¢±Ù ¹æÁö
-		if (!Component || Component->bDestroyed || !Component->IsCollisionEnabled() || Component->GetRigidBody()->IsStatic())
+		// nullptr ì²´í¬ë¥¼ ë¨¼ì €í•˜ì—¬ ë¶ˆí•„ìš”í•œ ë©¤ë²„ ì ‘ê·¼ ë°©ì§€
+		if (!Component || Component->bDestroyed || Component->GetRigidBody()->IsStatic())
 		{
 			continue;
 		}
-
-		// Æ®¸® ³ëµå ID À¯È¿¼º °Ë»ç Ãß°¡
 		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
 		{
 			continue;
 		}
 
+
+		// íŠ¸ë¦¬ ë…¸ë“œ ID ìœ íš¨ì„± ê²€ì‚¬ ì¶”ê°€
 	}
 
 	CollisionTree->UpdateTree();
@@ -420,7 +420,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
 
-		//Ãæµ¹Á¤º¸ ÀúÀå
+		//ì¶©ëŒì •ë³´ ì €ì¥
 		ActivePair.bPrevCollided = DetectResult.bCollided;
 
 	}
@@ -462,7 +462,7 @@ void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UC
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
 
-	//DX ±ÔÄ¢¿¡µû¸¥ ¹ı¼±À¸·Î °è»êÇÑ ÀÓÆŞ½ºÀÌ¹Ç·Î ¹æÇâÀ» ¹İ´ë·Î Àû¿ëÇØ¾ßÇÔ
+	//DX ê·œì¹™ì—ë”°ë¥¸ ë²•ì„ ìœ¼ë¡œ ê³„ì‚°í•œ ì„í„ìŠ¤ì´ë¯€ë¡œ ë°©í–¥ì„ ë°˜ëŒ€ë¡œ ì ìš©í•´ì•¼í•¨
 	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 }
@@ -481,9 +481,9 @@ void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, 
 	const float AngularBiasFactor = 0.2f;
 	const float Slop = 0.005f;
 
-	// ¸ñÇ¥ : »ó´ë¼Óµµ 0À¸·Î ¸¸µé±â
+	// ëª©í‘œ : ìƒëŒ€ì†ë„ 0ìœ¼ë¡œ ë§Œë“¤ê¸°
 
-	// ¼±Çü ¼Óµµ Ã³¸®
+	// ì„ í˜• ì†ë„ ì²˜ë¦¬
 	Vector3 RelativeVel = RigidB->GetVelocity() - RigidA->GetVelocity();
 	float NormalVelocity = Vector3::Dot(RelativeVel, DetectResult.Normal);
 
@@ -493,7 +493,7 @@ void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, 
 		desiredDeltaVelocity = (DetectResult.PenetrationDepth - Slop) * BiasFactor;
 	}
 
-	// ¼±Çü ¼Óµµ º¸Á¤
+	// ì„ í˜• ì†ë„ ë³´ì •
 	float velocityError = -NormalVelocity + desiredDeltaVelocity;
 
 	float invMassA = RigidA->IsStatic() ? 0.0f : 1.0f / RigidA->GetMass();
@@ -514,10 +514,10 @@ void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, 
 		}
 	}
 
-	// °¢¼Óµµ Ã³¸®
+	// ê°ì†ë„ ì²˜ë¦¬
 	Vector3 RelativeAngularVel = RigidB->GetAngularVelocity() - RigidA->GetAngularVelocity();
 
-	// °¢¼Óµµ º¸Á¤
+	// ê°ì†ë„ ë³´ì •
 	if (!RigidA->IsStatic())
 	{
 		RigidA->SetAngularVelocity(RigidA->GetAngularVelocity() - RelativeAngularVel * AngularBiasFactor);
@@ -541,7 +541,7 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 	if (!RigidA || !RigidB)
 		return;
 
-	// Á¤Àû/µ¿Àû »óÅÂ¿¡ µû¸¥ º¸Á¤ ºñÀ² °áÁ¤
+	// ì •ì /ë™ì  ìƒíƒœì— ë”°ë¥¸ ë³´ì • ë¹„ìœ¨ ê²°ì •
 	float ratioA = RigidA->IsStatic() ? 0.0f : 1.0f;
 	float ratioB = RigidB->IsStatic() ? 0.0f : 1.0f;
 
@@ -552,7 +552,7 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 
 		Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
 
-		// °¢ ¹°Ã¼¸¦ ¹İ´ë ¹æÇâÀ¸·Î ¹Ğ¾î³¿
+		// ê° ë¬¼ì²´ë¥¼ ë°˜ëŒ€ ë°©í–¥ìœ¼ë¡œ ë°€ì–´ëƒ„
 		if (!RigidA->IsStatic())
 		{
 			auto TransA = RigidA->GetTransform();
@@ -587,11 +587,11 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 
 	FAccumulatedConstraint Accumulation;
 
-	// Warm Starting - ÀÌÀü ÇÁ·¹ÀÓ ¶÷´Ù Àç»ç¿ë
+	// Warm Starting - ì´ì „ í”„ë ˆì„ ëŒë‹¤ ì¬ì‚¬ìš©
 	if (CollisionPair.bPrevCollided)
 	{
 		Accumulation = CollisionPair.PrevConstraints;
-		Accumulation.Scale(0.65f);  // ¾ÈÁ¤¼ºÀ» À§ÇÑ ½ºÄÉÀÏ¸µ
+		Accumulation.Scale(0.65f);  // ì•ˆì •ì„±ì„ ìœ„í•œ ìŠ¤ì¼€ì¼ë§
 	}
 
 	for (int i = 0; i < Config.ConstraintInterations ; ++i)
@@ -602,7 +602,7 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 		auto RigidPtrA = ComponentA.get()->GetRigidBody();
 		auto RigidPtrB = ComponentB.get()->GetRigidBody();
 
-		//Áß°£´Ü°è Àû¿ë
+		//ì¤‘ê°„ë‹¨ê³„ ì ìš©
 		RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 		RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	}

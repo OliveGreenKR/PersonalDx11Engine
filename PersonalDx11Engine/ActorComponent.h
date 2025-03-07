@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -19,15 +19,15 @@ public:
     template<typename T, typename ...Args>
     static std::shared_ptr<T> Create(Args&&... args)
     {
-        // T°¡ Base¸¦ »ó¼Ó¹Ş¾Ò´ÂÁö ÄÄÆÄÀÏ Å¸ÀÓ¿¡ Ã¼Å©
+        // Tê°€ Baseë¥¼ ìƒì†ë°›ì•˜ëŠ”ì§€ ì»´íŒŒì¼ íƒ€ì„ì— ì²´í¬
         static_assert(std::is_base_of_v<UActorComponent, T> || std::is_same_v<T, UActorComponent>,
                       "T must inherit from Base");
-        // std::make_shared¸¦ »ç¿ëÇÏ¿© °´Ã¼ »ı¼º
+        // std::make_sharedë¥¼ ì‚¬ìš©í•˜ì—¬ ê°ì²´ ìƒì„±
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
 private:
-    // private º¹»ç/ÀÌµ¿ »ı¼ºÀÚ¿Í ´ëÀÔ ¿¬»êÀÚ
+    // private ë³µì‚¬/ì´ë™ ìƒì„±ìì™€ ëŒ€ì… ì—°ì‚°ì
     UActorComponent(const UActorComponent&) = delete;
     UActorComponent& operator=(const UActorComponent&) = delete;
     UActorComponent(UActorComponent&&) = delete;
@@ -36,12 +36,10 @@ private:
 public:
     void BraodcastPostTreeInitialized();
 
-    // Tick ÀüÆÄ
+    // Tick ì „íŒŒ
     void BroadcastTick(float DeltaTime);
 
-    virtual bool IsEffective() { return  this != nullptr && IsActive(); }
-
-    // ÄÄÆ÷³ÍÆ® È°¼ºÈ­ »óÅÂ
+    // ì»´í¬ë„ŒíŠ¸ í™œì„±í™” ìƒíƒœ
     void SetActive(bool bNewActive) { bNewActive ? Activate() : DeActivate(); }
     bool IsActive() const { return bIsActive; }
 
@@ -50,34 +48,36 @@ protected:
     virtual void DeActivate();
 
 protected:
-    // ÄÄÆ÷³ÍÆ® Æ®¸® ±¸Á¶ ¿Ï¼º ÈÄ ÃÊ±âÈ­(¿À³Ê ¹× Æ®¸®±¸Á¶ Á¢±Ù °¡´É)
-    virtual void PostTreeInitialized(){}
+    virtual void PostTreeInitialized()
+    {
+        SetActive(bIsActive);
+    }
 
     virtual void Tick(float DeltaTime) {}
-    // ¼ÒÀ¯ °ü°è ¼³Á¤
+    // ì†Œìœ  ê´€ê³„ ì„¤ì •
     void SetOwner(UGameObject* InOwner) { OwnerObject = InOwner; }
     void SetParent(const std::shared_ptr<UActorComponent>& InParent);
 
 public:
-    // ÄÄÆ÷³ÍÆ® °èÃş ±¸Á¶ °ü¸®
+    // ì»´í¬ë„ŒíŠ¸ ê³„ì¸µ êµ¬ì¡° ê´€ë¦¬
     bool AddChild(const std::shared_ptr<UActorComponent>& Child);
     bool RemoveChild(const std::shared_ptr<UActorComponent>& Child);
     void DetachFromParent();
 
-    // °èÃş ±¸Á¶ Å½»ö
+    // ê³„ì¸µ êµ¬ì¡° íƒìƒ‰
     UActorComponent* GetRoot() const;
     std::shared_ptr<UActorComponent> GetParent() const { return ParentComponent.lock(); }
     const std::vector<std::shared_ptr<UActorComponent>>& GetChildren() const { return ChildComponents; }
 
-    // ÄÄÆ÷³ÍÆ® °Ë»ö À¯Æ¿¸®Æ¼
+    // ì»´í¬ë„ŒíŠ¸ ê²€ìƒ‰ ìœ í‹¸ë¦¬í‹°
     template<typename T>
     T* FindComponentByType()
     {
-        // ÇöÀç ÄÄÆ÷³ÍÆ® Ã¼Å©
+        // í˜„ì¬ ì»´í¬ë„ŒíŠ¸ ì²´í¬
         if (auto ThisComponent = dynamic_cast<T*>(this))
             return ThisComponent;
 
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (auto FoundComponent = Child->FindComponentByType<T>())
@@ -90,7 +90,7 @@ public:
     template<typename T>
     T* FindChildByType()
     {
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (auto FoundComponent = Child->FindComponentByType<T>())
@@ -105,7 +105,7 @@ public:
     {
         std::vector<std::weak_ptr<T>> Found;
 
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (Child)
@@ -127,7 +127,7 @@ public:
         Found.push_back(SharedThis);
 
 
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (Child)
@@ -141,19 +141,19 @@ public:
     }
 
 private:
-    // non-const ¹öÀüÀÇ raw Æ÷ÀÎÅÍ ¹İÈ¯ ÇÔ¼öµµ ÇÔ²² Á¦°ø
+    // non-const ë²„ì „ì˜ raw í¬ì¸í„° ë°˜í™˜ í•¨ìˆ˜ë„ í•¨ê»˜ ì œê³µ
     template<typename T>
     std::vector<T*> FindComponentsRaw()
     {
         std::vector<T*> Found;
 
-        // ÇöÀç ÄÄÆ÷³ÍÆ® Ã¼Å©
+        // í˜„ì¬ ì»´í¬ë„ŒíŠ¸ ì²´í¬
         if (auto ThisComponent = dynamic_cast<const T*>(this))
         {
             Found.push_back(const_cast<T*>(ThisComponent));
         }
 
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (Child)
@@ -166,13 +166,13 @@ private:
         return Found;
     }
 
-    // non-const ¹öÀüÀÇ raw Æ÷ÀÎÅÍ ¹İÈ¯ ÇÔ¼öµµ ÇÔ²² Á¦°ø
+    // non-const ë²„ì „ì˜ raw í¬ì¸í„° ë°˜í™˜ í•¨ìˆ˜ë„ í•¨ê»˜ ì œê³µ
     template<typename T>
     std::vector<T*> FindChildrenRaw()
     {
         std::vector<T*> Found;
 
-        // ÀÚ½Ä ÄÄÆ÷³ÍÆ®µé °Ë»ö
+        // ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ ê²€ìƒ‰
         for (const auto& Child : ChildComponents)
         {
             if (Child)
@@ -188,7 +188,7 @@ private:
 private:
     bool bIsActive : 1;
 
-    //»ı¸íÁÖ±â°¡ Á¾¼ÓµÉ°ÍÀÌ±â¿¡ ÀÏ¹İ raw »ç¿ë
+    //ìƒëª…ì£¼ê¸°ê°€ ì¢…ì†ë ê²ƒì´ê¸°ì— ì¼ë°˜ raw ì‚¬ìš©
     UGameObject* OwnerObject = nullptr;
     std::weak_ptr<UActorComponent> ParentComponent;
     std::vector<std::shared_ptr<UActorComponent>> ChildComponents;

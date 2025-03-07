@@ -1,4 +1,4 @@
-#include "GameObject.h"
+ï»¿#include "GameObject.h"
 #include "Model.h"
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
@@ -8,8 +8,7 @@
 UGameObject::UGameObject()
 {
 	RootActorComp = UActorComponent::Create<UActorComponent>();
-	auto CompPtr = RootActorComp.get();
-	CompPtr->SetOwner(this);
+	
 }
 
 UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
@@ -22,6 +21,7 @@ UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
 void UGameObject::PostInitialized()
 {
 	auto CompPtr = RootActorComp.get();
+	CompPtr->SetOwner(this);
 }
 
 void UGameObject::PostInitializedComponents()
@@ -127,7 +127,7 @@ void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)
 
 	DebugColor = Color::White();
 }
-//ÁÂÇ¥±â¹İ ¿òÁ÷ÀÓ¸¸
+//ì¢Œí‘œê¸°ë°˜ ì›€ì§ì„ë§Œ
 void UGameObject::StartMove(const Vector3& InDirection)
 {
 	if (InDirection.LengthSquared() < KINDA_SMALL)
@@ -155,14 +155,14 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	Vector3 Current = Transform.GetPosition();
 	Vector3 Delta = TargetPosition - Current;
 
-	//Á¤Áö
+	//ì •ì§€
 	float RemainingDistance = Delta.Length();
 	if (RemainingDistance < KINDA_SMALL)
 	{
 		StopMoveImmediately();
 		return;
 	}
-	// ÀÌ¹ø ÇÁ·¹ÀÓ¿¡¼­ÀÇ ÀÌµ¿ °Å¸® °è»ê (µî¼Ó ¿îµ¿)
+	// ì´ë²ˆ í”„ë ˆì„ì—ì„œì˜ ì´ë™ ê±°ë¦¬ ê³„ì‚° (ë“±ì† ìš´ë™)
 	Vector3 NewPosition;
 
 	float MoveDistance = MaxSpeed * DeltaTime;
@@ -244,7 +244,7 @@ bool UGameObject::IsPhysicsSimulated() const
 		return false;
 	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
 	{
-		return RigidComp->IsSimulatePhysics();
+		return RigidComp->IsActive();
 	}
 	return false;
 }
@@ -261,11 +261,12 @@ void UGameObject::SetGravity(const bool InBool)
 
 void UGameObject::SetPhysics(const bool InBool)
 {
-	if (!IsPhysicsSimulated())
+	if (!RootActorComp.get())
 		return;
+
 	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
 	{
-		RigidComp->SetSimulatePhysics(InBool);
+		RigidComp->SetActive(InBool);
 	}
 }
 

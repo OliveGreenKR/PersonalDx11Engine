@@ -1,9 +1,9 @@
-#include "CollisionEventDispatcher.h"
+ï»¿#include "CollisionEventDispatcher.h"
 #include "CollisionComponent.h"
 
 void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UCollisionComponent>& InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
-    if (!InComponent.get() || !InComponent->IsCollisionEnabled())
+    if (!InComponent.get())
     {
         return;
     }
@@ -12,18 +12,18 @@ void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UC
 
 void FCollisionEventDispatcher::DispatchCollisionEvents(const UCollisionComponent* InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
-    if (!InComponent || !InComponent->IsCollisionEnabled())
+    if (!InComponent)
     {
         return;
     }
 
     auto OtherComponent = EventData.OtherComponent.lock();
-    if (!OtherComponent || !OtherComponent->IsCollisionEnabled())
+    if (!OtherComponent)
     {
         return;
     }
 
-    // Áßº¹ ¹æÁö¸¦ À§ÇØ ´Ü¹æÇâ ÀÌº¥Æ®¸¸ ¹ß»ı
+    // ì¤‘ë³µ ë°©ì§€ë¥¼ ìœ„í•´ ë‹¨ë°©í–¥ ì´ë²¤íŠ¸ë§Œ ë°œìƒ
     switch (CollisionState)
     {
         case ECollisionState::Enter:

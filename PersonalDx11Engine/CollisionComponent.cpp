@@ -1,4 +1,4 @@
-#include "CollisionComponent.h"
+Ôªø#include "CollisionComponent.h"
 #include <memory>
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
@@ -7,14 +7,12 @@
 
 UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
 {
-	SetCollisionEnabled(true);
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
 
 UCollisionComponent::UCollisionComponent() :  bDestroyed(false)
 {
-	SetCollisionEnabled(true);
 }
 
 Vector3 UCollisionComponent::GetHalfExtent() const
@@ -79,12 +77,6 @@ void UCollisionComponent::SetCollisionShapeData(const FCollisionShapeData& InSha
 void UCollisionComponent::SetHalfExtent(const Vector3& InHalfExtent)
 {
 	Shape.HalfExtent = InHalfExtent;
-}
-
-bool UCollisionComponent::IsEffective()
-{
-	bool result = UPrimitiveComponent::IsEffective();
-	return  result && !bDestroyed && IsCollisionEnabled();
 }
 
 void UCollisionComponent::Activate()
@@ -161,7 +153,7 @@ Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
 
 void UCollisionComponent::PostTreeInitialized()
 {
-	Activate();
+	UPrimitiveComponent::PostTreeInitialized();
 
 	if (auto RigidPtr = RigidBody.lock())
 	{
@@ -172,12 +164,12 @@ void UCollisionComponent::PostTreeInitialized()
 
 void UCollisionComponent::Tick(const float DeltaTime)
 {
-	UActorComponent::Tick(DeltaTime);
+	UPrimitiveComponent::Tick(DeltaTime);
 
-	if (!IsActive() && !IsCollisionEnabled())
+	if (!IsActive())
 		return;
 
-	//¿Ã¿¸ ∆Æ∑£Ω∫∆˚ ¿˙¿Â
+	//Ïù¥Ï†Ñ Ìä∏ÎûúÏä§Ìèº Ï†ÄÏû•
 	PrevTransform = *GetTransform();
 }
 

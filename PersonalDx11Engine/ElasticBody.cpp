@@ -1,4 +1,4 @@
-#include "ElasticBody.h"
+ï»¿#include "ElasticBody.h"
 #include "ActorComponent.h"
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
@@ -115,7 +115,7 @@ void UElasticBody::SetShape(EShape InShape)
 		CollisionPtr->SetShape(GetCollisionShape(InShape));
 	}
 
-	//TODO : ÇüÅÂ¿¡ µû¸¥ ¸ğµ¨ ¼³Á¤
+	//TODO : í˜•íƒœì— ë”°ë¥¸ ëª¨ë¸ ì„¤ì •
 	switch (InShape)
 	{
 		case EShape::Box : 
@@ -142,8 +142,10 @@ void UElasticBody::SetShapeBox()
 }
 #pragma endregion
 
-UElasticBody::UElasticBody()
+UElasticBody::UElasticBody() : bIsActive(true)
 {
+	bDebug = true;
+
 	Rigid = UActorComponent::Create< URigidBodyComponent>();
 	Collision = UActorComponent::Create<UCollisionComponent>();
 }
@@ -156,13 +158,10 @@ void UElasticBody::Tick(const float DeltaTime)
 void UElasticBody::PostInitialized()
 {
 	UGameObject::PostInitialized();
-
-	bDebug = true;
-
 	//attach actor Comp
 	if (auto RootComp = RootActorComp.get())
 	{
-		//rigid body Ãß°¡ ¹× ÃÊ±âÈ­
+		//rigid body ì¶”ê°€ ë° ì´ˆê¸°í™”
 		if (Rigid.get())
 		{
 			Rigid.get()->bGravity = false;
@@ -170,7 +169,7 @@ void UElasticBody::PostInitialized()
 			AddActorComponent(Rigid);
 		}
 
-		//collsion body Ãß°¡ ¹× ÃÊ±âÈ­
+		//collsion body ì¶”ê°€ ë° ì´ˆê¸°í™”
 		if (Collision.get())
 		{
 			Collision->BindRigidBody(Rigid);
@@ -182,6 +181,7 @@ void UElasticBody::PostInitialized()
 void UElasticBody::PostInitializedComponents()
 {
 	UGameObject::PostInitializedComponents();
+	SetActive(bIsActive);
 }
 
 void UElasticBody::SetActive(const bool bActive)
@@ -194,14 +194,14 @@ void UElasticBody::SetActive(const bool bActive)
 
 void UElasticBody::Reset()
 {
-	// ÄÄÆ÷³ÍÆ® »óÅÂ ÃÊ±âÈ­
+	// ì»´í¬ë„ŒíŠ¸ ìƒíƒœ ì´ˆê¸°í™”
 	if (auto rigid = Rigid.get())
 	{
-		// ¹°¸® »óÅÂ ÃÊ±âÈ­
+		// ë¬¼ë¦¬ ìƒíƒœ ì´ˆê¸°í™”
 		rigid->Reset();
 	}
 
-	// À§Ä¡ ¹× È¸Àü ÃÊ±âÈ­ 
+	// ìœ„ì¹˜ ë° íšŒì „ ì´ˆê¸°í™” 
 	GetTransform()->SetPosition(Vector3::Zero);
 	GetTransform()->SetRotation(Quaternion::Identity);
 }

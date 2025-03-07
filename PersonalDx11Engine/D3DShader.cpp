@@ -83,7 +83,7 @@ void UShader::Release()
 		SamplerState->Release();
 		SamplerState = nullptr;
 	}
-
+	
 	if (VSByteCode)
 	{
 		VSByteCode->Release();
