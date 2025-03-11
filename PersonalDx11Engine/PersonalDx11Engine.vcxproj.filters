@@ -68,9 +68,6 @@
     <ClCompile Include="ElasticBody.cpp">
       <Filter>Contents\ElasticBody</Filter>
     </ClCompile>
-    <ClCompile Include="ElasticBodyManager.cpp">
-      <Filter>Contents\Managers</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionDetector.cpp">
       <Filter>Engine\Physics</Filter>
     </ClCompile>
@@ -260,9 +257,6 @@
     </ClInclude>
     <ClInclude Include="ElasticBody.h">
       <Filter>Contents\ElasticBody</Filter>
-    </ClInclude>
-    <ClInclude Include="ElasticBodyManager.h">
-      <Filter>Contents\Managers</Filter>
     </ClInclude>
     <ClInclude Include="CollisionDetector.h">
       <Filter>Engine\Physics</Filter>

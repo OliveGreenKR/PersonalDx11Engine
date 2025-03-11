@@ -31,7 +31,7 @@
 
 //Contents
 #include "Random.h"
-#include "ElasticBodyManager.h"
+//#include "ElasticBodyManager.h"
 #include "ElasticBody.h"
 
 #define KEY_UP 'W'
@@ -634,7 +634,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			tmp->Tick(DeltaTime);
 		}
-		UElasticBodyManager::Get()->Tick(DeltaTime);
+		//UElasticBodyManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
 
 #pragma endregion 
