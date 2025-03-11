@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "GameObject.h"
 #include "Color.h"
 #include "Model.h"
@@ -20,21 +20,17 @@ public:
     UElasticBody();
     virtual ~UElasticBody() = default;
 
-    // ±âº» ¼ö¸í ÁÖ±â ¸Ş¼­µå
+    // ê¸°ë³¸ ìˆ˜ëª… ì£¼ê¸° ë©”ì„œë“œ
     virtual void Tick(const float DeltaTime) override;
     virtual void PostInitialized() override;
     virtual void PostInitializedComponents() override;
 
-    // ÄÄÆ÷³ÍÆ® Á¢±ÙÀÚ
-    class URigidBodyComponent* GetRigidBody() const { return Rigid.get(); }
-    class UCollisionComponent* GetCollisionComponent() const { return Collision.get(); }
-
     /// <summary>
-    /// ÀÎ½ºÅÏ½º »óÅÂ ÃÊ±âÈ­
+    /// ì¸ìŠ¤í„´ìŠ¤ ìƒíƒœ ì´ˆê¸°í™”
     /// </summary>
     virtual void Reset();
 
-    // Ãæµ¹ ÀÌº¥Æ® ÇÚµé·¯
+    // ì¶©ëŒ ì´ë²¤íŠ¸ í•¸ë“¤ëŸ¬
     //void OnCollisionBegin(const FCollisionEventData& InCollision);
     //void OnCollisionStay(const FCollisionEventData& InCollision);
     //void OnCollisionEnd(const FCollisionEventData& InCollision);
@@ -49,7 +45,7 @@ public:
     float GetFrictionKinetic() const;
     float GetFrictionStatic() const;
 
-    // ¹°¸® ¼Ó¼º ¼³Á¤  
+    // ë¬¼ë¦¬ ì†ì„± ì„¤ì •  
     void SetMass(float InMass);
     void SetMaxSpeed(float InSpeed);
     void SetMaxAngularSpeed(float InSpeed);
@@ -58,24 +54,25 @@ public:
     void SetFrictionStatic(float InFriction);
     void SetRestitution(float InRestitution);
 
-    //Ãæµ¹Ã¼ ¼³Á¤
+    //ì¶©ëŒì²´ ì„¤ì •
     void SetShape(EShape InShape);
     void SetShapeSphere();
     void SetShapeBox();
+    void SyncCollisionShape();
 
-    // È°¼ºÈ­/ºñÈ°¼ºÈ­
+    // í™œì„±í™”/ë¹„í™œì„±í™”
     void SetActive(const bool bActive);
     bool IsActive() const { return bIsActive; }
 
 private:
-    // ³»ºÎ À¯Æ¿¸®Æ¼ ¸Ş¼­µå
+    // ë‚´ë¶€ ìœ í‹¸ë¦¬í‹° ë©”ì„œë“œ
     enum class ECollisionShapeType GetCollisionShape(const EShape Shape) const;
 
 private:
     bool bIsActive = true;
     EShape Shape = EShape::Sphere;
 
-    // ÄÄÆ÷³ÍÆ® ¼ÒÀ¯
+    // ì»´í¬ë„ŒíŠ¸ ì†Œìœ 
     std::shared_ptr<class URigidBodyComponent> Rigid;
     std::shared_ptr<class UCollisionComponent> Collision;
 

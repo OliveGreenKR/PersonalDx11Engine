@@ -129,6 +129,16 @@ void UElasticBody::SetShape(EShape InShape)
 			break;
 		}
 	}
+
+	SyncCollisionShape();
+}
+
+void UElasticBody::SyncCollisionShape()
+{
+	if (Collision.get() && GetTransform())
+	{
+		Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+	}
 }
 
 void UElasticBody::SetShapeSphere()
@@ -172,6 +182,7 @@ void UElasticBody::PostInitialized()
 		//collsion body 추가 및 초기화
 		if (Collision.get())
 		{
+			Collision->SetShapeBox(); //기본 박스 형태
 			Collision->BindRigidBody(Rigid);
 			Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
 		}
