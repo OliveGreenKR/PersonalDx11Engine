@@ -33,10 +33,8 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 	ApplyRandomShape(body);
 
 	//색상 결정
+	body->bDebug = true;
 	SetColorBasedOnMass(body);
-
-	//객체 보더 바운딩 설정
-
 
 	//객체 초기화 마무리
 	body.get()->SetActive(true);
@@ -262,7 +260,9 @@ void UElasticBodyManager::SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Bod
 	if (!Body.get())
 		return;
 	EMassCategory Category = CategorizeMass(Body->GetMass());
-	Body->SetDebugColor(GetColorFromMassCategory(Category));
+	Vector4 Color = GetColorFromMassCategory(Category);
+	Body.get()->SetDebugColor(Color);
+	Vector4 OutColor = Body->GetDebugColor();
 }
 
 void UElasticBodyManager::Tick(float DeltaTime)
@@ -288,7 +288,7 @@ void UElasticBodyManager::Render(URenderer* InRenderer, UCamera* InCamera, UShad
 			continue;
 		if (body->bIsActive)//활성화 객체만 렌더링
 		{
-			InRenderer->RenderGameObject(InCamera, body.get(), InShader, InCustomSampler);
+			InRenderer->RenderGameObject(InCamera, body.get(), InShader, InTexture, InCustomSampler);
 		}
 	}
 }

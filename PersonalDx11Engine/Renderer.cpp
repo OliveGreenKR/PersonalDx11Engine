@@ -1,4 +1,4 @@
-#include "Renderer.h"
+ï»¿#include "Renderer.h"
 #include "Model.h"
 #include "D3DShader.h"
 #include "GameObject.h"
@@ -35,12 +35,12 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 	if (!InModel || !InModel->IsInitialized()|| !InShader)
 		return;
 
-	// ¹öÆÛ ¸Å´ÏÀú¿¡¼­ ÇØ´ç ¸ðµ¨ÀÇ ¹öÆÛ ¸®¼Ò½º °¡Á®¿À±â
+	// ë²„í¼ ë§¤ë‹ˆì €ì—ì„œ í•´ë‹¹ ëª¨ë¸ì˜ ë²„í¼ ë¦¬ì†ŒìŠ¤ ê°€ì ¸ì˜¤ê¸°
 	FBufferResource* bufferResource = InModel->GetBufferResource();
 	if (!bufferResource || !bufferResource->GetVertexBuffer())
 		return;
 
-	// Á¤Á¡ ¹öÆÛ ¼³Á¤
+	// ì •ì  ë²„í¼ ì„¤ì •
 	ID3D11Buffer* vertexBuffer = bufferResource->GetVertexBuffer();
 	if (vertexBuffer == nullptr)
 	{
@@ -53,11 +53,11 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 
 	GetDeviceContext()->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
-	// »ùÇÃ·¯ ½ºÅ×ÀÌÆ® ¼³Á¤
+	// ìƒ˜í”ŒëŸ¬ ìŠ¤í…Œì´íŠ¸ ì„¤ì •
 	ID3D11SamplerState* samplerState = customSampler ? customSampler : GetDefaultSamplerState();
 	GetDeviceContext()->PSSetSamplers(0, 1, &samplerState);
 
-	// ÀÎµ¦½º ¹öÆÛ°¡ ÀÖ´Â °æ¿ì ÀÎµ¦½º ¹öÆÛ ¼³Á¤ ¹× DrawIndexed È£Ãâ
+	// ì¸ë±ìŠ¤ ë²„í¼ê°€ ìžˆëŠ” ê²½ìš° ì¸ë±ìŠ¤ ë²„í¼ ì„¤ì • ë° DrawIndexed í˜¸ì¶œ
 	if (auto indexBuffer = bufferResource->GetIndexBuffer()) {
 		GetDeviceContext()->IASetIndexBuffer(
 			indexBuffer,
@@ -66,7 +66,7 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 		);
 		GetDeviceContext()->DrawIndexed(bufferResource->GetIndexCount(), 0, 0);
 	}
-	// ÀÎµ¦½º ¹öÆÛ°¡ ¾ø´Â °æ¿ì ÀÏ¹Ý Draw È£Ãâ
+	// ì¸ë±ìŠ¤ ë²„í¼ê°€ ì—†ëŠ” ê²½ìš° ì¼ë°˜ Draw í˜¸ì¶œ
 	else {
 		GetDeviceContext()->Draw(bufferResource->GetVertexCount(), 0);
 	}
@@ -75,7 +75,7 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 
 void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
 {
-	if (!InObject || !InShader)
+	if (!InObject || !InShader || !InObject->IsActive())
 		return;
 
 	Matrix WorldMatrix = InObject->GetWorldMatrix();
@@ -104,15 +104,15 @@ void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject,
 bool URenderer::CreateDefaultSamplerState()
 {
 	D3D11_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;  // ¹ÙÀÌ¸®´Ï¾î ÇÊÅÍ¸µ, ºÎµå·¯¿î ÅØ½ºÃ³ Ç¥½Ã
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // UÁÂÇ¥ ¹Ýº¹
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;     // VÁÂÇ¥ ¹Ýº¹  
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;     // WÁÂÇ¥ ¹Ýº¹
-	samplerDesc.MinLOD = 0;                                // ÃÖ¼Ò LOD ·¹º§
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;               // ÃÖ´ë LOD Á¦ÇÑ ¾øÀ½
-	samplerDesc.MipLODBias = 0;                           // LOD ·¹º§ Á¶Á¤ ¾øÀ½
-	samplerDesc.MaxAnisotropy = 1;                        // ºñµî¹æ¼º ÇÊÅÍ¸µ »ç¿ë ¾ÈÇÔ
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // ºñ±³ »ùÇÃ¸µ »ç¿ë ¾ÈÇÔ
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;  // ë°”ì´ë¦¬ë‹ˆì–´ í•„í„°ë§, ë¶€ë“œëŸ¬ìš´ í…ìŠ¤ì²˜ í‘œì‹œ
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // Uì¢Œí‘œ ë°˜ë³µ
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;     // Vì¢Œí‘œ ë°˜ë³µ  
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;     // Wì¢Œí‘œ ë°˜ë³µ
+	samplerDesc.MinLOD = 0;                                // ìµœì†Œ LOD ë ˆë²¨
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;               // ìµœëŒ€ LOD ì œí•œ ì—†ìŒ
+	samplerDesc.MipLODBias = 0;                           // LOD ë ˆë²¨ ì¡°ì • ì—†ìŒ
+	samplerDesc.MaxAnisotropy = 1;                        // ë¹„ë“±ë°©ì„± í•„í„°ë§ ì‚¬ìš© ì•ˆí•¨
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // ë¹„êµ ìƒ˜í”Œë§ ì‚¬ìš© ì•ˆí•¨
 	
 	HRESULT result = GetDevice()->CreateSamplerState(&samplerDesc, &DefaultSamplerState);
 	return SUCCEEDED(result);

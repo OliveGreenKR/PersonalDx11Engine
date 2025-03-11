@@ -559,7 +559,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma endregion
 	
-
+	Character->SetActive(false);
+	Character2->SetActive(false);
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
