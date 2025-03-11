@@ -43,6 +43,10 @@ void UGameObject::PostInitializedComponents()
 
 void UGameObject::Tick(const float DeltaTime)
 {
+	if (!bIsActive)
+	{
+		return;
+	}
 	UpdateMovement(DeltaTime);
 	UpdateComponents(DeltaTime);
 }
@@ -112,6 +116,18 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 	{
 		CompPtr->BroadcastTick(DeltaTime);
 	}
+}
+
+void UGameObject::Activate()
+{
+	RootActorComp->SetActive(true);
+	bIsActive = true;
+}
+
+void UGameObject::DeActivate()
+{
+	RootActorComp->SetActive(false);
+	bIsActive = false;
 }
 
 void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)

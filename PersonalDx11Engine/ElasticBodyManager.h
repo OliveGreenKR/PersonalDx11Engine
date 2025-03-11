@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <vector>
 #include <memory>
 #include <unordered_map>
@@ -12,7 +12,7 @@ public:
 	UElasticBodyManager();
 	~UElasticBodyManager();
 
-	// º¹»ç/ÀÌµ¿ ¹× ´ëÀÔ ¿¬»êÀÚ »èÁ¦
+	// ë³µì‚¬/ì´ë™ ë° ëŒ€ì… ì—°ì‚°ì ì‚­ì œ
 	UElasticBodyManager(const UElasticBodyManager&) = delete;
 	UElasticBodyManager& operator=(const UElasticBodyManager&) = delete;
 	UElasticBodyManager(UElasticBodyManager&&) = delete;
@@ -22,7 +22,7 @@ public:
 public:
 	static UElasticBodyManager* Get()
 	{
-		// Æ÷ÀÎÅÍ¸¦ staticÀ¸·Î ¼±¾ğ
+		// í¬ì¸í„°ë¥¼ staticìœ¼ë¡œ ì„ ì–¸
 		static UElasticBodyManager* instance = []() {
 			UElasticBodyManager* manager = new UElasticBodyManager();
 			manager->Initialize();
@@ -32,22 +32,22 @@ public:
 		return instance;
 	}
 
-	// °´Ã¼ »ı¼º ¹× ¼³Á¤
+	// ê°ì²´ ìƒì„± ë° ì„¤ì •
 	std::shared_ptr<class UElasticBody> SpawnRandomBody();
 	void DespawnRandomBody();
 
-	//È°¼ºÈ­ °³Ã¼ ¼ö Á¦ÇÑ
+	//í™œì„±í™” ê°œì²´ ìˆ˜ ì œí•œ
 	void LimitActiveObjectCount(const size_t Count);
 
-	//Ãæµ¹Ã¼ ¼Ó¼º °ü¸®
+	//ì¶©ëŒì²´ ì†ì„± ê´€ë¦¬
 	void ApplyRandomShape(std::shared_ptr<UElasticBody>& Body);
 
-	// ¹°¸® ¼Ó¼º °ü¸®
+	// ë¬¼ë¦¬ ì†ì„± ê´€ë¦¬
 	void ApplyRandomPhysicsProperties(std::shared_ptr<UElasticBody>& Body);
 	void ApplyRandomTransform(std::shared_ptr<UElasticBody>& Body);
 	void SetColorBasedOnMass(std::shared_ptr<UElasticBody>& Body);
 
-	//ÃÖ¼Ò Count¸¸Å­ÀÇ Pool ¹Ì¸® ÁØºñ
+	//ìµœì†Œ Countë§Œí¼ì˜ Pool ë¯¸ë¦¬ ì¤€ë¹„
 	void PrewarmPool(size_t Count); 
 
 	void Tick(float DeltaTime);
@@ -59,19 +59,16 @@ public:
 
 	void ClearAllActiveBodies();
 
-	// »óÅÂ Á¶È¸
+	// ìƒíƒœ ì¡°íšŒ
 	size_t GetActiveBodyCount() const { return ActiveBodies.size(); }
 	size_t GetPooledBodyCount() const { return PooledBodies.size(); }
 private:
-	//ÃÊ±âÈ­ 
+	//ì´ˆê¸°í™” 
 	void Initialize(size_t InitialPoolSize = 128);
-	//ÀÚ¿ø È¸¼ö
+	//ìì› íšŒìˆ˜
 	void Release();
 
-	//°´Ã¼ ºñÈ°¼ºÈ­
-	void DeactivateBody(std::shared_ptr<UElasticBody>& Body);
-
-	// Áú·® Ä«Å×°í¸® ±¸ºĞ
+	// ì§ˆëŸ‰ ì¹´í…Œê³ ë¦¬ êµ¬ë¶„
 	enum EMassCategory
 	{
 		VeryLight = 0,
@@ -82,15 +79,15 @@ private:
 		Count
 	};
 
-	// Áú·® ¹üÁÖ °áÁ¤ ¸Ş¼­µå
+	// ì§ˆëŸ‰ ë²”ì£¼ ê²°ì • ë©”ì„œë“œ
 	EMassCategory CategorizeMass(const float Mass) const;
 	Vector4 GetColorFromMassCategory(const EMassCategory Category) const;
 
-	// °´Ã¼ °ü¸® Pool
+	// ê°ì²´ ê´€ë¦¬ Pool
 	std::vector<std::shared_ptr<UElasticBody>> ActiveBodies;
 	std::vector<std::shared_ptr<UElasticBody>> PooledBodies;
 
-	// ¼Ó¼º ¹üÀ§ ¼³Á¤
+	// ì†ì„± ë²”ìœ„ ì„¤ì •
 	struct FPropertyRanges
 	{
 		float MinMass = 0.5f;
@@ -104,15 +101,15 @@ private:
 		float MaxSpeed = 100.0f; 
 		float MaxAngularSpeed = 6.0f * PI;
 
-		// À§Ä¡ ¹üÀ§
-		Vector3 MinPosition{ -1.0f, -1.0f, 0.0f };
-		Vector3 MaxPosition{ 1.0f, 1.0f, 0.0f };
+		// ìœ„ì¹˜ ë²”ìœ„
+		Vector3 MinPosition{ -2.0f, -2.0f, 0.0f };
+		Vector3 MaxPosition{ 2.0f, 2.0f, 0.0f };
 	} PropertyRanges;
 
-	// Áú·®-»ö»ó ¸ÅÇÎ
+	// ì§ˆëŸ‰-ìƒ‰ìƒ ë§¤í•‘
 	std::unordered_map<EMassCategory, Vector4> MassColorMap;
 
-	// À¯Æ¿¸®Æ¼ ¸Ş¼­µå
+	// ìœ í‹¸ë¦¬í‹° ë©”ì„œë“œ
 	std::shared_ptr<UElasticBody> CreateNewBody();
 	std::shared_ptr<UElasticBody> GetBodyFromPool();
 	void ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body);

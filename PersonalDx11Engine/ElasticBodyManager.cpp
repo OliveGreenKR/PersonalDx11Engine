@@ -35,6 +35,9 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 	//색상 결정
 	SetColorBasedOnMass(body);
 
+	//객체 보더 바운딩 설정
+
+
 	//객체 초기화 마무리
 	body.get()->SetActive(true);
 	body.get()->PostInitializedComponents();
@@ -61,6 +64,7 @@ void UElasticBodyManager::ApplyRandomPhysicsProperties(std::shared_ptr<UElasticB
 {
 	if (!Body.get())
 		return;
+	//Body->SetGravity(FRandom::RandI());
 	Body->SetMaxSpeed(PropertyRanges.MaxSpeed);
 	Body->SetMaxAngularSpeed(PropertyRanges.MaxAngularSpeed);
 	Body->SetMass(FRandom::RandF(PropertyRanges.MinMass, PropertyRanges.MaxMass));
@@ -94,6 +98,28 @@ void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 		{EMassCategory::VeryHeavy,  Vector4(0.3f, 0.3f, 0.3f, 1.0f)}   // Dark Gray
 	};
 
+	PropertyRanges = {
+		//Mass
+		0.5f,
+		10.0f,
+		//size
+		0.3f,
+		1.0f,
+		//restitution
+		0.3f,
+		0.9f,
+		//friction
+		0.1f,
+		0.6f,
+		//speed
+		100.0f,
+		//angularSpeed
+		6.0f * PI,
+
+		// 위치 범위
+		{ -2.0f, -2.0f, -1.0f },
+		{ 2.0f, 2.0f, 1.0f }
+	};
 	// 풀 예약 및 미리 생성
 	PrewarmPool(InitialPoolSize);
 }
@@ -152,7 +178,7 @@ void UElasticBodyManager::ClearAllActiveBodies()
 	// 모든 활성 객체를 비활성화하고 초기화
 	for (auto& body : ActiveBodies)
 	{
-		DeactivateBody(body);
+		body->SetActive(false);
 	}
 
 	// 활성 객체들을 한 번에 풀로 이동
@@ -197,26 +223,14 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	std::shared_ptr<UElasticBody> body = PooledBodies.back();
 	PooledBodies.pop_back();
 
-	ActiveBodies.push_back(body);
-	//바디 객체 활성화
-	body->SetActive(true);
 	//바디 초기화 마무리
 	body->PostInitializedComponents();
+	//바디 객체 활성화
+	body->SetActive(true);
+
+	ActiveBodies.push_back(body);
 
 	return body;
-}
-
-void UElasticBodyManager::DeactivateBody(std::shared_ptr<UElasticBody>& Body)
-{
-	if (!Body.get())
-	{
-		return;
-	}
-	//비활성화
-	Body->SetActive(false);
-	//객체 상태 초기화
-	Body->Reset();
-	
 }
 
 void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
@@ -228,13 +242,15 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 	}
 
 	// 객체 비활성화
-	DeactivateBody(Body);
+	Body->SetActive(false);
 
-	// 활성 목록에서 제거 
+	// 활성 목록에서 제거 (swap and pop)
 	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
 	if (it != ActiveBodies.end())
 	{
-		ActiveBodies.erase(it);
+		// 찾은 요소와 마지막 요소를 교환한 후 마지막 요소 제거
+		std::swap(*it, ActiveBodies.back());
+		ActiveBodies.pop_back();
 	}
 
 	// 풀에 반환

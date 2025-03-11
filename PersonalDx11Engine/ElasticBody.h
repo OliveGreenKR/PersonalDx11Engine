@@ -61,8 +61,9 @@ public:
     void SyncCollisionShape();
 
     // 활성화/비활성화
-    void SetActive(const bool bActive);
-    bool IsActive() const { return bIsActive; }
+    virtual void Activate() override;
+    virtual void DeActivate() override;
+
 
 private:
     // 내부 유틸리티 메서드
@@ -75,9 +76,5 @@ private:
     // 컴포넌트 소유
     std::shared_ptr<class URigidBodyComponent> Rigid;
     std::shared_ptr<class UCollisionComponent> Collision;
-
-public:
-    class URigidBodyComponent* GetRigid();
-    class UCollisionComponent* GetCollision();
 
 };

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Transform.h"
 #include <memory>
 #include "Color.h"
@@ -65,6 +65,17 @@ protected:
 protected:
 	FTransform Transform;
 	std::weak_ptr<class UModel> Model;
+#pragma region Activation
+public:
+		// 활성화/비활성화
+	void SetActive(const bool bActive) { bActive ? Activate() : DeActivate(); }
+	bool IsActive() const { return bIsActive; }
+
+	virtual void Activate();
+	virtual void DeActivate();
+
+private:
+	bool bIsActive = true;
 
 #pragma region EventTriggered
 	virtual void OnCollisionBegin(const struct FCollisionEventData& InCollision);

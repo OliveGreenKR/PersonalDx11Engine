@@ -7,6 +7,108 @@
 #include "ModelBufferManager.h"
 #include "random.h"
 
+
+UElasticBody::UElasticBody() : bIsActive(true)
+{
+	bDebug = true;
+	//SetDebugColor(Vector4(FRandom::RandVector(Vector3::Zero, Vector3::One)));
+	Rigid = UActorComponent::Create< URigidBodyComponent>();
+	Collision = UActorComponent::Create<UCollisionComponent>();
+}
+
+void UElasticBody::Tick(const float DeltaTime)
+{
+	UGameObject::Tick(DeltaTime);
+}
+
+void UElasticBody::PostInitialized()
+{
+	UGameObject::PostInitialized();
+	//attach actor Comp
+	if (auto RootComp = RootActorComp.get())
+	{
+		//rigid body 추가 및 초기화
+		if (Rigid.get())
+		{
+			Rigid.get()->bGravity = false;
+			Rigid.get()->bSyncWithOwner = true;
+			AddActorComponent(Rigid);
+		}
+
+		//collsion body 추가 및 초기화
+		if (Collision.get())
+		{
+			Collision->SetShapeBox(); //기본 박스 형태
+			Collision->BindRigidBody(Rigid);
+			Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+		}
+	}
+}
+
+void UElasticBody::PostInitializedComponents()
+{
+	UGameObject::PostInitializedComponents();
+	SetActive(bIsActive);
+}
+
+void UElasticBody::SyncCollisionShape()
+{
+	if (Collision.get() && GetTransform())
+	{
+		Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
+	}
+}
+
+void UElasticBody::Activate()
+{
+	UGameObject::Activate();
+	Collision->SetActive(true);
+	Rigid->SetActive(true);
+}
+
+void UElasticBody::DeActivate()
+{
+	UGameObject::DeActivate();
+	Collision->SetActive(false);
+	Rigid->SetActive(false);
+}
+
+void UElasticBody::Reset()
+{
+	// 컴포넌트 상태 초기화
+	if (auto rigid = Rigid.get())
+	{
+		// 물리 상태 초기화
+		rigid->Reset();
+	}
+
+	// 위치 및 회전 초기화 
+	GetTransform()->SetPosition(Vector3::Zero);
+	GetTransform()->SetRotation(Quaternion::Identity);
+}
+
+ECollisionShapeType UElasticBody::GetCollisionShape(const EShape InShape) const
+{
+	switch (InShape)
+	{
+		case EShape::Box:
+		{
+			return ECollisionShapeType::Box;
+			break;
+		}
+		case EShape::Sphere:
+		{
+			return ECollisionShapeType::Sphere;
+			break;
+		}
+		default:
+		{
+			return ECollisionShapeType::Sphere;
+			break;
+		}
+	}
+}
+
 #pragma region Getter Setter
 const Vector3& UElasticBody::GetVelocity() const {
 	if (auto RigidPtr = Rigid.get()) {
@@ -118,7 +220,7 @@ void UElasticBody::SetShape(EShape InShape)
 	//TODO : 형태에 따른 모델 설정
 	switch (InShape)
 	{
-		case EShape::Box : 
+		case EShape::Box:
 		{
 			Model = UModelBufferManager::Get()->GetCubeModel();
 			break;
@@ -133,14 +235,6 @@ void UElasticBody::SetShape(EShape InShape)
 	SyncCollisionShape();
 }
 
-void UElasticBody::SyncCollisionShape()
-{
-	if (Collision.get() && GetTransform())
-	{
-		Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
-	}
-}
-
 void UElasticBody::SetShapeSphere()
 {
 	SetShape(EShape::Sphere);
@@ -151,106 +245,3 @@ void UElasticBody::SetShapeBox()
 	SetShape(EShape::Box);
 }
 #pragma endregion
-
-UElasticBody::UElasticBody() : bIsActive(true)
-{
-	bDebug = true;
-	//SetDebugColor(Vector4(FRandom::RandVector(Vector3::Zero, Vector3::One)));
-	Rigid = UActorComponent::Create< URigidBodyComponent>();
-	Collision = UActorComponent::Create<UCollisionComponent>();
-}
-
-void UElasticBody::Tick(const float DeltaTime)
-{
-	UGameObject::Tick(DeltaTime);
-}
-
-void UElasticBody::PostInitialized()
-{
-	UGameObject::PostInitialized();
-	//attach actor Comp
-	if (auto RootComp = RootActorComp.get())
-	{
-		//rigid body 추가 및 초기화
-		if (Rigid.get())
-		{
-			Rigid.get()->bGravity = false;
-			Rigid.get()->bSyncWithOwner = true;
-			AddActorComponent(Rigid);
-		}
-
-		//collsion body 추가 및 초기화
-		if (Collision.get())
-		{
-			Collision->SetShapeBox(); //기본 박스 형태
-			Collision->BindRigidBody(Rigid);
-			Collision->SetHalfExtent(GetTransform()->GetScale() * 0.5f);
-		}
-	}
-}
-
-void UElasticBody::PostInitializedComponents()
-{
-	UGameObject::PostInitializedComponents();
-	SetActive(bIsActive);
-}
-
-void UElasticBody::SetActive(const bool bActive)
-{
-	Collision->SetActive(bActive);
-	Rigid->SetActive(bActive);
-	RootActorComp->SetActive(bActive);
-	bIsActive = bActive;
-}
-
-void UElasticBody::Reset()
-{
-	// 컴포넌트 상태 초기화
-	if (auto rigid = Rigid.get())
-	{
-		// 물리 상태 초기화
-		rigid->Reset();
-	}
-
-	// 위치 및 회전 초기화 
-	GetTransform()->SetPosition(Vector3::Zero);
-	GetTransform()->SetRotation(Quaternion::Identity);
-}
-
-ECollisionShapeType UElasticBody::GetCollisionShape(const EShape InShape) const
-{
-	switch (InShape)
-	{
-		case EShape::Box:
-		{
-			return ECollisionShapeType::Box;
-			break;
-		}
-		case EShape::Sphere:
-		{
-			return ECollisionShapeType::Sphere;
-			break;
-		}
-		default:
-		{
-			return ECollisionShapeType::Sphere;
-			break;
-		}
-	}
-}
-
-URigidBodyComponent* UElasticBody::GetRigid()
-{
-#if defined(_DEBUG) || defined(DEBUG)
-	return Rigid.get();
-#endif
-	return nullptr;
-}
-
-UCollisionComponent* UElasticBody::GetCollision()
-{
-#if defined(_DEBUG) || defined(DEBUG)
-	return Collision.get();
-#endif
-	return nullptr;
-}
