@@ -234,16 +234,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Character2->SetPosition({ 1,0,0 });
 	Character2->SetShapeSphere();
 	Character2->bDebug = true;
-
-	//auto RigidComp2 = UActorComponent::Create<URigidBodyComponent>();
-	//RigidComp2->SetMass(Character2Mass);
-
-	//auto CollisionComp2 = UActorComponent::Create<UCollisionComponent>();
-	//CollisionComp2->SetShapeSphere();
-	//CollisionComp2->SetHalfExtent(0.5f * Character2->GetTransform()->GetScale());
-	//CollisionComp2->BindRigidBody(RigidComp2);
-
-	//Character2->AddActorComponent(RigidComp2);
 	
 #pragma endregion
 	Camera->PostInitialized();
@@ -262,7 +252,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	const float XBorder = 3.0f;
 	const float YBorder = 2.0f;
 	const float ZBorder = 5.0f;
-#pragma region Border Restitution Trigger 
+#pragma region Border Restitution Trigger(temporary)
 	auto IsInBorder = [XBorder, YBorder, ZBorder](const Vector3& Position)
 		{
 			return  std::abs(Position.x) < XBorder &&
@@ -695,8 +685,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Vector3 CurrentVelo = Character2->GetCurrentVelocity();
 			bool bGravity2 = Character2->IsGravity();
 			bool bPhysics2 = Character2->IsPhysicsSimulated();
+			bool bIsActive2 = Character2->IsActive();
 			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
 			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+			ImGui::Checkbox("bIsActive", &bIsActive2);
+			Character2->SetActive(bIsActive2);
 			ImGui::Checkbox("bDebug", &Character2->bDebug);
 			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
 			ImGui::Checkbox("bGravity", &bGravity2);

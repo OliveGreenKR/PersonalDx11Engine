@@ -1,4 +1,4 @@
-#include "ElasticBodyManager.h"
+ï»¿#include "ElasticBodyManager.h"
 #include "Math.h"
 #include "Random.h"
 #include "ElasticBody.h"
@@ -25,17 +25,17 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 	if (!body.get())
 		return nullptr;
 
-	//ÇüÅÂ °áÁ¤
+	//ìƒíƒœ ì„¤ì •
+	ApplyRandomTransform(body);
+	ApplyRandomPhysicsProperties(body);
+
+	//í˜•íƒœ ê²°ì •
 	ApplyRandomShape(body);
 
-	//»óÅÂ ¼³Á¤
-	ApplyRandomPhysicsProperties(body);
-	ApplyRandomTransform(body);
-
-	//»ö»ó °áÁ¤
+	//ìƒ‰ìƒ ê²°ì •
 	SetColorBasedOnMass(body);
 
-	//°´Ã¼ ÃÊ±âÈ­ ¸¶¹«¸®
+	//ê°ì²´ ì´ˆê¸°í™” ë§ˆë¬´ë¦¬
 	body.get()->SetActive(true);
 	body.get()->PostInitializedComponents();
 
@@ -85,7 +85,7 @@ void UElasticBodyManager::ApplyRandomTransform(std::shared_ptr<UElasticBody>& Bo
 void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 {
 	using EShape = UElasticBody::EShape;
-	//¸â¹ö ÃÊ±âÈ­
+	//ë©¤ë²„ ì´ˆê¸°í™”
 	MassColorMap = {
 		{EMassCategory::VeryLight,  Vector4(1.0f, 1.0f, 1.0f, 1.0f)},  // White
 		{EMassCategory::Light,      Vector4(1.0f, 1.0f, 0.0f, 1.0f)},  // Yellow
@@ -94,13 +94,13 @@ void UElasticBodyManager::Initialize(size_t InitialPoolSize)
 		{EMassCategory::VeryHeavy,  Vector4(0.3f, 0.3f, 0.3f, 1.0f)}   // Dark Gray
 	};
 
-	// Ç® ¿¹¾à ¹× ¹Ì¸® »ı¼º
+	// í’€ ì˜ˆì•½ ë° ë¯¸ë¦¬ ìƒì„±
 	PrewarmPool(InitialPoolSize);
 }
 
 void UElasticBodyManager::Release()
 {
-	//°´Ã¼ Á¤¸®
+	//ê°ì²´ ì •ë¦¬
 	ClearAllActiveBodies();
 	PooledBodies.clear();
 }
@@ -141,7 +141,7 @@ void UElasticBodyManager::PrewarmPool(size_t Count)
 	{
 		auto newBody = CreateNewBody();
 
-		// ºñÈ°¼ºÈ­ »óÅÂ·Î Ç®¿¡ Ãß°¡
+		// ë¹„í™œì„±í™” ìƒíƒœë¡œ í’€ì— ì¶”ê°€
 		newBody->SetActive(false);
 		PooledBodies.push_back(newBody);
 	}
@@ -149,23 +149,23 @@ void UElasticBodyManager::PrewarmPool(size_t Count)
 
 void UElasticBodyManager::ClearAllActiveBodies()
 {
-	// ¸ğµç È°¼º °´Ã¼¸¦ ºñÈ°¼ºÈ­ÇÏ°í ÃÊ±âÈ­
+	// ëª¨ë“  í™œì„± ê°ì²´ë¥¼ ë¹„í™œì„±í™”í•˜ê³  ì´ˆê¸°í™”
 	for (auto& body : ActiveBodies)
 	{
 		DeactivateBody(body);
 	}
 
-	// È°¼º °´Ã¼µéÀ» ÇÑ ¹ø¿¡ Ç®·Î ÀÌµ¿
+	// í™œì„± ê°ì²´ë“¤ì„ í•œ ë²ˆì— í’€ë¡œ ì´ë™
 	if (!ActiveBodies.empty())
 	{
-		// Ç®¿¡ °ø°£ÀÌ ÃæºĞÇÑÁö È®ÀÎÇÏ°í ÇÊ¿ä½Ã È®Àå
+		// í’€ì— ê³µê°„ì´ ì¶©ë¶„í•œì§€ í™•ì¸í•˜ê³  í•„ìš”ì‹œ í™•ì¥
 		PooledBodies.reserve(PooledBodies.size() + ActiveBodies.size());
 
-		// std::move¸¦ »ç¿ëÇÏ¿© º¤ÅÍ ³»¿ëÀ» È¿À²ÀûÀ¸·Î ÀÌµ¿
+		// std::moveë¥¼ ì‚¬ìš©í•˜ì—¬ ë²¡í„° ë‚´ìš©ì„ íš¨ìœ¨ì ìœ¼ë¡œ ì´ë™
 		std::move(std::begin(ActiveBodies), std::end(ActiveBodies),
 				  std::back_inserter(PooledBodies));
 
-		 // È°¼º °´Ã¼ ÄÁÅ×ÀÌ³Ê ºñ¿ì±â
+		 // í™œì„± ê°ì²´ ì»¨í…Œì´ë„ˆ ë¹„ìš°ê¸°
 		ActiveBodies.clear();
 	}
 }
@@ -173,34 +173,34 @@ void UElasticBodyManager::ClearAllActiveBodies()
 std::shared_ptr<UElasticBody> UElasticBodyManager::CreateNewBody()
 {
 	auto body = make_shared<UElasticBody>();
-	body->PostInitialized(); //ÃÖ¼ÒÇÑÀÇ ÃÊ±âÈ­ ¹× ÄÄÆ÷³ÍÆ® ±¸Á¶¸¸ µî·Ï
+	body->PostInitialized(); //ìµœì†Œí•œì˜ ì´ˆê¸°í™” ë° ì»´í¬ë„ŒíŠ¸ êµ¬ì¡°ë§Œ ë“±ë¡
 	return body;
 }
 
 std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 {
-	// Ç®ÀÌ ºñ¾îÀÖÀ¸¸é Ãß°¡ °´Ã¼ »ı¼º
+	// í’€ì´ ë¹„ì–´ìˆìœ¼ë©´ ì¶”ê°€ ê°ì²´ ìƒì„±
 	if (PooledBodies.empty())
 	{
 		const size_t BatchSize = ActiveBodies.size() * 0.5f;
 		PrewarmPool(BatchSize);
 
-		// ±×·¡µµ ºñ¾îÀÖ´Ù¸é ¿À·ù »óÈ² (¸Ş¸ğ¸® ºÎÁ· µî)
+		// ê·¸ë˜ë„ ë¹„ì–´ìˆë‹¤ë©´ ì˜¤ë¥˜ ìƒí™© (ë©”ëª¨ë¦¬ ë¶€ì¡± ë“±)
 		if (PooledBodies.empty())
 		{
-			// ·Î±× Ãâ·Â ¶Ç´Â ¿¹¿Ü Ã³¸®
+			// ë¡œê·¸ ì¶œë ¥ ë˜ëŠ” ì˜ˆì™¸ ì²˜ë¦¬
 			return nullptr;
 		}
 	}
 
-	// Ç®ÀÇ ¸¶Áö¸· °´Ã¼¸¦ °¡Á®¿È (LIFO - ½ºÅÃ ¹æ½ÄÀ¸·Î ÃÖ±Ù¿¡ ¹İÈ¯µÈ °´Ã¼ ¿ì¼± »ç¿ë)
+	// í’€ì˜ ë§ˆì§€ë§‰ ê°ì²´ë¥¼ ê°€ì ¸ì˜´ (LIFO - ìŠ¤íƒ ë°©ì‹ìœ¼ë¡œ ìµœê·¼ì— ë°˜í™˜ëœ ê°ì²´ ìš°ì„  ì‚¬ìš©)
 	std::shared_ptr<UElasticBody> body = PooledBodies.back();
 	PooledBodies.pop_back();
 
 	ActiveBodies.push_back(body);
-	//¹Ùµğ °´Ã¼ È°¼ºÈ­
+	//ë°”ë”” ê°ì²´ í™œì„±í™”
 	body->SetActive(true);
-	//¹Ùµğ ÃÊ±âÈ­ ¸¶¹«¸®
+	//ë°”ë”” ì´ˆê¸°í™” ë§ˆë¬´ë¦¬
 	body->PostInitializedComponents();
 
 	return body;
@@ -212,32 +212,32 @@ void UElasticBodyManager::DeactivateBody(std::shared_ptr<UElasticBody>& Body)
 	{
 		return;
 	}
-	//ºñÈ°¼ºÈ­
+	//ë¹„í™œì„±í™”
 	Body->SetActive(false);
-	//°´Ã¼ »óÅÂ ÃÊ±âÈ­
+	//ê°ì²´ ìƒíƒœ ì´ˆê¸°í™”
 	Body->Reset();
 	
 }
 
 void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 {
-	// À¯È¿¼º °Ë»ç
+	// ìœ íš¨ì„± ê²€ì‚¬
 	if (!Body.get())
 	{
 		return;
 	}
 
-	// °´Ã¼ ºñÈ°¼ºÈ­
+	// ê°ì²´ ë¹„í™œì„±í™”
 	DeactivateBody(Body);
 
-	// È°¼º ¸ñ·Ï¿¡¼­ Á¦°Å 
+	// í™œì„± ëª©ë¡ì—ì„œ ì œê±° 
 	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
 	if (it != ActiveBodies.end())
 	{
 		ActiveBodies.erase(it);
 	}
 
-	// Ç®¿¡ ¹İÈ¯
+	// í’€ì— ë°˜í™˜
 	PooledBodies.push_back(Body);
 }
 
@@ -253,7 +253,7 @@ void UElasticBodyManager::Tick(float DeltaTime)
 {
 	for (auto body : ActiveBodies)
 	{
-		if (!body.get())
+		if (!body.get() || !body->IsActive())
 		{
 			continue;
 		}
@@ -270,7 +270,7 @@ void UElasticBodyManager::Render(URenderer* InRenderer, UCamera* InCamera, UShad
 	{
 		if (!body.get())
 			continue;
-		if (body->bIsActive)
+		if (body->bIsActive)//í™œì„±í™” ê°ì²´ë§Œ ë Œë”ë§
 		{
 			InRenderer->RenderGameObject(InCamera, body.get(), InShader, InCustomSampler);
 		}
@@ -281,7 +281,7 @@ void UElasticBodyManager::Render(URenderer* InRenderer, UCamera* InCamera, UShad
 //to imple
 void UElasticBodyManager::LimitActiveObjectCount(const size_t Count)
 {
-	//Count °³¼ö·Î È°¼ºÈ­ °´Ã¼ °­Á¦ Á¶Á¤(Ãß°¡ ¹× »èÁ¦)
+	//Count ê°œìˆ˜ë¡œ í™œì„±í™” ê°ì²´ ê°•ì œ ì¡°ì •(ì¶”ê°€ ë° ì‚­ì œ)
 	const size_t targetCount = Math::Max(0, Count);
 
 }

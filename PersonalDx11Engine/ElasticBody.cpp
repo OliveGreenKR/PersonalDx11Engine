@@ -5,7 +5,7 @@
 #include "CollisionDefines.h"
 #include "Model.h"
 #include "ModelBufferManager.h"
-
+#include "random.h"
 
 #pragma region Getter Setter
 const Vector3& UElasticBody::GetVelocity() const {
@@ -155,7 +155,7 @@ void UElasticBody::SetShapeBox()
 UElasticBody::UElasticBody() : bIsActive(true)
 {
 	bDebug = true;
-
+	//SetDebugColor(Vector4(FRandom::RandVector(Vector3::Zero, Vector3::One)));
 	Rigid = UActorComponent::Create< URigidBodyComponent>();
 	Collision = UActorComponent::Create<UCollisionComponent>();
 }
