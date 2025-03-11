@@ -30,6 +30,7 @@
 #include "CollisionManager.h"
 
 //Contents
+#include "Random.h"
 #include "ElasticBodyManager.h"
 #include "ElasticBody.h"
 
@@ -561,6 +562,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	Character->SetActive(false);
 	Character2->SetActive(false);
+
+	float accumTime = 0.0f;
+	const float SPAWNFREQ = 0.75f;
+	vector<UElasticBody*> tmpVecs;
+
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -587,6 +593,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 #pragma endregion
 
+
 #pragma region logic
 		//Draw Debug
 		FDebugDrawManager::Get()->Tick(DeltaTime);
@@ -605,6 +612,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			Camera->Tick(DeltaTime);
 		}
+
+		accumTime += DeltaTime;
+		if(accumTime > SPAWNFREQ)
+		{
+			accumTime = 0.0f;
+
+			auto tmpBody = UGameObject::Create<UElasticBody>();
+			tmpBody->SetScale(FRandom::RandF(0.3f,1.0f) * Vector3::One);
+			tmpBody->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
+			tmpBody->SetShapeSphere();
+			tmpBody->bDebug = true;
+			tmpBody->PostInitialized();
+			tmpBody->PostInitializedComponents();
+			tmpBody->SetActive(true);
+			tmpVecs.push_back(tmpBody.get());
+			//UCollisionManager::Get()->PrintTreeStructure();
+		}
+		
+		for (auto tmp : tmpVecs)
+		{
+			tmp->Tick(DeltaTime);
+		}
 		UElasticBodyManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
 
@@ -617,7 +646,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Render
 		Renderer->RenderGameObject(Camera.get(),Character.get(), Shader.get(), *TTile.get());
 		Renderer->RenderGameObject(Camera.get(),Character2.get(), Shader.get(), *TPole.get());
-		UElasticBodyManager::Get()->Render(Renderer.get(), Camera.get(), Shader.get(), *TPole.get());
+		for (auto tmp : tmpVecs)
+		{
+			Renderer->RenderGameObject(Camera.get(), tmp, Shader.get(), *TPole.get());
+		}
+
+		//UElasticBodyManager::Get()->Render(Renderer.get(), Camera.get(), Shader.get(), *TTile.get());
 #pragma region UI
 		// ImGui UI 
 		ImGui_ImplDX11_NewFrame();
@@ -647,19 +681,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
 		//ImGui::InputInt("##Value", &value); // 숫자 입력 필드
-		ImGui::Text("%d / %d",
-					UElasticBodyManager::Get()->GetActiveBodyCount(),
-					UElasticBodyManager::Get()->GetPooledBodyCount());
-		ImGui::SameLine();
-		if (ImGui::Button("-")) {
-			UElasticBodyManager::Get()->DespawnRandomBody();
-			UCollisionManager::Get()->PrintTreeStructure();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("+")) {
-			UElasticBodyManager::Get()->SpawnRandomBody();
-			UCollisionManager::Get()->PrintTreeStructure();
-		}
+		//ImGui::Text("%d / %d",
+		//			UElasticBodyManager::Get()->GetActiveBodyCount(),
+		//			UElasticBodyManager::Get()->GetPooledBodyCount());
+		//ImGui::SameLine();
+		//if (ImGui::Button("-")) {
+		//	UElasticBodyManager::Get()->DespawnRandomBody();
+		//	UCollisionManager::Get()->PrintTreeStructure();
+		//}
+		//ImGui::SameLine();
+		//if (ImGui::Button("+")) {
+		//	UElasticBodyManager::Get()->SpawnRandomBody();
+		//	UCollisionManager::Get()->PrintTreeStructure();
+		//}
 		if (ImGui::Button("Print")) {
 			UCollisionManager::Get()->PrintTreeStructure();
 		}
@@ -691,8 +725,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			bool bIsActive2 = Character2->IsActive();
 			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
 			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-			ImGui::Checkbox("bIsActive", &bIsActive2);
-			Character2->SetActive(bIsActive2);
 			ImGui::Checkbox("bDebug", &Character2->bDebug);
 			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
 			ImGui::Checkbox("bGravity", &bGravity2);

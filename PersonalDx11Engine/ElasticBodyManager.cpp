@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "Model.h"
 #include "ModelBufferManager.h"
+#include "Debug.h"
 
 
 UElasticBodyManager::UElasticBodyManager()
@@ -24,6 +25,11 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 
 	if (!body.get())
 		return nullptr;
+	
+	body->Reset();
+
+	//객체 활성화y
+	body.get()->SetActive(true);
 
 	//상태 설정
 	ApplyRandomTransform(body);
@@ -35,11 +41,7 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::SpawnRandomBody()
 	//색상 결정
 	body->bDebug = true;
 	SetColorBasedOnMass(body);
-
-	//객체 초기화 마무리
-	body.get()->SetActive(true);
-	body.get()->PostInitializedComponents();
-
+	
 	return body;
 }
 
@@ -196,8 +198,9 @@ void UElasticBodyManager::ClearAllActiveBodies()
 
 std::shared_ptr<UElasticBody> UElasticBodyManager::CreateNewBody()
 {
-	auto body = make_shared<UElasticBody>();
-	body->PostInitialized(); //최소한의 초기화 및 컴포넌트 구조만 등록
+	auto body = UGameObject::Create<UElasticBody>();
+	body->PostInitialized();
+	body->PostInitializedComponents();
 	return body;
 }
 
@@ -206,13 +209,13 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	// 풀이 비어있으면 추가 객체 생성
 	if (PooledBodies.empty())
 	{
-		const size_t BatchSize = ActiveBodies.size() * 0.5f;
+		const size_t BatchSize = std::max<size_t>(10, ActiveBodies.size() * 0.5f);
 		PrewarmPool(BatchSize);
 
 		// 그래도 비어있다면 오류 상황 (메모리 부족 등)
 		if (PooledBodies.empty())
 		{
-			// 로그 출력 또는 예외 처리
+			LOG("ElasticBodyPool : Out of memory");
 			return nullptr;
 		}
 	}
@@ -221,8 +224,7 @@ std::shared_ptr<UElasticBody> UElasticBodyManager::GetBodyFromPool()
 	std::shared_ptr<UElasticBody> body = PooledBodies.back();
 	PooledBodies.pop_back();
 
-	//바디 초기화 마무리
-	body->PostInitializedComponents();
+
 	//바디 객체 활성화
 	body->SetActive(true);
 
@@ -239,9 +241,6 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 		return;
 	}
 
-	// 객체 비활성화
-	Body->SetActive(false);
-
 	// 활성 목록에서 제거 (swap and pop)
 	auto it = std::find(ActiveBodies.begin(), ActiveBodies.end(), Body);
 	if (it != ActiveBodies.end())
@@ -249,7 +248,15 @@ void UElasticBodyManager::ReturnBodyToPool(std::shared_ptr<UElasticBody>& Body)
 		// 찾은 요소와 마지막 요소를 교환한 후 마지막 요소 제거
 		std::swap(*it, ActiveBodies.back());
 		ActiveBodies.pop_back();
+
 	}
+	else
+	{
+		LOG("Invalid body returned");
+		return;
+	}
+	// 객체 비활성화
+	Body->SetActive(false);
 
 	// 풀에 반환
 	PooledBodies.push_back(Body);
@@ -299,7 +306,6 @@ void UElasticBodyManager::LimitActiveObjectCount(const size_t Count)
 {
 	//Count 개수로 활성화 객체 강제 조정(추가 및 삭제)
 	const size_t targetCount = Math::Max(0, Count);
-
 }
 
 

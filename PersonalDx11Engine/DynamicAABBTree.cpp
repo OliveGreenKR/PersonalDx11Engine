@@ -1,14 +1,14 @@
-#include "DynamicAABBTree.h"
+ï»¿#include "DynamicAABBTree.h"
 #include <iostream>
 #include <queue>
-
+#include "Debug.h"
 
 FDynamicAABBTree::FDynamicAABBTree(size_t InitialCapacity)
 {
     NodePool.resize(InitialCapacity);
     FreeNodes.reserve(InitialCapacity);
 
-    // ÃÊ±â free list ±¸¼º
+    // ì´ˆê¸° free list êµ¬ì„±
     for (size_t i = 0; i < InitialCapacity - 1; ++i)
     {
         FreeNodes.insert(i);
@@ -24,38 +24,43 @@ FDynamicAABBTree::~FDynamicAABBTree()
 size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object)
 {
     if (!Object)
+    {
+        LOG("Invalied DynamicBounable Object Inserted");
         return NULL_NODE;
-    // Áßº¹ °Ë»ç
+    }
+        
+    // ì¤‘ë³µ ê²€ì‚¬
     for (size_t i = 0; i < NodePool.size(); ++i)
     {
         const Node& ExistingNode = NodePool[i];
-        // FreeNodes¿¡ Æ÷ÇÔµÇÁö ¾ÊÀº ³ëµå Áß¿¡¼­¸¸ °Ë»ç
+        // FreeNodesì— í¬í•¨ë˜ì§€ ì•Šì€ ë…¸ë“œ ì¤‘ì—ì„œë§Œ ê²€ì‚¬
         if (FreeNodes.find(i) == FreeNodes.end())
         {
             if (ExistingNode.BoundableObject == Object.get())
             {
-                return FDynamicAABBTree::NULL_NODE; // ÀÌ¹Ì Á¸ÀçÇÏ´Â °´Ã¼¸é Ãß°¡ ½ÇÆĞ
+                LOG("%d is already Inserted", i);
+                return NULL_NODE; //ì´ë¯¸ ì¡´ì¬í•˜ëŠ” ê°ì²´
             }
         }
     }
     size_t NodeId = AllocateNode();
     Node& NewNode = NodePool[NodeId];
 
-    // ÃÊ±â ¹Ù¿îµå ¼³Á¤
+    // ì´ˆê¸° ë°”ìš´ë“œ ì„¤ì •
     auto OwnerTrans = Object->GetTransform();
     const Vector3 Position = Object->GetTransform()->GetPosition();
     const Vector3 HalfExtent = Object->GetHalfExtent();
     
-    // ½ÇÁ¦ AABB ¼³Á¤
+    // ì‹¤ì œ AABB ì„¤ì •
     NewNode.Bounds.Min = Position - HalfExtent;
     NewNode.Bounds.Max = Position + HalfExtent;
 
-    // Fat AABB ¼³Á¤ (¸¶Áø Ãß°¡)
-    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One * (MIN_MARGIN);  // ¸Å¿ì ÀÛÀº AABB¸¦ À§ÇÑ ÃÖ¼Ò ¿©À¯
+    // Fat AABB ì„¤ì • (ë§ˆì§„ ì¶”ê°€)
+    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One * (MIN_MARGIN);  // ë§¤ìš° ì‘ì€ AABBë¥¼ ìœ„í•œ ìµœì†Œ ì—¬ìœ 
     NewNode.FatBounds.Min = Position - Margin;
     NewNode.FatBounds.Max = Position + Margin;
 
-    // ÃßÀûÀ» À§ÇÑ ¸¶Áö¸· »óÅÂ ÀúÀå
+    // ì¶”ì ì„ ìœ„í•œ ë§ˆì§€ë§‰ ìƒíƒœ ì €ì¥
     NewNode.LastPosition = Position;
     NewNode.LastHalfExtent = HalfExtent;
     NewNode.BoundableObject = Object.get();
@@ -76,14 +81,14 @@ void FDynamicAABBTree::Remove(size_t NodeId)
 
 void FDynamicAABBTree::UpdateTree()
 {
-    // ·çÆ®°¡ ¾øÀ¸¸é Á¾·á
+    // ë£¨íŠ¸ê°€ ì—†ìœ¼ë©´ ì¢…ë£Œ
     if (RootId == NULL_NODE)
         return;
 
     std::vector<size_t> NodesToUpdate;
     NodesToUpdate.reserve(NodeCount);
 
-    // ¸®ÇÁ ³ëµåµéÀÇ ¹Ù¿îµå Ã¼Å© ¹× ¾÷µ¥ÀÌÆ® ÇÊ¿ä ³ëµå ¼öÁı
+    // ë¦¬í”„ ë…¸ë“œë“¤ì˜ ë°”ìš´ë“œ ì²´í¬ ë° ì—…ë°ì´íŠ¸ í•„ìš” ë…¸ë“œ ìˆ˜ì§‘
     for (size_t i = 0; i < NodePool.size(); ++i)
     {
         Node& Node = NodePool[i];
@@ -104,7 +109,7 @@ void FDynamicAABBTree::UpdateTree()
         //}
     }
 
-    // ¼öÁıµÈ ³ëµåµé ¾÷µ¥ÀÌÆ®
+    // ìˆ˜ì§‘ëœ ë…¸ë“œë“¤ ì—…ë°ì´íŠ¸
     for (size_t NodeId : NodesToUpdate)
     {
         RemoveLeaf(NodeId);
@@ -117,12 +122,12 @@ size_t FDynamicAABBTree::AllocateNode()
 {
     if (FreeNodes.empty())
     {
-        // ³ëµå Ç® È®Àå
+        // ë…¸ë“œ í’€ í™•ì¥
         size_t OldSize = NodePool.size();
         size_t NewSize = OldSize * 2;
         NodePool.resize(NewSize);
 
-        // »õ·Î¿î free ³ëµåµé Ãß°¡
+        // ìƒˆë¡œìš´ free ë…¸ë“œë“¤ ì¶”ê°€
         FreeNodes.reserve(NewSize - OldSize);
         for (size_t i = OldSize; i < NewSize; ++i)
         {
@@ -133,8 +138,9 @@ size_t FDynamicAABBTree::AllocateNode()
     auto it = FreeNodes.begin();
     size_t NodeId = *it;
     FreeNodes.erase(it);
-    NodePool[NodeId] = Node();  // ÃÊ±âÈ­
+    NodePool[NodeId] = Node();  // ì´ˆê¸°í™”
     NodeCount++;
+    LOG("%d allocated", NodeId);
     return NodeId;
 }
 
@@ -143,14 +149,14 @@ void FDynamicAABBTree::FreeNode(size_t NodeId)
     if (NodeId >= NodePool.size())
         return;
 
-    NodePool[NodeId] = Node();  // Àç¼³Á¤
+    NodePool[NodeId] = Node();  // ì¬ì„¤ì •
     FreeNodes.insert(NodeId);
     NodeCount--;
 }
 
 void FDynamicAABBTree::InsertLeaf(size_t LeafId)
 {
-    // Ã¹ ³ëµå¸é ·çÆ®·Î ¼³Á¤
+    // ì²« ë…¸ë“œë©´ ë£¨íŠ¸ë¡œ ì„¤ì •
     if (RootId == NULL_NODE)
     {
         RootId = LeafId;
@@ -158,7 +164,7 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         return;
     }
 
-    // »ğÀÔ À§Ä¡ Ã£±â
+    // ì‚½ì… ìœ„ì¹˜ ì°¾ê¸°
     Node& Leaf = NodePool[LeafId];
     size_t CurrentId = RootId;
 
@@ -168,14 +174,14 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         size_t LeftId = Current.Left;
         size_t RightId = Current.Right;
 
-        // SAH ºñ¿ë °è»ê
+        // SAH ë¹„ìš© ê³„ì‚°
         float CurrentCost = ComputeCost(Current.Bounds);
         AABB CombinedBounds;
         CombinedBounds.Min = Vector3::Min(Current.Bounds.Min, Leaf.Bounds.Min);
         CombinedBounds.Max = Vector3::Max(Current.Bounds.Max, Leaf.Bounds.Max);
         float CombinedCost = ComputeCost(CombinedBounds);
 
-        // ¿ŞÂÊ, ¿À¸¥ÂÊ ÀÚ½Ä°úÀÇ °áÇÕ ºñ¿ë °è»ê
+        // ì™¼ìª½, ì˜¤ë¥¸ìª½ ìì‹ê³¼ì˜ ê²°í•© ë¹„ìš© ê³„ì‚°
         Node& LeftChild = NodePool[LeftId];
         Node& RightChild = NodePool[RightId];
 
@@ -189,7 +195,7 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         RightCombined.Max = Vector3::Max(RightChild.Bounds.Max, Leaf.Bounds.Max);
         float RightCost = ComputeCost(RightCombined);
 
-        // ÃÖ¼Ò ºñ¿ë °æ·Î ¼±ÅÃ
+        // ìµœì†Œ ë¹„ìš© ê²½ë¡œ ì„ íƒ
         if (LeftCost < RightCost && LeftCost < CombinedCost)
         {
             CurrentId = LeftId;
@@ -200,26 +206,26 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
         }
         else 
         {
-            // ÇöÀç ³ëµå¿¡ Á÷Á¢ ÇÕÄ¡´Â °ÍÀÌ °¡Àå È¿À²ÀûÀÎ °æ¿ì
+            // í˜„ì¬ ë…¸ë“œì— ì§ì ‘ í•©ì¹˜ëŠ” ê²ƒì´ ê°€ì¥ íš¨ìœ¨ì ì¸ ê²½ìš°
             break;
         }
     }
 
-    // »õ·Î¿î ºÎ¸ğ ³ëµå »ı¼º
+    // ìƒˆë¡œìš´ ë¶€ëª¨ ë…¸ë“œ ìƒì„±
     size_t NewParentId = AllocateNode();
     Node& NewParent = NodePool[NewParentId];
 
     size_t OldParentId = NodePool[CurrentId].Parent;
     NewParent.Parent = OldParentId;
 
-    // »õ ºÎ¸ğÀÇ AABB ¼³Á¤
+    // ìƒˆ ë¶€ëª¨ì˜ AABB ì„¤ì •
     NewParent.Bounds.Min = Vector3::Min(Leaf.Bounds.Min, NodePool[CurrentId].Bounds.Min);
     NewParent.Bounds.Max = Vector3::Max(Leaf.Bounds.Max, NodePool[CurrentId].Bounds.Max);
     NewParent.Height = NodePool[CurrentId].Height + 1;
 
     if (OldParentId != NULL_NODE)
     {
-        // ±âÁ¸ ºÎ¸ğÀÇ ÀÚ½Ä Æ÷ÀÎÅÍ ¾÷µ¥ÀÌÆ®
+        // ê¸°ì¡´ ë¶€ëª¨ì˜ ìì‹ í¬ì¸í„° ì—…ë°ì´íŠ¸
         if (NodePool[OldParentId].Left == CurrentId)
         {
             NodePool[OldParentId].Left = NewParentId;
@@ -231,17 +237,17 @@ void FDynamicAABBTree::InsertLeaf(size_t LeafId)
     }
     else
     {
-        // ·çÆ® ¾÷µ¥ÀÌÆ®
+        // ë£¨íŠ¸ ì—…ë°ì´íŠ¸
         RootId = NewParentId;
     }
 
-    // »õ ºÎ¸ğÀÇ ÀÚ½Ä ¼³Á¤
+    // ìƒˆ ë¶€ëª¨ì˜ ìì‹ ì„¤ì •
     NewParent.Left = CurrentId;
     NewParent.Right = LeafId;
     NodePool[CurrentId].Parent = NewParentId;
     NodePool[LeafId].Parent = NewParentId;
 
-    // Á¶»ó ³ëµåµéÀÇ AABB ¾÷µ¥ÀÌÆ®
+    // ì¡°ìƒ ë…¸ë“œë“¤ì˜ AABB ì—…ë°ì´íŠ¸
     CurrentId = NewParentId;
     while (CurrentId != NULL_NODE)
     {
@@ -279,11 +285,11 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
         NodePool[ParentId].Right : NodePool[ParentId].Left;
 
     if (!IsValidId(SiblingId))
-        return;  // ÇüÁ¦°¡ À¯È¿ÇÏÁö ¾ÊÀ¸¸é Á¾·á
+        return;  // í˜•ì œê°€ ìœ íš¨í•˜ì§€ ì•Šìœ¼ë©´ ì¢…ë£Œ
 
     if (IsValidId(GrandParentId))
     {
-        // ÇüÁ¦¸¦ Á¶ºÎ¸ğ¿¡ Á÷Á¢ ¿¬°á
+        // í˜•ì œë¥¼ ì¡°ë¶€ëª¨ì— ì§ì ‘ ì—°ê²°
         if (NodePool[GrandParentId].Left == ParentId)
         {
             NodePool[GrandParentId].Left = SiblingId;
@@ -294,10 +300,10 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
         }
         NodePool[SiblingId].Parent = GrandParentId;
 
-        // ºÎ¸ğ ³ëµå Á¦°Å
+        // ë¶€ëª¨ ë…¸ë“œ ì œê±°
         FreeNode(ParentId);
 
-        // Á¶»óµéÀÇ AABB ¾÷µ¥ÀÌÆ®
+        // ì¡°ìƒë“¤ì˜ AABB ì—…ë°ì´íŠ¸
         size_t CurrentId = GrandParentId;
         while (CurrentId != NULL_NODE)
         {
@@ -316,7 +322,7 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
     }
     else
     {
-        // ÇüÁ¦¸¦ »õ·Î¿î ·çÆ®·Î
+        // í˜•ì œë¥¼ ìƒˆë¡œìš´ ë£¨íŠ¸ë¡œ
         RootId = SiblingId;
         NodePool[SiblingId].Parent = NULL_NODE;
         FreeNode(ParentId);
@@ -325,7 +331,7 @@ void FDynamicAABBTree::RemoveLeaf(size_t LeafId)
 
 size_t FDynamicAABBTree::Rebalance(size_t NodeId)
 {
-    // ±âº» ID °ËÁõ
+    // ê¸°ë³¸ ID ê²€ì¦
     if (!IsValidId(NodeId))
         return NULL_NODE;
 
@@ -336,7 +342,7 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
     size_t LeftId = N.Left;
     size_t RightId = N.Right;
 
-    // ÀÚ½Ä ³ëµå À¯È¿¼º °Ë»ç
+    // ìì‹ ë…¸ë“œ ìœ íš¨ì„± ê²€ì‚¬
     if (!IsValidId(LeftId) || !IsValidId(RightId))
         return NodeId;
 
@@ -345,29 +351,29 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
 
     int Balance = RightChild.Height - LeftChild.Height;
 
-    // ¿À¸¥ÂÊÀÌ ´õ ±íÀº °æ¿ì
+    // ì˜¤ë¥¸ìª½ì´ ë” ê¹Šì€ ê²½ìš°
     if (Balance > 1)
     {
         size_t RightLeftId = RightChild.Left;
         size_t RightRightId = RightChild.Right;
 
-        // Ãß°¡ ÀÚ½Ä ³ëµå À¯È¿¼º °Ë»ç
+        // ì¶”ê°€ ìì‹ ë…¸ë“œ ìœ íš¨ì„± ê²€ì‚¬
         if (!IsValidId(RightLeftId) || !IsValidId(RightRightId))
             return NodeId;
 
         Node& RightLeft = NodePool[RightLeftId];
         Node& RightRight = NodePool[RightRightId];
 
-        // ºÎ¸ğ-ÀÚ½Ä °ü°è ¾÷µ¥ÀÌÆ®
-        N.Right = RightLeftId;              // 1. NÀÇ ¿À¸¥ÂÊ ÀÚ½ÄÀ»  RightLeft·Î º¯°æ
+        // ë¶€ëª¨-ìì‹ ê´€ê³„ ì—…ë°ì´íŠ¸
+        N.Right = RightLeftId;              // 1. Nì˜ ì˜¤ë¥¸ìª½ ìì‹ì„  RightLeftë¡œ ë³€ê²½
         if (IsValidId(RightLeftId))
-            RightLeft.Parent = NodeId;      // 2. RightLeftÀÇ ºÎ¸ğ¸¦ NÀ¸·Î ¼³Á¤
+            RightLeft.Parent = NodeId;      // 2. RightLeftì˜ ë¶€ëª¨ë¥¼ Nìœ¼ë¡œ ì„¤ì •
 
-        RightChild.Left = NodeId;           // 3. RightChildÀÇ ¿ŞÂÊ ÀÚ½ÄÀ» NÀ¸·Î ¼³Á¤
-        RightChild.Parent = N.Parent;       // 4. RightChildÀÇ ºÎ¸ğ¸¦ NÀÇ ºÎ¸ğ·Î ¼³Á¤
-        N.Parent = RightId;                 // 5. NÀÇ ºÎ¸ğ¸¦ RightChild·Î ¼³Á¤
+        RightChild.Left = NodeId;           // 3. RightChildì˜ ì™¼ìª½ ìì‹ì„ Nìœ¼ë¡œ ì„¤ì •
+        RightChild.Parent = N.Parent;       // 4. RightChildì˜ ë¶€ëª¨ë¥¼ Nì˜ ë¶€ëª¨ë¡œ ì„¤ì •
+        N.Parent = RightId;                 // 5. Nì˜ ë¶€ëª¨ë¥¼ RightChildë¡œ ì„¤ì •
 
-        // ·çÆ® ³ëµå ¾÷µ¥ÀÌÆ®
+        // ë£¨íŠ¸ ë…¸ë“œ ì—…ë°ì´íŠ¸
         if (RightChild.Parent != NULL_NODE)
         {
             if (NodePool[RightChild.Parent].Left == NodeId)
@@ -378,13 +384,13 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
         else
             RootId = RightId;
 
-        // ³ôÀÌ Á¶Á¤
+        // ë†’ì´ ì¡°ì •
         N.Height = 1 + std::max(LeftChild.Height,
                                 IsValidId(RightLeftId) ? RightLeft.Height : 0);
         RightChild.Height = 1 + std::max(N.Height, RightRight.Height);
 
-        //AABB ¾÷µ¥ÀÌÆ®
-        // NÀÇ »õ AABB °è»ê (LeftChild¿Í RightLeftÀÇ Á¶ÇÕ)
+        //AABB ì—…ë°ì´íŠ¸
+        // Nì˜ ìƒˆ AABB ê³„ì‚° (LeftChildì™€ RightLeftì˜ ì¡°í•©)
         if (IsValidId(RightLeftId)) {
             N.Bounds.Min = Vector3::Min(LeftChild.Bounds.Min, RightLeft.Bounds.Min);
             N.Bounds.Max = Vector3::Max(LeftChild.Bounds.Max, RightLeft.Bounds.Max);
@@ -393,36 +399,36 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
             N.Bounds = LeftChild.Bounds; 
         }
 
-        // RightChildÀÇ »õ AABB °è»ê (N°ú RightRightÀÇ Á¶ÇÕ)
+        // RightChildì˜ ìƒˆ AABB ê³„ì‚° (Nê³¼ RightRightì˜ ì¡°í•©)
         RightChild.Bounds.Min = Vector3::Min(N.Bounds.Min, RightRight.Bounds.Min);
         RightChild.Bounds.Max = Vector3::Max(N.Bounds.Max, RightRight.Bounds.Max);
 
         return RightId;
     }
 
-    // ¿ŞÂÊÀÌ ´õ ±íÀº °æ¿ì
+    // ì™¼ìª½ì´ ë” ê¹Šì€ ê²½ìš°
     if (Balance < -1)
     {
         size_t LeftLeftId = LeftChild.Left;
         size_t LeftRightId = LeftChild.Right;
 
-        // Ãß°¡ ÀÚ½Ä ³ëµå À¯È¿¼º °Ë»ç
+        // ì¶”ê°€ ìì‹ ë…¸ë“œ ìœ íš¨ì„± ê²€ì‚¬
         if (!IsValidId(LeftLeftId) || !IsValidId(LeftRightId))
             return NodeId;
 
         Node& LeftLeft = NodePool[LeftLeftId];
         Node& LeftRight = NodePool[LeftRightId];
 
-        // ºÎ¸ğ-ÀÚ½Ä °ü°è ¾÷µ¥ÀÌÆ®
-        N.Left = LeftRightId;               // 1. NÀÇ ¿ŞÂÊ ÀÚ½ÄÀ» LeftRightÀ¸·Î º¯°æ
+        // ë¶€ëª¨-ìì‹ ê´€ê³„ ì—…ë°ì´íŠ¸
+        N.Left = LeftRightId;               // 1. Nì˜ ì™¼ìª½ ìì‹ì„ LeftRightìœ¼ë¡œ ë³€ê²½
         if (IsValidId(LeftRightId))
-            LeftRight.Parent = NodeId;      // 2. LeftRightÀÇ ºÎ¸ğ¸¦ NÀ¸·Î ¼³Á¤
+            LeftRight.Parent = NodeId;      // 2. LeftRightì˜ ë¶€ëª¨ë¥¼ Nìœ¼ë¡œ ì„¤ì •
 
-        LeftChild.Right = NodeId;           // 3. LeftChildÀÇ ¿À¸¥ÂÊ ÀÚ½ÄÀ» NÀ¸·Î ¼³Á¤
-        LeftChild.Parent = N.Parent;        // 4. LeftChildÀÇ ºÎ¸ğ¸¦ NÀÇ ºÎ¸ğ·Î ¼³Á¤
-        N.Parent = LeftId;                  // 5. NÀÇ ºÎ¸ğ¸¦ LeftChild·Î ¼³Á¤
+        LeftChild.Right = NodeId;           // 3. LeftChildì˜ ì˜¤ë¥¸ìª½ ìì‹ì„ Nìœ¼ë¡œ ì„¤ì •
+        LeftChild.Parent = N.Parent;        // 4. LeftChildì˜ ë¶€ëª¨ë¥¼ Nì˜ ë¶€ëª¨ë¡œ ì„¤ì •
+        N.Parent = LeftId;                  // 5. Nì˜ ë¶€ëª¨ë¥¼ LeftChildë¡œ ì„¤ì •
 
-        // ·çÆ® ³ëµå ¾÷µ¥ÀÌÆ®
+        // ë£¨íŠ¸ ë…¸ë“œ ì—…ë°ì´íŠ¸
         if (LeftChild.Parent != NULL_NODE)
         {
             if (NodePool[LeftChild.Parent].Left == NodeId)
@@ -433,22 +439,22 @@ size_t FDynamicAABBTree::Rebalance(size_t NodeId)
         else
             RootId = LeftId;
 
-        // ³ôÀÌ Á¶Á¤
+        // ë†’ì´ ì¡°ì •
         N.Height = 1 + std::max(RightChild.Height,
                                 IsValidId(LeftRightId) ? LeftRight.Height : 0);
         LeftChild.Height = 1 + std::max(LeftLeft.Height, N.Height);
 
-        // AABB¾÷µ¥ÀÌÆ®
-        // NÀÇ »õ AABB °è»ê (RightChild¿Í LeftRightÀÇ Á¶ÇÕ)
+        // AABBì—…ë°ì´íŠ¸
+        // Nì˜ ìƒˆ AABB ê³„ì‚° (RightChildì™€ LeftRightì˜ ì¡°í•©)
         if (IsValidId(LeftRightId)) {
             N.Bounds.Min = Vector3::Min(RightChild.Bounds.Min, LeftRight.Bounds.Min);
             N.Bounds.Max = Vector3::Max(RightChild.Bounds.Max, LeftRight.Bounds.Max);
         }
         else {
-            N.Bounds = RightChild.Bounds; // ¸¸¾à LeftRight°¡ ¾ø´Ù¸é
+            N.Bounds = RightChild.Bounds; // ë§Œì•½ LeftRightê°€ ì—†ë‹¤ë©´
         }
 
-        // LeftChildÀÇ »õ AABB °è»ê (N°ú LeftLeftÀÇ Á¶ÇÕ)
+        // LeftChildì˜ ìƒˆ AABB ê³„ì‚° (Nê³¼ LeftLeftì˜ ì¡°í•©)
         LeftChild.Bounds.Min = Vector3::Min(N.Bounds.Min, LeftLeft.Bounds.Min);
         LeftChild.Bounds.Max = Vector3::Max(N.Bounds.Max, LeftLeft.Bounds.Max);
 
@@ -467,16 +473,16 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
     const Vector3& Position = UpdateNode.BoundableObject->GetTransform()->GetPosition();
     const Vector3& HalfExtent = UpdateNode.BoundableObject->GetHalfExtent();
 
-    // ½ÇÁ¦ AABB ¾÷µ¥ÀÌÆ®
+    // ì‹¤ì œ AABB ì—…ë°ì´íŠ¸
     UpdateNode.Bounds.Min = Position - HalfExtent;
     UpdateNode.Bounds.Max = Position + HalfExtent;
 
-    // Fat AABB ¾÷µ¥ÀÌÆ®
+    // Fat AABB ì—…ë°ì´íŠ¸
     Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One * MIN_MARGIN;
     UpdateNode.FatBounds.Min = Position - Margin;
     UpdateNode.FatBounds.Max = Position + Margin;
 
-    // ÀÌÀü »óÅÂ ÀúÀå
+    // ì´ì „ ìƒíƒœ ì €ì¥
     UpdateNode.LastPosition = Position;
     UpdateNode.LastHalfExtent = HalfExtent;
 
@@ -486,7 +492,7 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
 float FDynamicAABBTree::ComputeCost(const AABB& Bounds) const
 {
     Vector3 Dimensions = Bounds.Max - Bounds.Min;
-    // Ç¥¸éÀû ÈŞ¸®½ºÆ½ (Surface Area Heuristic)
+    // í‘œë©´ì  íœ´ë¦¬ìŠ¤í‹± (Surface Area Heuristic)
     return 2.0f * (Dimensions.x * Dimensions.y + Dimensions.y * Dimensions.z + Dimensions.z * Dimensions.x);
 }
 
@@ -509,7 +515,7 @@ bool FDynamicAABBTree::IsValidId(const size_t NodeId) const
 
 void FDynamicAABBTree::ReBuildTree()
 {
-    // ÇöÀç È°¼º ³ëµå ¹é¾÷
+    // í˜„ì¬ í™œì„± ë…¸ë“œ ë°±ì—…
     std::vector<std::shared_ptr<IDynamicBoundable>> activeObjects;
 
     for (size_t i = 0; i < NodePool.size(); i++)
@@ -518,15 +524,15 @@ void FDynamicAABBTree::ReBuildTree()
         {
             activeObjects.push_back(std::shared_ptr<IDynamicBoundable>(
                 const_cast<IDynamicBoundable*>(NodePool[i].BoundableObject),
-                [](IDynamicBoundable*) {} //ÀÓ½Ã ÂüÁ¶ shared_ptr
+                [](IDynamicBoundable*) {} //ì„ì‹œ ì°¸ì¡° shared_ptr
             ));
         }
     }
 
-    // Æ®¸® ÃÊ±âÈ­
+    // íŠ¸ë¦¬ ì´ˆê¸°í™”
     ClearTree();
 
-    // È°¼º °´Ã¼ ´Ù½Ã »ğÀÔ
+    // í™œì„± ê°ì²´ ë‹¤ì‹œ ì‚½ì…
     for (const auto& obj : activeObjects)
     {
         Insert(obj);
@@ -540,7 +546,7 @@ void FDynamicAABBTree::ClearTree(const size_t InitialCapacity)
     RootId = NULL_NODE;
     NodeCount = 0;
 
-    // ÃÊ±â ¿ë·®À¸·Î ´Ù½Ã ÃÊ±âÈ­
+    // ì´ˆê¸° ìš©ëŸ‰ìœ¼ë¡œ ë‹¤ì‹œ ì´ˆê¸°í™”
     NodePool.resize(InitialCapacity);
     FreeNodes.reserve(InitialCapacity);
 
@@ -561,7 +567,7 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
     std::unordered_set<size_t> visited;
     Stack.reserve(NodeCount);
 
-    // ·çÆ®ºÎÅÍ ½ÃÀÛ
+    // ë£¨íŠ¸ë¶€í„° ì‹œì‘
     if (RootId != NULL_NODE)
         Stack.push_back(RootId);
 
@@ -583,13 +589,13 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
 
         const Node& CurrentNode = NodePool[NodeId];
 
-		// AABB°¡ °ãÄ¡Áö ¾ÊÀ¸¸é ½ºÅµ
+		// AABBê°€ ê²¹ì¹˜ì§€ ì•Šìœ¼ë©´ ìŠ¤í‚µ
 		if (!QueryBounds.Overlaps(CurrentNode.Bounds))
 			continue;
 
         if (CurrentNode.IsLeaf())
         {
-            // ¸®ÇÁ ³ëµå¸é Äİ¹é È£Ãâ
+            // ë¦¬í”„ ë…¸ë“œë©´ ì½œë°± í˜¸ì¶œ
             if (CurrentNode.BoundableObject)
             {
                 Func(NodeId);
@@ -597,7 +603,7 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
         }
         else
         {
-            // ³»ºÎ ³ëµå¸é ÀÚ½ÄµéÀ» ½ºÅÃ¿¡ Ãß°¡
+            // ë‚´ë¶€ ë…¸ë“œë©´ ìì‹ë“¤ì„ ìŠ¤íƒì— ì¶”ê°€
             if (CurrentNode.Left != NULL_NODE && CurrentNode.Left < NodePool.size()) {
                 Stack.push_back(CurrentNode.Left);
             }
@@ -617,22 +623,22 @@ void FDynamicAABBTree::PrintBinaryTree(size_t root, std::string prefix, bool isL
 
     cout << prefix;
 
-    cout << (isLeft ? "¦§¦¡¦¡ " : "¦¦¦¡¦¡ ");
+    cout << (isLeft ? "â”œâ”€â”€ " : "â””â”€â”€ ");
 
     auto RootNode = NodePool[root];
-    // ³ëµå µ¥ÀÌÅÍ Ãâ·Â ¹× ºÎ¸ğ Á¤º¸ Ãß°¡
+    // ë…¸ë“œ ë°ì´í„° ì¶œë ¥ ë° ë¶€ëª¨ ì •ë³´ ì¶”ê°€
     if (RootNode.IsLeaf())
-        cout << "*";//LEAF Ç¥½Ã
+        cout << "*";//LEAF í‘œì‹œ
     cout << root;
     if (RootNode.Parent != NULL_NODE) {
         cout << " (Parent: " << RootNode.Parent << ")";
     }
     cout << endl;
 
-    // ÀÚ½Ä ³ëµå¿¡ ´ëÇÑ »õ Á¢µÎ»ç °è»ê
-    string newPrefix = prefix + (isLeft ? "¦¢   " : "    ");
+    // ìì‹ ë…¸ë“œì— ëŒ€í•œ ìƒˆ ì ‘ë‘ì‚¬ ê³„ì‚°
+    string newPrefix = prefix + (isLeft ? "â”‚   " : "    ");
 
-    // ¿ŞÂÊ, ¿À¸¥ÂÊ ÀÚ½Ä Ãâ·Â (¿ŞÂÊ ¸ÕÀú)
+    // ì™¼ìª½, ì˜¤ë¥¸ìª½ ìì‹ ì¶œë ¥ (ì™¼ìª½ ë¨¼ì €)
     PrintBinaryTree(RootNode.Left, newPrefix, true);
     PrintBinaryTree(RootNode.Right, newPrefix, false);
 }

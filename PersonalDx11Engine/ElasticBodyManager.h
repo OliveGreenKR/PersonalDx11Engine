@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include "Math.h" 
 
-class ElasticBody;
-
 class UElasticBodyManager
 {
 public:

@@ -8,6 +8,7 @@
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventDispatcher.h"
 #include "DebugDrawManager.h"
+#include "Debug.h"
 
 UCollisionManager::~UCollisionManager()
 {
@@ -48,7 +49,11 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>& InComponent)
 {
 	if (!InComponent || RegisteredComponents.empty())
+	{
+		LOG("UnRegister for InValid Component");
 		return;
+
+	}
 
 	// 관리 중인 컴포넌트인지 확인
 	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
@@ -58,7 +63,11 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>
 								 });
 
 	if (targetIt == RegisteredComponents.end())
+	{
+		LOG("UnRegister for UnMangagedComps");
 		return;
+	}
+		
 
 	// 인덱스 및 데이터 저장
 	size_t targetIndex = targetIt - RegisteredComponents.begin();

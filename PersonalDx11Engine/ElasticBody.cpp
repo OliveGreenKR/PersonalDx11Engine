@@ -48,7 +48,6 @@ void UElasticBody::PostInitialized()
 void UElasticBody::PostInitializedComponents()
 {
 	UGameObject::PostInitializedComponents();
-	SetActive(bIsActive);
 }
 
 void UElasticBody::SyncCollisionShape()
