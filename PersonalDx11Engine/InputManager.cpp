@@ -1,4 +1,4 @@
-#include "InputManager.h"
+ï»¿#include "InputManager.h"
 #include <windows.h>
 #include "Math.h"
 
@@ -18,7 +18,7 @@ bool UInputManager::ProcessWindowsMessage(UINT Message, WPARAM WParam, LPARAM LP
             EventData.bControl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
             EventData.bShift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
 
-            // ¹İº¹ ÀÔ·Â È®ÀÎ
+            // ë°˜ë³µ ì…ë ¥ í™•ì¸
             bool bIsRepeat = (HIWORD(LParam) & KF_REPEAT) == KF_REPEAT;
 
             if (!bWasPressed)

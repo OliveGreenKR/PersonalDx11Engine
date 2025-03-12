@@ -1,5 +1,4 @@
-#pragma once
-#pragma once
+ï»¿#pragma once
 #include "Delegate.h"
 #include <windows.h>
 #include <unordered_map>
@@ -7,7 +6,7 @@
 #include <string>
 
 
-// Å° ÀÌº¥Æ® Å¸ÀÔ Á¤ÀÇ
+// í‚¤ ì´ë²¤íŠ¸ íƒ€ì… ì •ì˜
 enum class EKeyEvent
 {
     Pressed,
@@ -15,7 +14,7 @@ enum class EKeyEvent
     Repeat,
 };
 
-// ÀÔ·Â ÀÌº¥Æ®¿¡ Àü´ŞµÉ µ¥ÀÌÅÍ ±¸Á¶Ã¼
+// ì…ë ¥ ì´ë²¤íŠ¸ì— ì „ë‹¬ë  ë°ì´í„° êµ¬ì¡°ì²´
 struct FKeyEventData
 {
     WPARAM KeyCode;
@@ -25,16 +24,16 @@ struct FKeyEventData
     bool bShift;
 };
 
-// Å° ÀÌº¥Æ® µ¨¸®°ÔÀÌÆ® Å¸ÀÔ Á¤ÀÇ
+// í‚¤ ì´ë²¤íŠ¸ ë¸ë¦¬ê²Œì´íŠ¸ íƒ€ì… ì •ì˜
 using FOnKeyEvent = FDelegate<const FKeyEventData&>;
 
 class UInputManager
 {
 private:
-    // °¢ ÀÌº¥Æ® Å¸ÀÔº° µ¨¸®°ÔÀÌÆ®
+    // ê° ì´ë²¤íŠ¸ íƒ€ì…ë³„ ë¸ë¦¬ê²Œì´íŠ¸
     std::unordered_map<EKeyEvent, FOnKeyEvent> KeyEventDelegates;
 
-    // ÇöÀç Å° »óÅÂ ÀúÀå
+    // í˜„ì¬ í‚¤ ìƒíƒœ ì €ì¥
     std::unordered_map<WPARAM, bool> KeyStates;
 
     UInputManager() = default;
@@ -46,10 +45,10 @@ public:
         return Instance.get();
     }
 
-    // À©µµ¿ì ÇÁ·Î½ÃÀú¿¡¼­ È£ÃâµÉ ¸Ş½ÃÁö Ã³¸® ÇÔ¼ö
+    // ìœˆë„ìš° í”„ë¡œì‹œì €ì—ì„œ í˜¸ì¶œë  ë©”ì‹œì§€ ì²˜ë¦¬ í•¨ìˆ˜
     bool ProcessWindowsMessage(UINT Message, WPARAM WParam, LPARAM LParam);
 
-    //½Ã½ºÅÛ ¹Ù¿îµù
+    //ì‹œìŠ¤í…œ ë°”ìš´ë”©
     void BindKeyEventSystem(
         EKeyEvent EventType,
         const std::function<void(const FKeyEventData&)>& InFunction,
@@ -57,7 +56,7 @@ public:
     {
         KeyEventDelegates[EventType].BindSystem(InFunction, InFunctionName);
     }
-    //½Ã½ºÅÛ ¾ğ¹Ù¿îµù
+    //ì‹œìŠ¤í…œ ì–¸ë°”ìš´ë”©
     void UnbindKeyEventSystem(
         EKeyEvent EventType,
         const std::string& InFunctionName)
@@ -65,7 +64,7 @@ public:
         KeyEventDelegates[EventType].UnbindSystem(InFunctionName);
     }
 
-    // Æ¯Á¤ Å° ÀÌº¥Æ®¿¡ ´ëÇÑ ÇÔ¼ö ¹ÙÀÎµù
+    // íŠ¹ì • í‚¤ ì´ë²¤íŠ¸ì— ëŒ€í•œ í•¨ìˆ˜ ë°”ì¸ë”©
     template<typename T>
     void BindKeyEvent(
         EKeyEvent EventType,
@@ -76,7 +75,7 @@ public:
         KeyEventDelegates[EventType].Bind(InObject, InFunction, InFunctionName);
     }
 
-    // Æ¯Á¤ Å° ÀÌº¥Æ®¿¡¼­ ÇÔ¼ö ¾ğ¹ÙÀÎµù
+    // íŠ¹ì • í‚¤ ì´ë²¤íŠ¸ì—ì„œ í•¨ìˆ˜ ì–¸ë°”ì¸ë”©
     template<typename T>
     void UnbindKeyEvent(
         EKeyEvent EventType,
@@ -86,7 +85,7 @@ public:
         KeyEventDelegates[EventType].Unbind(InObject, InFunctionName);
     }
 
-    // °´Ã¼ÀÇ ¸ğµç Å° ÀÌº¥Æ® ¹ÙÀÎµù Á¦°Å
+    // ê°ì²´ì˜ ëª¨ë“  í‚¤ ì´ë²¤íŠ¸ ë°”ì¸ë”© ì œê±°
     template<typename T>
     void UnbindAllKeyEvents(const std::shared_ptr<T>& InObject)
     {
@@ -96,14 +95,14 @@ public:
         }
     }
 
-    // Æ¯Á¤ Å°°¡ ÇöÀç ´­·ÁÀÖ´ÂÁö È®ÀÎ
+    // íŠ¹ì • í‚¤ê°€ í˜„ì¬ ëˆŒë ¤ìˆëŠ”ì§€ í™•ì¸
     bool IsKeyDown(WPARAM KeyCode) const
     {
         auto It = KeyStates.find(KeyCode);
         return It != KeyStates.end() && It->second;
     }
 
-    // ¸¸¾à Alt, Ctrl, Shift¿Í ÇÔ²² ´­·È´ÂÁö È®ÀÎÀÌ ÇÊ¿äÇÑ °æ¿ì
+    // ë§Œì•½ Alt, Ctrl, Shiftì™€ í•¨ê»˜ ëˆŒë ¸ëŠ”ì§€ í™•ì¸ì´ í•„ìš”í•œ ê²½ìš°
     bool IsKeyDownWithModifiers(WPARAM KeyCode, bool bCheckAlt, bool bCheckCtrl, bool bCheckShift) const
     {
         if (!IsKeyDown(KeyCode)) return false;

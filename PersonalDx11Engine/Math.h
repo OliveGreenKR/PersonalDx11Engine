@@ -1,5 +1,4 @@
-#pragma once
-#define NOMINMAX  
+ï»¿#pragma once
 #include <directxmath.h>
 #include <cmath>
 #include <algorithm>
@@ -9,8 +8,8 @@ using namespace DirectX;
 const float PI = XM_PI;
 
 
-constexpr float KINDA_SMALL = 1e-4f; // º¸Åë ¿ëµµ
-constexpr float KINDA_SMALLER = 1e-6f; // Á¤¹Ğ °è»ê ¿ëµµ
+constexpr float KINDA_SMALL = 1e-4f; // ë³´í†µ ìš©ë„
+constexpr float KINDA_SMALLER = 1e-6f; // ì •ë°€ ê³„ì‚° ìš©ë„
 
 // Forward declarations
 struct Vector2;
@@ -585,30 +584,30 @@ inline Vector4::Vector4(const Vector2& Vec) : XMFLOAT4(Vec.x, Vec.y, 0.0f, 1.0f)
 
 inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up)
 {
-	// ÀÔ·Â º¤ÅÍ°¡ ¿µº¤ÅÍÀÎ °æ¿ì Ã¼Å©
+	// ì…ë ¥ ë²¡í„°ê°€ ì˜ë²¡í„°ì¸ ê²½ìš° ì²´í¬
 	if (LookAt.LengthSquared() < KINDA_SMALL)
 	{
 		return Quaternion(0, 0, 0, 1.0f);
 	}
-	// 1. ÀÔ·Â º¤ÅÍµéÀ» XMVECTOR·Î º¯È¯
+	// 1. ì…ë ¥ ë²¡í„°ë“¤ì„ XMVECTORë¡œ ë³€í™˜
 	XMVECTOR vLookAt = XMVector3Normalize(XMLoadFloat3(&LookAt));
 	XMVECTOR vUp = XMVector3Normalize(XMLoadFloat3(&Up));
 
-	// 2. Á÷±³ ±âÀú º¤ÅÍ °è»ê
-	// Forward = Á¤±ÔÈ­µÈ LookAt º¤ÅÍ
+	// 2. ì§êµ ê¸°ì € ë²¡í„° ê³„ì‚°
+	// Forward = ì •ê·œí™”ëœ LookAt ë²¡í„°
 	XMVECTOR vForward = vLookAt;
 
-	// Right = Up ¡¿ Forward (¿ÜÀû)
+	// Right = Up Ã— Forward (ì™¸ì )
 	XMVECTOR vRight = XMVector3Cross(vUp, vForward);
 
-	// Right°¡ ³Ê¹« ÀÛÀº °æ¿ì (LookAt°ú UpÀÌ °ÅÀÇ ÆòÇàÇÒ ¶§) Ã³¸®
+	// Rightê°€ ë„ˆë¬´ ì‘ì€ ê²½ìš° (LookAtê³¼ Upì´ ê±°ì˜ í‰í–‰í•  ë•Œ) ì²˜ë¦¬
 	if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
 	{
-		// LookAt°ú UpÀÌ ÆòÇàÇÑ °æ¿ì, ¾à°£ ´Ù¸¥ Up º¤ÅÍ »ç¿ë
+		// LookAtê³¼ Upì´ í‰í–‰í•œ ê²½ìš°, ì•½ê°„ ë‹¤ë¥¸ Up ë²¡í„° ì‚¬ìš©
 		vUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 		vRight = XMVector3Cross(vUp, vForward);
 
-		// ¿©ÀüÈ÷ ³Ê¹« ÀÛÀ¸¸é ´Ù¸¥ Ãà ½Ãµµ
+		// ì—¬ì „íˆ ë„ˆë¬´ ì‘ìœ¼ë©´ ë‹¤ë¥¸ ì¶• ì‹œë„
 		if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
 		{
 			vUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -616,14 +615,14 @@ inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up
 		}
 	}
 
-	// Right Á¤±ÔÈ­
+	// Right ì •ê·œí™”
 	vRight = XMVector3Normalize(vRight);
 
-	// ½ÇÁ¦ Up = Forward ¡¿ Right
+	// ì‹¤ì œ Up = Forward Ã— Right
 	vUp = XMVector3Cross(vForward, vRight);
-	// UpÀº Á¤±ÔÈ­µÈ º¤ÅÍµéÀÇ ¿ÜÀûÀÌ¹Ç·Î µû·Î Á¤±ÔÈ­ÇÒ ÇÊ¿ä ¾øÀ½
+	// Upì€ ì •ê·œí™”ëœ ë²¡í„°ë“¤ì˜ ì™¸ì ì´ë¯€ë¡œ ë”°ë¡œ ì •ê·œí™”í•  í•„ìš” ì—†ìŒ
 
-	// 3. Á÷±³ ±âÀú º¤ÅÍµé·Î È¸Àü Çà·Ä »ı¼º
+	// 3. ì§êµ ê¸°ì € ë²¡í„°ë“¤ë¡œ íšŒì „ í–‰ë ¬ ìƒì„±
 	XMMATRIX RotationMatrix(
 		vRight,
 		vUp,
@@ -631,10 +630,10 @@ inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up
 		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)
 	);
 
-	// 4. Çà·ÄÀ» ÄõÅÍ´Ï¿ÂÀ¸·Î º¯È¯
+	// 4. í–‰ë ¬ì„ ì¿¼í„°ë‹ˆì˜¨ìœ¼ë¡œ ë³€í™˜
 	XMVECTOR quat = XMQuaternionRotationMatrix(RotationMatrix);
 
-	// 5. °á°ú¸¦ Quaternion ±¸Á¶Ã¼¿¡ ÀúÀå
+	// 5. ê²°ê³¼ë¥¼ Quaternion êµ¬ì¡°ì²´ì— ì €ì¥
 	Quaternion result;
 	XMStoreFloat4(&result, quat);
 
@@ -727,33 +726,33 @@ namespace Math
 
 	static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
 	{
-		//È¸ÀüÃà Á¤±ÔÈ­
+		//íšŒì „ì¶• ì •ê·œí™”
 		XMVECTOR NormalizedAxis = XMVector3Normalize(InAxis);
 		return XMQuaternionRotationNormal(NormalizedAxis, RadianAngle);
 	}
 	//retrun Normalized Quat
 	static const Quaternion EulerToQuaternion(const Vector3& InEuler)
 	{
-		// °¢µµ¸¦ ¶óµğ¾ÈÀ¸·Î º¯È¯
+		// ê°ë„ë¥¼ ë¼ë””ì•ˆìœ¼ë¡œ ë³€í™˜
 		XMVECTOR RadianAngles = XMVectorScale(
 			XMLoadFloat3(&InEuler),
 			XM_PI / 180.0f
 		);
 
-		// °¢ Ãàº° È¸Àü¿¡ ´ëÇÑ µ¶¸³Àû °è»ê
+		// ê° ì¶•ë³„ íšŒì „ì— ëŒ€í•œ ë…ë¦½ì  ê³„ì‚°
 		XMVECTOR PitchRotation = RotateAroundAxis(
-			XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f),  // XÃà
-			XMVectorGetX(RadianAngles)            // ÇÇÄ¡ °¢µµ
+			XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f),  // Xì¶•
+			XMVectorGetX(RadianAngles)            // í”¼ì¹˜ ê°ë„
 		);
 
 		XMVECTOR YawRotation = RotateAroundAxis(
-			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),  // YÃà
-			XMVectorGetY(RadianAngles)            // ¿ä °¢µµ
+			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f),  // Yì¶•
+			XMVectorGetY(RadianAngles)            // ìš” ê°ë„
 		);
 
 		XMVECTOR RollRotation = RotateAroundAxis(
-			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),  // ZÃà
-			XMVectorGetZ(RadianAngles)            // ·Ñ °¢µµ
+			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),  // Zì¶•
+			XMVectorGetZ(RadianAngles)            // ë¡¤ ê°ë„
 		);
 		
 		XMVECTOR RotationVec = XMQuaternionMultiply(
@@ -768,8 +767,8 @@ namespace Math
 	static Vector3 QuaternionToEuler(const Quaternion& q)
 	{
 		Vector3 EulerAngles;
-		// ÄõÅÍ´Ï¿ÂÀ» ¿ÀÀÏ·¯ °¢À¸·Î º¯È¯
-			// atan2¸¦ »ç¿ëÇÏ¿© -180µµ¿¡¼­ 180µµ »çÀÌÀÇ °¢µµ¸¦ ¾òÀ½
+		// ì¿¼í„°ë‹ˆì˜¨ì„ ì˜¤ì¼ëŸ¬ ê°ìœ¼ë¡œ ë³€í™˜
+			// atan2ë¥¼ ì‚¬ìš©í•˜ì—¬ -180ë„ì—ì„œ 180ë„ ì‚¬ì´ì˜ ê°ë„ë¥¼ ì–»ìŒ
 
 		// Pitch (x-axis rotation)
 		float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
@@ -780,7 +779,7 @@ namespace Math
 		float sinp = 2.0f * (q.w * q.y - q.z * q.x);
 		if (std::abs(sinp) >= 1.0f)
 		{
-			// 90µµ¿¡¼­ÀÇ Æ¯ÀÌÁ¡ Ã³¸®
+			// 90ë„ì—ì„œì˜ íŠ¹ì´ì  ì²˜ë¦¬
 			EulerAngles.y = std::copysign(PI / 2.0f, sinp);
 		}
 		else
@@ -793,7 +792,7 @@ namespace Math
 		float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
 		EulerAngles.z = std::atan2(siny_cosp, cosy_cosp);
 
-		// ¶óµğ¾ÈÀ» µµ·Î º¯È¯
+		// ë¼ë””ì•ˆì„ ë„ë¡œ ë³€í™˜
 		return EulerAngles * (180.0f / PI);
 	}
 
@@ -826,14 +825,14 @@ namespace Math
 
 	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
 	{
-		// SIMD ¿¬»êÀ» À§ÇØ XMVECTOR º¯È¯
+		// SIMD ì—°ì‚°ì„ ìœ„í•´ XMVECTOR ë³€í™˜
 		XMVECTOR Q0 = XMLoadFloat4(&Start);
 		XMVECTOR Q1 = XMLoadFloat4(&End);
 
-		// SIMD¸¦ È°¿ëÇÑ º¸°£ °è»ê
+		// SIMDë¥¼ í™œìš©í•œ ë³´ê°„ ê³„ì‚°
 		XMVECTOR Result = Slerp(Q0, Q1, Factor);
 
-		// °á°ú º¯È¯ ¹× ¹İÈ¯
+		// ê²°ê³¼ ë³€í™˜ ë° ë°˜í™˜
 		Quaternion ResultFloat4;
 		XMStoreFloat4(&ResultFloat4, Result);
 		return ResultFloat4;
@@ -841,33 +840,33 @@ namespace Math
 
 	static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
 	{
-		// »ó¼ö Á¤ÀÇ
+		// ìƒìˆ˜ ì •ì˜
 		static constexpr float kParallelThreshold = 1.0f - KINDA_SMALL;
 
-		// º¤ÅÍ Á¤±ÔÈ­
+		// ë²¡í„° ì •ê·œí™”
 		XMVECTOR v1 = XMVector3Normalize(target);
 		XMVECTOR v2 = XMVector3Normalize(dest);
 
-		// ÄÚ»çÀÎ °¢µµ °è»ê
+		// ì½”ì‚¬ì¸ ê°ë„ ê³„ì‚°
 		XMVECTOR cosAngle = XMVector3Dot(v1, v2);
 		cosAngle = XMVectorMin(
 			XMVectorMax(cosAngle, XMVectorReplicate(-1.0f)),
 			XMVectorReplicate(1.0f)
 		);
 
-		// ÆòÇàÇÑ °æ¿ì Ã³¸®
+		// í‰í–‰í•œ ê²½ìš° ì²˜ë¦¬
 		if (XMVectorGetX(cosAngle) > kParallelThreshold)
 		{
 			return XMQuaternionIdentity();
 		}
 
-		// ¹İ´ë ¹æÇâÀÎ °æ¿ì Ã³¸®
+		// ë°˜ëŒ€ ë°©í–¥ì¸ ê²½ìš° ì²˜ë¦¬
 		if (XMVectorGetX(cosAngle) < -kParallelThreshold)
 		{
-			// XMVector ³×ÀÓ½ºÆäÀÌ½ºÀÇ »ó¼ö È°¿ë
+			// XMVector ë„¤ì„ìŠ¤í˜ì´ìŠ¤ì˜ ìƒìˆ˜ í™œìš©
 			XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMUp()));
 
-			// È¸ÀüÃàÀÌ 0ÀÎ °æ¿ì, Right º¤ÅÍ »ç¿ë
+			// íšŒì „ì¶•ì´ 0ì¸ ê²½ìš°, Right ë²¡í„° ì‚¬ìš©
 			if (XMVector3Equal(rotAxis, XMVector::XMZero()))
 			{
 				rotAxis = XMVector3Normalize(XMVector3Cross(v1, XMVector::XMRight()));
@@ -876,7 +875,7 @@ namespace Math
 			return XMQuaternionRotationAxis(rotAxis, XM_PI);
 		}
 
-		// ÀÏ¹İÀûÀÎ °æ¿ìÀÇ È¸Àü °è»ê
+		// ì¼ë°˜ì ì¸ ê²½ìš°ì˜ íšŒì „ ê³„ì‚°
 		XMVECTOR rotAxis = XMVector3Normalize(XMVector3Cross(v1, v2));
 		float angle = XMVectorGetX(XMVectorACos(cosAngle));
 

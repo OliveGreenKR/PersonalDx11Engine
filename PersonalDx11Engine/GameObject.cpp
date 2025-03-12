@@ -140,8 +140,6 @@ void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)
 {
 	if (InCollision.CollisionDetectResult.bCollided)
 		return;
-
-	DebugColor = Color::White();
 }
 //좌표기반 움직임만
 void UGameObject::StartMove(const Vector3& InDirection)
