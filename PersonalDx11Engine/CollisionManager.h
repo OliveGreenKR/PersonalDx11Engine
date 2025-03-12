@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include <memory>
 #include <vector>
@@ -26,7 +26,7 @@ struct FCollisionPair
     size_t IndexB;
    
     mutable FAccumulatedConstraint PrevConstraints;
-    mutable bool bPrevCollided : 1;                     //ÀÌÀü Ãæµ¹ ¿©ºÎ
+    mutable bool bPrevCollided : 1;                     //ì´ì „ ì¶©ëŒ ì—¬ë¶€
 
 
     bool operator==(const FCollisionPair& Other) const
@@ -35,6 +35,7 @@ struct FCollisionPair
     }
 };
 
+//collision pair hash
 namespace std
 {
     template<>
@@ -50,44 +51,44 @@ namespace std
 struct FCollisionSystemConfig
 {
     bool bPhysicsSimulated = true;
-    float MinimumTimeStep = 0.0016f;     // ÃÖ¼Ò ½Ã°£ °£°İ (¾à 600fps)
-    float MaximumTimeStep = 0.0166f;     // ÃÖ´ë ½Ã°£ °£°İ (¾à 60fps)
-    float CCDVelocityThreshold = 3.0f;     // CCD È°¼ºÈ­ ¼Óµµ ÀÓ°è°ª
+    float MinimumTimeStep = 0.0016f;     // ìµœì†Œ ì‹œê°„ ê°„ê²© (ì•½ 600fps)
+    float MaximumTimeStep = 0.0166f;     // ìµœëŒ€ ì‹œê°„ ê°„ê²© (ì•½ 60fps)
+    float CCDVelocityThreshold = 3.0f;     // CCD í™œì„±í™” ì†ë„ ì„ê³„ê°’
     int ConstraintInterations = 5;
-    // AABB Tree °ü·Ã ¼³Á¤
-    size_t InitialCapacity = 1024;       // ÃÊ±â ÄÄÆ÷³ÍÆ® ¹× Æ®¸® ¿ë·®
-    float AABBMargin = 0.1f;             // AABB ¿©À¯ °ø°£
+    // AABB Tree ê´€ë ¨ ì„¤ì •
+    size_t InitialCapacity = 1024;       // ì´ˆê¸° ì»´í¬ë„ŒíŠ¸ ë° íŠ¸ë¦¬ ìš©ëŸ‰
+    float AABBMargin = 0.1f;             // AABB ì—¬ìœ  ê³µê°„
 };
 
 struct FContactPoint
 {
-    Vector3 Position;        // Á¢ÃËÁ¡ À§Ä¡
-    Vector3 Normal;         // Á¢ÃË¸é ³ë¸»
-    float Penetration;      // Ä§Åõ ±íÀÌ
-    float AccumulatedNormalImpulse;   // ´©ÀûµÈ ¼öÁ÷ Ãæ°İ·®
-    float AccumulatedTangentImpulse;  // ´©ÀûµÈ Á¢¼± Ãæ°İ·®
+    Vector3 Position;        // ì ‘ì´‰ì  ìœ„ì¹˜
+    Vector3 Normal;         // ì ‘ì´‰ë©´ ë…¸ë§
+    float Penetration;      // ì¹¨íˆ¬ ê¹Šì´
+    float AccumulatedNormalImpulse;   // ëˆ„ì ëœ ìˆ˜ì§ ì¶©ê²©ëŸ‰
+    float AccumulatedTangentImpulse;  // ëˆ„ì ëœ ì ‘ì„  ì¶©ê²©ëŸ‰
 };
 
 /// <summary>
-/// µî·ÏµÈ ÄÄÆ÷³ÍµéÀÇ Ãæµ¹ Çö»óÀ» °ü¸®
-/// DynamicAABBTree¸¦ ÀÌ¿ëÇØ °´Ã¼ÀÇ Ãæµ¹½ÖÀ» °ü¸®ÇÏ°í
-/// Ãæµ¹ Å×½ºÆ® ¹× Ãæµ¹ ¹İÀÀµîÀ» ¼öÇàÇÔ
+/// ë“±ë¡ëœ ì»´í¬ë„Œë“¤ì˜ ì¶©ëŒ í˜„ìƒì„ ê´€ë¦¬
+/// DynamicAABBTreeë¥¼ ì´ìš©í•´ ê°ì²´ì˜ ì¶©ëŒìŒì„ ê´€ë¦¬í•˜ê³ 
+/// ì¶©ëŒ í…ŒìŠ¤íŠ¸ ë° ì¶©ëŒ ë°˜ì‘ë“±ì„ ìˆ˜í–‰í•¨
 /// </summary>
 class UCollisionManager
 {
 private:
-    // º¹»ç ¹× ÀÌµ¿ ¹æÁö
+    // ë³µì‚¬ ë° ì´ë™ ë°©ì§€
     UCollisionManager(const UCollisionManager&) = delete;
     UCollisionManager& operator=(const UCollisionManager&) = delete;
     UCollisionManager(UCollisionManager&&) = delete;
     UCollisionManager& operator=(UCollisionManager&&) = delete;
 
-    // »ı¼ºÀÚ/¼Ò¸êÀÚ
+    // ìƒì„±ì/ì†Œë©¸ì
     UCollisionManager() = default;
     ~UCollisionManager();
 
 private:
-    //ÄÄÆ÷³ÍÆ® °ü¸® ±¸Á¶Ã¼
+    //ì»´í¬ë„ŒíŠ¸ ê´€ë¦¬ êµ¬ì¡°ì²´
     struct FComponentData
     {
         std::shared_ptr<UCollisionComponent> Component;
@@ -97,7 +98,7 @@ private:
 public:
     static UCollisionManager* Get()
     {
-        // Æ÷ÀÎÅÍ¸¦ staticÀ¸·Î ¼±¾ğ
+        // í¬ì¸í„°ë¥¼ staticìœ¼ë¡œ ì„ ì–¸
         static UCollisionManager* instance = []() {
             UCollisionManager* manager = new UCollisionManager();
             manager->Initialize();
@@ -129,33 +130,33 @@ private:
     inline bool IsDestroyedComponent(size_t Idx) const {
         return RegisteredComponents[Idx].Component->bDestroyed;
     }
-    //Ãæµ¹ ½ÖÀÇ ÀÎµ¦½º »õ·Î ¾÷µ¥ÀÌÆ® -for deletion
+    //ì¶©ëŒ ìŒì˜ ì¸ë±ìŠ¤ ìƒˆë¡œ ì—…ë°ì´íŠ¸ -for deletion
     void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
 
-    //°Ë»ö ÇïÆÛ
+    //ê²€ìƒ‰ í—¬í¼
     size_t FindComponentIndex(size_t TreeNodeId) const;
 
-    // Ãæµ¹ Ã³¸® °ü·Ã ÇÔ¼öµé
+    // ì¶©ëŒ ì²˜ë¦¬ ê´€ë ¨ í•¨ìˆ˜ë“¤
     void ProcessCollisions(const float DeltaTime);
 
-    //CCD ÀÓ°è¼Óµµ ºñ±³
+    //CCD ì„ê³„ì†ë„ ë¹„êµ
     bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
 
-    //»õ·Î¿î Ãæµ¹½Ö ¾÷µ¥ÀÌÆ®
+    //ìƒˆë¡œìš´ ì¶©ëŒìŒ ì—…ë°ì´íŠ¸
     void UpdateCollisionPairs();
 
-    //ÄÄÆ÷³ÍÆ® Æ®·£½ºÆû ¾÷µ¥ÀÌÆ®
+    //ì»´í¬ë„ŒíŠ¸ íŠ¸ëœìŠ¤í¼ ì—…ë°ì´íŠ¸
     void UpdateCollisionTransform();
 
     void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
 
-    //ÀÏ¹İÀûÀÎ Ãæµ¹¹İÀÀ (Ãæ°İ·®±â¹İ ¼Óµµ º¯È­)
+    //ì¼ë°˜ì ì¸ ì¶©ëŒë°˜ì‘ (ì¶©ê²©ëŸ‰ê¸°ë°˜ ì†ë„ ë³€í™”)
     void ApplyCollisionResponseByImpulse(
         const std::shared_ptr<UCollisionComponent>& ComponentA,
         const std::shared_ptr<UCollisionComponent>& ComponentB,
         const FCollisionDetectionResult& DetectResult);
 
-    //¿¬¼ÓÀûÀÎ Ãæµ¹ ¹İÀÀ (¼Óµµ ±â¹İ)
+    //ì—°ì†ì ì¸ ì¶©ëŒ ë°˜ì‘ (ì†ë„ ê¸°ë°˜)
     void HandlePersistentCollision(
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult,
@@ -167,7 +168,7 @@ private:
         const FCollisionDetectionResult& DetectResult,
         const float DeltaTime);
 
-    //Á¦¾àÁ¶°Ç ±â¹İ ¹İº¹Àû ÇØ°á
+    //ì œì•½ì¡°ê±´ ê¸°ë°˜ ë°˜ë³µì  í•´ê²°
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
                                             const FCollisionDetectionResult& DetectResult);
 
@@ -178,12 +179,12 @@ public:
     void PrintTreeStructure();
 
 private:
-    // ÇÏºÎ ½Ã½ºÅÛ Å¬·¡½ºµé
+    // í•˜ë¶€ ì‹œìŠ¤í…œ í´ë˜ìŠ¤ë“¤
     class FCollisionDetector* Detector = nullptr;
     class FCollisionResponseCalculator* ResponseCalculator = nullptr;
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
 
-    // ÄÄÆ÷³ÍÆ® °ü¸®
+    // ì»´í¬ë„ŒíŠ¸ ê´€ë¦¬
     std::vector<FComponentData> RegisteredComponents; 
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;

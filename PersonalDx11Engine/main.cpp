@@ -35,7 +35,7 @@
 #include "ElasticBody.h"
 
 //test
-#include "testDynamicAABBTree.h"
+//#include "testDynamicAABBTree.h"
 
 #define KEY_UP 'W'
 #define KEY_DOWN 'S'
@@ -145,19 +145,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
-
-	//test dynamic tree
-	{
-		std::ofstream outFile("test\\test_all_result.txt");
-		if (!outFile.is_open()) 
-		{
-			throw std::runtime_error("Failed to open file for writing");
-		}
-
-		TestDynamicAABBTree::RunAllTests(outFile, 500, 455, 100);
-		CoUninitialize();
-		return 0;
-	}
 
 	//Renderer
 	auto Renderer = make_unique<URenderer>();

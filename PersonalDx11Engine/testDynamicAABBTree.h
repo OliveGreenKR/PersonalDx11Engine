@@ -491,3 +491,19 @@ namespace TestDynamicAABBTree
         return (test1 && test2 && test3) ? 0 : 1;
     }
 }
+
+
+
+//how to use in main
+////test dynamic tree
+//{
+//    std::ofstream outFile("test\\test_all_result.txt");
+//    if (!outFile.is_open())
+//    {
+//        throw std::runtime_error("Failed to open file for writing");
+//    }
+
+//    TestDynamicAABBTree::RunAllTests(outFile, 500, 455, 100);
+//    CoUninitialize();
+//    return 0;
+//}
