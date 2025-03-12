@@ -189,23 +189,14 @@ namespace TestDynamicAABBTree
     }
 #pragma endregion
 
-
-
-//노드 삽임 및 트리 균형 테스트
-    bool TestInsertionAndBalance(const std::string TARGETPATH = "test\\", std::ostream& os = std::cout) {
-        const std::string INPUT_FILE = TARGETPATH + "insert_test_input.txt";
-        const std::string ACTUAL_OUTPUT_FILE = TARGETPATH + "insert_test_actual.txt";
-        const int NODE_COUNT = 500;
-
-
-
+    bool TestInsertionAndBalance(int nodeCount, const std::string& inputFile, const std::string& outputFile, std::ostream& os = std::cout) {
         // 테스트 데이터 생성 (이미 존재하지 않는 경우)
-        if (!std::filesystem::exists(INPUT_FILE)) {
-            GenerateTestData(INPUT_FILE, NODE_COUNT);
+        if (!std::filesystem::exists(inputFile)) {
+            GenerateTestData(inputFile, nodeCount);
         }
 
         // 테스트 데이터 로드
-        auto boundables = LoadTestData(INPUT_FILE);
+        auto boundables = LoadTestData(inputFile);
 
         // 트리 생성 및 노드 삽입
         FDynamicAABBTree tree;
@@ -225,51 +216,38 @@ namespace TestDynamicAABBTree
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
         // 트리 상태 저장
-        SaveTreeState(tree, ACTUAL_OUTPUT_FILE);
+        SaveTreeState(tree, outputFile);
 
         // 트리 검증
         bool isTreeValid = true;
 
-        // 1. 트리 내 노드 수 확인
-        isTreeValid = (tree.GetNodeCount() == NODE_COUNT) && isTreeValid;
+        // 1. 트리 내 리프 노드 수 확인
+        isTreeValid = (tree.GetNodeCount() == nodeCount);
 
-        // 2. 모든 노드 ID가 유효한지 확인
+        // 2. 모든 노드 ID가 리프노드인지 확인
         for (size_t nodeId : nodeIds) {
             isTreeValid = (nodeId != FDynamicAABBTree::NULL_NODE) && isTreeValid;
         }
-
-        // 3. 트리 균형 검증
-        // 여기서는 트리의 높이가 log(n)에 가까운지 확인
-        // 실제 구현에서는 높이를 가져오는 함수가 필요할 수 있습니다.
-        // int treeHeight = tree.GetTreeHeight();
-        // int expectedMaxHeight = static_cast<int>(log2(NODE_COUNT) * 2);  // 균형 트리의 경우 log2(n)이지만, 여유를 두고 2배까지 허용
-        // isTreeValid = (treeHeight <= expectedMaxHeight) && isTreeValid;
-
 
         os << "Insertion Test Results:" << std::endl;
         os << "  Nodes inserted: " << nodeIds.size() << std::endl;
         os << "  Tree node count: " << tree.GetNodeCount() << std::endl;
         os << "  Execution time: " << duration << " ms" << std::endl;
-        // os << "  Tree height: " << treeHeight << " (max expected: " << expectedMaxHeight << ")" << std::endl;
         os << "  Tree is valid: " << (isTreeValid ? "YES" : "NO") << std::endl;
 
         return isTreeValid;
     }
-    //노드 삭베 및 트리 무결성 테스트
-    bool TestDeletionAndIntegrity(const std::string TARGETPATH = "test\\", std::ostream& os = std::cout) {
-        const std::string INPUT_FILE = TARGETPATH+ "delete_test_input.txt";
-        const std::string ACTUAL_OUTPUT_FILE = TARGETPATH+ "delete_test_actual.txt";
-        const std::string BEFORE_OUTPUT_FILE = TARGETPATH+ "before_deletion.txt";
-        const int NODE_COUNT = 500;
-        const int DELETE_COUNT = 100;
 
+    bool TestDeletionAndIntegrity(int nodeCount, int deleteCount, const std::string& inputFile,
+                                  const std::string& beforeOutputFile, const std::string& afterOutputFile,
+                                  std::ostream& os = std::cout) {
         // 테스트 데이터 생성 (이미 존재하지 않는 경우)
-        if (!std::filesystem::exists(INPUT_FILE)) {
-            GenerateTestData(INPUT_FILE, NODE_COUNT);
+        if (!std::filesystem::exists(inputFile)) {
+            GenerateTestData(inputFile, nodeCount);
         }
 
         // 테스트 데이터 로드
-        auto boundables = LoadTestData(INPUT_FILE);
+        auto boundables = LoadTestData(inputFile);
 
         // 트리 생성 및 노드 삽입
         FDynamicAABBTree tree;
@@ -285,10 +263,10 @@ namespace TestDynamicAABBTree
         std::random_device rd;
         std::mt19937 gen(rd());
         std::shuffle(nodeIds.begin(), nodeIds.end(), gen);
-        std::vector<size_t> nodesToDelete(nodeIds.begin(), nodeIds.begin() + DELETE_COUNT);
+        std::vector<size_t> nodesToDelete(nodeIds.begin(), nodeIds.begin() + deleteCount);
 
         // 트리 상태 저장 (삭제 전)
-        SaveTreeState(tree, BEFORE_OUTPUT_FILE);
+        SaveTreeState(tree, beforeOutputFile);
 
         // 시간 측정 시작
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -303,49 +281,33 @@ namespace TestDynamicAABBTree
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
         // 트리 상태 저장 (삭제 후)
-        SaveTreeState(tree, ACTUAL_OUTPUT_FILE);
+        SaveTreeState(tree, afterOutputFile);
 
         // 트리 검증
         bool isTreeValid = true;
 
         // 1. 트리 내 노드 수 확인
-        isTreeValid = (tree.GetNodeCount() == NODE_COUNT - DELETE_COUNT) && isTreeValid;
-
-        // 2. 삭제된 노드가 실제로 트리에서 제거되었는지 확인
-        // 이 부분은 FDynamicAABBTree에 IsNodeValid 같은 함수가 필요합니다
-        // for (size_t nodeId : nodesToDelete) {
-        //    isTreeValid = !tree.IsNodeValid(nodeId) && isTreeValid;
-        // }
-
-        // 3. 트리 균형 검증
-        // int treeHeight = tree.GetTreeHeight();
-        // int expectedMaxHeight = static_cast<int>(log2(NODE_COUNT - DELETE_COUNT) * 2);
-        // isTreeValid = (treeHeight <= expectedMaxHeight) && isTreeValid;
+        isTreeValid = (tree.GetNodeCount() == nodeCount - deleteCount) && isTreeValid;
 
         os << "Deletion Test Results:" << std::endl;
-        os << "  Nodes deleted: " << DELETE_COUNT << std::endl;
-        os << "  Tree node count: " << tree.GetNodeCount() << " (expected: " << (NODE_COUNT - DELETE_COUNT) << ")" << std::endl;
+        os << "  Nodes deleted: " << deleteCount << std::endl;
+        os << "  Tree node count: " << tree.GetNodeCount() << " (expected: " << (nodeCount - deleteCount) << ")" << std::endl;
         os << "  Execution time: " << duration << " ms" << std::endl;
-        // os << "  Tree height: " << treeHeight << " (max expected: " << expectedMaxHeight << ")" << std::endl;
         os << "  Tree is valid: " << (isTreeValid ? "YES" : "NO") << std::endl;
 
         return isTreeValid;
     }
-    //QueryOverlap 기능 및 성능 테스트
-    bool TestQueryOverlap(const std::string TARGETPATH = "test\\", std::ostream& os = std::cout) {
-        const std::string INPUT_FILE = TARGETPATH + "query_test_input.txt";
-        const std::string ACTUAL_OUTPUT_FILE = TARGETPATH + "query_test_actual.txt";
-        const int NODE_COUNT = 500;
-        const int QUERY_COUNT = 100;
-        const float ACCEPTABLE_QUERY_TIME_MS = 5.0f;  // 쿼리당 허용 가능한 최대 시간 (밀리초)
 
+    bool TestQueryOverlap(int nodeCount, int queryCount, float acceptableQueryTimeMs,
+                          const std::string& inputFile, const std::string& outputFile,
+                          std::ostream& os = std::cout) {
         // 테스트 데이터 생성 (이미 존재하지 않는 경우)
-        if (!std::filesystem::exists(INPUT_FILE)) {
-            GenerateTestData(INPUT_FILE, NODE_COUNT);
+        if (!std::filesystem::exists(inputFile)) {
+            GenerateTestData(inputFile, nodeCount);
         }
 
         // 테스트 데이터 로드
-        auto boundables = LoadTestData(INPUT_FILE);
+        auto boundables = LoadTestData(inputFile);
 
         // 트리 생성 및 노드 삽입
         FDynamicAABBTree tree;
@@ -362,7 +324,7 @@ namespace TestDynamicAABBTree
         std::uniform_real_distribution<float> sizeDistrib(5.0f, 30.0f);
 
         std::vector<FDynamicAABBTree::AABB> queryRegions;
-        for (int i = 0; i < QUERY_COUNT; ++i) {
+        for (int i = 0; i < queryCount; ++i) {
             FDynamicAABBTree::AABB queryBox;
             Vector3 center(posDistrib(gen), posDistrib(gen), posDistrib(gen));
             Vector3 halfExtent(sizeDistrib(gen), sizeDistrib(gen), sizeDistrib(gen));
@@ -395,7 +357,7 @@ namespace TestDynamicAABBTree
         }
 
         // 결과 저장
-        std::ofstream outFile(ACTUAL_OUTPUT_FILE);
+        std::ofstream outFile(outputFile);
         if (outFile.is_open()) {
             for (size_t i = 0; i < queryResults.size(); ++i) {
                 outFile << "Query " << i << " (" << queryTimes[i] << " ms): ";
@@ -414,9 +376,10 @@ namespace TestDynamicAABBTree
         float totalQueryTime = 0.0f;
         for (float time : queryTimes) {
             totalQueryTime += time;
-            if (time > ACCEPTABLE_QUERY_TIME_MS) {
-                std::cout << "  Warning: Query time " << time << " ms exceeds acceptable limit of "
-                    << ACCEPTABLE_QUERY_TIME_MS << " ms" << std::endl;
+            if (time > acceptableQueryTimeMs) {
+                os << "  Warning: Query time " << time << " ms exceeds acceptable limit of "
+                    << acceptableQueryTimeMs << " ms" << std::endl;
+                isValid = false;
             }
         }
         float avgQueryTime = totalQueryTime / queryTimes.size();
@@ -430,7 +393,7 @@ namespace TestDynamicAABBTree
             // 모든 바운더블과 직접 AABB 교차 테스트
             for (size_t j = 0; j < boundables.size(); ++j) {
                 const auto& boundable = boundables[j];
-                Vector3 pos = boundable->GetPosition();
+                Vector3 pos = boundable->GetTransform()->GetPosition();
                 Vector3 ext = boundable->GetHalfExtent();
 
                 FDynamicAABBTree::AABB objectBox;
@@ -449,12 +412,12 @@ namespace TestDynamicAABBTree
         }
 
         if (incorrectQueries > 0) {
-            std::cout << "  Warning: " << incorrectQueries << " queries have potentially incorrect results" << std::endl;
+            os << "  Warning: " << incorrectQueries << " queries have potentially incorrect results" << std::endl;
             isValid = false;
         }
 
         os << "Query Overlap Test Results:" << std::endl;
-        os << "  Queries executed: " << QUERY_COUNT << std::endl;
+        os << "  Queries executed: " << queryCount << std::endl;
         os << "  Average query time: " << avgQueryTime << " ms" << std::endl;
         os << "  Max query time: " << *std::max_element(queryTimes.begin(), queryTimes.end()) << " ms" << std::endl;
         os << "  Tests passed: " << (isValid ? "YES" : "NO") << std::endl;
@@ -462,23 +425,31 @@ namespace TestDynamicAABBTree
         return isValid;
     }
 
-    int RunAllTests(const std::string TARGETPATH = "test\\", std::ostream& os = std::cout) {
+    int RunAllTests(std::ostream& os = std::cout, int nodeCount = 500,int deleteCount = 500, int queryCount = 100) {
+        const std::string targetPath = "test\\";
+        const std::string insertInputFile = targetPath + "insert_test_input.txt";
+        const std::string insertOutputFile = targetPath + "insert_test_actual.txt";
+        const std::string deleteInputFile = targetPath + "delete_test_input.txt";
+        const std::string deleteBeforeFile = targetPath + "before_deletion.txt";
+        const std::string deleteAfterFile = targetPath + "delete_test_actual.txt";
+        const std::string queryInputFile = targetPath + "query_test_input.txt";
+        const std::string queryOutputFile = targetPath + "query_test_actual.txt";
+        
+        float acceptableQueryTimeMs = 5.0f;
 
-        GenerateTestData("test\\insert_test_input.txt", 500);
-        // 테스트 2: 노드 삭제 테스트 데이터 (500개)
-        GenerateTestData("test\\delete_test_input.txt", 500);
-        // 테스트 3: 쿼리 오버랩 테스트 데이터 (500개 노드 + 100개 쿼리)
-        GenerateTestData("test\\query_test_input.txt", 500);
-        GenerateQueryTestData("test\\query_test_queries.txt", 100);
+        // 테스트 데이터 생성
+        GenerateTestData(insertInputFile, nodeCount);
+        GenerateTestData(deleteInputFile, nodeCount);
+        GenerateTestData(queryInputFile, nodeCount);
+        GenerateQueryTestData(targetPath + "query_test_queries.txt", queryCount);
 
-
-        bool test1 = TestInsertionAndBalance();
+        bool test1 = TestInsertionAndBalance(nodeCount, insertInputFile, insertOutputFile, os);
         os << "\n-----------------------------------------\n" << std::endl;
 
-        bool test2 = TestDeletionAndIntegrity();
+        bool test2 = TestDeletionAndIntegrity(nodeCount, deleteCount, deleteInputFile, deleteBeforeFile, deleteAfterFile, os);
         os << "\n-----------------------------------------\n" << std::endl;
 
-        bool test3 = TestQueryOverlap();
+        bool test3 = TestQueryOverlap(nodeCount, queryCount, acceptableQueryTimeMs, queryInputFile, queryOutputFile, os);
         os << "\n-----------------------------------------\n" << std::endl;
 
         os << "Overall Test Results:" << std::endl;

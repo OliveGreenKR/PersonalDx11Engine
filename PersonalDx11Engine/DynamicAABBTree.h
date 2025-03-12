@@ -118,6 +118,12 @@ public:
     }
     //사용중인 노드 수 반환
     const size_t GetNodeCount() { return NodeCount; }
+
+    // 리프 노드 관련 디버깅 유틸리티 함수들
+    size_t GetLeafNodeCount() const;
+    bool IsLeafNode(size_t NodeId) const;
+    std::vector<size_t> GetAllLeafNodeIds() const;
+
 private:
     // 노드 풀 관리
     size_t AllocateNode();

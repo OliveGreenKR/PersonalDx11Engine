@@ -613,6 +613,44 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
     }
 }
 
+
+size_t FDynamicAABBTree::GetLeafNodeCount() const
+{
+    size_t leafCount = 0;
+
+    // 유효한 모든 노드를 순회하며 리프 노드 개수 계산
+    for (size_t i = 0; i < NodePool.size(); ++i)
+    {
+        if (IsValidId(i) && NodePool[i].IsLeaf())
+        {
+            leafCount++;
+        }
+    }
+
+    return leafCount;
+}
+
+bool FDynamicAABBTree::IsLeafNode(size_t NodeId) const
+{
+    return IsValidId(NodeId) && NodePool[NodeId].IsLeaf();
+}
+
+std::vector<size_t> FDynamicAABBTree::GetAllLeafNodeIds() const
+{
+    std::vector<size_t> leafNodes;
+    leafNodes.reserve(NodeCount); // 최대 가능한 리프 노드 수로 예약
+
+    for (size_t i = 0; i < NodePool.size(); ++i)
+    {
+        if (IsValidId(i) && NodePool[i].IsLeaf())
+        {
+            leafNodes.push_back(i);
+        }
+    }
+
+    return leafNodes;
+}
+
 void FDynamicAABBTree::PrintBinaryTree(size_t root, std::ostream& os, std::string prefix, bool isLeft ) const
 {
     if (!IsValidId(root))
