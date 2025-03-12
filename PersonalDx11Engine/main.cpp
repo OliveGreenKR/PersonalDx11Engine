@@ -79,7 +79,8 @@ void CreateConsole(int consoleWidth, int consoleHeight, int xPos, int yPos)
 
 	COORD bufferSize;
 	bufferSize.X = static_cast<SHORT>(min(consoleWidth / 8, SHRT_MAX)); // 대략적인 문자 너비로 나눔
-	bufferSize.Y = static_cast<SHORT>(min(consoleHeight / 16, SHRT_MAX)); // 대략적인 문자 높이로 나눔
+	//bufferSize.Y = static_cast<SHORT>(min(consoleHeight / 16, SHRT_MAX)); // 대략적인 문자 높이로 나눔
+	bufferSize.Y = static_cast<SHORT>(min(consoleHeight, SHRT_MAX)); 
 	SetConsoleScreenBufferSize(consoleHandle, bufferSize);
 
 	// 콘솔 창 스타일 설정 (필요시)
@@ -565,6 +566,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	float accumTime = 0.0f;
 	const float SPAWNFREQ = 0.75f;
+	bool bSpawnBody = true;
 	vector<UElasticBody*> tmpVecs;
 
 #pragma region MainLoop
@@ -617,17 +619,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if(accumTime > SPAWNFREQ)
 		{
 			accumTime = 0.0f;
-
-			auto tmpBody = UGameObject::Create<UElasticBody>();
-			tmpBody->SetScale(FRandom::RandF(0.3f,1.0f) * Vector3::One);
-			tmpBody->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
-			tmpBody->SetShapeSphere();
-			tmpBody->bDebug = true;
-			tmpBody->PostInitialized();
-			tmpBody->PostInitializedComponents();
-			tmpBody->SetActive(true);
-			tmpVecs.push_back(tmpBody.get());
-			//UCollisionManager::Get()->PrintTreeStructure();
+			if (bSpawnBody)
+			{
+				auto tmpBody = UGameObject::Create<UElasticBody>();
+				tmpBody->SetScale(FRandom::RandF(0.1f, 0.2f)* Vector3::One);
+				tmpBody->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
+				tmpBody->SetMass(FRandom::RandF(1.0f, 5.0f));
+				tmpBody->SetShapeSphere();
+				tmpBody->bDebug = true;
+				tmpBody->SetDebugColor((Vector4)FRandom::RandVector({ 0,0,0 }, { 1,1,1 }));
+				tmpBody->PostInitialized();
+				tmpBody->PostInitializedComponents();
+				tmpBody->SetActive(true);
+				tmpVecs.push_back(tmpBody.get());
+				//UCollisionManager::Get()->PrintTreeStructure();
+				LOG("ElasticBody Count : %03d", tmpVecs.size());
+			}
 		}
 		
 		for (auto tmp : tmpVecs)
@@ -636,6 +643,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 		//UElasticBodyManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
+	
 
 #pragma endregion 
 		
@@ -694,6 +702,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//	UElasticBodyManager::Get()->SpawnRandomBody();
 		//	UCollisionManager::Get()->PrintTreeStructure();
 		//}
+		ImGui::SameLine();
+		ImGui::Checkbox("bSpawnBody", &bSpawnBody);
 		if (ImGui::Button("Print")) {
 			UCollisionManager::Get()->PrintTreeStructure();
 		}

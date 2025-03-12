@@ -56,9 +56,6 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Engine\Managers</Filter>
     </ClCompile>
-    <ClCompile Include="DynamicAABBTree.cpp">
-      <Filter>Engine\DataStructure</Filter>
-    </ClCompile>
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Components\ActorComponent</Filter>
     </ClCompile>
@@ -82,6 +79,9 @@
     </ClCompile>
     <ClCompile Include="ModelBufferManager.cpp">
       <Filter>Engine\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicAABBTree.cpp">
+      <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +166,12 @@
     <Filter Include="D3D\Shader">
       <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\DataStructure\DynamicAABBTree">
+      <UniqueIdentifier>{77e10acf-6d19-4e96-b63a-2345eb71071b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DataStructure\DynamicAABBTree\test">
+      <UniqueIdentifier>{8be354d4-b7f2-4f6e-8e35-51a3a45c2e43}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -237,9 +243,6 @@
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="DynamicAABBTree.h">
-      <Filter>Engine\DataStructure</Filter>
-    </ClInclude>
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
@@ -293,6 +296,12 @@
     </ClInclude>
     <ClInclude Include="Debug.h">
       <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicAABBTree.h">
+      <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
+    </ClInclude>
+    <ClInclude Include="testDynamicAABBTree.h">
+      <Filter>Engine\DataStructure\DynamicAABBTree\test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

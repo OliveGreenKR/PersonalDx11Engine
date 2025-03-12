@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include "Transform.h"
 #include "DynamicBoundableInterface.h"
@@ -11,9 +11,9 @@
 class FDynamicAABBTree
 {
 public:
-    // 16¹ÙÀÌÆ® Á¤·ÄÀ» À§ÇÑ »ó¼ö
+    // 16ë°”ì´íŠ¸ ì •ë ¬ì„ ìœ„í•œ ìƒìˆ˜
     static constexpr size_t NULL_NODE = static_cast<size_t>(-1);
-    float AABB_Extension = 0.1f;    // AABB È®Àå °è¼ö
+    float AABB_Extension = 0.1f;    // AABB í™•ì¥ ê³„ìˆ˜
     static constexpr float MIN_MARGIN = 0.01f;
 
     struct AABB
@@ -22,13 +22,13 @@ public:
         Vector3 Max;
 
         bool Contains(const AABB& Other) const {
-            // SIMD ÃÖÀûÈ­¸¦ À§ÇØ XMVECTOR »ç¿ë
+            // SIMD ìµœì í™”ë¥¼ ìœ„í•´ XMVECTOR ì‚¬ìš©
             XMVECTOR vMin = XMLoadFloat3(&Min);
             XMVECTOR vMax = XMLoadFloat3(&Max);
             XMVECTOR vOtherMin = XMLoadFloat3(&Other.Min);
             XMVECTOR vOtherMax = XMLoadFloat3(&Other.Max);
 
-            // ¼öÄ¡Àû ¾ÈÁ¤¼ºÀ» À§ÇÑ epsilon »ç¿ë
+            // ìˆ˜ì¹˜ì  ì•ˆì •ì„±ì„ ìœ„í•œ epsilon ì‚¬ìš©
             XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
             return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), vOtherMin)
                 && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), vOtherMax);
@@ -58,35 +58,35 @@ public:
 
     struct alignas(16) Node
     {
-        // 24¹ÙÀÌÆ® Á¤·Ä µ¥ÀÌÅÍ
-        AABB Bounds;                 // ½ÇÁ¦ AABB
-        AABB FatBounds;             // ¿©À¯ ÀÖ´Â AABB (µ¿Àû °»½Å ÃÖÀûÈ­¿ë)
-        // 12 ¹ÙÀÌÆ®
-        Vector3 LastPosition;     // ÀÌÀü ÇÁ·¹ÀÓÀÇ À§Ä¡
-        Vector3 LastHalfExtent;   // ÀÌÀü ÇÁ·¹ÀÓÀÇ HalfExtent
+        // 24ë°”ì´íŠ¸ ì •ë ¬ ë°ì´í„°
+        AABB Bounds;                 // ì‹¤ì œ AABB
+        AABB FatBounds;             // ì—¬ìœ  ìˆëŠ” AABB (ë™ì  ê°±ì‹  ìµœì í™”ìš©)
+        // 12 ë°”ì´íŠ¸
+        Vector3 LastPosition;     // ì´ì „ í”„ë ˆì„ì˜ ìœ„ì¹˜
+        Vector3 LastHalfExtent;   // ì´ì „ í”„ë ˆì„ì˜ HalfExtent
 
-        // 8¹ÙÀÌÆ® µ¥ÀÌÅÍ
+        // 8ë°”ì´íŠ¸ ë°ì´í„°
         size_t Parent = NULL_NODE;
         size_t Left = NULL_NODE;
         size_t Right = NULL_NODE;
         IDynamicBoundable* BoundableObject = nullptr;
 
        
-        // 4¹ÙÀÌÆ® µ¥ÀÌÅÍ
+        // 4ë°”ì´íŠ¸ ë°ì´í„°
         int32_t Height = 0;
 
-        //ÆĞµù
-        int32_t Padding[3];      //ÃÑ 108 + 12 
+        //íŒ¨ë”©
+        int32_t Padding[3];      //ì´ 108 + 12 
 
         bool IsLeaf() const { return Left == NULL_NODE; }
         bool NeedsUpdate(const Vector3& CurrentPosition, const Vector3& CurrentHalfExtent) const
         {
-            // ÇöÀç »óÅÂ·Î AABB »ı¼º
+            // í˜„ì¬ ìƒíƒœë¡œ AABB ìƒì„±
             AABB CurrentBounds;
             CurrentBounds.Min = CurrentPosition - CurrentHalfExtent;
             CurrentBounds.Max = CurrentPosition + CurrentHalfExtent;
 
-            // ÇöÀç »óÅÂÀÇ AABB°¡ FatBounds¸¦ ¹ş¾î³µ´ÂÁö °Ë»ç
+            // í˜„ì¬ ìƒíƒœì˜ AABBê°€ FatBoundsë¥¼ ë²—ì–´ë‚¬ëŠ”ì§€ ê²€ì‚¬
             return !FatBounds.Contains(CurrentBounds);
         }
 
@@ -96,12 +96,12 @@ public:
     FDynamicAABBTree(size_t InitialCapacity = 1024);
     ~FDynamicAABBTree();
 
-    // ÇÙ½É ±â´É
+    // í•µì‹¬ ê¸°ëŠ¥
     size_t Insert(const std::shared_ptr<IDynamicBoundable>& Object);
     void Remove(size_t NodeId);
     void UpdateTree();
 
-    // Äõ¸® ±â´É
+    // ì¿¼ë¦¬ ê¸°ëŠ¥
     void QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func);
 
     const AABB& GetBounds(const size_t NodeId)
@@ -115,26 +115,28 @@ public:
         assert(NodePool[NodeId].BoundableObject);
         return NodePool[NodeId].FatBounds;
     }
+    //ì‚¬ìš©ì¤‘ì¸ ë…¸ë“œ ìˆ˜ ë°˜í™˜
+    const size_t GetNodeCount() { return NodeCount; }
 private:
-    // ³ëµå Ç® °ü¸®
+    // ë…¸ë“œ í’€ ê´€ë¦¬
     size_t AllocateNode();
     void FreeNode(size_t NodeId);
 
-    // Æ®¸® À¯Áöº¸¼ö
+    // íŠ¸ë¦¬ ìœ ì§€ë³´ìˆ˜
     void InsertLeaf(size_t NodeId);
     void RemoveLeaf(size_t NodeId);
     void UpdateNodeBounds(size_t NodeId);
     size_t Rebalance(size_t NodeId);
 
-    // SAH °ü·Ã
+    // SAH ê´€ë ¨
     float ComputeCost(const AABB& Bounds) const;
     float ComputeInheritedCost(size_t NodeId) const;
 
     bool IsValidId(const size_t NodeId) const;
 
-    //Æ®¸® Àç»ı¼º
+    //íŠ¸ë¦¬ ì¬ìƒì„±
     void ReBuildTree();
-    //Æ®¸® ÃÊ±âÈ­
+    //íŠ¸ë¦¬ ì´ˆê¸°í™”
     void ClearTree(const size_t InitialCapacity = 1024);
 
 public:
@@ -143,8 +145,8 @@ private:
     void PrintBinaryTree(size_t root, std::string prefix = "", bool isLeft = false) const;
 
 private:
-    std::vector<Node> NodePool;           // ³ëµå ¸Ş¸ğ¸® Ç® - ¸ğµç ³ëµå¸¦ º¸°ü
-    std::unordered_set<size_t> FreeNodes; // Àç»ç¿ë °¡´ÉÇÑ ³ëµå ÀÎµ¦½º¸¸ º¸°ü
-    size_t RootId = NULL_NODE;            // ·çÆ® ³ëµå ÀÎµ¦½º
-    size_t NodeCount = 0;                 // ÇöÀç »ç¿ë ÁßÀÎ ³ëµå ¼ö
+    std::vector<Node> NodePool;           // ë…¸ë“œ ë©”ëª¨ë¦¬ í’€ - ëª¨ë“  ë…¸ë“œë¥¼ ë³´ê´€
+    std::unordered_set<size_t> FreeNodes; // ì¬ì‚¬ìš© ê°€ëŠ¥í•œ ë…¸ë“œ ì¸ë±ìŠ¤ë§Œ ë³´ê´€
+    size_t RootId = NULL_NODE;            // ë£¨íŠ¸ ë…¸ë“œ ì¸ë±ìŠ¤
+    size_t NodeCount = 0;                 // í˜„ì¬ ì‚¬ìš© ì¤‘ì¸ ë…¸ë“œ ìˆ˜
 };

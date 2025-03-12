@@ -38,7 +38,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
         {
             if (ExistingNode.BoundableObject == Object.get())
             {
-                LOG("%d is already Inserted", i);
+                //LOG("%d is already Inserted", i);
                 return NULL_NODE; //이미 존재하는 객체
             }
         }
