@@ -638,7 +638,6 @@ bool FDynamicAABBTree::IsLeafNode(size_t NodeId) const
 std::vector<size_t> FDynamicAABBTree::GetAllLeafNodeIds() const
 {
     std::vector<size_t> leafNodes;
-    leafNodes.reserve(NodeCount); // 최대 가능한 리프 노드 수로 예약
 
     for (size_t i = 0; i < NodePool.size(); ++i)
     {

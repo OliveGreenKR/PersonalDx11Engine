@@ -79,7 +79,7 @@ public:
         //패딩
         int32_t Padding[3];      //총 108 + 12 
 
-        bool IsLeaf() const { return Left == NULL_NODE; }
+        bool IsLeaf() const { return Left == NULL_NODE && BoundableObject != nullptr; }
         bool NeedsUpdate(const Vector3& CurrentPosition, const Vector3& CurrentHalfExtent) const
         {
             // 현재 상태로 AABB 생성

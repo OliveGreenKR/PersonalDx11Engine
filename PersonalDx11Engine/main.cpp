@@ -154,7 +154,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			throw std::runtime_error("Failed to open file for writing");
 		}
 
-		TestDynamicAABBTree::RunAllTests(outFile ,  50,48,10);
+		TestDynamicAABBTree::RunAllTests(outFile, 500, 455, 100);
 		CoUninitialize();
 		return 0;
 	}

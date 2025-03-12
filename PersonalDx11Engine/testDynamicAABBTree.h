@@ -200,7 +200,7 @@ namespace TestDynamicAABBTree
 
         // 트리 생성 및 노드 삽입
         FDynamicAABBTree tree;
-        std::vector<size_t> nodeIds;
+        std::vector<size_t> insertLeafIds;
 
         // 시간 측정 시작
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -208,7 +208,7 @@ namespace TestDynamicAABBTree
         // 노드 삽입
         for (const auto& boundable : boundables) {
             size_t nodeId = tree.Insert(boundable);
-            nodeIds.push_back(nodeId);
+            insertLeafIds.push_back(nodeId);
         }
 
         // 시간 측정 종료
@@ -221,17 +221,23 @@ namespace TestDynamicAABBTree
         // 트리 검증
         bool isTreeValid = true;
 
+        auto outLeafIds = tree.GetAllLeafNodeIds();
+        std::sort(outLeafIds.begin(), outLeafIds.end());
+        std::sort(insertLeafIds.begin(), insertLeafIds.end());
+
         // 1. 트리 내 리프 노드 수 확인
-        isTreeValid = (tree.GetNodeCount() == nodeCount);
+        isTreeValid = (outLeafIds.size() == nodeCount) 
+            && isTreeValid;
 
         // 2. 모든 노드 ID가 리프노드인지 확인
-        for (size_t nodeId : nodeIds) {
-            isTreeValid = (nodeId != FDynamicAABBTree::NULL_NODE) && isTreeValid;
+        for (int i = 0; i < nodeCount; ++i) {
+            isTreeValid = outLeafIds[i] == insertLeafIds[i] 
+                && isTreeValid;
         }
 
         os << "Insertion Test Results:" << std::endl;
-        os << "  Nodes inserted: " << nodeIds.size() << std::endl;
-        os << "  Tree node count: " << tree.GetNodeCount() << std::endl;
+        os << "  Nodes inserted: " << insertLeafIds.size() << std::endl;
+        os << "  Tree node count: " << outLeafIds.size() << std::endl;
         os << "  Execution time: " << duration << " ms" << std::endl;
         os << "  Tree is valid: " << (isTreeValid ? "YES" : "NO") << std::endl;
 
@@ -251,19 +257,19 @@ namespace TestDynamicAABBTree
 
         // 트리 생성 및 노드 삽입
         FDynamicAABBTree tree;
-        std::vector<size_t> nodeIds;
+        std::vector<size_t> insertLeafIds;
 
         // 모든 노드 삽입
         for (const auto& boundable : boundables) {
             size_t nodeId = tree.Insert(boundable);
-            nodeIds.push_back(nodeId);
+            insertLeafIds.push_back(nodeId);
         }
 
         // 삭제할 노드 선택 (랜덤)
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::shuffle(nodeIds.begin(), nodeIds.end(), gen);
-        std::vector<size_t> nodesToDelete(nodeIds.begin(), nodeIds.begin() + deleteCount);
+        std::shuffle(insertLeafIds.begin(), insertLeafIds.end(), gen);
+        std::vector<size_t> nodesToDelete(insertLeafIds.begin(), insertLeafIds.begin() + deleteCount);
 
         // 트리 상태 저장 (삭제 전)
         SaveTreeState(tree, beforeOutputFile);
@@ -286,8 +292,13 @@ namespace TestDynamicAABBTree
         // 트리 검증
         bool isTreeValid = true;
 
-        // 1. 트리 내 노드 수 확인
-        isTreeValid = (tree.GetNodeCount() == nodeCount - deleteCount) && isTreeValid;
+        auto outLeafIds = tree.GetAllLeafNodeIds();
+        std::sort(outLeafIds.begin(), outLeafIds.end());
+        std::sort(insertLeafIds.begin(), insertLeafIds.end());
+
+        // 1. 트리 내 리프 노드 수 확인
+        isTreeValid = (outLeafIds.size() == (nodeCount - deleteCount))
+            && isTreeValid;
 
         os << "Deletion Test Results:" << std::endl;
         os << "  Nodes deleted: " << deleteCount << std::endl;
@@ -313,8 +324,11 @@ namespace TestDynamicAABBTree
         FDynamicAABBTree tree;
 
         // 모든 노드 삽입
+        vector<size_t> insertedLeafIds;
+        insertedLeafIds.reserve(nodeCount);
         for (const auto& boundable : boundables) {
-            tree.Insert(boundable);
+            size_t nodeId = tree.Insert(boundable);
+            insertedLeafIds.push_back(nodeId);
         }
 
         // 쿼리 영역 생성 (랜덤)
@@ -401,13 +415,27 @@ namespace TestDynamicAABBTree
                 objectBox.Max = pos + ext;
 
                 if (queryBox.Overlaps(objectBox)) {
-                    bruteForceResult.push_back(j);  // 실제로는 노드 ID가 필요하지만, 여기서는 인덱스 사용
+                    size_t nodeId = insertedLeafIds[j];
+                    bruteForceResult.push_back(nodeId); 
                 }
             }
 
-            // 결과 크기 비교 (정확한 ID 비교는 어려울 수 있음)
-            if (bruteForceResult.size() != queryResults[i].size()) {
+            // 결과 비교 
+            std::sort(bruteForceResult.begin(), bruteForceResult.end());
+            std::sort(queryResults[i].begin(), queryResults[i].end());
+            if (bruteForceResult.size() != queryResults[i].size())
+            {
                 incorrectQueries++;
+            }
+            else 
+            {
+                for (int k = 0; k < bruteForceResult.size(); ++k)
+                {
+                    if (bruteForceResult[k] != queryResults[i][k])
+                    {
+                        incorrectQueries++;
+                    }
+                }
             }
         }
 
@@ -419,7 +447,10 @@ namespace TestDynamicAABBTree
         os << "Query Overlap Test Results:" << std::endl;
         os << "  Queries executed: " << queryCount << std::endl;
         os << "  Average query time: " << avgQueryTime << " ms" << std::endl;
-        os << "  Max query time: " << *std::max_element(queryTimes.begin(), queryTimes.end()) << " ms" << std::endl;
+        if (queryCount > 0)
+        {
+            os << "  Max query time: " << *std::max_element(queryTimes.begin(), queryTimes.end()) << " ms" << std::endl;
+        }
         os << "  Tests passed: " << (isValid ? "YES" : "NO") << std::endl;
 
         return isValid;
