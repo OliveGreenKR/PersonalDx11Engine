@@ -30,76 +30,56 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent)
 {
+	if (!NewComponent || NewComponent->bDestroyed)
+		return;
+
 	// AABB 트리에 등록
 	size_t TreeNodeId = CollisionTree->Insert(NewComponent);
 	if (TreeNodeId == FDynamicAABBTree::NULL_NODE)
-	{
 		return;
-	}
-
-	// 컴포넌트 데이터 생성 및 등록
-	FComponentData ComponentData;
-	ComponentData.Component = NewComponent;
-	ComponentData.TreeNodeId = TreeNodeId;
 
 	// 벡터에 추가
-	RegisteredComponents.push_back(std::move(ComponentData));
+	RegisteredComponents[TreeNodeId] = NewComponent; 
 }
 
 void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>& InComponent)
 {
-	if (!InComponent || RegisteredComponents.empty())
-	{
-		LOG("UnRegister for InValid Component");
+	if (!InComponent)
 		return;
-
-	}
 
 	// 관리 중인 컴포넌트인지 확인
 	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
-								 [&InComponent](const FComponentData& CompData)
+								 [&InComponent](const auto& RegisteredPair)
 								 {
-									 return CompData.Component.get() == InComponent.get();
+									 return InComponent.get() == RegisteredPair.second.get();
 								 });
 
 	if (targetIt == RegisteredComponents.end())
 	{
-		LOG("UnRegister for UnMangagedComps");
+		LOG("[WARNING] Try UnRegister to UnRegisutered Collision");
 		return;
 	}
-		
 
-	// 인덱스 및 데이터 저장
-	size_t targetIndex = targetIt - RegisteredComponents.begin();
-	size_t treeNodeId = targetIt->TreeNodeId;
+	// 트리 노드 ID 저장
+	size_t unregistedId = targetIt->first;
 
 	// AABB 트리에서 제거
 	if (CollisionTree)
-		CollisionTree->Remove(treeNodeId);
+		CollisionTree->Remove(unregistedId);
 
-	// 충돌 쌍에서 해당 인덱스 관련 항목 제거
+	// 충돌 쌍에서 해당 컴포넌트 관련 항목 제거
 	auto it = ActiveCollisionPairs.begin();
 	while (it != ActiveCollisionPairs.end())
 	{
 		const FCollisionPair& Pair = *it;
-		if (Pair.IndexA == targetIndex || Pair.IndexB == targetIndex)
+		if (Pair.TreeIdA == unregistedId || Pair.TreeIdB == unregistedId)
 			it = ActiveCollisionPairs.erase(it);
 		else
 			++it;
 	}
 
-	// 컴포넌트 제거
-	if (targetIndex < RegisteredComponents.size() - 1)
-	{
-		// 마지막 요소와 교체 후 제거 (swap-and-pop)
-		std::swap(RegisteredComponents[targetIndex], RegisteredComponents.back());
-
-		// 교체된 컴포넌트의 인덱스 업데이트
-		UpdateCollisionPairIndices(RegisteredComponents.size() - 1, targetIndex);
-	}
-
-	// 마지막 요소 제거
-	RegisteredComponents.pop_back();
+	// RegisteredComponents에서 제거 
+	RegisteredComponents.erase(targetIt);
 }
 
 void UCollisionManager::Tick(const float DeltaTime)
@@ -116,7 +96,7 @@ void UCollisionManager::UnRegisterAll()
 
 	for (const auto& Registered : RegisteredComponents)
 	{
-		CollisionTree->Remove(Registered.TreeNodeId);
+		CollisionTree->Remove(Registered.first);
 	}
 	ActiveCollisionPairs.clear();
 	RegisteredComponents.clear();
@@ -163,105 +143,38 @@ void UCollisionManager::Release()
 void UCollisionManager::CleanupDestroyedComponents()
 {
 	if (RegisteredComponents.empty())
-	{
 		return;
-	}
 
-	// 1. 제거될 컴포넌트의 인덱스들을 수집
-	std::vector<size_t> DestroyedIndices;
-	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	// 제거될 컴포넌트 식별
+	auto it = RegisteredComponents.begin();
+	while (it != RegisteredComponents.end())
 	{
-		if (RegisteredComponents[i].Component->bDestroyed)
+		auto comp = it->second;
+		if (!comp || comp->bDestroyed)
 		{
-			DestroyedIndices.push_back(i);
-		}
-	}
+			// AABB 트리에서 제거
+			if (CollisionTree && CollisionTree->IsValidId(it->first))
+				CollisionTree->Remove(it->first);
 
-	if (DestroyedIndices.empty())
-	{
-		return;
-	}
-
-	// 2. AABB 트리에서 제거
-	for (size_t Index : DestroyedIndices)
-	{
-		size_t TreeNodeId = RegisteredComponents[Index].TreeNodeId;
-		CollisionTree->Remove(TreeNodeId);
-	}
-
-	// 3. 활성 충돌 쌍에서 제거
-	for (auto it = ActiveCollisionPairs.begin(); it != ActiveCollisionPairs.end();)
-	{
-		const FCollisionPair& Pair = *it;
-		// 페어의 둘 중 하나라도 제거될 인덱스에 포함되면 제거
-		if (std::find(DestroyedIndices.begin(), DestroyedIndices.end(), Pair.IndexA) != DestroyedIndices.end() ||
-			std::find(DestroyedIndices.begin(), DestroyedIndices.end(), Pair.IndexB) != DestroyedIndices.end())
-		{
-			it = ActiveCollisionPairs.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
-
-	// 4. RegisteredComponents 벡터에서 제거
-	// 주의: 뒤에서부터 제거하여 인덱스 변화 최소화
-	std::sort(DestroyedIndices.begin(), DestroyedIndices.end(), std::greater<size_t>());
-	for (size_t Index : DestroyedIndices)
-	{
-		if (Index < RegisteredComponents.size())
-		{
-			// 마지막 요소와 교체 후 제거 (swap and pop)
-			if (Index < RegisteredComponents.size() - 1)
+			// 활성 충돌 쌍에서 관련 항목 제거
+			auto pairIt = ActiveCollisionPairs.begin();
+			while (pairIt != ActiveCollisionPairs.end())
 			{
-				std::swap(RegisteredComponents[Index], RegisteredComponents.back());
-
-				// 교체된 컴포넌트의 새 인덱스에 대한 충돌 쌍 업데이트
-				size_t OldIndex = RegisteredComponents.size() - 1;
-				UpdateCollisionPairIndices(OldIndex, Index);
+				const FCollisionPair& Pair = *pairIt;
+				if (RegisteredComponents[Pair.TreeIdA].get() == comp.get() ||
+					RegisteredComponents[Pair.TreeIdA].get() == comp.get())
+					pairIt = ActiveCollisionPairs.erase(pairIt);
+				else
+					++pairIt;
 			}
-			RegisteredComponents.pop_back();
-		}
-	}
-}
 
-void UCollisionManager::UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex)
-{
-	std::vector<FCollisionPair> UpdatedPairs;
-
-	// 이전 인덱스를 사용하는 모든 쌍을 찾아 새 인덱스로 업데이트
-	for (auto it = ActiveCollisionPairs.begin(); it != ActiveCollisionPairs.end();)
-	{
-		FCollisionPair CurrentPair = *it;
-		bool bNeedsUpdate = false;
-
-		if (CurrentPair.IndexA == OldIndex)
-		{
-			CurrentPair.IndexA = NewIndex;
-			bNeedsUpdate = true;
-		}
-		if (CurrentPair.IndexB == OldIndex)
-		{
-			CurrentPair.IndexB = NewIndex;
-			bNeedsUpdate = true;
-		}
-
-		if (bNeedsUpdate)
-		{
-			it = ActiveCollisionPairs.erase(it);
-			UpdatedPairs.push_back(CurrentPair);
+			// RegisteredComponents에서 제거
+			it = RegisteredComponents.erase(it);
 		}
 		else
 		{
 			++it;
 		}
-	}
-
-	// 업데이트된 쌍들을 다시 삽입
-	for (const auto& Pair : UpdatedPairs)
-	{
-		ActiveCollisionPairs.insert(Pair);
 	}
 }
 
@@ -275,101 +188,44 @@ void UCollisionManager::UpdateCollisionPairs()
 
 	// 새로운 충돌 쌍을 저장할 임시 컨테이너
 	std::unordered_set<FCollisionPair> NewCollisionPairs;
-	size_t EstimatedPairs = std::min(ActiveCollisionPairs.size(),
-									 RegisteredComponents.size() * (RegisteredComponents.size() - 1) / 2);
-	NewCollisionPairs.reserve(EstimatedPairs);
 
-	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
+	// 현재 유효한 컴포넌트들만 필터링
+	//for (const auto& compData : RegisteredComponents)
+	//{
+	//	auto& Component = compData.second;
+	//	size_t TreeNodeId = compData.first;
+
+	//	if (Component && !Component->bDestroyed &&
+	//		Component->IsActive() && CollisionTree->IsLeafNode(TreeNodeId))
+	//	{
+	//		FDynamicAABBTree::AABB FatBounds = CollisionTree->GetFatBounds(TreeNodeId);
+	//		CollisionTree->QueryOverlap(FatBounds, [&NewCollisionPairs, &TreeNodeId]
+	//									(const size_t OtherNodeId)
+	//									{
+	//										FCollisionPair tmpPairs(TreeNodeId,OtherNodeId);
+	//										NewCollisionPairs.insert(tmpPairs);
+	//									});
+	//	}
+	//}
+
+	// 가능한 모든 페어 생성 (O(n²) 작업)
+	for (auto it = RegisteredComponents.begin(); it != RegisteredComponents.end() ; ++it)
 	{
-		const auto& ComponentData = RegisteredComponents[i];
-		auto* Component = ComponentData.Component.get();
-
-		// 유효성 검사
-		if (!Component || !Component->IsActive())
+		for (auto jt = it; jt != RegisteredComponents.end(); ++jt)
 		{
-			continue;
-		}
-
-		// 트리 노드 ID 유효성 검사 추가
-		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
-		{
-			continue;
-		}
-
-		//const FDynamicAABBTree::AABB& TargetFatBounds = CollisionTree->GetFatBounds(ComponentData.TreeNodeId);
-
-		//CollisionTree->QueryOverlap(
-		//	TargetFatBounds,
-		//	[this, i, &NewCollisionPairs](size_t OtherNodeId) {
-		//		if (OtherNodeId == FDynamicAABBTree::NULL_NODE || i == OtherNodeId)
-		//		{
-		//			return;
-		//		}
-
-		//		size_t OtherIndex = FindComponentIndex(OtherNodeId);
-		//		if (OtherIndex == SIZE_MAX)
-		//		{
-		//			return;
-		//		}
-
-		//		const auto& OtherComponent = RegisteredComponents[OtherIndex].Component;
-		//		if (!OtherComponent || OtherComponent->bDestroyed ||
-		//			!OtherComponent->GetCollisionEnabled())
-		//		{
-		//			return;
-		//		}
-
-		//		NewCollisionPairs.insert(FCollisionPair(i, OtherIndex));
-		//	});
-
-		for (size_t j = i; j < RegisteredComponents.size(); ++j)
-		{
-			//for test, push all pairs
-			if (i == j)
-				continue;
-
-			const auto& OtherComponentData = RegisteredComponents[j];
-			auto* OtherComponent = OtherComponentData.Component.get();
-
-			// 유효성 검사
-			if (!OtherComponent || !OtherComponent->IsActive())
+			if (it->first != jt->first)
 			{
-				continue;
+				FCollisionPair tmpPairs(it->first, jt->first);
+				NewCollisionPairs.insert(tmpPairs);
 			}
-
-			// 트리 노드 ID 유효성 검사 추가
-			if (OtherComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
-			{
-				continue;
-			}
-			NewCollisionPairs.insert(FCollisionPair(i, j));
 		}
 	}
-	
+
 	ActiveCollisionPairs = std::move(NewCollisionPairs);
 }
 
 void UCollisionManager::UpdateCollisionTransform()
 {
-	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
-	{
-		const auto& ComponentData = RegisteredComponents[i];
-		auto* Component = ComponentData.Component.get();
-
-		// nullptr 체크를 먼저하여 불필요한 멤버 접근 방지
-		if (!Component || Component->bDestroyed || Component->GetRigidBody()->IsStatic())
-		{
-			continue;
-		}
-		if (ComponentData.TreeNodeId == FDynamicAABBTree::NULL_NODE)
-		{
-			continue;
-		}
-
-
-		// 트리 노드 ID 유효성 검사 추가
-	}
-
 	CollisionTree->UpdateTree();
 }
 
@@ -380,27 +236,12 @@ bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
 	return RigidBody->GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
-size_t UCollisionManager::FindComponentIndex(size_t TreeNodeId) const
-{
-	for (size_t i = 0; i < RegisteredComponents.size(); ++i)
-	{
-		if (RegisteredComponents[i].TreeNodeId == TreeNodeId)
-		{
-			return i;
-		}
-	}
-	return SIZE_MAX;
-}
-
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
 	for (auto& ActivePair : ActiveCollisionPairs)
 	{
-		auto& CompAData = RegisteredComponents[ActivePair.IndexA];
-		auto& CompBData = RegisteredComponents[ActivePair.IndexB];
-
-		auto CompA = CompAData.Component;
-		auto CompB = CompBData.Component;
+		auto& CompA = RegisteredComponents[ActivePair.TreeIdA];
+		auto& CompB = RegisteredComponents[ActivePair.TreeIdB];
 
 		const float PersistentThreshold = 0.1f;
 
@@ -478,8 +319,8 @@ void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UC
 
 void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
 {
-	auto CompA = RegisteredComponents[InPair.IndexA].Component;
-	auto CompB = RegisteredComponents[InPair.IndexB].Component;
+	auto CompA = RegisteredComponents[InPair.TreeIdA];
+	auto CompB = RegisteredComponents[InPair.TreeIdB];
 
 	auto RigidA = CompA->GetRigidBody();
 	auto RigidB = CompB->GetRigidBody();
@@ -583,8 +424,8 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
 
-	auto ComponentA = RegisteredComponents[CollisionPair.IndexA].Component;
-	auto ComponentB = RegisteredComponents[CollisionPair.IndexB].Component;
+	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA];
+	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB];
 
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
@@ -621,11 +462,9 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
 {
-	auto CompAData = RegisteredComponents[InPair.IndexA];
-	auto CompBData = RegisteredComponents[InPair.IndexB];
+	auto CompA = RegisteredComponents[InPair.TreeIdA];
+	auto CompB = RegisteredComponents[InPair.TreeIdB];
 
-	auto CompA = CompAData.Component;
-	auto CompB = CompBData.Component;
 	if (!CompA || !CompB)
 		return;
 

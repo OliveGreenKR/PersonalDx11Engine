@@ -324,7 +324,7 @@ namespace TestDynamicAABBTree
         FDynamicAABBTree tree;
 
         // 모든 노드 삽입
-        vector<size_t> insertedLeafIds;
+        std::vector<size_t> insertedLeafIds;
         insertedLeafIds.reserve(nodeCount);
         for (const auto& boundable : boundables) {
             size_t nodeId = tree.Insert(boundable);

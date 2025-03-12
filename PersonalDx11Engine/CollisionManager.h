@@ -15,34 +15,35 @@ struct FTransform;
 #pragma region CollisionPair
 struct FCollisionPair
 {
-    FCollisionPair(size_t InIndexA, size_t InIndexB)
-        : IndexA(InIndexA < InIndexB ? InIndexA : InIndexB)
-        , IndexB(InIndexA < InIndexB ? InIndexB : InIndexA)
+    FCollisionPair(size_t InIdA, size_t InIdB)
+        : TreeIdA(InIdA < InIdB ? InIdA : InIdB)
+        , TreeIdB(InIdA < InIdB ? InIdB : InIdA)
         , bPrevCollided(false)
-    {}
+    {
+    }
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
 
-    size_t IndexA;
-    size_t IndexB;
-   
-    mutable FAccumulatedConstraint PrevConstraints;
-    mutable bool bPrevCollided : 1;                     //이전 충돌 여부
+    size_t TreeIdA;
+    size_t TreeIdB;
 
+    mutable FAccumulatedConstraint PrevConstraints;
+    mutable bool bPrevCollided : 1;
 
     bool operator==(const FCollisionPair& Other) const
     {
-        return IndexA == Other.IndexA && IndexB == Other.IndexB;
+        return TreeIdA == Other.TreeIdA && TreeIdB == Other.TreeIdB;
     }
 };
 
-//collision pair hash
+//Collisoin Pairs Hash
 namespace std
 {
     template<>
     struct hash<FCollisionPair>
     {
         size_t operator()(const FCollisionPair& Pair) const {
-            return ((Pair.IndexA + Pair.IndexB) * (Pair.IndexA + Pair.IndexB + 1) / 2) + Pair.IndexB;
+            return std::hash<size_t>()(Pair.TreeIdA) ^
+                (std::hash<size_t>()(Pair.TreeIdB) << 1);
         }
     };
 }
@@ -87,14 +88,6 @@ private:
     UCollisionManager() = default;
     ~UCollisionManager();
 
-private:
-    //컴포넌트 관리 구조체
-    struct FComponentData
-    {
-        std::shared_ptr<UCollisionComponent> Component;
-        size_t TreeNodeId;
-    };
-
 public:
     static UCollisionManager* Get()
     {
@@ -127,14 +120,6 @@ private:
     void Initialize();
     void Release();
     void CleanupDestroyedComponents();
-    inline bool IsDestroyedComponent(size_t Idx) const {
-        return RegisteredComponents[Idx].Component->bDestroyed;
-    }
-    //충돌 쌍의 인덱스 새로 업데이트 -for deletion
-    void UpdateCollisionPairIndices(size_t OldIndex, size_t NewIndex);
-
-    //검색 헬퍼
-    size_t FindComponentIndex(size_t TreeNodeId) const;
 
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
@@ -185,7 +170,8 @@ private:
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
 
     // 컴포넌트 관리
-    std::vector<FComponentData> RegisteredComponents; 
+    //std::vector<FComponentData> RegisteredComponents; 
+    std::unordered_map<size_t, std::shared_ptr<UCollisionComponent>> RegisteredComponents;
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 };

@@ -102,11 +102,6 @@ void FDynamicAABBTree::UpdateTree()
         {
             NodesToUpdate.push_back(i);
         }
-
-        //if (Node.BoundableObject->IsTransformChanged())
-        //{
-        //    NodesToUpdate.push_back(i);
-        //}
     }
 
     // 수집된 노드들 업데이트

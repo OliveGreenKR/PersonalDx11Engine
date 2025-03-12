@@ -627,7 +627,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (bSpawnBody)
 			{
 				auto tmpBody = UGameObject::Create<UElasticBody>();
-				tmpBody->SetScale(FRandom::RandF(0.1f, 0.2f)* Vector3::One);
+				tmpBody->SetScale(FRandom::RandF(0.5f, 0.8f)* Vector3::One);
 				tmpBody->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
 				tmpBody->SetMass(FRandom::RandF(1.0f, 5.0f));
 				tmpBody->SetShapeSphere();

@@ -119,6 +119,9 @@ public:
     //사용중인 노드 수 반환
     const size_t GetNodeCount() { return NodeCount; }
 
+    //현재 사용중인 노드인지 검사
+    bool IsValidId(const size_t NodeId) const;
+
     // 리프 노드 관련 디버깅 유틸리티 함수들
     size_t GetLeafNodeCount() const;
     bool IsLeafNode(size_t NodeId) const;
@@ -139,7 +142,7 @@ private:
     float ComputeCost(const AABB& Bounds) const;
     float ComputeInheritedCost(size_t NodeId) const;
 
-    bool IsValidId(const size_t NodeId) const;
+
 
     //트리 재생성
     void ReBuildTree();
