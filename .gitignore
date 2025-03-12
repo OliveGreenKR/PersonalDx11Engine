@@ -1,4 +1,4 @@
-#vs
+﻿#vs
 .vs/
 # Visual Studio
 .vs/
@@ -56,6 +56,8 @@
 
 #debug
 PersonalDx11Engine/x64/*
+#test
+PersonalDx11Engine/test/*
 # Resources
 PersonalDx11Engine/Resources/*
 *.tif

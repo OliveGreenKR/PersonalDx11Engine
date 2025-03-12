@@ -668,6 +668,6 @@ void UCollisionManager::PrintTreeStructure()
 {
 #if defined(_DEBUG) || defined(DEBUG)
 //test
-	CollisionTree->PrintTreeStructure();
+	CollisionTree->PrintTreeStructure(std::cout);
 #endif
 }

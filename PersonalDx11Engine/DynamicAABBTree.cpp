@@ -140,7 +140,6 @@ size_t FDynamicAABBTree::AllocateNode()
     FreeNodes.erase(it);
     NodePool[NodeId] = Node();  // 초기화
     NodeCount++;
-    LOG("%d allocated", NodeId);
     return NodeId;
 }
 
@@ -556,9 +555,9 @@ void FDynamicAABBTree::ClearTree(const size_t InitialCapacity)
     }
 }
 
-void FDynamicAABBTree::PrintTreeStructure() const
+void FDynamicAABBTree::PrintTreeStructure(std::ostream& os) const
 {
-    PrintBinaryTree(RootId);
+    PrintBinaryTree(RootId, os);
 }
 
 void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func)
@@ -614,31 +613,28 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
     }
 }
 
-void FDynamicAABBTree::PrintBinaryTree(size_t root, std::string prefix, bool isLeft) const
+void FDynamicAABBTree::PrintBinaryTree(size_t root, std::ostream& os, std::string prefix, bool isLeft ) const
 {
-    using namespace std;
-
-    if (!IsValidId(root)) 
+    if (!IsValidId(root))
         return;
 
-    cout << prefix;
-
-    cout << (isLeft ? "├── " : "└── ");
+    os << prefix;
+    os << (isLeft ? "├── " : "└── ");
 
     auto RootNode = NodePool[root];
     // 노드 데이터 출력 및 부모 정보 추가
     if (RootNode.IsLeaf())
-        cout << "*";//LEAF 표시
-    cout << root;
+        os << "*"; // LEAF 표시
+    os << root;
     if (RootNode.Parent != NULL_NODE) {
-        cout << " (Parent: " << RootNode.Parent << ")";
+        os << " (Parent: " << RootNode.Parent << ")";
     }
-    cout << endl;
+    os << std::endl;
 
     // 자식 노드에 대한 새 접두사 계산
-    string newPrefix = prefix + (isLeft ? "│   " : "    ");
+    std::string newPrefix = prefix + (isLeft ? "│   " : "    ");
 
     // 왼쪽, 오른쪽 자식 출력 (왼쪽 먼저)
-    PrintBinaryTree(RootNode.Left, newPrefix, true);
-    PrintBinaryTree(RootNode.Right, newPrefix, false);
+    PrintBinaryTree(RootNode.Left, os, newPrefix, true);
+    PrintBinaryTree(RootNode.Right, os, newPrefix, false);
 }

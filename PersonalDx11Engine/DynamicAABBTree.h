@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <memory>
 #include <functional>
+#include <iostream>
 
 class FDynamicAABBTree
 {
@@ -140,9 +141,11 @@ private:
     void ClearTree(const size_t InitialCapacity = 1024);
 
 public:
-	void PrintTreeStructure() const;
+	void PrintTreeStructure(std::ostream& os = std::cout) const;
 private:
-    void PrintBinaryTree(size_t root, std::string prefix = "", bool isLeft = false) const;
+    void PrintBinaryTree(size_t root, std::ostream& os, 
+                         std::string prefix = "", 
+                         bool isLeft = false) const;
 
 private:
     std::vector<Node> NodePool;           // 노드 메모리 풀 - 모든 노드를 보관

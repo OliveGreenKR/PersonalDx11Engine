@@ -34,6 +34,9 @@
 //#include "ElasticBodyManager.h"
 #include "ElasticBody.h"
 
+//test
+#include "testDynamicAABBTree.h"
+
 #define KEY_UP 'W'
 #define KEY_DOWN 'S'
 #define KEY_LEFT 'A'
@@ -113,10 +116,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
-
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	
 #pragma region COM
 	HRESULT hr = CoInitialize(nullptr);
 	if (FAILED(hr))
@@ -142,6 +145,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
+
+	TestDynamicAABBTree::RunAllTests();
+	while(true)
+	{ }
+	// Uninitialize COM
+	CoUninitialize();
+	return 0;
 
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
@@ -568,6 +578,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	const float SPAWNFREQ = 0.75f;
 	bool bSpawnBody = true;
 	vector<UElasticBody*> tmpVecs;
+
+
 
 #pragma region MainLoop
 	while (bIsExit == false)
