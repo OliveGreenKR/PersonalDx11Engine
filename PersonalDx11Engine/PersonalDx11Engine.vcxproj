@@ -201,8 +201,9 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="SceneBase.h" />
+    <ClInclude Include="SceneInterface.h" />
     <ClInclude Include="SceneCompoent.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexDataContainer.h" />

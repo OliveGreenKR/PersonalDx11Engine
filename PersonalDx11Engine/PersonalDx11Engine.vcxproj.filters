@@ -172,8 +172,8 @@
     <Filter Include="Engine\Scene">
       <UniqueIdentifier>{d953a0f8-c3fb-43b3-8c82-891be96f0c1b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Scene\Base">
-      <UniqueIdentifier>{021ef761-04f7-489e-8f5b-c5cc8348e7ff}</UniqueIdentifier>
+    <Filter Include="Contents\Scenes">
+      <UniqueIdentifier>{81ed0914-7efe-452a-8fe9-18306d76e905}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -303,9 +303,6 @@
     <ClInclude Include="testDynamicAABBTree.h">
       <Filter>Engine\DataStructure\DynamicAABBTree\test</Filter>
     </ClInclude>
-    <ClInclude Include="SceneBase.h">
-      <Filter>Engine\Scene\Base</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Engine\Managers</Filter>
     </ClInclude>
@@ -314,6 +311,12 @@
     </ClInclude>
     <ClInclude Include="InputDefines.h">
       <Filter>Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneInterface.h">
+      <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,6 @@
 ﻿#pragma once
-class UScene
+#include <string>
+class ISceneInterface
 {
 public:
     virtual void Initialize() = 0; // 씬 초기화
@@ -8,4 +9,6 @@ public:
     virtual void Update(float DeltaTime) = 0; // 씬 업데이트
     virtual void Render(class URenderer* Renderer) = 0; // 씬 렌더링
     virtual void HandleInput(const class FKeyEventData& EventData) = 0; // 입력 처리
+
+    virtual std::string& GetName() = 0; //Scene 이름
 };
