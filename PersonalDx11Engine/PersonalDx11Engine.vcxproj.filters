@@ -44,9 +44,6 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Engine\Math</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Engine\Input</Filter>
-    </ClCompile>
     <ClCompile Include="RigidBodyComponent.cpp">
       <Filter>Engine\Components\RigidBody</Filter>
     </ClCompile>
@@ -172,6 +169,12 @@
     <Filter Include="Engine\DataStructure\DynamicAABBTree\test">
       <UniqueIdentifier>{8be354d4-b7f2-4f6e-8e35-51a3a45c2e43}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Scene">
+      <UniqueIdentifier>{d953a0f8-c3fb-43b3-8c82-891be96f0c1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Scene\Base">
+      <UniqueIdentifier>{021ef761-04f7-489e-8f5b-c5cc8348e7ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -224,9 +227,6 @@
     </ClInclude>
     <ClInclude Include="Frustum.h">
       <Filter>Engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Engine\Input</Filter>
     </ClInclude>
     <ClInclude Include="Delegate.h">
       <Filter>Engine\Delegate</Filter>
@@ -302,6 +302,18 @@
     </ClInclude>
     <ClInclude Include="testDynamicAABBTree.h">
       <Filter>Engine\DataStructure\DynamicAABBTree\test</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneBase.h">
+      <Filter>Engine\Scene\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="InputContext.h">
+      <Filter>Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="InputDefines.h">
+      <Filter>Engine\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

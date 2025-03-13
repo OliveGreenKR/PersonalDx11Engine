@@ -11,21 +11,34 @@ class UModel;
 
 class UGameObject : public std::enable_shared_from_this<UGameObject>
 {
+private:
+	template<typename T>
+	struct ConstructorAccess : public T {
+		ConstructorAccess() : T() {}
+
+		template<typename... Args>
+		ConstructorAccess(Args&&... args) : T(std::forward<Args>(args)...) {}
+	};
 public:
+
+	// 객체 생성을 위한 템플릿 팩토리 메소드
 	template<typename T>
 	static std::shared_ptr<T> Create()
 	{
-		static_assert(std::is_base_of_v<UGameObject,T> || std::is_same_v<UGameObject, T>,
-					  "T must be derived of UGmameObject");
-		return std::shared_ptr<T>(new T());
+		static_assert(std::is_base_of_v<UGameObject, T> || std::is_same_v<UGameObject, T>,
+					  "T must be derived of UGameObject");
+
+		// make_shared 로 효율적인 한번의 할당만
+		return std::make_shared<ConstructorAccess<T>>();
 	}
 
 	template<typename T>
 	static std::shared_ptr<T> Create(const shared_ptr<UModel>& InModel)
 	{
 		static_assert(std::is_base_of_v<UGameObject, T> || std::is_same_v<UGameObject, T>,
-					  "T must be derived of UGmameObject");
-		return std::shared_ptr<T>(new T(InModel));
+					  "T must be derived of UGameObject");
+
+		return std::make_shared<ConstructorAccess<T>>(InModel);
 	}
 
 protected:

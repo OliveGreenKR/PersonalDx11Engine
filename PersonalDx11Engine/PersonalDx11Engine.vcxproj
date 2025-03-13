@@ -149,7 +149,6 @@
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
-    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -182,6 +181,8 @@
     </ClInclude>
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="InputContext.h" />
+    <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
@@ -200,6 +201,7 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="SceneBase.h" />
     <ClInclude Include="SceneCompoent.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
     <ClInclude Include="Transform.h" />

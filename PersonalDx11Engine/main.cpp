@@ -231,6 +231,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CollisionComp1->SetShapeBox();
 	CollisionComp1->SetHalfExtent(0.5f * Character->GetTransform()->GetScale());
 	CollisionComp1->BindRigidBody(RigidComp1);
+	CollisionComp1->SetActive(false);
 
 	Character->AddActorComponent(RigidComp1);
 
@@ -346,222 +347,279 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 															   "BorderCheck");
 
 #pragma endregion
+#pragma region InputAction
+    UInputAction AMoveUp_P1("AMoveUp_P1");
+    AMoveUp_P1.KeyCodes = { 'W' };
 
-#pragma region  InputBind
-	//input Action Bind - TODO::  Abstactionize 'Input Action'
-	//현재는 객체가 직접 본인이 반응할 키 이벤트를 관리..
-	constexpr WPARAM ACTION_MOVE_UP_P1 = 'W';
-	constexpr WPARAM ACTION_MOVE_DOWN_P1 = 'S';
-	constexpr WPARAM ACTION_MOVE_RIGHT_P1 = 'D';
-	constexpr WPARAM ACTION_MOVE_LEFT_P1 = 'A';
-	constexpr WPARAM ACTION_MOVE_STOP_P1 = 'F';
+    UInputAction AMoveDown_P1("AMoveDown_P1");
+    AMoveDown_P1.KeyCodes = { 'S' };
 
-	constexpr WPARAM ACTION_MOVE_UP_P2 = 'I';
-	constexpr WPARAM ACTION_MOVE_DOWN_P2 = 'K';
-	constexpr WPARAM ACTION_MOVE_RIGHT_P2 = 'L';
-	constexpr WPARAM ACTION_MOVE_LEFT_P2 = 'J';
-	constexpr WPARAM ACTION_MOVE_STOP_P2 = 'H';
+    UInputAction AMoveRight_P1("AMoveRight_P1");
+    AMoveRight_P1.KeyCodes = { 'D' };
 
-	constexpr WPARAM ACTION_CAMERA_UP = VK_UP;
-	constexpr WPARAM ACTION_CAMERA_DOWN = VK_DOWN;
-	constexpr WPARAM ACTION_CAMERA_RIGHT = VK_RIGHT;
-	constexpr WPARAM ACTION_CAMERA_LEFT = VK_LEFT;
-	constexpr WPARAM ACTION_CAMERA_FOLLOWOBJECT = 'V';
-	constexpr WPARAM ACTION_CAMERA_LOOKTO = VK_F2;
+    UInputAction AMoveLeft_P1("AMoveLeft_P1");
+    AMoveLeft_P1.KeyCodes = { 'A' };
 
-	constexpr WPARAM ACTION_DEBUG_1 = VK_F1;
+    UInputAction AMoveStop_P1("AMoveStop_P1");
+    AMoveStop_P1.KeyCodes = { 'F' };
+
+    UInputAction AMoveUp_P2("AMoveUp_P2");
+    AMoveUp_P2.KeyCodes = { 'I' };
+
+    UInputAction AMoveDown_P2("AMoveDown_P2");
+    AMoveDown_P2.KeyCodes = { 'K' };
+
+    UInputAction AMoveRight_P2("AMoveRight_P2");
+    AMoveRight_P2.KeyCodes = { 'L' };
+
+    UInputAction AMoveLeft_P2("AMoveLeft_P2");
+    AMoveLeft_P2.KeyCodes = { 'J' };
+
+    UInputAction AMoveStop_P2("AMoveStop_P2");
+    AMoveStop_P2.KeyCodes = { 'H' };
+
+    UInputAction CameraUp("CameraUp");
+    CameraUp.KeyCodes = { VK_UP };
+
+    UInputAction CameraDown("CameraDown");
+    CameraDown.KeyCodes = { VK_DOWN };
+
+    UInputAction CameraRight("CameraRight");
+    CameraRight.KeyCodes = { VK_RIGHT };
+
+    UInputAction CameraLeft("CameraLeft");
+    CameraLeft.KeyCodes = { VK_LEFT };
+
+    UInputAction CameraFollowObject("CameraFollowObject");
+    CameraFollowObject.KeyCodes = { 'V' };
+
+    UInputAction CameraLookTo("CameraLookTo");
+    CameraLookTo.KeyCodes = { VK_F2 };
+
+    UInputAction Debug1("Debug1");
+    Debug1.KeyCodes = { VK_F1 };
+
+#pragma endregion
+#pragma region  Input Action Bind
+
+	auto InputContext01 = UInputContext::Create("Scene01");
+	UInputManager::Get()->RegisterInputContext(InputContext01);
 
 	//Character
-	UInputManager::Get()->BindKeyEvent(
-		EKeyEvent::Pressed,
-		Character,
-		[&Character,&CharacterMass](const FKeyEventData& EventData) {
-			float InForceMagnitude = CharacterMass * 100.0f;
-			switch (EventData.KeyCode)
-			{
-				case(ACTION_MOVE_UP_P1) :
-				{
-					if (EventData.bShift)
-					{
-						Character->StartMove(Vector3::Forward);
-					}
-					else
-					{
-						Character->ApplyForce(Vector3::Forward * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_DOWN_P1):
-				{
-					if (EventData.bShift)
-					{
-						Character->StartMove(-Vector3::Forward);
-					}
-					else
-					{
-						Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_RIGHT_P1):
-				{
-					if (EventData.bShift)
-					{
-						Character->StartMove(Vector3::Right);
-					}
-					else
-					{
-						Character->ApplyForce(Vector3::Right * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_LEFT_P1):
-				{
-					if (EventData.bShift)
-					{
-						Character->StartMove(-Vector3::Right);
-					}
-					else
-					{
-						Character->ApplyForce(-Vector3::Right * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_STOP_P1):
-				{
-					Character->StopMove();
-				}
-			}
-		},
-		"CharacterMove");
+	InputContext01->BindAction(AMoveUp_P1,
+							   EKeyEvent::Pressed,
+							   Character,
+							   [&Character, &CharacterMass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = CharacterMass * 100.0f;
 
-	//Character2
-	UInputManager::Get()->BindKeyEvent(
-		EKeyEvent::Pressed,
-		Character2,
-		[&Character2,&Character2Mass](const FKeyEventData& EventData) {
-			float InForceMagnitude = Character2Mass * 100.0f;
+								   if (EventData.bShift)
+								   {
+									   Character->StartMove(Vector3::Forward);
+								   }
+								   else
+								   {
+									   Character->ApplyForce(Vector3::Forward * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
 
-			switch (EventData.KeyCode)
-			{
-				case(ACTION_MOVE_UP_P2):
-				{
-					if (EventData.bShift)
-					{
-						Character2->StartMove(Vector3::Forward);
-					}
-					else
-					{
-						Character2->ApplyForce(Vector3::Forward * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_DOWN_P2):
-				{
-					if (EventData.bShift)
-					{
-						Character2->StartMove(-Vector3::Forward);
-					}
-					else
-					{
-						Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_RIGHT_P2):
-				{
-					if (EventData.bShift)
-					{
-						Character2->StartMove(Vector3::Right);
-					}
-					else
-					{
-						Character2->ApplyForce(Vector3::Right * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_LEFT_P2):
-				{
-					if (EventData.bShift)
-					{
-						Character2->StartMove(-Vector3::Right);
-					}
-					else
-					{
-						Character2->ApplyForce(-Vector3::Right * InForceMagnitude);
-					}
-					break;
-				}
-				case(ACTION_MOVE_STOP_P2):
-				{
-					Character2->StopMove();
-				}
-			}
-		},
-		"CharacterMove");
-	//Camera
-	UInputManager::Get()->BindKeyEvent(
-		EKeyEvent::Pressed,
-		Camera,
-		[&Camera](const FKeyEventData& EventData) {
-			switch (EventData.KeyCode)
-			{
-				case(ACTION_CAMERA_UP):
-				{
-					Camera->StartMove(Vector3::Forward);
-					break;
-				}
-				case(ACTION_CAMERA_DOWN):
-				{
-					Camera->StartMove(-Vector3::Forward);
-					break;
-				}
-				case(ACTION_CAMERA_RIGHT):
-				{
-					Camera->StartMove(Vector3::Right);
-					break;
-				}
-				case(ACTION_CAMERA_LEFT):
-				{
-					Camera->StartMove(-Vector3::Right);
-					break;
-				}
-				case(ACTION_CAMERA_FOLLOWOBJECT):
-				{
-					Camera->bLookAtObject = !Camera->bLookAtObject;
-					break;
-				}
-				case(ACTION_CAMERA_LOOKTO):
-				{
-					Camera->LookTo();
-					break;
-				}
-			}
-		},
-		"CharacterMove");
-	//Safe Delegate test
-	UInputManager::Get()->BindKeyEventSystem(
-		EKeyEvent::Pressed,
-		[&Character2](const FKeyEventData& EventData) {
-			if (EventData.KeyCode == ACTION_DEBUG_1)
-			{
-				//회전 관성 테스트
-				if (Character2.get())
-				{
-					Vector3 TargetPos = Character2->GetTransform()->GetPosition();
+	InputContext01->BindAction(AMoveDown_P1,
+							   EKeyEvent::Pressed,
+							   Character,
+							   [&Character, &CharacterMass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = CharacterMass * 100.0f;
 
-					TargetPos += Vector3::Right * 0.15f;
-					TargetPos += Vector3::Up * 0.15f;
-					Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
-						Vector3::Right *1.0f,
-						TargetPos);
-				}
-			}
-		},
-		"DEBUG1");
+								   if (EventData.bShift)
+								   {
+									   Character->StartMove(-Vector3::Forward);
+								   }
+								   else
+								   {
+									   Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
 
+	InputContext01->BindAction(AMoveRight_P1,
+							   EKeyEvent::Pressed,
+							   Character,
+							   [&Character, &CharacterMass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = CharacterMass * 100.0f;
 
+								   if (EventData.bShift)
+								   {
+									   Character->StartMove(Vector3::Right);
+								   }
+								   else
+								   {
+									   Character->ApplyForce(Vector3::Right * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
 
+	InputContext01->BindAction(AMoveLeft_P1,
+							   EKeyEvent::Pressed,
+							   Character,
+							   [&Character, &CharacterMass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = CharacterMass * 100.0f;
+
+								   if (EventData.bShift)
+								   {
+									   Character->StartMove(-Vector3::Right);
+								   }
+								   else
+								   {
+									   Character->ApplyForce(-Vector3::Right * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveStop_P1,
+							   EKeyEvent::Pressed,
+							   Character,
+							   [&Character](const FKeyEventData& EventData) {
+								   Character->StopMove();
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveUp_P2,
+							   EKeyEvent::Pressed,
+							   Character2,
+							   [&Character2, &Character2Mass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = Character2Mass * 100.0f;
+
+								   if (EventData.bShift)
+								   {
+									   Character2->StartMove(Vector3::Forward);
+								   }
+								   else
+								   {
+									   Character2->ApplyForce(Vector3::Forward * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveDown_P2,
+							   EKeyEvent::Pressed,
+							   Character2,
+							   [&Character2, &Character2Mass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = Character2Mass * 100.0f;
+
+								   if (EventData.bShift)
+								   {
+									   Character2->StartMove(-Vector3::Forward);
+								   }
+								   else
+								   {
+									   Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveRight_P2,
+							   EKeyEvent::Pressed,
+							   Character2,
+							   [&Character2, &Character2Mass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = Character2Mass * 100.0f;
+
+								   if (EventData.bShift)
+								   {
+									   Character2->StartMove(Vector3::Right);
+								   }
+								   else
+								   {
+									   Character2->ApplyForce(Vector3::Right * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveLeft_P2,
+							   EKeyEvent::Pressed,
+							   Character2,
+							   [&Character2, &Character2Mass](const FKeyEventData& EventData) {
+								   float InForceMagnitude = Character2Mass * 100.0f;
+
+								   if (EventData.bShift)
+								   {
+									   Character2->StartMove(-Vector3::Right);
+								   }
+								   else
+								   {
+									   Character2->ApplyForce(-Vector3::Right * InForceMagnitude);
+								   }
+							   },
+							   "CharacterMove");
+
+	InputContext01->BindAction(AMoveStop_P2,
+							   EKeyEvent::Pressed,
+							   Character2,
+							   [&Character2](const FKeyEventData& EventData) {
+								   Character2->StopMove();
+							   },
+							   "CharacterMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraUp,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->StartMove(Vector3::Forward);
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraDown,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->StartMove(-Vector3::Forward);
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraRight,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->StartMove(Vector3::Right);
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraLeft,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->StartMove(-Vector3::Right);
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->bLookAtObject = !Camera->bLookAtObject;
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindAction(CameraLookTo,
+													EKeyEvent::Pressed,
+													Camera,
+													[&Camera](const FKeyEventData& EventData) {
+														Camera->LookTo();
+													},
+													"CameraMove");
+
+	UInputManager::Get()->SystemContext->BindActionSystem(Debug1,
+													EKeyEvent::Pressed,
+													[&Character2](const FKeyEventData& EventData) {
+														if (Character2.get())
+														{
+															Vector3 TargetPos = Character2->GetTransform()->GetPosition();
+															TargetPos += Vector3::Right * 0.15f;
+															TargetPos += Vector3::Up * 0.15f;
+															Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
+																Vector3::Right * 1.0f,
+																TargetPos);
+														}
+													},
+													"DebugAction");
 #pragma endregion
 	
 	Character->SetActive(false);
@@ -571,8 +629,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	const float SPAWNFREQ = 0.75f;
 	bool bSpawnBody = true;
 	vector<UElasticBody*> tmpVecs;
-
-
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -599,7 +655,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 #pragma endregion
-
 
 #pragma region logic
 		//Draw Debug
