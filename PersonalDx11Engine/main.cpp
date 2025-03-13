@@ -194,10 +194,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui::SetNextWindowPos(ImVec2(2.0f, 2.0f), ImGuiCond_FirstUseEver);//영구위치설정
 	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //자동조절
 
-	const ImGuiWindowFlags UIWindowFlags =
-		ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
-		ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
-
 	bool bIsExit = false;
 
 	//delta frame time
@@ -737,83 +733,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::End();
 
 
-		if (Camera)
-		{
-			ImGui::Begin("Camera", nullptr, UIWindowFlags);
-			ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-			ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-			ImGui::Text(Debug::ToString(*Camera->GetTransform()));
-			ImGui::End();
-		}
-
-		ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
-		//ImGui::InputInt("##Value", &value); // 숫자 입력 필드
-		//ImGui::Text("%d / %d",
-		//			UElasticBodyManager::Get()->GetActiveBodyCount(),
-		//			UElasticBodyManager::Get()->GetPooledBodyCount());
-		//ImGui::SameLine();
-		//if (ImGui::Button("-")) {
-		//	UElasticBodyManager::Get()->DespawnRandomBody();
-		//	UCollisionManager::Get()->PrintTreeStructure();
-		//}
-		//ImGui::SameLine();
-		//if (ImGui::Button("+")) {
-		//	UElasticBodyManager::Get()->SpawnRandomBody();
-		//	UCollisionManager::Get()->PrintTreeStructure();
-		//}
-		ImGui::SameLine();
-		ImGui::Checkbox("bSpawnBody", &bSpawnBody);
-		if (ImGui::Button("Print")) {
-			UCollisionManager::Get()->PrintTreeStructure();
-		}
-		ImGui::End();
-
-		if (Character)
-		{
-			Vector3 CurrentVelo = Character->GetCurrentVelocity();
-			bool bGravity = Character->IsGravity();
-			bool bPhysics = Character->IsPhysicsSimulated();
-			ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-			ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-			ImGui::Checkbox("bDebug", &Character->bDebug);
-			ImGui::Checkbox("bPhysicsBased", &bPhysics);
-			ImGui::Checkbox("bGravity", &bGravity);
-			Character->SetGravity(bGravity);
-			Character->SetPhysics(bPhysics);
-			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-						CurrentVelo.y,
-						CurrentVelo.z);
-			ImGui::End();
-		}
-		
-		if (Character2)
-		{
-			Vector3 CurrentVelo = Character2->GetCurrentVelocity();
-			bool bGravity2 = Character2->IsGravity();
-			bool bPhysics2 = Character2->IsPhysicsSimulated();
-			bool bIsActive2 = Character2->IsActive();
-			ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-			ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-			ImGui::Checkbox("bDebug", &Character2->bDebug);
-			ImGui::Checkbox("bPhysicsBased", &bPhysics2);
-			ImGui::Checkbox("bGravity", &bGravity2);
-			Character2->SetGravity(bGravity2);
-			Character2->SetPhysics(bPhysics2);
-			ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-						CurrentVelo.y,
-						CurrentVelo.z);
-			ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
-						Character2->GetTransform()->GetPosition().y,
-						Character2->GetTransform()->GetPosition().z);
-			ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
-						Character2->GetTransform()->GetEulerRotation().y,
-						Character2->GetTransform()->GetEulerRotation().z);
-
-			ImGui::End();
-		}
-
+	
 		FDebugDrawManager::Get()->DrawAll(Camera.get());
 
+		//RenderUI
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #pragma endregion

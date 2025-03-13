@@ -110,9 +110,6 @@ void UGameplayScene01::Unload()
 
 void UGameplayScene01::Update(float DeltaTime)
 {
-    // 디버그 드로잉 업데이트
-    FDebugDrawManager::Get()->Tick(DeltaTime);
-
     // 주요 객체 업데이트
     if (Character)
     {
@@ -146,41 +143,96 @@ void UGameplayScene01::Update(float DeltaTime)
         elasticBody->Tick(DeltaTime);
     }
 
-    // 충돌 관리자 업데이트
-    UCollisionManager::Get()->Tick(DeltaTime);
 }
 
-void UGameplayScene01::Render(URenderer* Renderer)
+void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
-    //TODO : RenerJobQ 를 통한 렌더링 중앙화 + 쉐이더 전역화
-    
-
-    //if (!Renderer || !Shader || !Camera)
-    //    return;
-
-    //// 주요 객체 렌더링
-    //if (Character && TextureTile && *TextureTile)
-    //{
-    //    Renderer->RenderGameObject(Camera.get(), Character.get(), Shader.get(), *TextureTile);
-    //}
-
-    //if (Character2 && TexturePole && *TexturePole)
-    //{
-    //    Renderer->RenderGameObject(Camera.get(), Character2.get(), Shader.get(), *TexturePole);
-    //}
-
-    //// 탄성체 렌더링
-    //for (auto& elasticBody : ElasticBodies)
-    //{
-    //    if (elasticBody && TexturePole && *TexturePole)
-    //    {
-    //        Renderer->RenderGameObject(Camera.get(), elasticBody.get(), Shader.get(), *TexturePole);
-    //    }
-    //}
-
-    // 디버그 드로잉 렌더링
-    FDebugDrawManager::Get()->DrawAll(Camera.get());
+    Renderer->SubmitRenderJob(Camera.get(), Character.get(), *TextureTile.get());
 }
+
+void UGameplayScene01::SubmitRenderUI()
+{
+    const ImGuiWindowFlags UIWindowFlags =
+        ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
+        ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
+
+    if (Camera)
+    {
+        ImGui::Begin("Camera", nullptr, UIWindowFlags);
+        ImGui::Checkbox("bIs2D", &Camera->bIs2D);
+        ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
+        ImGui::Text(Debug::ToString(*Camera->GetTransform()));
+        ImGui::End();
+    }
+
+    ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
+    //ImGui::InputInt("##Value", &value); // 숫자 입력 필드
+    //ImGui::Text("%d / %d",
+    //			UElasticBodyManager::Get()->GetActiveBodyCount(),
+    //			UElasticBodyManager::Get()->GetPooledBodyCount());
+    //ImGui::SameLine();
+    //if (ImGui::Button("-")) {
+    //	UElasticBodyManager::Get()->DespawnRandomBody();
+    //	UCollisionManager::Get()->PrintTreeStructure();
+    //}
+    //ImGui::SameLine();
+    //if (ImGui::Button("+")) {
+    //	UElasticBodyManager::Get()->SpawnRandomBody();
+    //	UCollisionManager::Get()->PrintTreeStructure();
+    //}
+    ImGui::SameLine();
+    ImGui::Checkbox("bSpawnBody", &bSpawnBody);
+    if (ImGui::Button("Print")) {
+        UCollisionManager::Get()->PrintTreeStructure();
+    }
+    ImGui::End();
+
+    if (Character)
+    {
+        Vector3 CurrentVelo = Character->GetCurrentVelocity();
+        bool bGravity = Character->IsGravity();
+        bool bPhysics = Character->IsPhysicsSimulated();
+        ImGui::Begin("Charcter", nullptr, UIWindowFlags);
+        ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+        ImGui::Checkbox("bDebug", &Character->bDebug);
+        ImGui::Checkbox("bPhysicsBased", &bPhysics);
+        ImGui::Checkbox("bGravity", &bGravity);
+        Character->SetGravity(bGravity);
+        Character->SetPhysics(bPhysics);
+        ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+                    CurrentVelo.y,
+                    CurrentVelo.z);
+        ImGui::End();
+    }
+
+    if (Character2)
+    {
+        Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+        bool bGravity2 = Character2->IsGravity();
+        bool bPhysics2 = Character2->IsPhysicsSimulated();
+        bool bIsActive2 = Character2->IsActive();
+        ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
+        ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+        ImGui::Checkbox("bDebug", &Character2->bDebug);
+        ImGui::Checkbox("bPhysicsBased", &bPhysics2);
+        ImGui::Checkbox("bGravity", &bGravity2);
+        Character2->SetGravity(bGravity2);
+        Character2->SetPhysics(bPhysics2);
+        ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+                    CurrentVelo.y,
+                    CurrentVelo.z);
+        ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
+                    Character2->GetTransform()->GetPosition().y,
+                    Character2->GetTransform()->GetPosition().z);
+        ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
+                    Character2->GetTransform()->GetEulerRotation().y,
+                    Character2->GetTransform()->GetEulerRotation().z);
+
+        ImGui::End();
+    }
+}
+
+
 
 void UGameplayScene01::HandleInput(const FKeyEventData& EventData)
 {

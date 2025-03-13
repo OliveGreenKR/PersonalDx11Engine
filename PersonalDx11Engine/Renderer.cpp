@@ -11,7 +11,8 @@ void URenderer::Initialize(HWND hWindow)
 	assert(result);
 	result = CreateDefaultSamplerState();
 	assert(result);
-	
+
+	RenderJobs.reserve(512);
 }
 
 void URenderer::BindShader(UShader* InShader)
@@ -118,6 +119,44 @@ bool URenderer::CreateDefaultSamplerState()
 	return SUCCEEDED(result);
 }
 
+void URenderer::SubmitRenderJob(UCamera* InCamera, const UGameObject* InObject, ID3D11ShaderResourceView* InTexture)
+{
+	if (!InCamera || !InObject)
+		return;
+
+	// 모델 유효성 검사
+	if (!InObject->GetModel() || !InObject->GetModel()->IsInitialized())
+		return;
+
+	// 렌더 작업 생성 및 추가
+	RenderJobs.emplace_back(InCamera, InObject, InTexture);
+}
+
+void URenderer::ClearRenderJobs()
+{
+	// 렌더 작업 목록 비우기
+	RenderJobs.clear();
+}
+void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCustomSampler)
+{
+	if (!InShader)
+		return;
+
+	ID3D11SamplerState* SamplerState = InCustomSampler;
+	if (!InCustomSampler)
+	{
+		SamplerState = GetDefaultSamplerState();
+	}
+
+	// 셰이더 바인딩
+	BindShader(InShader);
+
+	// 모든 렌더 작업 처리
+	for (const auto& Job : RenderJobs)
+	{
+		RenderGameObject(Job.Camera, Job.GameObject, InShader, SamplerState);
+	}
+}
 void URenderer::Release()
 {
 	if (DefaultSamplerState)

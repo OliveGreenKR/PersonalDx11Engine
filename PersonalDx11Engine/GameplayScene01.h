@@ -17,7 +17,8 @@ public:
     void Load(class ID3D11Device* Device, class ID3D11DeviceContext* DeviceContext) override;
     void Unload() override;
     void Update(float DeltaTime) override;
-    void Render(URenderer* Renderer) override;
+    void SubmitRender(URenderer* Renderer) override;
+    void SubmitRenderUI() override;
     void HandleInput(const FKeyEventData& EventData) override;
 
     std::string& GetName() override { return SceneName; }

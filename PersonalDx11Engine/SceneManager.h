@@ -78,7 +78,7 @@ public:
     {
         if (ActiveScene && Renderer)
         {
-            ActiveScene->Render(Renderer);
+            ActiveScene->SubmitRender(Renderer);
         }
     }
 
