@@ -8,12 +8,12 @@ class UCamera : public UGameObject
 public:
 	virtual ~UCamera() override = default;
 
-	static std::shared_ptr<UCamera> Create(float fov, float aspectRatio, float nearZ, float farZ)
+	static std::shared_ptr<UCamera> Create(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ)
 	{
-		return std::shared_ptr<UCamera>(new UCamera(fov,aspectRatio,nearZ,farZ));
+		return std::shared_ptr<UCamera>(new UCamera(fov, viewportWidth, viewportHeight,nearZ, farZ));
 	}
 protected:
-	explicit UCamera(float fov, float aspectRatio, float nearZ, float farZ);
+	explicit UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ);
 public:
 	virtual void Tick(const float DeltaTime) override;
 	virtual void PostInitialized() override;
@@ -26,6 +26,11 @@ public:
 	void SetAspectRatio(float InRatio) { AspectRatio = InRatio; UpdateProjectionMatrix(); }
 	void SetNearZ(float InZ) { NearZ = InZ; UpdateProjectionMatrix();  }
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
+	void SetViewportSize(uint32_t Width, uint32_t Height);
+
+	uint32_t GetViewportWidth() const { return ViewportWidth; }
+	uint32_t GetViewportHeight() const { return ViewportHeight; }
+	float GetAspectRatio() const { return static_cast<float>(ViewportWidth) / static_cast<float>(ViewportHeight); }
 
 	bool IsInView(const Vector3& Position);
 	void SetLookAtObject(UGameObject* InTarget);
@@ -52,6 +57,8 @@ private :
 	//radian
 	float Fov = PI/4.0f;		//VerticalFOV
 	float AspectRatio = 1.0f;   //affect to HorizontalFOV 
+	uint32_t ViewportWidth = 1280;  
+	uint32_t ViewportHeight = 720;  
 	float NearZ = 0.1f;
 	float FarZ = 1000.0f;
 

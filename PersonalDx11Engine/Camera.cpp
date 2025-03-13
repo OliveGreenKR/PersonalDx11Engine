@@ -1,8 +1,8 @@
 ﻿#include "Camera.h"
 #include "Debug.h"
 
-UCamera::UCamera(float fov, float aspectRatio, float nearZ, float farZ)
-	: Fov(fov), AspectRatio(aspectRatio), NearZ(nearZ), FarZ(farZ)
+UCamera::UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ)
+	: Fov(fov), ViewportWidth(viewportWidth), ViewportHeight(viewportHeight), NearZ(nearZ), FarZ(farZ)
 {
 	UpdateProjectionMatrix();
 }
@@ -34,6 +34,13 @@ const Matrix UCamera::GetViewMatrix()
 const Matrix UCamera::GetProjectionMatrix() const
 {
 	return ProjectionMatrix;
+}
+
+void UCamera::SetViewportSize(uint32_t Width, uint32_t Height)
+{
+	ViewportWidth = Width;
+	ViewportHeight = Height;
+	UpdateProjectionMatrix();  // 비율이 바뀌었으므로 투영 행렬 업데이트
 }
 
 bool UCamera::IsInView(const Vector3& Position)
@@ -137,6 +144,7 @@ void UCamera::OnTransformChanged(const FTransform& Changed)
 
 void UCamera::UpdateProjectionMatrix()
 {
+	const float AspectRatio = GetAspectRatio();
 	if (bIs2D)
 	{
 		float nearPlaneHeight = 2.0f * NearZ * tanf(Fov * 0.5f);

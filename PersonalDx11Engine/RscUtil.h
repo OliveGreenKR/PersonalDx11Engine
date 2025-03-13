@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 #pragma comment(lib, "user32")
 #pragma comment(lib, "d3d11")
@@ -14,19 +14,18 @@
 #include <vector>
 
 //need to COM Init
-//// ¥‹¿œ Ω∫∑πµÂ »Ø∞Ê
+//// Îã®Ïùº Ïä§Î†àÎìú ÌôòÍ≤Ω
 //CoInitialize(nullptr);
 //
-//// ∏÷∆ºΩ∫∑πµÂ »Ø∞Ê
+//// Î©ÄÌã∞Ïä§Î†àÎìú ÌôòÍ≤Ω
 //CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
 //need to COM Exit
 //CoUninitialize();
 
-
-bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11ShaderResourceView** OutShaderResourceView)
+inline bool LoadTextureDataFromFile(const wchar_t* FilePath, BYTE** OutPixelData, UINT* OutWidth, UINT* OutHeight, UINT* OutRowPitch)
 {
-    // WIC ∆—≈‰∏Æ ª˝º∫
+    // WIC Ìå©ÌÜ†Î¶¨ ÏÉùÏÑ±
     IWICImagingFactory* WICFactory = nullptr;
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory,
@@ -36,7 +35,7 @@ bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11Sh
     );
     if (FAILED(hr)) return false;
 
-    // µƒ⁄¥ı ª˝º∫
+    // ÎîîÏΩîÎçî ÏÉùÏÑ±
     IWICBitmapDecoder* Decoder = nullptr;
     hr = WICFactory->CreateDecoderFromFilename(
         FilePath,
@@ -47,12 +46,12 @@ bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11Sh
     );
     if (FAILED(hr)) { WICFactory->Release(); return false; }
 
-    // «¡∑π¿” »πµÊ
+    // ÌîÑÎ†àÏûÑ ÌöçÎìù
     IWICBitmapFrameDecode* Frame = nullptr;
     hr = Decoder->GetFrame(0, &Frame);
     if (FAILED(hr)) { Decoder->Release(); WICFactory->Release(); return false; }
 
-    // BGRA ∆˜∏À¿∏∑Œ ∫Ø»Ø
+    // BGRA Ìè¨Îß∑ÏúºÎ°ú Î≥ÄÌôò
     IWICFormatConverter* Converter = nullptr;
     hr = WICFactory->CreateFormatConverter(&Converter);
     if (FAILED(hr)) { Frame->Release(); Decoder->Release(); WICFactory->Release(); return false; }
@@ -67,11 +66,36 @@ bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11Sh
     );
     if (FAILED(hr)) { Converter->Release(); Frame->Release(); Decoder->Release(); WICFactory->Release(); return false; }
 
-    // ¿ÃπÃ¡ˆ ≈©±‚ »πµÊ
-    UINT Width, Height;
-    Converter->GetSize(&Width, &Height);
+    // Ïù¥ÎØ∏ÏßÄ ÌÅ¨Í∏∞ ÌöçÎìù
+    Converter->GetSize(OutWidth, OutHeight);
+    *OutRowPitch = *OutWidth * 4;
 
-    // ≈ÿΩ∫√≥ ª˝º∫
+    // ÌîΩÏÖÄ Îç∞Ïù¥ÌÑ∞Î•º ÏúÑÌïú Î©îÎ™®Î¶¨ Ìï†Îãπ (Ìò∏Ï∂úÏûêÍ∞Ä Ìï¥Ï†ú Ï±ÖÏûÑ)
+    *OutPixelData = new BYTE[*OutRowPitch * *OutHeight];
+
+    // ÌîΩÏÖÄ Îç∞Ïù¥ÌÑ∞ Î≥µÏÇ¨
+    Converter->CopyPixels(nullptr, *OutRowPitch, *OutRowPitch * *OutHeight, *OutPixelData);
+
+    // Î¶¨ÏÜåÏä§ Ï†ïÎ¶¨
+    Converter->Release();
+    Frame->Release();
+    Decoder->Release();
+    WICFactory->Release();
+
+    return true;
+}
+
+inline bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11ShaderResourceView** OutShaderResourceView)
+{
+    HRESULT hr;
+    BYTE* PixelData = nullptr;
+    UINT Width = 0, Height = 0, RowPitch = 0;
+
+    // ÌîΩÏÖÄ Îç∞Ïù¥ÌÑ∞ Î°úÎìú
+    if (!LoadTextureDataFromFile(FilePath, &PixelData, &Width, &Height, &RowPitch))
+        return false;
+
+    // ÌÖçÏä§Ï≤ò ÏÉùÏÑ±ÏùÑ ÏúÑÌïú Ï†ïÎ≥¥ Íµ¨ÏÑ±
     D3D11_TEXTURE2D_DESC TextureDesc = {};
     TextureDesc.Width = Width;
     TextureDesc.Height = Height;
@@ -79,23 +103,28 @@ bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11Sh
     TextureDesc.ArraySize = 1;
     TextureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     TextureDesc.SampleDesc.Count = 1;
+    TextureDesc.SampleDesc.Quality = 0;
     TextureDesc.Usage = D3D11_USAGE_DEFAULT;
     TextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-    // «»ºø µ•¿Ã≈Õ ¡ÿ∫Ò
-    UINT RowPitch = Width * 4;
-    std::vector<BYTE> Buffer(RowPitch * Height);
-    Converter->CopyPixels(nullptr, RowPitch, Buffer.size(), Buffer.data());
+    TextureDesc.CPUAccessFlags = 0;
+    TextureDesc.MiscFlags = 0;
 
     D3D11_SUBRESOURCE_DATA InitData = {};
-    InitData.pSysMem = Buffer.data();
+    InitData.pSysMem = PixelData;
     InitData.SysMemPitch = RowPitch;
+    InitData.SysMemSlicePitch = 0;
 
+    // ÌÖçÏä§Ï≤ò ÏÉùÏÑ±
     ID3D11Texture2D* Texture = nullptr;
     hr = Device->CreateTexture2D(&TextureDesc, &InitData, &Texture);
-    if (FAILED(hr)) { Converter->Release(); Frame->Release(); Decoder->Release(); WICFactory->Release(); return false; }
 
-    // SRV ª˝º∫
+    // Î©îÎ™®Î¶¨ Ìï¥Ï†ú (Îç∞Ïù¥ÌÑ∞Í∞Ä GPUÎ°ú Î≥µÏÇ¨ÎêòÏóàÏúºÎØÄÎ°ú Îçî Ïù¥ÏÉÅ ÌïÑÏöî ÏóÜÏùå)
+    delete[] PixelData;
+
+    if (FAILED(hr))
+        return false;
+
+    // SRV ÏÉùÏÑ±
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
     SRVDesc.Format = TextureDesc.Format;
     SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -103,12 +132,8 @@ bool LoadTextureFromFile(ID3D11Device* Device, const wchar_t* FilePath, ID3D11Sh
 
     hr = Device->CreateShaderResourceView(Texture, &SRVDesc, OutShaderResourceView);
 
-    // ∏Æº“Ω∫ ¡§∏Æ
+    // ÌÖçÏä§Ï≤ò Ìï¥Ï†ú (SRVÍ∞Ä Ï∞∏Ï°∞Î•º Ïú†ÏßÄÌï®)
     Texture->Release();
-    Converter->Release();
-    Frame->Release();
-    Decoder->Release();
-    WICFactory->Release();
 
     return SUCCEEDED(hr);
 }

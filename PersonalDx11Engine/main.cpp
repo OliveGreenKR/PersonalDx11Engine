@@ -31,7 +31,6 @@
 
 //Contents
 #include "Random.h"
-//#include "ElasticBodyManager.h"
 #include "ElasticBody.h"
 
 //test
@@ -213,7 +212,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto SphereModel = UModelBufferManager::Get()->GetSphereModel();
 
 #pragma region Object Initialization
-	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 100.0f);
+	auto Camera = UCamera::Create(PI / 4.0f, SCREEN_WIDTH , SCREEN_HEIGHT, 0.1f, 100.0f);
 	Camera->SetPosition({ 0,0.0f,-10.0f });
 
 	float CharacterMass = 5.0f;
