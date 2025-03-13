@@ -148,6 +148,7 @@ void UGameplayScene01::Update(float DeltaTime)
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
     Renderer->SubmitRenderJob(Camera.get(), Character.get(), *TextureTile.get());
+
 }
 
 void UGameplayScene01::SubmitRenderUI()
@@ -230,9 +231,9 @@ void UGameplayScene01::SubmitRenderUI()
 
         ImGui::End();
     }
+
+    FDebugDrawManager::Get()->DrawAll(Camera.get());
 }
-
-
 
 void UGameplayScene01::HandleInput(const FKeyEventData& EventData)
 {
@@ -513,6 +514,7 @@ void UGameplayScene01::SetupInput()
                                                           },
                                                           "DebugAction");
 }
+
 void UGameplayScene01::SetupBorderTriggers()
 {
     auto IsInBorder = [this](const Vector3& Position) {
@@ -599,6 +601,7 @@ void UGameplayScene01::SetupBorderTriggers()
                                                                 },
                                                                 "BorderCheck");
 }
+
 void UGameplayScene01::SpawnElasticBody()
 {
     auto tmpBody = UGameObject::Create<UElasticBody>();
