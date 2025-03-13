@@ -14,7 +14,7 @@ class UGameplayScene01 : public ISceneInterface
 public:
     // Inherited via ISceneInterface
     void Initialize() override;
-    void Load() override;
+    void Load(class ID3D11Device* Device, class ID3D11DeviceContext* DeviceContext) override;
     void Unload() override;
     void Update(float DeltaTime) override;
     void Render(URenderer* Renderer) override;
@@ -50,10 +50,9 @@ private:
     float CharacterMass = 5.0f;
     float Character2Mass = 15.0f;
 
-    // 텍스처 및 쉐이더
+    // 텍스처 
     std::shared_ptr<ID3D11ShaderResourceView*> TextureTile;
     std::shared_ptr<ID3D11ShaderResourceView*> TexturePole;
-    std::shared_ptr<UShader> Shader;
 
     // 경계 값
     const float XBorder = 3.0f;

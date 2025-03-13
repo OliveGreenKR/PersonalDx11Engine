@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "D3D.h"
 #include "Math.h"
 

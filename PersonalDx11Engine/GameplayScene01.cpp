@@ -23,7 +23,6 @@ void UGameplayScene01::Initialize()
     auto CubeModel = UModelBufferManager::Get()->GetCubeModel();
     auto SphereModel = UModelBufferManager::Get()->GetSphereModel();
 
-
     const int VIEW_WIDTH = 800;
     const int VIEW_HEIGHT = 800;
 
@@ -82,18 +81,13 @@ void UGameplayScene01::Initialize()
     UInputManager::Get()->RegisterInputContext(InputContext);
 }
 
-void UGameplayScene01::Load()
+void UGameplayScene01::Load(class ID3D11Device* Device, class ID3D11DeviceContext* DeviceContext)
 {
     // 텍스처 로드
-    TextureTile = std::make_shared<ID3D11ShaderResourceView*>();
-    TexturePole = std::make_shared<ID3D11ShaderResourceView*>();
-
-    // 현재는 Renderer가 파라미터로 전달되지 않아 로드할 수 없음
-    // 실제 구현에서는 다음과 같이 해야 함:
-    // LoadTextureFromFile(Renderer->GetDevice(), TEXTURE03, TextureTile.get());
-    // LoadTextureFromFile(Renderer->GetDevice(), TEXTURE02, TexturePole.get());
-
-    // 쉐이더 생성 및 설정도 Renderer가 필요하므로 여기서는 생략
+	TextureTile = std::make_shared<ID3D11ShaderResourceView*>();
+	TexturePole = std::make_shared<ID3D11ShaderResourceView*>();
+	LoadTextureFromFile(Device, TEXTURE03, TextureTile.get());
+	LoadTextureFromFile(Device, TEXTURE02, TexturePole.get());
 }
 
 void UGameplayScene01::Unload()
@@ -109,10 +103,9 @@ void UGameplayScene01::Unload()
     Character2 = nullptr;
     Camera = nullptr;
 
-    // 텍스처 및 쉐이더 해제
+    // 텍스처 해제
     TextureTile = nullptr;
     TexturePole = nullptr;
-    Shader = nullptr;
 }
 
 void UGameplayScene01::Update(float DeltaTime)
@@ -159,28 +152,31 @@ void UGameplayScene01::Update(float DeltaTime)
 
 void UGameplayScene01::Render(URenderer* Renderer)
 {
-    if (!Renderer || !Shader || !Camera)
-        return;
+    //TODO : RenerJobQ 를 통한 렌더링 중앙화 + 쉐이더 전역화
+    
 
-    // 주요 객체 렌더링
-    if (Character && TextureTile && *TextureTile)
-    {
-        Renderer->RenderGameObject(Camera.get(), Character.get(), Shader.get(), *TextureTile);
-    }
+    //if (!Renderer || !Shader || !Camera)
+    //    return;
 
-    if (Character2 && TexturePole && *TexturePole)
-    {
-        Renderer->RenderGameObject(Camera.get(), Character2.get(), Shader.get(), *TexturePole);
-    }
+    //// 주요 객체 렌더링
+    //if (Character && TextureTile && *TextureTile)
+    //{
+    //    Renderer->RenderGameObject(Camera.get(), Character.get(), Shader.get(), *TextureTile);
+    //}
 
-    // 탄성체 렌더링
-    for (auto& elasticBody : ElasticBodies)
-    {
-        if (elasticBody && TexturePole && *TexturePole)
-        {
-            Renderer->RenderGameObject(Camera.get(), elasticBody.get(), Shader.get(), *TexturePole);
-        }
-    }
+    //if (Character2 && TexturePole && *TexturePole)
+    //{
+    //    Renderer->RenderGameObject(Camera.get(), Character2.get(), Shader.get(), *TexturePole);
+    //}
+
+    //// 탄성체 렌더링
+    //for (auto& elasticBody : ElasticBodies)
+    //{
+    //    if (elasticBody && TexturePole && *TexturePole)
+    //    {
+    //        Renderer->RenderGameObject(Camera.get(), elasticBody.get(), Shader.get(), *TexturePole);
+    //    }
+    //}
 
     // 디버그 드로잉 렌더링
     FDebugDrawManager::Get()->DrawAll(Camera.get());
