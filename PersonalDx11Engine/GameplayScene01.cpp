@@ -51,7 +51,7 @@ void UGameplayScene01::Unload()
     // 입력 컨텍스트 삭제
     UInputManager::Get()->UnregisterInputContext(SceneName);
 
-    // 모든 활성 객체 삭제
+    // 모든 활성 객체 해제
     for (auto body : ElasticBodies)
     {
         body->SetActive(false);
@@ -119,8 +119,13 @@ void UGameplayScene01::SubmitRenderUI()
 
         ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);
-        if (ImGui::Button("Print")) {
-            UCollisionManager::Get()->PrintTreeStructure();
+        if (ImGui::Checkbox("bGravity", &bGravity))
+        {
+            LOG("%s", bGravity ? "T" : "F");
+            for (auto ebody : ElasticBodies)
+            {
+                ebody->SetGravity(bGravity);
+            }
         }
         ImGui::End();
                                            });
@@ -213,58 +218,72 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
             std::abs(Position.z) < ZBorder;
         };
 
-    InBody->GetTransform()->OnTransformChangedDelegate.Bind(InBody,
-                                                               [IsInBorder, this, &InBody](const FTransform& InTransform) {
-                                                                   if (!IsInBorder(InTransform.GetPosition()))
-                                                                   {
-                                                                       const Vector3 Position = InTransform.GetPosition();
-                                                                       Vector3 Normal = Vector3::Zero;
-                                                                       Vector3 NewPosition = Position;
+    if (!InBody.get())
+        return;
 
-                                                                       // 충돌한 면의 법선 계산과 위치 보정
-                                                                       if (std::abs(Position.x) >= XBorder)
-                                                                       {
-                                                                           Normal.x = Position.x > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
-                                                                       }
-                                                                       if (std::abs(Position.y) >= YBorder)
-                                                                       {
-                                                                           Normal.y = Position.y > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
-                                                                       }
-                                                                       if (std::abs(Position.z) >= ZBorder)
-                                                                       {
-                                                                           Normal.z = Position.z > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
-                                                                       }
+    // 약한 참조를 사용하여 순환 참조 방지
+    std::weak_ptr<UElasticBody> WeakBody = InBody;
 
-                                                                       Normal.Normalize();
-                                                                       //Position correction
-                                                                       InBody->GetTransform()->SetPosition(NewPosition);
+    InBody->GetTransform()->OnTransformChangedDelegate.Bind(
+        InBody, // 여기서는 객체를 전달해야 함
+        [IsInBorder, this, WeakBody](const FTransform& InTransform) {
+            // 약한 참조에서 유효한 공유 포인터를 획득
+            if (auto Body = WeakBody.lock()) {
+                if (!IsInBorder(InTransform.GetPosition()))
+                {
+                    const Vector3 Position = InTransform.GetPosition();
+                    Vector3 Normal = Vector3::Zero;
+                    Vector3 NewPosition = Position;
 
-                                                                       const Vector3 CurrentVelo = InBody->GetCurrentVelocity();
-                                                                       const float Restitution = 0.8f;
-                                                                       const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
-                                                                       Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * InBody->GetMass();
+                    // 충돌한 면의 법선 계산과 위치 보정
+                    if (std::abs(Position.x) >= XBorder)
+                    {
+                        Normal.x = Position.x > 0 ? -1.0f : 1.0f;
+                        NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+                    }
+                    if (std::abs(Position.y) >= YBorder)
+                    {
+                        Normal.y = Position.y > 0 ? -1.0f : 1.0f;
+                        NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
+                    }
+                    if (std::abs(Position.z) >= ZBorder)
+                    {
+                        Normal.z = Position.z > 0 ? -1.0f : 1.0f;
+                        NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
+                    }
 
-                                                                       InBody->ApplyImpulse(std::move(NewImpulse));
-                                                                   }
-                                                               },
-                                                               "BorderCheck");
+                    Normal.Normalize();
+
+                    // Position correction
+                    Body->GetTransform()->SetPosition(NewPosition);
+
+                    const Vector3 CurrentVelo = Body->GetCurrentVelocity();
+                    const float Restitution = 0.8f;
+                    const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+                    Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Body->GetMass();
+                    Body->ApplyImpulse(std::move(NewImpulse));
+                }
+            }
+        },
+        "BorderCheck"
+    );
 }
-
 void UGameplayScene01::SpawnElasticBody()
 {
     auto body = UGameObject::Create<UElasticBody>();
+    body->PostInitialized();
+    body->PostInitializedComponents();
+
     body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
     body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
-    body->SetMass(FRandom::RandF(1.0f, 5.0f));
     body->SetShapeSphere();
     body->bDebug = true;
     body->SetDebugColor((Vector4)FRandom::RandVector({ 0,0,0 }, { 1,1,1 }));
-    body->PostInitialized();
-    body->PostInitializedComponents();
+    body->SetMass(FRandom::RandF(1.0f, 5.0f));
+    body->SetGravity(bGravity);
+
     body->SetActive(true);
+
     SetupBorderTriggers(body);
 
     ElasticBodies.push_back(body);

@@ -234,26 +234,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->ProcessRenderJobs(Shader.get());
 		Renderer->ClearRenderJobs();
 #pragma region SystemUI
-		UUIManager::Get()->RegisterUIElement("SystemUI_FPS", [DeltaTime]() {
-			ImGui::SetNextWindowSize(ImVec2(150, 20));
-			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 150, 0));
-			ImGui::Begin("##DebugText", nullptr,
+		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02]() {
+			ImGui::SetNextWindowSize(ImVec2(400, 30));
+			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 410, 0));
+			ImGui::Begin("SystemUI", nullptr,
 						 ImGuiWindowFlags_NoTitleBar |
 						 ImGuiWindowFlags_NoResize |
 						 ImGuiWindowFlags_NoMove |
-						 ImGuiWindowFlags_NoInputs |
 						 ImGuiWindowFlags_NoBackground |
 						 ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("FPS : %.2f", 1.0f / DeltaTime);
-			ImGui::End();
-											 });
-
-		UUIManager::Get()->RegisterUIElement("SystemUI_Scene", [&GameplayScene01,&GameplayScene02]() {
-			ImGui::SetNextWindowSize(ImVec2(150, 40));
-			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 300, 0));
-			ImGui::Begin("Scene", nullptr, 
-						 ImGuiWindowFlags_NoTitleBar);
-			ImGui::SameLine();
 			if (ImGui::Button("Scene01"))
 			{
 				USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
@@ -263,9 +252,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				USceneManager::Get()->ChangeScene(GameplayScene02->GetName());
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("CollisionTree")) {
+				UCollisionManager::Get()->PrintTreeStructure();
+			}
+			ImGui::SameLine();
+			ImGui::Text("FPS : %.02f", 1.0f / DeltaTime);
 			ImGui::End();
 											 });
-
 
 #pragma endregion
 

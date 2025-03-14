@@ -183,13 +183,6 @@ void UGameplayScene02::SubmitRenderUI()
 
             ImGui::End();
         }
-
-        ImGui::Begin("Collsiion", nullptr, UIWindowFlags);
-        if (ImGui::Button("Print")) {
-            UCollisionManager::Get()->PrintTreeStructure();
-        }
-        ImGui::End();
-
         });
 }
 

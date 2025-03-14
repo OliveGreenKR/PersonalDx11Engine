@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #pragma once
 
 #include <functional>
@@ -15,29 +15,29 @@ public:
     using FunctionType = std::function<void(Args...)>;
 
 private:
-    // µ¨¸®°ÔÀÌÆ®¿¡ ¹ÙÀÎµùµÈ ÇÔ¼öÀÇ Á¤º¸¸¦ ÀúÀåÇÏ´Â ±¸Á¶Ã¼
+    // ë¸ë¦¬ê²Œì´íŠ¸ì— ë°”ì¸ë”©ëœ í•¨ìˆ˜ì˜ ì •ë³´ë¥¼ ì €ì¥í•˜ëŠ” êµ¬ì¡°ì²´
     struct FBoundFunction
     {
         FunctionType Function;
-        std::weak_ptr<void> BoundObject;  // void Å¸ÀÔÀ¸·Î ¸ğµç °´Ã¼ Å¸ÀÔ Áö¿ø
+        std::weak_ptr<void> BoundObject;  // void íƒ€ì…ìœ¼ë¡œ ëª¨ë“  ê°ì²´ íƒ€ì… ì§€ì›
         std::string FunctionName;
         bool bSystem = false;
 
         bool operator==(const FBoundFunction& Other) const
         {
-            // µÑ ´Ù ½Ã½ºÅÛ ÇÔ¼öÀÎ °æ¿ì 
+            // ë‘˜ ë‹¤ ì‹œìŠ¤í…œ í•¨ìˆ˜ì¸ ê²½ìš° 
             if (bSystem && Other.bSystem)
             {
                 return FunctionName == Other.FunctionName;
             }
 
-            // ÇÏ³ª¸¸ ½Ã½ºÅÛ ÇÔ¼öÀÎ °æ¿ì
+            // í•˜ë‚˜ë§Œ ì‹œìŠ¤í…œ í•¨ìˆ˜ì¸ ê²½ìš°
             if (bSystem || Other.bSystem)
             {
-                return false;  // ½Ã½ºÅÛ ÇÔ¼ö¿Í °´Ã¼ ÇÔ¼ö´Â Àı´ë °°À» ¼ö ¾øÀ½
+                return false;  // ì‹œìŠ¤í…œ í•¨ìˆ˜ì™€ ê°ì²´ í•¨ìˆ˜ëŠ” ì ˆëŒ€ ê°™ì„ ìˆ˜ ì—†ìŒ
             }
 
-            // µÑ ´Ù °´Ã¼¿¡ ¹ÙÀÎµùµÈ ÇÔ¼öÀÎ °æ¿ì
+            // ë‘˜ ë‹¤ ê°ì²´ì— ë°”ì¸ë”©ëœ í•¨ìˆ˜ì¸ ê²½ìš°
             bool bSameObject = !BoundObject.owner_before(Other.BoundObject) &&
                 !Other.BoundObject.owner_before(BoundObject);
 
@@ -48,14 +48,14 @@ private:
     std::vector<FBoundFunction> BoundFunctions;
 
 public:
-    // ½Ã½ºÅÛ ÇÔ¼ö ¹ÙÀÎµù (°´Ã¼ ¾øÀÌ ÇÔ¼ö¸¸ ¹ÙÀÎµù)
+    // ì‹œìŠ¤í…œ í•¨ìˆ˜ ë°”ì¸ë”© (ê°ì²´ ì—†ì´ í•¨ìˆ˜ë§Œ ë°”ì¸ë”©)
     void BindSystem(const std::function<void(Args...)>& InFunction,
                     const std::string& InFunctionName)
     {
-        // ½Ã½ºÅÛ ÇÔ¼ö
+        // ì‹œìŠ¤í…œ í•¨ìˆ˜
         FBoundFunction NewBinding{ InFunction, std::weak_ptr<void>(), InFunctionName ,true };
 
-        // Áßº¹ ¹ÙÀÎµù ¹æÁö
+        // ì¤‘ë³µ ë°”ì¸ë”© ë°©ì§€
         auto ExistingBinding = std::find_if(
             BoundFunctions.begin(),
             BoundFunctions.end(),
@@ -71,7 +71,7 @@ public:
         }
     }
 
-    // ½Ã½ºÅÛ ÇÔ¼ö ¾ğ¹ÙÀÎµù
+    // ì‹œìŠ¤í…œ í•¨ìˆ˜ ì–¸ë°”ì¸ë”©
     void UnbindSystem(const std::string& InFunctionName)
     {
         BoundFunctions.erase(
@@ -89,16 +89,16 @@ public:
     }
 
 
-    // ¸â¹ö ÇÔ¼ö¸¦ µ¨¸®°ÔÀÌÆ®¿¡ ¹ÙÀÎµù
+    // ë©¤ë²„ í•¨ìˆ˜ë¥¼ ë¸ë¦¬ê²Œì´íŠ¸ì— ë°”ì¸ë”©
     template<typename T>
     void Bind(const std::shared_ptr<T>& InObject,
               const FunctionType& InFunction,
               const std::string& InFunctionName)
     {
-        // ÀÌ¹Ì Á¸ÀçÇÏ´ÂÁö È®ÀÎ
+        // ì´ë¯¸ ì¡´ì¬í•˜ëŠ”ì§€ í™•ì¸
         FBoundFunction NewBinding{ InFunction, InObject, InFunctionName };
 
-        // Áßº¹ ¹ÙÀÎµù ¹æÁö
+        // ì¤‘ë³µ ë°”ì¸ë”© ë°©ì§€
         auto ExistingBinding = std::find_if(
             BoundFunctions.begin(),
             BoundFunctions.end(),
@@ -114,7 +114,7 @@ public:
         }
     }
 
-    // ¸â¹ö ÇÔ¼ö Æ÷ÀÎÅÍ¸¦ À§ÇÑ »õ·Î¿î ¿À¹ö·Îµå Ãß°¡
+    // ë©¤ë²„ í•¨ìˆ˜ í¬ì¸í„°ë¥¼ ìœ„í•œ ìƒˆë¡œìš´ ì˜¤ë²„ë¡œë“œ ì¶”ê°€
     template<typename U, typename T>
     void Bind(const std::shared_ptr<U>& InObject,
               void (T::* MemberFunction)(Args...),
@@ -130,7 +130,7 @@ public:
         Bind(InObject, BoundFunction, InFunctionName);
     }
 
-    // Æ¯Á¤ °´Ã¼ÀÇ Æ¯Á¤ ÇÔ¼ö¸¦ ¾ğ¹ÙÀÎµù
+    // íŠ¹ì • ê°ì²´ì˜ íŠ¹ì • í•¨ìˆ˜ë¥¼ ì–¸ë°”ì¸ë”©
     template<typename T>
     void Unbind(const std::shared_ptr<T>& InObject, const std::string& InFunctionName)
     {
@@ -148,7 +148,7 @@ public:
                     auto BoundObjectLocked = Binding.BoundObject.lock();
                     if (!BoundObjectLocked)
                     {
-                        // °´Ã¼°¡ ÀÌ¹Ì »èÁ¦µÊ
+                        // ê°ì²´ê°€ ì´ë¯¸ ì‚­ì œë¨
                         return true;
                     }
 
@@ -159,7 +159,7 @@ public:
         );
     }
 
-    // Æ¯Á¤ °´Ã¼ÀÇ ¸ğµç ¹ÙÀÎµù Á¦°Å
+    // íŠ¹ì • ê°ì²´ì˜ ëª¨ë“  ë°”ì¸ë”© ì œê±°
     template<typename T>
     void UnbindAll(const std::shared_ptr<T>& InObject)
     {
@@ -172,7 +172,7 @@ public:
                     auto BoundObjectLocked = Binding.BoundObject.lock();
                     if (!BoundObjectLocked)
                     {
-                        // °´Ã¼°¡ ÀÌ¹Ì »èÁ¦µÊ
+                        // ê°ì²´ê°€ ì´ë¯¸ ì‚­ì œë¨
                         return true;
                     }
 
@@ -183,19 +183,19 @@ public:
         );
     }
 
-    // ¸ğµç ¹ÙÀÎµù Á¦°Å
+    // ëª¨ë“  ë°”ì¸ë”© ì œê±°
     void UnbindAll()
     {
         BoundFunctions.clear();
     }
 
-    // µ¨¸®°ÔÀÌÆ® ½ÇÇà (»ì¾ÆÀÖ´Â °´Ã¼ÀÇ ÇÔ¼ö¸¸ È£Ãâ)
+    // ë¸ë¦¬ê²Œì´íŠ¸ ì‹¤í–‰ (ì‚´ì•„ìˆëŠ” ê°ì²´ì˜ í•¨ìˆ˜ë§Œ í˜¸ì¶œ)
     void Broadcast(Args... InArgs) 
     {
         bool isDirty = false;
         for (const auto& Binding : BoundFunctions)
         {
-            // °´Ã¼¿¡ ¹ÙÀÎµùµÈ ÇÔ¼öÀÇ °æ¿ì °´Ã¼ »ıÁ¸ È®ÀÎ
+            // ê°ì²´ì— ë°”ì¸ë”©ëœ í•¨ìˆ˜ì˜ ê²½ìš° ê°ì²´ ìƒì¡´ í™•ì¸
             if (!Binding.bSystem)
             {
                 if (Binding.BoundObject.expired())
@@ -211,7 +211,7 @@ public:
                     }
                 }
             }
-            // ½Ã½ºÅÛ ÇÔ¼ö´Â °´Ã¼ È®ÀÎ ¾øÀÌ Á÷Á¢ È£Ãâ
+            // ì‹œìŠ¤í…œ í•¨ìˆ˜ëŠ” ê°ì²´ í™•ì¸ ì—†ì´ ì§ì ‘ í˜¸ì¶œ
             else if (Binding.Function)
             {
                 Binding.Function(InArgs...);
@@ -224,7 +224,7 @@ public:
         }
     }
 
-    // Á¤¸® ÇÔ¼ö - »èÁ¦µÈ °´Ã¼ÀÇ ¹ÙÀÎµùÀ» Á¦°Å
+    // ì •ë¦¬ í•¨ìˆ˜ - ì‚­ì œëœ ê°ì²´ì˜ ë°”ì¸ë”©ì„ ì œê±°
     void RemoveExpiredBindings()
     {
         BoundFunctions.erase(
@@ -240,7 +240,7 @@ public:
         );
     }
 
-    // Á¤¸® ÇÔ¼ö - nullÀ» ÂüÁ¶ÇÏ°í ÀÖ´Â ¸ğµç ¹ÙÀÎµù Á¦°Å(½Ã½ºÅÛÆ÷ÇÔ)
+    // ì •ë¦¬ í•¨ìˆ˜ - nullì„ ì°¸ì¡°í•˜ê³  ìˆëŠ” ëª¨ë“  ë°”ì¸ë”© ì œê±°(ì‹œìŠ¤í…œí¬í•¨)
     void RemoveSystemBindings()
     {
         BoundFunctions.erase(
@@ -256,7 +256,7 @@ public:
         );
     }
 
-    // ¹ÙÀÎµùµÈ ÇÔ¼öÀÇ ¼ö ¹İÈ¯
+    // ë°”ì¸ë”©ëœ í•¨ìˆ˜ì˜ ìˆ˜ ë°˜í™˜
     size_t GetNumBound() const
     {
         return BoundFunctions.size();
