@@ -96,41 +96,47 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	Vector3 TargetPosition = TargetObject->GetTransform()->GetPosition();
 	Vector3 CurrentPosition = GetTransform()->GetPosition();
 	Vector3 DesiredDirection = TargetPosition - CurrentPosition;
+
+	// 방향 벡터가 너무 작으면 계산 중단
+	if (DesiredDirection.LengthSquared() < KINDA_SMALL)
+		return;
+
 	DesiredDirection.Normalize();
 	Vector3 CurrentForward = GetNormalizedForwardVector();
 
-	// 2. 현재 방향에서 목표 방향으로의 회전 계산
-	Quaternion ToRotate = Math::GetRotationBetweenVectors(CurrentForward, DesiredDirection);
-
-	// 3. 회전 각도 계산
+	// 2. 현재 방향과 목표 방향 간의 각도 계산
 	float DotProduct = Vector3::Dot(CurrentForward, DesiredDirection);
 	DotProduct = Math::Clamp(DotProduct, -1.0f, 1.0f);
-	float AngleDiff = Math::RadToDegree(std::acos(DotProduct)); //[0:180]
+	float AngleDiff = Math::RadToDegree(std::acos(DotProduct)); // [0:180]
 
-	// 4. 최소 각도 체크
+	// 3. 최소 각도 이하면 회전하지 않음
 	if (AngleDiff < MinTrackAngle)
 		return;
 
-	// 5. 회전 속도 계산 (각도가 클수록 빠르게)
-	float SpeedFactor = Math::Clamp(AngleDiff / MaxTrackAngleSpeed, 0.0f, 1.0f);
-	float CurrentRotationSpeed = MaxRotationSpeed * SpeedFactor * DeltaTime;
-
-	// 6. 최종 회전 계산
-	Quaternion StepRotation;
-	if (AngleDiff > MaxTrackAngle)
+	// 4. 회전 방향 결정
+	Vector3 RotAxis = Vector3::Cross(CurrentForward, DesiredDirection);
+	if (RotAxis.LengthSquared() < KINDA_SMALL)
 	{
-		LOG("Out of Max Track Angle");
-		float RotateAmount = MaxTrackAngle / AngleDiff;
-		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
+		// 완전히 반대 방향을 바라보는 경우, 임의의 회전축 사용
+		RotAxis = Vector3::Cross(CurrentForward, Vector3::Up);
+		if (RotAxis.LengthSquared() < KINDA_SMALL)
+			RotAxis = Vector3::Cross(CurrentForward, Vector3::Right);
 	}
-	else
-	{
-		float RotateAmount = CurrentRotationSpeed / AngleDiff;
-		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
-	}
+	RotAxis.Normalize();
 
-	// 7. 회전 적용
-	AddRotationQuaternion(StepRotation);
+	// 5. 회전 각도 제한 및 속도 계산
+	float RotationAngle = std::min(AngleDiff, MaxTrackAngle); // 최대 회전 각도 제한
+	float SpeedFactor = Math::Clamp(AngleDiff / MaxTrackAngleSpeed, 0.1f, 1.0f); // 회전 속도 계수
+	float FinalRotationAngle = RotationAngle * SpeedFactor * DeltaTime * MaxRotationSpeed;
+
+	// 6. 회전 적용
+	if (FinalRotationAngle > KINDA_SMALL)
+	{
+		Quaternion DeltaRotation;
+		XMVECTOR RotationQuat = XMQuaternionRotationAxis(XMLoadFloat3(&RotAxis), Math::DegreeToRad(FinalRotationAngle));
+		XMStoreFloat4(&DeltaRotation, RotationQuat);
+		AddRotationQuaternion(DeltaRotation);
+	}
 }
 
 void UCamera::UpdatDirtyView() 
