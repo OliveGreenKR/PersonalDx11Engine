@@ -56,6 +56,11 @@ struct FCollisionSystemConfig
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
     int ConstraintInterations = 5;
+    //fixedTimeStep
+    bool bUseFixedTimestep = true;       // 고정 타임스텝 사용 여부
+    float FixedTimeStep = 0.016f;        // 고정 타임스텝 크기 (60Hz)
+    int MaxSubSteps = 5;                 // 최대 서브스텝 수
+
     // AABB Tree 관련 설정
     size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간
@@ -168,6 +173,9 @@ private:
     class FCollisionDetector* Detector = nullptr;
     class FCollisionResponseCalculator* ResponseCalculator = nullptr;
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
+
+    // 고정 타임스텝 관련 변수
+    float AccumulatedTime = 0.0f;
 
     // 컴포넌트 관리
     //std::vector<FComponentData> RegisteredComponents; 

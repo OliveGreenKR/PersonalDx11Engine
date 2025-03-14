@@ -119,6 +119,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	Quaternion StepRotation;
 	if (AngleDiff > MaxTrackAngle)
 	{
+		LOG("Out of Max Track Angle");
 		float RotateAmount = MaxTrackAngle / AngleDiff;
 		StepRotation = Math::Slerp(Quaternion::Identity, ToRotate, RotateAmount);
 	}
@@ -131,6 +132,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	// 7. 회전 적용
 	AddRotationQuaternion(StepRotation);
 }
+
 void UCamera::UpdatDirtyView() 
 {
 	UpdateViewMatrix();

@@ -187,10 +187,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Scene
 	auto GameplayScene01 = make_shared<UGameplayScene01>();
 	USceneManager::Get()->RegisterScene(GameplayScene01);
-	USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
 
 	auto GameplayScene02 = make_shared<UGameplayScene02>();
 	USceneManager::Get()->RegisterScene(GameplayScene02);
+
+	//Defualt Scene Load
+	USceneManager::Get()->ChangeScene(GameplayScene02->GetName());
 
 #pragma region MainLoop
 	while (bIsExit == false)

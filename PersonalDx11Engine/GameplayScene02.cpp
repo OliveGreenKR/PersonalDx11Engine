@@ -32,6 +32,7 @@ void UGameplayScene02::Initialize()
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
     Camera->SetPosition({ 0, 0.0f, -10.0f });
 
+
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
     Character->SetScale(0.75f * Vector3::One);
@@ -52,13 +53,15 @@ void UGameplayScene02::Initialize()
     Character2->PostInitialized();
 
     Camera->SetLookAtObject(Character.get());
-    Camera->LookTo(Character->GetTransform()->GetPosition());
+    Camera->LookTo({ 0.0f, 0.0f, 0.0f }); //.정중앙
     Camera->bLookAtObject = false;
 
     Character->PostInitializedComponents();
     Character2->PostInitializedComponents();
     Camera->PostInitializedComponents();
 
+    //물리속성 설정
+    SetMaxSpeeds(MaxSpeed);
     // 경계 충돌 감지 설정
     SetupBorderTriggers();
 
@@ -143,6 +146,7 @@ void UGameplayScene02::SubmitRenderUI()
         if (Character)
         {
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
+            Vector3 CurrentPos = Character->GetTransform()->GetPosition();
             bool bGravity = Character->IsGravity();
             bool bPhysics = Character->IsPhysicsSimulated();
             ImGui::Begin("Charcter", nullptr, UIWindowFlags);
@@ -155,6 +159,9 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
                         CurrentVelo.y,
                         CurrentVelo.z);
+            ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
+                        CurrentPos.y,
+                        CurrentPos.z);
             ImGui::End();
         }
 
@@ -174,16 +181,21 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
                         CurrentVelo.y,
                         CurrentVelo.z);
-            ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
-                        Character2->GetTransform()->GetPosition().y,
-                        Character2->GetTransform()->GetPosition().z);
-            ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
-                        Character2->GetTransform()->GetEulerRotation().y,
-                        Character2->GetTransform()->GetEulerRotation().z);
-
             ImGui::End();
         }
+
+        ImGui::Begin("Both", nullptr, UIWindowFlags);
+        ImGui::SetNextItemWidth(50.0f);
+        if (ImGui::InputFloat("MaxSpeed", &MaxSpeed, 0.0f, 0.0f, "%.02f"))
+        {
+            SetMaxSpeeds(MaxSpeed);
+        }
+        ImGui::SetNextItemWidth(50.0f);
+        ImGui::InputFloat("PowerMags", &PowerMagnitude, 0.0f, 0.0f, "%.02f");
+        ImGui::End();
         });
+
+
 }
 
 void UGameplayScene02::HandleInput(const FKeyEventData& EventData)
@@ -251,7 +263,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * 100.0f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -268,7 +280,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * 100.0f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -285,7 +297,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * 100.0f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -302,7 +314,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * 100.0f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -328,7 +340,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * 100.0f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -345,7 +357,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * 100.0f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -362,7 +374,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * 100.0f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -379,7 +391,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              Character2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * 100.0f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (EventData.bShift)
                                  {
@@ -551,4 +563,22 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                     }
                                                                 },
                                                                 "BorderCheck");
+}
+
+void UGameplayScene02::SetMaxSpeeds(const float InMaxSpeed)
+{
+    MaxSpeed = InMaxSpeed;
+    if (Character)
+    {
+        Character->SetMaxSpeed(MaxSpeed);
+    }
+    if (Character2)
+    {
+        Character2->SetMaxSpeed(MaxSpeed);
+    }
+}
+
+void UGameplayScene02::SetPowerMagnitude(const float InMagnitude)
+{
+    PowerMagnitude = InMagnitude;
 }

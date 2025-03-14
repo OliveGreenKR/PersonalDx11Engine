@@ -41,6 +41,15 @@ public:
 		return std::make_shared<ConstructorAccess<T>>(InModel);
 	}
 
+	template<typename T, typename...Args>
+	static std::shared_ptr<T> Create(Args&&...args)
+	{
+		static_assert(std::is_base_of_v<UGameObject, T> || std::is_same_v<UGameObject, T>,
+					  "T must be derived of UGameObject");
+
+		return std::make_shared<ConstructorAccess<T>>(std::forward<Args>(args)...);
+	}
+
 protected:
 	UGameObject();
 	UGameObject(const shared_ptr<UModel>& InModel);

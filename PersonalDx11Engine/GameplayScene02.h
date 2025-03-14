@@ -24,6 +24,12 @@ public:
 
     std::string& GetName() override { return SceneName; }
 
+    void SetMaxSpeeds(const float InMaxSpeed);
+    void SetPowerMagnitude(const float InMagnitude);
+
+    float GetMaxSpeeds() const { return MaxSpeed; }
+    float GetPowerMagnitude() const { return PowerMagnitude; }
+
 public:
     UGameplayScene02();
     ~UGameplayScene02() = default;
@@ -33,6 +39,9 @@ private:
     void SetupBorderTriggers();
 
 private:
+    float MaxSpeed = 5.0f;
+    float PowerMagnitude = 100.0f;
+
     // 객체 및 카메라
     std::shared_ptr<UCamera> Camera;
     std::shared_ptr<UElasticBody> Character;

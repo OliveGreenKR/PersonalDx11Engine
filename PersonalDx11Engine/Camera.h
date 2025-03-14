@@ -10,8 +10,9 @@ public:
 
 	static std::shared_ptr<UCamera> Create(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ)
 	{
-		return std::shared_ptr<UCamera>(new UCamera(fov, viewportWidth, viewportHeight,nearZ, farZ));
+		return UGameObject::Create<UCamera>(fov, viewportWidth, viewportHeight, nearZ, farZ);
 	}
+
 protected:
 	explicit UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ);
 public:
