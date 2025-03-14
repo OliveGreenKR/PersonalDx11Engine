@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "D3D.h"
+#include "RenderHardwareInterface.h"
 #include "Math.h"
 #include <vector>
 
@@ -57,15 +57,9 @@ public:
 public:
 	__forceinline ID3D11Device* GetDevice() { return RenderHardware->GetDevice(); }
 	__forceinline ID3D11DeviceContext* GetDeviceContext() { return RenderHardware->GetDeviceContext(); }
-	__forceinline ID3D11SamplerState* GetDefaultSamplerState() {return DefaultSamplerState;	}
-public:
-	__forceinline void SetVSync(bool activation) { RenderHardware->bVSync = activation; }
+	__forceinline ID3D11SamplerState* GetDefaultSamplerState() {return RenderHardware->GetDefaultSamplerState();	}
 
 private:
-	bool CreateDefaultSamplerState();
-
-private:
-	FD3D* RenderHardware = new FD3D();
-	ID3D11SamplerState* DefaultSamplerState = nullptr;
+	IRenderHardware* RenderHardware;
 	std::vector<FRenderJob> RenderJobs;
 };

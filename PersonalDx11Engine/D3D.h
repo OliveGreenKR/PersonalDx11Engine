@@ -1,30 +1,24 @@
-#pragma once
-#pragma comment(lib, "user32")
-#pragma comment(lib, "d3d11")
-#pragma comment(lib, "d3dcompiler")
-#pragma comment(lib, "dxguid")
-
-#include <d3d11.h>
-#include <d3dcompiler.h>
-#include <directxmath.h>
+Ôªø#pragma once
+#include "RenderHardwareInterface.h"
 
 using namespace DirectX;
 
-class FD3D
+class FD3D : public IRenderHardware
 {
 public:
     FD3D() = default;
     ~FD3D();
 
-    bool Initialize(HWND Hwnd);
-    void Release();
+    // Inherited via IRenderHardware
+    bool Initialize(HWND Hwnd) override;
+    void Release() override;
+    void BeginFrame() override;
+    void EndFrame() override;
+    ID3D11SamplerState* GetDefaultSamplerState() override;
+    bool IsDeviceReady() override { return bIsInitialized; }
 
-    void BeginScene();
-    void EndScene();
-
-
-    __forceinline ID3D11Device* GetDevice()                 { return Device; }
-    __forceinline ID3D11DeviceContext* GetDeviceContext()   { return DeviceContext; }
+    __forceinline ID3D11Device* GetDevice() override               { return Device; }
+    __forceinline ID3D11DeviceContext* GetDeviceContext() override   { return DeviceContext; }
 
     bool CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer);
 
@@ -42,12 +36,14 @@ private:
     bool CreateDepthStencilState();
     bool CreateDepthStencillView();
     bool CreateBlendState();
+    bool CreateDefaultSamplerState();
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencil();
 private:
+    bool bIsInitialized = false;
 
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;
@@ -58,9 +54,12 @@ private:
     ID3D11DepthStencilState* DepthStencilState = nullptr;
     ID3D11BlendState* BlendState = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
-    //RenderTargetView¥¬ ∑ª¥ı∏µ ∞·∞˙π∞¿ª ¿˙¿Â«“ ∏ﬁ∏∏Æ øµø™ ¡ˆ¡§, 
+    //RenderTargetViewÎäî Î†åÎçîÎßÅ Í≤∞Í≥ºÎ¨ºÏùÑ Ï†ÄÏû•Ìï† Î©îÎ™®Î¶¨ ÏòÅÏó≠ ÏßÄÏ†ï, 
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RasterizerState* RasterizerState = nullptr;
+    ID3D11SamplerState* DefaultSamplerState = nullptr;
+
+
 
     D3D11_VIEWPORT ViewportInfo;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };

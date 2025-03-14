@@ -1,4 +1,4 @@
-#include "D3D.h"
+ï»¿#include "D3D.h"
 
 FD3D::~FD3D()
 {
@@ -15,6 +15,7 @@ bool FD3D::Initialize(HWND Hwnd)
 		CreateDepthStencillView() &&
 		CreateBlendState();
 
+	bIsInitialized = result;
 	assert(result);
 	return result;
 }
@@ -31,12 +32,12 @@ void FD3D::Release()
 	}
 }
 
-void FD3D::BeginScene()
+void FD3D::BeginFrame()
 {
 	PrepareRender();
 }
 
-void FD3D::EndScene()
+void FD3D::EndFrame()
 {
 	//swap buffer
 	SwapChain->Present(bVSync, 0);
@@ -89,7 +90,7 @@ bool FD3D::CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer)
 void FD3D::PrepareRender()
 {
 	DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);
-	//±íÀÌ¹öÆÛ ÃÖ´ñ°ª ÃÊ±âÈ­
+	//ê¹Šì´ë²„í¼ ìµœëŒ“ê°’ ì´ˆê¸°í™”
 	DeviceContext->ClearDepthStencilView(DepthStencilView, 
 										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -112,15 +113,15 @@ bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)
 	D3D_FEATURE_LEVEL featurelevels[] = { D3D_FEATURE_LEVEL_11_0 };
 
 	DXGI_SWAP_CHAIN_DESC swapchaindesc = {};
-	swapchaindesc.BufferDesc.Width = 0; // Ã¢ Å©±â¿¡ ¸Â°Ô ÀÚµ¿À¸·Î ¼³Á¤
-	swapchaindesc.BufferDesc.Height = 0; // Ã¢ Å©±â¿¡ ¸Â°Ô ÀÚµ¿À¸·Î ¼³Á¤
-	swapchaindesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // »ö»ó Æ÷¸Ë - 32bit
-	swapchaindesc.SampleDesc.Count = 1; // ¸ÖÆ¼ »ùÇÃ¸µ ºñÈ°¼ºÈ­
-	swapchaindesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // ·»´õ Å¸°ÙÀ¸·Î »ç¿ë
-	swapchaindesc.BufferCount = 2; // ´õºí ¹öÆÛ¸µ
-	swapchaindesc.OutputWindow = Hwnd; // ·»´õ¸µÇÒ Ã¢ ÇÚµé
-	swapchaindesc.Windowed = TRUE; // Ã¢ ¸ðµå
-	swapchaindesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // ½º¿Ò ¹æ½Ä - discard backbuffer
+	swapchaindesc.BufferDesc.Width = 0; // ì°½ í¬ê¸°ì— ë§žê²Œ ìžë™ìœ¼ë¡œ ì„¤ì •
+	swapchaindesc.BufferDesc.Height = 0; // ì°½ í¬ê¸°ì— ë§žê²Œ ìžë™ìœ¼ë¡œ ì„¤ì •
+	swapchaindesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // ìƒ‰ìƒ í¬ë§· - 32bit
+	swapchaindesc.SampleDesc.Count = 1; // ë©€í‹° ìƒ˜í”Œë§ ë¹„í™œì„±í™”
+	swapchaindesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // ë Œë” íƒ€ê²Ÿìœ¼ë¡œ ì‚¬ìš©
+	swapchaindesc.BufferCount = 2; // ë”ë¸” ë²„í¼ë§
+	swapchaindesc.OutputWindow = Hwnd; // ë Œë”ë§í•  ì°½ í•¸ë“¤
+	swapchaindesc.Windowed = TRUE; // ì°½ ëª¨ë“œ
+	swapchaindesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // ìŠ¤ì™‘ ë°©ì‹ - discard backbuffer
 	swapchaindesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; //auto selected by G-Driver
 	swapchaindesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED; ////auto selected by G-Driver
 
@@ -170,8 +171,8 @@ bool FD3D::CreateFrameBuffer()
 bool FD3D::CreateRasterizerState()
 {
 	D3D11_RASTERIZER_DESC rasterizerdesc = {};
-	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // Ã¤¿ì±â ¸ðµå
-	rasterizerdesc.CullMode = D3D11_CULL_BACK; // ¹é ÆäÀÌ½º ÄÃ¸µ
+	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // ì±„ìš°ê¸° ëª¨ë“œ
+	rasterizerdesc.CullMode = D3D11_CULL_BACK; // ë°± íŽ˜ì´ìŠ¤ ì»¬ë§
 
 	return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
 }
@@ -250,11 +251,28 @@ bool FD3D::CreateBlendState()
 	return SUCCEEDED(Device->CreateBlendState(&blendDesc, &BlendState));
 }
 
+bool FD3D::CreateDefaultSamplerState()
+{
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;  // ë°”ì´ë¦¬ë‹ˆì–´ í•„í„°ë§, ë¶€ë“œëŸ¬ìš´ í…ìŠ¤ì²˜ í‘œì‹œ
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // Uì¢Œí‘œ ë°˜ë³µ
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;     // Vì¢Œí‘œ ë°˜ë³µ  
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;     // Wì¢Œí‘œ ë°˜ë³µ
+	samplerDesc.MinLOD = 0;                                // ìµœì†Œ LOD ë ˆë²¨
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;               // ìµœëŒ€ LOD ì œí•œ ì—†ìŒ
+	samplerDesc.MipLODBias = 0;                           // LOD ë ˆë²¨ ì¡°ì • ì—†ìŒ
+	samplerDesc.MaxAnisotropy = 1;                        // ë¹„ë“±ë°©ì„± í•„í„°ë§ ì‚¬ìš© ì•ˆí•¨
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // ë¹„êµ ìƒ˜í”Œë§ ì‚¬ìš© ì•ˆí•¨
+
+	HRESULT result = GetDevice()->CreateSamplerState(&samplerDesc, &DefaultSamplerState);
+	return SUCCEEDED(result);
+}
+
 void FD3D::ReleaseDeviceAndSwapChain()
 {
 	if (DeviceContext)
 	{
-		DeviceContext->Flush(); // ³²¾ÆÀÖ´Â GPU ¸í·É ½ÇÇà
+		DeviceContext->Flush(); // ë‚¨ì•„ìžˆëŠ” GPU ëª…ë ¹ ì‹¤í–‰
 	}
 
 	if (SwapChain)
@@ -319,3 +337,17 @@ void FD3D::ReleaseDepthStencil()
 	}
 	
 }
+
+ID3D11SamplerState* FD3D::GetDefaultSamplerState()
+{
+	if (!DefaultSamplerState)
+	{
+		if (!CreateDefaultSamplerState())
+		{
+			return nullptr;
+		}
+	}
+
+	return DefaultSamplerState;
+}
+

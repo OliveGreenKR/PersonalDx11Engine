@@ -191,6 +191,7 @@
     <ClInclude Include="ModelBufferManager.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
+    <ClInclude Include="RenderHardwareInterface.h" />
     <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />
