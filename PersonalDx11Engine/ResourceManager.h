@@ -82,13 +82,6 @@ public:
     std::shared_ptr<class UShader> LoadShader(const std::wstring& VSPath, const std::wstring& PSPath,
                                               D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize);
 
-
-    // 미구현 - 비동기 로딩 업데이트 (매 프레임 호출)
-    void UpdateAsyncLoading()
-    {
-        // 비동기 로드 큐 처리 (구현 필요)
-    }
-
     // 미사용 리소스 언로드
     void UnloadUnusedResources(float TimeSinceLastUse = 60.0f)
     {

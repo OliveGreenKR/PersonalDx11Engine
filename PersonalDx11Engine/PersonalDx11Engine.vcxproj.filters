@@ -89,6 +89,9 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine\Managers</Filter>
     </ClCompile>
+    <ClCompile Include="GameplayScene02.cpp">
+      <Filter>Contents\Scenes\Scene2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -189,6 +192,9 @@
     </Filter>
     <Filter Include="Engine\Resources\Texture">
       <UniqueIdentifier>{5748ce1d-105a-40ce-b7a9-d258531e7723}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Scenes\Scene2">
+      <UniqueIdentifier>{e9b29a5b-ecca-4913-93ab-6f047d3670ed}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -347,6 +353,9 @@
     </ClInclude>
     <ClInclude Include="UIManager.h">
       <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameplayScene02.h">
+      <Filter>Contents\Scenes\Scene2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

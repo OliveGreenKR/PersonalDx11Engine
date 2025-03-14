@@ -30,14 +30,12 @@ public:
 
 private:
     void SetupInput();
-    void SetupBorderTriggers();
+    void SetupBorderTriggers(shared_ptr<UElasticBody>& InBody);
     void SpawnElasticBody();
 
 private:
     // 객체 및 카메라
     std::shared_ptr<UCamera> Camera;
-    std::shared_ptr<UGameObject> Character;
-    std::shared_ptr<UElasticBody> Character2;
     std::vector<std::shared_ptr<UElasticBody>> ElasticBodies;
 
     // 씬 이름
@@ -47,10 +45,6 @@ private:
     float AccumTime = 0.0f;
     const float SPAWN_FREQUENCY = 0.75f;
     bool bSpawnBody = true;
-
-    // 물리 관련 변수
-    float CharacterMass = 5.0f;
-    float Character2Mass = 15.0f;
 
     // 텍스처 
     std::shared_ptr<class UTexture2D> TextureTile;

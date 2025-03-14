@@ -518,6 +518,7 @@ void UCollisionManager::PrintTreeStructure()
 //test
 	CollisionTree->PrintTreeStructure(std::cout);
 	LOG("Collision Comps : %02d", CollisionTree->GetLeafNodeCount());
+	LOG("Node : %02d", CollisionTree->GetNodeCount());
 	LOG("-------------------------------------");
 #endif
 }

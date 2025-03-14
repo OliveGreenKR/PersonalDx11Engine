@@ -24,6 +24,7 @@
 
 #include "SceneManager.h"
 #include "GameplayScene01.h"
+#include "GameplayScene02.h"
 
 #include "ResourceManager.h"
 #include "UIManager.h"
@@ -188,6 +189,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	USceneManager::Get()->RegisterScene(GameplayScene01);
 	USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
 
+	auto GameplayScene02 = make_shared<UGameplayScene02>();
+	USceneManager::Get()->RegisterScene(GameplayScene02);
+
 #pragma region MainLoop
 	while (bIsExit == false)
 	{
@@ -243,6 +247,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("FPS : %.2f", 1.0f / DeltaTime);
 			ImGui::End();
 											 });
+
+		UUIManager::Get()->RegisterUIElement("SystemUI_Scene", [&GameplayScene01,&GameplayScene02]() {
+			ImGui::SetNextWindowSize(ImVec2(150, 40));
+			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 300, 0));
+			ImGui::Begin("Scene", nullptr, 
+						 ImGuiWindowFlags_NoTitleBar);
+			ImGui::SameLine();
+			if (ImGui::Button("Scene01"))
+			{
+				USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Scene02"))
+			{
+				USceneManager::Get()->ChangeScene(GameplayScene02->GetName());
+			}
+			ImGui::End();
+											 });
+
+
 #pragma endregion
 
 		USceneManager::Get()->RenderUI();
