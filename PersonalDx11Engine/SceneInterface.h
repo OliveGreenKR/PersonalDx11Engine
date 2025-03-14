@@ -10,6 +10,7 @@ public:
     virtual void SubmitRender(class URenderer* Renderer) = 0; // 씬 렌더링
     virtual void SubmitRenderUI() = 0;  //UI 렌더링 요청
     virtual void HandleInput(const class FKeyEventData& EventData) = 0; // 입력 처리
+    virtual class UCamera* GetMainCamera() const = 0; //메인 카메라 접근자
 
     virtual std::string& GetName() = 0; //Scene 이름
 };

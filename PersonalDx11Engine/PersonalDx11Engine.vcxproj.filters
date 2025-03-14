@@ -324,9 +324,6 @@
     <ClInclude Include="GameplayScene01.h">
       <Filter>Contents\Scenes\Scene1</Filter>
     </ClInclude>
-    <ClInclude Include="WorldManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">

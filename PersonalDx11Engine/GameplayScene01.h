@@ -20,6 +20,7 @@ public:
     void SubmitRender(URenderer* Renderer) override;
     void SubmitRenderUI() override;
     void HandleInput(const FKeyEventData& EventData) override;
+    class UCamera* GetMainCamera() const override { return Camera.get(); }
 
     std::string& GetName() override { return SceneName; }
 

@@ -82,6 +82,11 @@ public:
         }
     }
 
+    class UCamera* GetActiveCamera()
+    {
+        return ActiveScene->GetMainCamera();
+    }
+
     // 활성 씬 반환
     std::shared_ptr<ISceneInterface> GetActiveScene() const
     {

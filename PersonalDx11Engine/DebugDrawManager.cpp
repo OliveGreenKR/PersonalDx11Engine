@@ -1,4 +1,4 @@
-#include "DebugDrawManager.h"
+ï»¿#include "DebugDrawManager.h"
 #include "Camera.h"
 
 void FDebugDrawManager::DrawArrow(const Vector3& Start, const Vector3& Direction, float Length, float Size, const Vector4& Color, float Duration)
@@ -10,7 +10,7 @@ void FDebugDrawManager::DrawArrow(const Vector3& Start, const Vector3& Direction
 
 void FDebugDrawManager::Tick(const float DeltaTime)
 {
-	// ¸¸·áµÈ ¿ä¼Ò Á¦°Å
+	// ë§Œë£Œëœ ìš”ì†Œ ì œê±°
 	Elements.erase(
 		std::remove_if(
 			Elements.begin(),
@@ -20,7 +20,7 @@ void FDebugDrawManager::Tick(const float DeltaTime)
 		Elements.end()
 	);
 
-	// ³²Àº ¿ä¼ÒµéÀÇ ½Ã°£ ¾÷µ¥ÀÌÆ®
+	// ë‚¨ì€ ìš”ì†Œë“¤ì˜ ì‹œê°„ ì—…ë°ì´íŠ¸
 	for (auto& Element : Elements)
 	{
 		Element->CurrentTime += DeltaTime;
@@ -29,6 +29,8 @@ void FDebugDrawManager::Tick(const float DeltaTime)
 
 void FDebugDrawManager::DrawAll(UCamera* Camera)
 {
+	if (!Camera)
+		return;
 	for (auto& Element : Elements)
 	{
 		Element->Draw(Camera);
@@ -39,27 +41,27 @@ void FDebugDrawManager::DrawAll(UCamera* Camera)
 //----------
 
 
-// FDebugDrawArrowÀÇ Draw ±¸Çö
+// FDebugDrawArrowì˜ Draw êµ¬í˜„
 void FDebugDrawArrow::Draw(UCamera* Camera)
 {
 	if (!ImGui::GetCurrentContext())
 		return;
 
-	// ¿ùµå ÁÂÇ¥¸¦ ½ºÅ©¸° ÁÂÇ¥·Î º¯È¯
+	// ì›”ë“œ ì¢Œí‘œë¥¼ ìŠ¤í¬ë¦° ì¢Œí‘œë¡œ ë³€í™˜
 	XMVECTOR WorldStart = XMLoadFloat3(&Start);
 	XMVECTOR vDirection = XMLoadFloat3(&Direction);
 	vDirection = XMVector3Normalize(vDirection);
 
 	XMVECTOR WorldEnd = WorldStart + vDirection * Length;
 
-	// ViewProjection Çà·Ä Àû¿ë
+	// ViewProjection í–‰ë ¬ ì ìš©
 	Matrix ViewProj = Camera->GetViewMatrix() * Camera->GetProjectionMatrix();
 
-	// ½ºÅ©¸° °ø°£À¸·Î º¯È¯
+	// ìŠ¤í¬ë¦° ê³µê°„ìœ¼ë¡œ ë³€í™˜
 	XMVECTOR ProjStart = XMVector3Transform(WorldStart, ViewProj);
 	XMVECTOR ProjEnd = XMVector3Transform(WorldEnd, ViewProj);
 
-	// NDC ÁÂÇ¥¸¦ ½ºÅ©¸° ÁÂÇ¥·Î º¯È¯
+	// NDC ì¢Œí‘œë¥¼ ìŠ¤í¬ë¦° ì¢Œí‘œë¡œ ë³€í™˜
 	float ScreenWidth = ImGui::GetIO().DisplaySize.x;
 	float ScreenHeight = ImGui::GetIO().DisplaySize.y;
 
@@ -73,17 +75,17 @@ void FDebugDrawArrow::Draw(UCamera* Camera)
 		(1.0f - (XMVectorGetY(ProjEnd) / XMVectorGetW(ProjEnd) + 1.0f) * 0.5f) * ScreenHeight
 	);
 
-	// Z°ªÀÌ ºä Æò¸é µÚ¿¡ ÀÖ´ÂÁö È®ÀÎ
+	// Zê°’ì´ ë·° í‰ë©´ ë’¤ì— ìˆëŠ”ì§€ í™•ì¸
 	if (XMVectorGetZ(ProjStart) < 0 || XMVectorGetZ(ProjEnd) < 0 ||
 		XMVectorGetW(ProjStart) < KINDA_SMALL || XMVectorGetW(ProjEnd) < KINDA_SMALL)
 		return;
 
-	// È­»ìÇ¥ ±×¸®±â
+	// í™”ì‚´í‘œ ê·¸ë¦¬ê¸°
 	ImDrawList* DrawList = ImGui::GetForegroundDrawList();
 	//ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
 
 
-	// ¸ŞÀÎ ¶óÀÎ
+	// ë©”ì¸ ë¼ì¸
 	DrawList->AddLine(
 		ScreenStart,
 		ScreenEnd,
@@ -91,7 +93,7 @@ void FDebugDrawArrow::Draw(UCamera* Camera)
 		Size
 	);
 
-	// È­»ìÇ¥ Çìµå °è»ê
+	// í™”ì‚´í‘œ í—¤ë“œ ê³„ì‚°
 	ImVec2 Direction = ImVec2(
 		ScreenEnd.x - ScreenStart.x,
 		ScreenEnd.y - ScreenStart.y
@@ -101,11 +103,11 @@ void FDebugDrawArrow::Draw(UCamera* Camera)
 	if (DirectionLength < 1e-6f)
 		return;
 
-	// ¹æÇâ Á¤±ÔÈ­
+	// ë°©í–¥ ì •ê·œí™”
 	Direction.x /= DirectionLength;
 	Direction.y /= DirectionLength;
 
-	// È­»ìÇ¥ ÇìµåÀÇ µÎ Á¡ °è»ê
+	// í™”ì‚´í‘œ í—¤ë“œì˜ ë‘ ì  ê³„ì‚°
 	float ArrowSize = Size * 4.0f;
 	ImVec2 Perpendicular(-Direction.y, Direction.x);
 
@@ -119,7 +121,7 @@ void FDebugDrawArrow::Draw(UCamera* Camera)
 		ScreenEnd.y - Direction.y * ArrowSize - Perpendicular.y * ArrowSize
 	);
 
-	// È­»ìÇ¥ Çìµå ±×¸®±â
+	// í™”ì‚´í‘œ í—¤ë“œ ê·¸ë¦¬ê¸°
 	DrawList->AddTriangleFilled(
 		ScreenEnd,
 		ArrowPoint1,

@@ -29,6 +29,8 @@
 #include "CollisionComponent.h"
 #include "CollisionManager.h"
 
+#include "SceneManager.h"
+
 //Contents
 #include "Random.h"
 #include "ElasticBody.h"
@@ -245,7 +247,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("FPS : %.2f", 1.0f/DeltaTime);
 		ImGui::End();
 
-		FDebugDrawManager::Get()->DrawAll(Camera.get());
+		auto Camera = USceneManager::Get()->GetActiveScene()->GetMainCamera();
+		FDebugDrawManager::Get()->DrawAll(Camera);
 		//RenderUI
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
