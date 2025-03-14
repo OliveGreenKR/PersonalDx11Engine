@@ -7,7 +7,6 @@
 #include "InputManager.h"
 #include "Random.h"
 #include "DebugDrawManager.h"
-#include "RscUtil.h"
 #include "define.h"
 #include "Color.h"
 #include "Debug.h"
@@ -77,7 +76,7 @@ void UGameplayScene01::Initialize()
     SetupInput();
 
     // 초기 비활성화
-    Character->SetActive(false);
+    Character->SetActive(true);
     Character2->SetActive(false);
 
     // 입력 컨텍스트 등록

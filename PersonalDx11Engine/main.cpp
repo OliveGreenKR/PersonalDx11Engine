@@ -9,21 +9,14 @@
 
 #include "Debug.h"
 #include "DebugDrawManager.h"
-
 #include <memory>
 #include "define.h"
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
-
-#include "Model.h"
-
 #include "D3DShader.h"
-#include "RscUtil.h"
-#include "GameObject.h"
-#include "Camera.h"
 #include "InputManager.h"
-#include "RigidBodyComponent.h"
+
 #include "Color.h"
 
 #include "CollisionComponent.h"

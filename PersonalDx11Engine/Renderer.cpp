@@ -83,7 +83,7 @@ void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject, 
 	Matrix ViewMatrix = InCamera->GetViewMatrix();
 	Matrix ProjectionMatrix = InCamera->GetProjectionMatrix();
 	auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
-
+	
 	InShader->BindMatrix(GetDeviceContext(), BufferData);
 
 	RenderModel(InObject->GetModel(), InShader, customSampler);
@@ -101,7 +101,6 @@ void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject,
 	InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
 	RenderGameObject(InCamera, InObject, InShader, InCustomSampler);
 }
-
 
 void URenderer::SubmitRenderJob(UCamera* InCamera, const UGameObject* InObject, ID3D11ShaderResourceView* InTexture)
 {
@@ -126,19 +125,10 @@ void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCusto
 	if (!InShader)
 		return;
 
-	ID3D11SamplerState* SamplerState = InCustomSampler;
-	if (!InCustomSampler)
-	{
-		SamplerState = GetDefaultSamplerState();
-	}
-
-	// 셰이더 바인딩
-	BindShader(InShader);
-
 	// 모든 렌더 작업 처리
 	for (const auto& Job : RenderJobs)
 	{
-		RenderGameObject(Job.Camera, Job.GameObject, InShader, SamplerState);
+		RenderGameObject(Job.Camera, Job.GameObject, InShader, Job.Texture, InCustomSampler);
 	}
 }
 void URenderer::Release()

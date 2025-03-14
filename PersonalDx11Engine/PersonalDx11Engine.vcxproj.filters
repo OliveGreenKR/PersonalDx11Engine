@@ -306,9 +306,6 @@
     <ClInclude Include="define.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="RscUtil.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Debug.h">
       <Filter>Engine</Filter>
     </ClInclude>
