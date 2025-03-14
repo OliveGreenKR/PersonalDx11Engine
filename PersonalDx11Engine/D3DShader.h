@@ -1,6 +1,8 @@
 ﻿#pragma once
 
-#include "D3D.h"
+#include "RenderHardwareInterface.h"
+#include "ResourceInterface.h"
+#include "Math.h"
 #include <vector>
 #include <type_traits>
 
@@ -50,7 +52,7 @@ enum class EBufferSlot
 /// <summary>
 /// 단일 SamplerState, 복수의 cBuffer를 지원하는 쉐이더 파일 관리
 /// </summary>
-class UShader
+class UShader : public IResource
 {
 private:
 
@@ -60,14 +62,18 @@ public:
 	~UShader();
 
 public:
-	void Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
-	void Release();
+
+	// IResource 인터페이스 구현
+	bool IsLoaded() const override { return bIsLoaded; }
+	void Release() override;
+	size_t GetMemorySize() const override { return MemorySize; }
+
+	void Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
 	//파이프라인 상태 설정, vs, ps, samplerstate
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
 	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
 	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
 	void BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& Data);
-	__forceinline const bool IsInitialized() const { return bIsInitialized; }
 
 	ID3D11InputLayout* GetInputLayout() const { return InputLayout;}
 
@@ -79,6 +85,11 @@ public:
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
 
 	void SetSamplerState(ID3D11SamplerState* InSamplerState);
+
+private:
+	// 메모리 사용량 계산 메서드
+	void CalculateMemoryUsage();
+
 private:
 	ID3D11VertexShader* VertexShader = nullptr;
 	ID3D11PixelShader* PixelShader = nullptr;
@@ -89,7 +100,8 @@ private:
 
 	ID3DBlob* VSByteCode = nullptr; // 컴파일된 버텍스 셰이더 바이트코드 저장
 
-	bool bIsInitialized = false;
+	bool bIsLoaded = false;
+	size_t MemorySize = 0;
 };
 
 template<typename T>

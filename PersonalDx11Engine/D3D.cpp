@@ -7,6 +7,9 @@ FD3D::~FD3D()
 
 bool FD3D::Initialize(HWND Hwnd)
 {
+	if (bIsInitialized)
+		return true;
+
 	bool result = CreateDeviceAndSwapChain(Hwnd) &&
 		CreateFrameBuffer() &&
 		CreateRasterizerState() &&

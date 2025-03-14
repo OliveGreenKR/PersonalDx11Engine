@@ -156,7 +156,9 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelBufferManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +194,8 @@
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
+    <ClInclude Include="ResourceInterface.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="RigidBodyComponent.h" />
     <ClInclude Include="RscUtil.h" />
     <ClInclude Include="ImGui\imconfig.h" />
@@ -208,7 +212,9 @@
     <ClInclude Include="SceneCompoent.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="UIManager.h" />
     <ClInclude Include="VertexDataContainer.h" />
     <ClInclude Include="VertexFormat.h" />
   </ItemGroup>

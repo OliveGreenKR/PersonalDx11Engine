@@ -22,6 +22,8 @@ public:
 
     bool CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer);
 
+    void SetVSync(const bool InBool) { bVSync = InBool; }
+
 public:
     bool bVSync = true;
 

@@ -4,13 +4,13 @@
 #include "GameObject.h"
 #include "Camera.h"
 
-void URenderer::Initialize(HWND hWindow)
+void URenderer::Initialize(HWND hWindow, IRenderHardware* InRenderHardware)
 {
-	bool result;
-	result = RenderHardware->Initialize(hWindow);
-	assert(result);
-	result = CreateDefaultSamplerState();
-	assert(result);
+	assert(InRenderHardware);
+
+	bool result = true;
+	RenderHardware = InRenderHardware;
+	result = result && RenderHardware->IsDeviceReady();
 
 	RenderJobs.reserve(512);
 }
@@ -143,11 +143,6 @@ void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCusto
 }
 void URenderer::Release()
 {
-	if (DefaultSamplerState)
-	{
-		DefaultSamplerState->Release();
-		DefaultSamplerState = nullptr;
-	}
-	RenderHardware->Release();
+	RenderJobs.clear();
 }
 

@@ -33,7 +33,7 @@
       <Filter>Engine\GameObject\Camera</Filter>
     </ClCompile>
     <ClCompile Include="D3DShader.cpp">
-      <Filter>D3D\Shader</Filter>
+      <Filter>Engine\Resources\Shader</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\GameObject</Filter>
@@ -82,6 +82,12 @@
     </ClCompile>
     <ClCompile Include="GameplayScene01.cpp">
       <Filter>Contents\Scenes\Scene1</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Engine\Resources\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Engine\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,9 +166,6 @@
     <Filter Include="D3D\Buffer">
       <UniqueIdentifier>{4c3ccda6-25fe-4d99-9400-97d9cebbabe6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D\Shader">
-      <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\DataStructure\DynamicAABBTree">
       <UniqueIdentifier>{77e10acf-6d19-4e96-b63a-2345eb71071b}</UniqueIdentifier>
     </Filter>
@@ -177,6 +180,15 @@
     </Filter>
     <Filter Include="Contents\Scenes\Scene1">
       <UniqueIdentifier>{ddb70e12-28df-483d-8c50-e5b46dc1bf8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources">
+      <UniqueIdentifier>{a86807fb-7457-4cfd-ae18-567c2022eada}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources\Shader">
+      <UniqueIdentifier>{dd10939c-42db-4ab8-9dcd-49a6b536b698}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources\Texture">
+      <UniqueIdentifier>{5748ce1d-105a-40ce-b7a9-d258531e7723}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -217,7 +229,7 @@
       <Filter>Engine\GameObject\Camera</Filter>
     </ClInclude>
     <ClInclude Include="D3DShader.h">
-      <Filter>D3D\Shader</Filter>
+      <Filter>Engine\Resources\Shader</Filter>
     </ClInclude>
     <ClInclude Include="Math.h">
       <Filter>Engine\Math</Filter>
@@ -326,6 +338,18 @@
     </ClInclude>
     <ClInclude Include="RenderHardwareInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Engine\Resources\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="UIManager.h">
+      <Filter>Engine\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

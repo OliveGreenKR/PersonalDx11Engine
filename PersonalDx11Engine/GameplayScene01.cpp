@@ -11,6 +11,9 @@
 #include "define.h"
 #include "Color.h"
 #include "Debug.h"
+#include "ResourceManager.h"
+#include "Texture.h"
+#include "UIManager.h"
 
 UGameplayScene01::UGameplayScene01()
 {
@@ -81,13 +84,11 @@ void UGameplayScene01::Initialize()
     UInputManager::Get()->RegisterInputContext(InputContext);
 }
 
-void UGameplayScene01::Load(class ID3D11Device* Device, class ID3D11DeviceContext* DeviceContext)
+void UGameplayScene01::Load()
 {
     // 텍스처 로드
-	TextureTile = std::make_shared<ID3D11ShaderResourceView*>();
-	TexturePole = std::make_shared<ID3D11ShaderResourceView*>();
-	LoadTextureFromFile(Device, TEXTURE03, TextureTile.get());
-	LoadTextureFromFile(Device, TEXTURE02, TexturePole.get());
+    TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
+	TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
 }
 
 void UGameplayScene01::Unload()
@@ -108,7 +109,7 @@ void UGameplayScene01::Unload()
     TexturePole = nullptr;
 }
 
-void UGameplayScene01::Update(float DeltaTime)
+void UGameplayScene01::Tick(float DeltaTime)
 {
     // 주요 객체 업데이트
     if (Character)
@@ -147,8 +148,13 @@ void UGameplayScene01::Update(float DeltaTime)
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
-    Renderer->SubmitRenderJob(Camera.get(), Character.get(), *TextureTile.get());
+    Renderer->SubmitRenderJob(Camera.get(), Character.get(), TextureTile.get()->GetShaderResourceView());
+    Renderer->SubmitRenderJob(Camera.get(), Character2.get(), TexturePole.get()->GetShaderResourceView());
 
+    for (auto ebody : ElasticBodies)
+    {
+        Renderer->SubmitRenderJob(Camera.get(), ebody.get(), TexturePole.get()->GetShaderResourceView());
+    }
 }
 
 void UGameplayScene01::SubmitRenderUI()
@@ -157,82 +163,86 @@ void UGameplayScene01::SubmitRenderUI()
         ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
 
-    if (Camera)
-    {
-        ImGui::Begin("Camera", nullptr, UIWindowFlags);
-        ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-        ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-        ImGui::Text(Debug::ToString(*Camera->GetTransform()));
+
+    UUIManager::Get()->RegisterUIElement("Scene01UI", [this]() {
+
+        if (Camera)
+        {
+            ImGui::Begin("Camera", nullptr, UIWindowFlags);
+            ImGui::Checkbox("bIs2D", &Camera->bIs2D);
+            ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
+            ImGui::Text(Debug::ToString(*Camera->GetTransform()));
+            ImGui::End();
+        }
+
+        ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
+        //ImGui::InputInt("##Value", &value); // 숫자 입력 필드
+        //ImGui::Text("%d / %d",
+        //			UElasticBodyManager::Get()->GetActiveBodyCount(),
+        //			UElasticBodyManager::Get()->GetPooledBodyCount());
+        //ImGui::SameLine();
+        //if (ImGui::Button("-")) {
+        //	UElasticBodyManager::Get()->DespawnRandomBody();
+        //	UCollisionManager::Get()->PrintTreeStructure();
+        //}
+        //ImGui::SameLine();
+        //if (ImGui::Button("+")) {
+        //	UElasticBodyManager::Get()->SpawnRandomBody();
+        //	UCollisionManager::Get()->PrintTreeStructure();
+        //}
+        ImGui::SameLine();
+        ImGui::Checkbox("bSpawnBody", &bSpawnBody);
+        if (ImGui::Button("Print")) {
+            UCollisionManager::Get()->PrintTreeStructure();
+        }
         ImGui::End();
-    }
 
-    ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
-    //ImGui::InputInt("##Value", &value); // 숫자 입력 필드
-    //ImGui::Text("%d / %d",
-    //			UElasticBodyManager::Get()->GetActiveBodyCount(),
-    //			UElasticBodyManager::Get()->GetPooledBodyCount());
-    //ImGui::SameLine();
-    //if (ImGui::Button("-")) {
-    //	UElasticBodyManager::Get()->DespawnRandomBody();
-    //	UCollisionManager::Get()->PrintTreeStructure();
-    //}
-    //ImGui::SameLine();
-    //if (ImGui::Button("+")) {
-    //	UElasticBodyManager::Get()->SpawnRandomBody();
-    //	UCollisionManager::Get()->PrintTreeStructure();
-    //}
-    ImGui::SameLine();
-    ImGui::Checkbox("bSpawnBody", &bSpawnBody);
-    if (ImGui::Button("Print")) {
-        UCollisionManager::Get()->PrintTreeStructure();
-    }
-    ImGui::End();
+        if (Character)
+        {
+            Vector3 CurrentVelo = Character->GetCurrentVelocity();
+            bool bGravity = Character->IsGravity();
+            bool bPhysics = Character->IsPhysicsSimulated();
+            ImGui::Begin("Charcter", nullptr, UIWindowFlags);
+            ImGui::Checkbox("bIsMove", &Character->bIsMoving);
+            ImGui::Checkbox("bDebug", &Character->bDebug);
+            ImGui::Checkbox("bPhysicsBased", &bPhysics);
+            ImGui::Checkbox("bGravity", &bGravity);
+            Character->SetGravity(bGravity);
+            Character->SetPhysics(bPhysics);
+            ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+                        CurrentVelo.y,
+                        CurrentVelo.z);
+            ImGui::End();
+        }
 
-    if (Character)
-    {
-        Vector3 CurrentVelo = Character->GetCurrentVelocity();
-        bool bGravity = Character->IsGravity();
-        bool bPhysics = Character->IsPhysicsSimulated();
-        ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-        ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-        ImGui::Checkbox("bDebug", &Character->bDebug);
-        ImGui::Checkbox("bPhysicsBased", &bPhysics);
-        ImGui::Checkbox("bGravity", &bGravity);
-        Character->SetGravity(bGravity);
-        Character->SetPhysics(bPhysics);
-        ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-                    CurrentVelo.y,
-                    CurrentVelo.z);
-        ImGui::End();
-    }
+        if (Character2)
+        {
+            Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+            bool bGravity2 = Character2->IsGravity();
+            bool bPhysics2 = Character2->IsPhysicsSimulated();
+            bool bIsActive2 = Character2->IsActive();
+            ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
+            ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
+            ImGui::Checkbox("bDebug", &Character2->bDebug);
+            ImGui::Checkbox("bPhysicsBased", &bPhysics2);
+            ImGui::Checkbox("bGravity", &bGravity2);
+            Character2->SetGravity(bGravity2);
+            Character2->SetPhysics(bPhysics2);
+            ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
+                        CurrentVelo.y,
+                        CurrentVelo.z);
+            ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
+                        Character2->GetTransform()->GetPosition().y,
+                        Character2->GetTransform()->GetPosition().z);
+            ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
+                        Character2->GetTransform()->GetEulerRotation().y,
+                        Character2->GetTransform()->GetEulerRotation().z);
 
-    if (Character2)
-    {
-        Vector3 CurrentVelo = Character2->GetCurrentVelocity();
-        bool bGravity2 = Character2->IsGravity();
-        bool bPhysics2 = Character2->IsPhysicsSimulated();
-        bool bIsActive2 = Character2->IsActive();
-        ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-        ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-        ImGui::Checkbox("bDebug", &Character2->bDebug);
-        ImGui::Checkbox("bPhysicsBased", &bPhysics2);
-        ImGui::Checkbox("bGravity", &bGravity2);
-        Character2->SetGravity(bGravity2);
-        Character2->SetPhysics(bPhysics2);
-        ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
-                    CurrentVelo.y,
-                    CurrentVelo.z);
-        ImGui::Text("Position : %.2f  %.2f  %.2f", Character2->GetTransform()->GetPosition().x,
-                    Character2->GetTransform()->GetPosition().y,
-                    Character2->GetTransform()->GetPosition().z);
-        ImGui::Text("Rotation : %.2f  %.2f  %.2f", Character2->GetTransform()->GetEulerRotation().x,
-                    Character2->GetTransform()->GetEulerRotation().y,
-                    Character2->GetTransform()->GetEulerRotation().z);
+            ImGui::End();
+        }
 
-        ImGui::End();
-    }
 
-    FDebugDrawManager::Get()->DrawAll(Camera.get());
+                                           });
 }
 
 void UGameplayScene01::HandleInput(const FKeyEventData& EventData)

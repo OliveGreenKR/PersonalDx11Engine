@@ -7,7 +7,7 @@ UShader::~UShader()
 	Release();
 }
 
-void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize)
+void UShader::Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize)
 {
 	HRESULT result;
 
@@ -74,6 +74,12 @@ void UShader::Initialize(ID3D11Device* Device, const wchar_t* vertexShaderPath, 
 	// VSBlob 저장
 	VSByteCode = VSBlob;
 	PSBlob->Release();
+
+	// 메모리 사용량 계산
+	CalculateMemoryUsage();
+
+	// 로드 상태 업데이트
+	bIsLoaded = true;
 }
 
 void UShader::Release()
@@ -117,6 +123,12 @@ void UShader::Release()
 		VertexShader->Release();
 		VertexShader = nullptr;
 	}
+
+	/// 메모리 사용량 초기화
+	MemorySize = 0;
+
+	// 로드 상태 업데이트
+	bIsLoaded = false;
 }
 
 void UShader::Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState)
@@ -186,4 +198,34 @@ void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
 	{
 		SamplerState->AddRef();
 	}
+}
+
+// 메모리 사용량 계산 메서드 추가
+void UShader::CalculateMemoryUsage()
+{
+	MemorySize = 0;
+
+	// VSByteCode 크기
+	if (VSByteCode)
+	{
+		MemorySize += VSByteCode->GetBufferSize();
+	}
+
+	// ConstantBuffers 크기 추가
+	for (auto* buffer : ConstantBuffers)
+	{
+		if (buffer)
+		{
+			D3D11_BUFFER_DESC desc;
+			buffer->GetDesc(&desc);
+			MemorySize += desc.ByteWidth;
+		}
+	}
+	
+	// 기타 D3D 객체의 추정 메모리 추가
+	// 실제 메모리 사용량은 드라이버와 하드웨어에 따라 달라질 수 있으므로 대략적인 추정치 사용
+	if (VertexShader)MemorySize += 128;    // 추정치
+	if (PixelShader) MemorySize += 128;     // 추정치
+	if (InputLayout) MemorySize += 64;      // 추정치
+	if (SamplerState) MemorySize += 32;     // 추정치
 }

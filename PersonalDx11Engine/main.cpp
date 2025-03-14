@@ -30,10 +30,10 @@
 #include "CollisionManager.h"
 
 #include "SceneManager.h"
+#include "GameplayScene01.h"
 
-//Contents
-#include "Random.h"
-#include "ElasticBody.h"
+#include "ResourceManager.h"
+#include "UIManager.h"
 
 //test
 //#include "testDynamicAABBTree.h"
@@ -147,17 +147,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
 
+	//Hardware
+	auto RenderHardware = make_shared<FD3D>();
+	assert(RenderHardware->Initialize(hWnd));
+	RenderHardware->SetVSync(false);
+
 	//Renderer
 	auto Renderer = make_unique<URenderer>();
-	Renderer->Initialize(hWnd);
-	Renderer->SetVSync(true);
+	Renderer->Initialize(hWnd, RenderHardware.get());
+
 
 	//ModelBufferManager Init
 	UModelBufferManager::Get()->SetDevice(Renderer->GetDevice());
 	assert(UModelBufferManager::Get()->Initialize());
 
+	//ResourceManager
+	UResourceManager::Get()->Initialize(RenderHardware.get());
+
 	//Shader
-	auto Shader = make_unique<UShader>();
 	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
 	{
 		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
@@ -165,20 +172,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER, textureShaderLayout, ARRAYSIZE(textureShaderLayout));
+
 	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
-
-	Shader->Initialize(Renderer->GetDevice(), MYSHADER, MYSHADER, textureShaderLayout, ARRAYSIZE(textureShaderLayout));
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
-
-	// 여기에서 ImGui를 생성합니다.
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init((void*)hWnd);
-	ImGui_ImplDX11_Init(Renderer->GetDevice(), Renderer->GetDeviceContext());
-	//ImGui set
-	ImGui::SetNextWindowPos(ImVec2(2.0f, 2.0f), ImGuiCond_FirstUseEver);//영구위치설정
-	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver); //자동조절
+	
+	//UIManager
+	UUIManager::Get()->Initialize(hWnd, RenderHardware->GetDevice(), RenderHardware->GetDeviceContext());
 
 	bool bIsExit = false;
 
@@ -189,6 +189,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
+
+	//Scene
+	auto GameplayScene01 = make_shared<UGameplayScene01>();
+	USceneManager::Get()->RegisterScene(GameplayScene01);
+	USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
 
 #pragma region MainLoop
 	while (bIsExit == false)
@@ -217,8 +222,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		//Draw Debug
 		FDebugDrawManager::Get()->Tick(DeltaTime);
+		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
@@ -226,33 +231,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//before render
 		Renderer->BeforeRender();
 
-		//Render Obejct
+		USceneManager::Get()->Render(Renderer.get());
+
+		//Actual Render 
 		Renderer->ProcessRenderJobs(Shader.get());
 		Renderer->ClearRenderJobs();
-
-#pragma region UI
-		// ImGui UI 
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-		ImGui::SetNextWindowSize(ImVec2(150, 20));
-		ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 150,0));
-		ImGui::Begin("##DebugText", nullptr,
-					 ImGuiWindowFlags_NoTitleBar |
-					 ImGuiWindowFlags_NoResize |
-					 ImGuiWindowFlags_NoMove |
-					 ImGuiWindowFlags_NoInputs |
-					 ImGuiWindowFlags_NoBackground |
-					 ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::Text("FPS : %.2f", 1.0f/DeltaTime);
-		ImGui::End();
-
-		auto Camera = USceneManager::Get()->GetActiveScene()->GetMainCamera();
-		FDebugDrawManager::Get()->DrawAll(Camera);
-		//RenderUI
-		ImGui::Render();
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+#pragma region SystemUI
+		UUIManager::Get()->RegisterUIElement("SystemUI_FPS", [DeltaTime]() {
+			ImGui::SetNextWindowSize(ImVec2(150, 20));
+			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 150, 0));
+			ImGui::Begin("##DebugText", nullptr,
+						 ImGuiWindowFlags_NoTitleBar |
+						 ImGuiWindowFlags_NoResize |
+						 ImGuiWindowFlags_NoMove |
+						 ImGuiWindowFlags_NoInputs |
+						 ImGuiWindowFlags_NoBackground |
+						 ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("FPS : %.2f", 1.0f / DeltaTime);
+			ImGui::End();
+											 });
 #pragma endregion
+
+		USceneManager::Get()->RenderUI();
+		UUIManager::Get()->RenderUI();
+
+		auto Camera = USceneManager::Get()->GetActiveCamera();
+		FDebugDrawManager::Get()->DrawAll(Camera);
+
 		//end render
 		Renderer->EndRender();
 #pragma endregion

@@ -2,6 +2,7 @@
 #include "RenderHardwareInterface.h"
 #include "Math.h"
 #include <vector>
+#include <memory>
 
 class UModel;
 class UShader;
@@ -38,7 +39,7 @@ public:
 	~URenderer() = default;
 
 public:
-	void Initialize(HWND hWindow);
+	void Initialize(HWND hWindow, IRenderHardware* InRenderHardware);
 	void Release();
 
 	void BindShader(UShader* InShader);

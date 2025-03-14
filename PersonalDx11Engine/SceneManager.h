@@ -47,7 +47,7 @@ public:
     }
 
     // 씬 업데이트
-    void Update(float DeltaTime)
+    void Tick(float DeltaTime)
     {
         // 씬 전환 처리
         if (bIsTransitioning && PendingScene)
@@ -69,7 +69,7 @@ public:
         // 활성 씬 업데이트
         if (ActiveScene)
         {
-            ActiveScene->Update(DeltaTime);
+            ActiveScene->Tick(DeltaTime);
         }
     }
 
@@ -79,6 +79,15 @@ public:
         if (ActiveScene && Renderer)
         {
             ActiveScene->SubmitRender(Renderer);
+        }
+
+    }
+
+    void RenderUI()
+    {
+        if (ActiveScene)
+        {
+            ActiveScene->SubmitRenderUI();
         }
     }
 
