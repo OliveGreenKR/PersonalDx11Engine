@@ -562,10 +562,10 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
         return;
 
     std::vector<size_t> Stack;
-    std::unordered_set<size_t> visited;
     // 약간의 여유를 두고 할당
     Stack.reserve(static_cast<size_t>(log2(NodeCount) * 1.5 + 2));
     Stack.push_back(RootId);
+
 
     while (!Stack.empty())
     {
@@ -592,7 +592,6 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
         else
         {
             // 내부 노드면 자식들을 스택에 추가
-            // 오른쪽 자식을 먼저 넣어 왼쪽부터 처리하게 함
             if (IsValidId(CurrentNode.Right))
                 Stack.push_back(CurrentNode.Right);
 

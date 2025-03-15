@@ -10,7 +10,6 @@
 #include "Debug.h"
 #include "DebugDrawManager.h"
 #include <memory>
-#include "define.h"
 #include "Renderer.h"
 #include "Math.h"
 #include "D3D.h"
@@ -18,8 +17,7 @@
 #include "InputManager.h"
 
 #include "Color.h"
-
-#include "CollisionComponent.h"
+#include "define.h"
 #include "CollisionManager.h"
 
 #include "SceneManager.h"
@@ -30,17 +28,7 @@
 #include "UIManager.h"
 
 //test
-//#include "testDynamicAABBTree.h"
-
-#define KEY_UP 'W'
-#define KEY_DOWN 'S'
-#define KEY_LEFT 'A'
-#define KEY_RIGHT 'D'
-
-#define KEY_UP2 'I'
-#define KEY_DOWN2 'K'
-#define KEY_LEFT2 'J'
-#define KEY_RIGHT2 'L'
+#include "testDynamicAABBTree.h"
 
 constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 800;
@@ -114,12 +102,12 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	
 #pragma region COM
 	HRESULT hr = CoInitialize(nullptr);
 	if (FAILED(hr))
 		return false;
 #pragma endregion
+
 #pragma region window init
 
 	WCHAR WindowClass[] = L"MyPersonal11Engine";
@@ -140,6 +128,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
+
+	//std::string input;
+	//std::getline(std::cin, input); // 사용자 입력을 기다림
+	//return 0;
 
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();
