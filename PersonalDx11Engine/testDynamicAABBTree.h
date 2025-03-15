@@ -631,6 +631,8 @@ namespace TestDynamicAABBTree
             overallMaxQueryTime = std::max(overallMaxQueryTime, maxQueryTimeMs);
             totalIncorrectQueries += incorrectQueries;
             if (testQuery) queryPassCount++;
+
+            os << (i + 1) << "/" << iterations << "\n";
         }
 
         // 평균 계산

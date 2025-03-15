@@ -129,6 +129,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
 
+	//TestDynamicAABBTree::RunAllTestsIterate(std::cout, 100, 500, 500, 500);
 	//std::string input;
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
