@@ -557,39 +557,33 @@ void FDynamicAABBTree::PrintTreeStructure(std::ostream& os) const
 
 void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func)
 {
+    // 루트가 없으면 종료
+    if (RootId == NULL_NODE)
+        return;
+
     std::vector<size_t> Stack;
     std::unordered_set<size_t> visited;
-    Stack.reserve(NodeCount);
-
-    // 루트부터 시작
-    if (RootId != NULL_NODE)
-        Stack.push_back(RootId);
+    // 약간의 여유를 두고 할당
+    Stack.reserve(static_cast<size_t>(log2(NodeCount) * 1.5 + 2));
+    Stack.push_back(RootId);
 
     while (!Stack.empty())
     {
         size_t NodeId = Stack.back();
         Stack.pop_back();
-        if (visited.find(NodeId) == visited.end())
-        {
-            visited.insert(NodeId);
-        }
-        else
-        {
-            continue;
-        }
 
         if (!IsValidId(NodeId))
             continue;
 
         const Node& CurrentNode = NodePool[NodeId];
 
-		// AABB가 겹치지 않으면 스킵
-		if (!QueryBounds.Overlaps(CurrentNode.Bounds))
-			continue;
+        // AABB가 겹치지 않으면 이 서브트리 전체 스킵
+        if (!QueryBounds.Overlaps(CurrentNode.Bounds))
+            continue;
 
         if (CurrentNode.IsLeaf())
         {
-            // 리프 노드면 콜백 호출
+            // 리프 노드이고 바운더블 객체가 있으면 콜백 호출
             if (CurrentNode.BoundableObject)
             {
                 Func(NodeId);
@@ -598,15 +592,16 @@ void FDynamicAABBTree::QueryOverlap(const AABB& QueryBounds, const std::function
         else
         {
             // 내부 노드면 자식들을 스택에 추가
-            if (CurrentNode.Left != NULL_NODE && CurrentNode.Left < NodePool.size()) {
-                Stack.push_back(CurrentNode.Left);
-            }
-            if (CurrentNode.Right != NULL_NODE && CurrentNode.Right < NodePool.size()) {
+            // 오른쪽 자식을 먼저 넣어 왼쪽부터 처리하게 함
+            if (IsValidId(CurrentNode.Right))
                 Stack.push_back(CurrentNode.Right);
-            }
+
+            if (IsValidId(CurrentNode.Left))
+                Stack.push_back(CurrentNode.Left);
         }
     }
 }
+
 
 
 size_t FDynamicAABBTree::GetLeafNodeCount() const
