@@ -71,12 +71,15 @@ public:
 
     // 컴포넌트 검색 유틸리티
     template<typename T>
-    T* FindComponentByType()
+    T* FindComponentByType(const bool SelfInclude = true)
     {
-        // 현재 컴포넌트 체크
-        if (auto ThisComponent = dynamic_cast<T*>(this))
-            return ThisComponent;
-
+        if (SelfInclude)
+        {
+            // 현재 컴포넌트 체크
+            if (auto ThisComponent = dynamic_cast<T*>(this))
+                return ThisComponent;
+        }
+        
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
         {
@@ -90,43 +93,26 @@ public:
     template<typename T>
     T* FindChildByType()
     {
-        // 자식 컴포넌트들 검색
-        for (const auto& Child : ChildComponents)
-        {
-            if (auto FoundComponent = Child->FindComponentByType<T>())
-                return FoundComponent;
-        }
-
-        return nullptr;
+        return FindComponentByType<T>(false);
     }
 
     template<typename T>
     std::vector<std::weak_ptr<T>> FindChildrenByType()
     {
-        std::vector<std::weak_ptr<T>> Found;
-
-        // 자식 컴포넌트들 검색
-        for (const auto& Child : ChildComponents)
-        {
-            if (Child)
-            {
-                auto ChildComponents = Child->FindComponentsByType<T>();
-                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
-            }
-        }
-
-        return Found;
+        return FindComponentsByType<T>(false);
     }
 
     template<typename T>
-    std::vector<std::weak_ptr<T>> FindComponentsByType()
+    std::vector<std::weak_ptr<T>> FindComponentsByType(const bool SelfInclude = true)
     {
         std::vector<std::weak_ptr<T>> Found;
 
-        std::shared_ptr<UActorComponent>& SharedThis = shared_from_this();
-        Found.push_back(SharedThis);
-
-
+        if (SelfInclude)
+        {
+            std::shared_ptr<UActorComponent>& SharedThis = shared_from_this();
+            Found.push_back(SharedThis);
+        }
+        
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
         {
@@ -141,18 +127,20 @@ public:
     }
 
 private:
-    // non-const 버전의 raw 포인터 반환 함수도 함께 제공
     template<typename T>
-    std::vector<T*> FindComponentsRaw()
+    std::vector<T*> FindComponentsRaw(const bool SelfInclude = true)
     {
         std::vector<T*> Found;
-
-        // 현재 컴포넌트 체크
-        if (auto ThisComponent = dynamic_cast<const T*>(this))
+        
+        if (SelfInclude)
         {
-            Found.push_back(const_cast<T*>(ThisComponent));
+            // 현재 컴포넌트 체크
+            if (auto ThisComponent = dynamic_cast<const T*>(this))
+            {
+                Found.push_back(const_cast<T*>(ThisComponent));
+            }
         }
-
+       
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
         {
@@ -166,23 +154,10 @@ private:
         return Found;
     }
 
-    // non-const 버전의 raw 포인터 반환 함수도 함께 제공
     template<typename T>
     std::vector<T*> FindChildrenRaw()
     {
-        std::vector<T*> Found;
-
-        // 자식 컴포넌트들 검색
-        for (const auto& Child : ChildComponents)
-        {
-            if (Child)
-            {
-                auto ChildComponents = Child->FindComponentsRaw<T>();
-                Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
-            }
-        }
-
-        return Found;
+        return FindComponentsRaw<T>(false);
     }
 
 private:
