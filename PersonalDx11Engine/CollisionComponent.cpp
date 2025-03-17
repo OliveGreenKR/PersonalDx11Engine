@@ -28,7 +28,7 @@ const FTransform* UCollisionComponent::GetTransform() const
 	{
 		return RigidPtr->GetTransform();
 	}
-	return &ComponentTransform;
+	return &LocalTransform;
 }
 
 FTransform* UCollisionComponent::GetTransform()
@@ -39,7 +39,7 @@ FTransform* UCollisionComponent::GetTransform()
 	{
 		return RigidPtr->GetTransform();
 	}
-	return &ComponentTransform;
+	return &LocalTransform;
 }
 
 bool UCollisionComponent::IsStatic() const
@@ -87,7 +87,7 @@ void UCollisionComponent::Activate()
 
 void UCollisionComponent::DeActivate()
 {
-	UPrimitiveComponent::DeActivate();
+	USceneComponent::DeActivate();
 	DeActivateCollision();
 }
 
@@ -151,25 +151,24 @@ Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
 	}
 }
 
+const FTransform& UCollisionComponent::GetWorldTransform() const
+{
+	return USceneComponent::GetWorldTransform();
+}
+
 void UCollisionComponent::PostTreeInitialized()
 {
-	UPrimitiveComponent::PostTreeInitialized();
-
-	if (auto RigidPtr = RigidBody.lock())
-	{
-		GetOwner()->GetTransform()->
-			OnTransformChangedDelegate.Bind(shared_from_this(), &UCollisionComponent::OnOwnerTransformChanged, "OnOwnerTransformChanged");
-	}
+	USceneComponent::PostTreeInitialized();
 }
 
 void UCollisionComponent::Tick(const float DeltaTime)
 {
-	UPrimitiveComponent::Tick(DeltaTime);
+	USceneComponent::Tick(DeltaTime);
 
 	if (!IsActive())
 		return;
 
 	//이전 트랜스폼 저장
-	PrevTransform = *GetTransform();
+	PrevWorldTransform = GetWorldTransform();
 }
 

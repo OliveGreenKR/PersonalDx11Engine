@@ -2,7 +2,7 @@
 #include "Math.h"
 #include <memory>
 #include "ActorComponent.h"
-#include "PrimitiveComponent.h"
+#include "SceneComponent.h"
 
 class UGameObject;
 
@@ -12,7 +12,7 @@ enum class ERigidBodyType
 	Static
 };
 
-class URigidBodyComponent : public UPrimitiveComponent
+class URigidBodyComponent : public USceneComponent
 {
 public:
 	// 회전관성 접근제어 토근
@@ -28,9 +28,6 @@ public:
 
 	void Reset();
 	virtual void Tick(const float DeltaTime) override;
-
-	virtual const FTransform* GetTransform() const override;
-	virtual FTransform* GetTransform() override;
 
 	// 속도 기반 인터페이스
 	void SetVelocity(const Vector3& InVelocity);
@@ -73,11 +70,11 @@ public:
 public:
 	// 시뮬레이션 플래그
 	bool bGravity  =  false;
-	bool bSyncWithOwner = true;
 
 	bool IsStatic() const { return RigidType == ERigidBodyType::Static; }
 
 private:
+	//속도에 따른 트랜스폼 변화
 	void UpdateTransform(float DeltaTime);
 	void ClampVelocities();
 	void ApplyDrag(float DeltaTime) {}//todo

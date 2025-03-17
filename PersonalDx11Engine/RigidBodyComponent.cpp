@@ -18,7 +18,7 @@ void URigidBodyComponent::Reset()
 
 void URigidBodyComponent::Tick(const float DeltaTime)
 {
-	UPrimitiveComponent::Tick(DeltaTime);
+	USceneComponent::Tick(DeltaTime);
 	if (!IsActive())
 		return;
 
@@ -112,23 +112,14 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 		return;
 	}
 
-	FTransform* TargetTransform = nullptr;
-	if (bSyncWithOwner || GetOwner())
-	{
-		TargetTransform = GetOwner()->GetTransform();
-	}
-	else
-	{
-		TargetTransform = &ComponentTransform;
-	}
-	
+	FTransform TargetTransform = GetLocalTransform();
 
 	// 위치 업데이트
-	Vector3 NewPosition = TargetTransform->GetPosition() + Velocity * DeltaTime;
-	TargetTransform->SetPosition(NewPosition);
+	Vector3 NewPosition = TargetTransform.Position + Velocity * DeltaTime;
+	TargetTransform.Position = NewPosition;
 
 	// 회전 업데이트
-	Matrix WorldRotation = TargetTransform->GetRotationMatrix();
+	Matrix WorldRotation = TargetTransform.GetRotationMatrix();
 	XMVECTOR WorldAngularVel = XMLoadFloat3(&AngularVelocity);
 
 	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
@@ -136,7 +127,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	{
 		XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
 		float Angle = AngularSpeed * DeltaTime;
-		TargetTransform->RotateAroundAxis(
+		TargetTransform.RotateAroundAxis(
 			Vector3(
 				XMVectorGetX(RotationAxis),
 				XMVectorGetY(RotationAxis),
@@ -145,6 +136,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 			Math::RadToDegree(Angle)
 		);
 	}
+	SetLocalTransform(TargetTransform);
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -168,31 +160,7 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
-	return GetTransform()->GetPosition();
-}
-
-const FTransform* URigidBodyComponent::GetTransform() const
-{
-	if (bSyncWithOwner || GetOwner())
-	{
-		return  GetOwner()->GetTransform();
-	}
-	else
-	{
-		return &ComponentTransform;
-	}
-}
-
-FTransform* URigidBodyComponent::GetTransform()
-{
-	if (bSyncWithOwner && GetOwner())
-	{
-		return  GetOwner()->GetTransform();
-	}
-	else
-	{
-		return &ComponentTransform;
-	}
+	return GetLocalTransform().Position;
 }
 
 void URigidBodyComponent::SetMass(float InMass)

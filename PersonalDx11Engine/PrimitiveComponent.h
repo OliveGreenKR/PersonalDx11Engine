@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "SceneCompoent.h"
+#include "SceneComponent.h"
 #include "Model.h"
 //렌더링 가능
 class UPrimitiveComponent : public USceneComponent

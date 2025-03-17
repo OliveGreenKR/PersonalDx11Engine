@@ -36,7 +36,7 @@ public:
 	bool IsInView(const Vector3& Position);
 	void SetLookAtObject(UGameObject* InTarget);
 
-	void LookTo(const Vector3& TargetPosition);
+	void LookAt(const Vector3& TargetPosition);
 	void LookTo();
 
 

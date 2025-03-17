@@ -28,9 +28,9 @@ namespace Debug
 				 "Position : %.2f  %.2f  %.2f\n"
 				 "Rotation : %.2f  %.2f  %.2f\n"
 				 "Scale    : %.2f  %.2f  %.2f\n",
-				 InTransform.GetPosition().x, InTransform.GetPosition().y, InTransform.GetPosition().z,
+				 InTransform.Position.x, InTransform.Position.y, InTransform.Position.z,
 				 InTransform.GetEulerRotation().x, InTransform.GetEulerRotation().y, InTransform.GetEulerRotation().z,
-				 InTransform.GetScale().x, InTransform.GetScale().y, InTransform.GetScale().z);
+				 InTransform.Scale.x, InTransform.Scale.y, InTransform.Scale.z);
 		return buffer;
 	}
 

@@ -17,7 +17,7 @@ void UCamera::Tick(float DeltaTime)
 void UCamera::PostInitialized()
 {
 	UGameObject::PostInitialized();
-	GetTransform()->OnTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
+	GetRootComp()->OnTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
 }
 
 const Matrix UCamera::GetViewMatrix()
@@ -68,13 +68,9 @@ void UCamera::SetLookAtObject(UGameObject* InTarget)
 	LookAtObject = InTarget->shared_from_this();
 }
 
-void UCamera::LookTo(const Vector3& TargetPosition)
+void UCamera::LookAt(const Vector3& TargetPosition)
 {
-	Vector3 Direction = TargetPosition - GetTransform()->GetPosition();
-	Direction.Normalize();
-	Vector3 CurrentForward = GetNormalizedForwardVector();
-	Quaternion toRotate =  Math::GetRotationBetweenVectors(CurrentForward, Direction);
-	AddRotationQuaternion(toRotate);
+	GetRootComp()->LookAt(TargetPosition);
 }
 
 void UCamera::LookTo()
@@ -82,7 +78,7 @@ void UCamera::LookTo()
 	auto TargetObject = LookAtObject.lock();
 	if (TargetObject)
 	{
-		LookTo(TargetObject->GetTransform()->GetPosition());
+		LookAt(TargetObject->GetTransform().Position);
 	}
 }
 
@@ -93,8 +89,8 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		return;
 
 	// 1. 목표 방향 계산
-	Vector3 TargetPosition = TargetObject->GetTransform()->GetPosition();
-	Vector3 CurrentPosition = GetTransform()->GetPosition();
+	Vector3 TargetPosition = TargetObject->GetTransform().Position;
+	Vector3 CurrentPosition = GetTransform().Position;
 	Vector3 DesiredDirection = TargetPosition - CurrentPosition;
 
 	// 방향 벡터가 너무 작으면 계산 중단
@@ -172,8 +168,8 @@ void UCamera::UpdateViewMatrix()
 	XMVECTOR vUp = XMVector::XMUp();
 
 	//현재 상태
-	XMVECTOR vRotation = XMLoadFloat4(&GetTransform()->GetRotation());
-	XMVECTOR vPosition = XMLoadFloat3(&GetTransform()->GetPosition());
+	XMVECTOR vRotation = XMLoadFloat4(&GetTransform().Rotation);
+	XMVECTOR vPosition = XMLoadFloat3(&GetTransform().Position);
 
 	XMVECTOR currentLookAt = XMVector3Rotate(vLookAt, vRotation);
 	currentLookAt = XMVectorAdd(vPosition, currentLookAt);

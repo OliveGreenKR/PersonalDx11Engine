@@ -45,42 +45,42 @@ void UGameObject::Tick(const float DeltaTime)
 
 void UGameObject::SetPosition(const Vector3& InPosition)
 {
-	GetTransform()->SetPosition(InPosition);
+	RootComponent->SetLocalPosition(InPosition);
 }
 
 void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 {
-	GetTransform()->SetEulerRotation(InEulerAngles);
+	RootComponent->SetLocalRotationEuler(InEulerAngles);
 }
 
 void UGameObject::SetRotationQuaternion(const Quaternion& InQuaternion)
 {
-	GetTransform()->SetRotation(InQuaternion);
+	RootComponent->SetLocalRotation(InQuaternion);
 }
 
 void UGameObject::SetScale(const Vector3& InScale)
 {
-	GetTransform()->SetScale(InScale);
+	RootComponent->SetLocalScale(InScale);
 }
 
 void UGameObject::AddPosition(const Vector3& InDelta)
 {
-	GetTransform()->AddPosition(InDelta);
+	RootComponent->AddLocalPosition(InDelta);
 }
 
 void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 {
-	GetTransform()->AddEulerRotation(InEulerDelta);
+	RootComponent->AddLocalRotationEuler(InEulerDelta);
 }
 
 void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 {
-	GetTransform()->AddRotation(InQuaternionDelta);
+	RootComponent->AddLocalRotation(InQuaternionDelta);
 }
 
 const Vector3 UGameObject::GetNormalizedForwardVector() const
 {
-	Matrix RotationMatrix = GetTransform()->GetRotationMatrix();
+	Matrix RotationMatrix = GetTransform().GetRotationMatrix();
 	XMVECTOR BaseForward = XMVector::XMForward();
 	XMVECTOR TransformedForward = XMVector3Transform(BaseForward, RotationMatrix);
 	TransformedForward = XMVector3Normalize(TransformedForward);
@@ -129,7 +129,7 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	TargetPosition = GetTransform()->GetPosition() + InDirection.GetNormalized() * MaxSpeed;
+	TargetPosition = GetTransform().Position + InDirection.GetNormalized() * MaxSpeed;
 }
 
 void UGameObject::StopMove()
@@ -148,7 +148,7 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	if (bIsMoving == false)
 		return;
 
-	Vector3 Current = GetTransform()->GetPosition();
+	Vector3 Current = GetTransform().Position;
 	Vector3 Delta = TargetPosition - Current;
 
 	//정지

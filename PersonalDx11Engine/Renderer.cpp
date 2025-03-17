@@ -26,7 +26,6 @@ void URenderer::BeforeRender()
 	RenderHardware->BeginFrame();
 }
 
-
 void URenderer::EndRender()
 {
 	RenderHardware->EndFrame();
@@ -87,7 +86,7 @@ void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject,  USha
 
 	for (auto Primitive : Primitives)
 	{
-		Matrix WorldMatrix = Primitive->GetTransform()->GetModelingMatrix();
+		Matrix WorldMatrix = Primitive->GetWorldTransform().GetModelingMatrix();
 		auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
 		InShader->BindMatrix(GetDeviceContext(), BufferData);
 
@@ -116,7 +115,7 @@ void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject,  USha
 
 		Matrix ViewMatrix = InCamera->GetViewMatrix();
 		Matrix ProjectionMatrix = InCamera->GetProjectionMatrix();
-		Matrix WorldMatrix = InPrimitive->GetTransform()->GetModelingMatrix();
+		Matrix WorldMatrix = InPrimitive->GetWorldTransform().GetModelingMatrix();
 		auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
 		InShader->BindMatrix(GetDeviceContext(), BufferData);
 

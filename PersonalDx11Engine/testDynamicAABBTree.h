@@ -29,19 +29,17 @@ namespace TestDynamicAABBTree
             , bIsStatic(InIsStatic)
             , bIsTransformChanged(false)
         {
-            Transform.SetPosition(InPosition);
+            Transform.Position = InPosition;
         }
 
         // IDynamicBoundable 인터페이스 구현
         virtual Vector3 GetHalfExtent() const override { return HalfExtent; }
-        virtual const FTransform* GetTransform() const override { return &Transform; }
+        virtual const FTransform& GetWorldTransform() const override { return Transform; }
         virtual bool IsStatic() const override { return bIsStatic; }
-        virtual bool IsTransformChanged() const override { return bIsTransformChanged; }
-        virtual void SetTransformChagedClean() override { bIsTransformChanged = false; }
 
         // 테스트용 추가 기능
         void SetPosition(const Vector3& NewPosition) {
-            Transform.SetPosition(NewPosition);
+            Transform.Position = NewPosition;
             bIsTransformChanged = true;
         }
 
@@ -50,7 +48,7 @@ namespace TestDynamicAABBTree
             bIsTransformChanged = true;
         }
 
-        Vector3 GetPosition() const { return Transform.GetPosition(); }
+        Vector3 GetPosition() const { return Transform.Position; }
     };
 
 #pragma region Utils for Test
@@ -445,7 +443,7 @@ namespace TestDynamicAABBTree
             for (size_t j = 0; j < boundables.size(); ++j)
             {
                 const auto& boundable = boundables[j];
-                Vector3 pos = boundable->GetTransform()->GetPosition();
+                Vector3 pos = boundable->GetWorldTransform().Position;
                 Vector3 ext = boundable->GetHalfExtent();
 
                 FDynamicAABBTree::AABB objectBox;

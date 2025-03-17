@@ -5,13 +5,13 @@
 #include "Transform.h"
 #include "CollisionDefines.h"
 #include "DynamicBoundableInterface.h"
-#include "PrimitiveComponent.h"
+#include "SceneComponent.h"
 
 class URigidBodyComponent;
 class UGameObject;
 
 // 충돌 응답에 필요한 속성 관리
-class UCollisionComponent : public UPrimitiveComponent, public IDynamicBoundable
+class UCollisionComponent : public USceneComponent, public IDynamicBoundable
 {
 	friend class UCollisionManager;
 public:
@@ -19,16 +19,11 @@ public:
 	~UCollisionComponent() = default;
 	UCollisionComponent();
 public:
-	//Scene Comp
-	virtual const FTransform* GetTransform() const override;
-	virtual FTransform* GetTransform() override;
 
 	// Inherited via IDynamicBoundable
 	Vector3 GetHalfExtent() const override;
-	
 	bool IsStatic() const override;
-	bool IsTransformChanged() const override { return bIsTransformDirty; }
-	void SetTransformChagedClean() override { bIsTransformDirty = false; }
+	const FTransform& GetWorldTransform() const override;
 
 protected:
 	virtual void PostTreeInitialized() override;
@@ -42,12 +37,11 @@ public:
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
 	const FCollisionShapeData& GetCollisionShape() const { return Shape; }
-	const FTransform& GetPreviousTransform() const { return PrevTransform; }
+	const FTransform& GetPreviousTransform() const { return PrevWorldTransform; }
 
 	//Setter
 	void SetCollisionShapeData(const FCollisionShapeData& InShape);
 	void SetHalfExtent(const Vector3& InHalfExtent);
-
 
 	//형태 지정
 	void SetShape(const ECollisionShapeType InShape);
@@ -90,7 +84,6 @@ private:
 private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
 	FCollisionShapeData Shape;
-	FTransform PrevTransform = FTransform();    // CCD를 위한 이전 프레임 트랜스폼
-
-	bool bIsTransformDirty = false;
-}; 
+	// CCD를 위한 이전 프레임 월드 트랜스폼
+	FTransform PrevWorldTransform = FTransform();
+};

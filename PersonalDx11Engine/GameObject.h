@@ -4,7 +4,7 @@
 #include "Color.h"
 #include "Delegate.h"
 #include "ActorComponent.h"
-#include "SceneCompoent.h"
+#include "SceneComponent.h"
 
 using namespace std;
 
@@ -65,12 +65,8 @@ public:
 
 	const Vector3 GetNormalizedForwardVector() const;
 
-	__forceinline const FTransform* GetTransform() const { return RootComponent->GetTransform(); }
-	__forceinline FTransform* GetTransform() { return RootComponent->GetTransform(); }
-	Matrix GetWorldMatrix() const  { return RootComponent->GetTransform()->GetModelingMatrix(); }
-
-	//void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
-	//UModel* GetModel() const;
+	__forceinline const FTransform& GetTransform() const { return RootComponent->GetWorldTransform(); }
+	Matrix GetWorldMatrix() const  { return RootComponent->GetWorldTransform().GetModelingMatrix(); }
 
 protected:
 	virtual void UpdateComponents(const float DeltaTime);

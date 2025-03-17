@@ -51,7 +51,7 @@ void UGameplayScene02::Initialize()
     Character2->PostInitialized();
 
     Camera->SetLookAtObject(Character.get());
-    Camera->LookTo({ 0.0f, 0.0f, 0.0f }); //.정중앙
+    Camera->LookAt({ 0.0f, 0.0f, 0.0f }); //.정중앙
     Camera->bLookAtObject = false;
 
     Character->PostInitializedComponents();
