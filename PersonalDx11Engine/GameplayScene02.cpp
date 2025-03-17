@@ -70,6 +70,9 @@ void UGameplayScene02::Initialize()
     Character->SetActive(true);
     Character2->SetActive(true);
 
+    Character->SetGravity(false);
+    Character2->SetGravity(false);
+
     // 입력 컨텍스트 등록
     UInputManager::Get()->RegisterInputContext(InputContext);
 }

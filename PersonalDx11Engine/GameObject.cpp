@@ -180,7 +180,7 @@ void UGameObject::ApplyForce(const Vector3&& InForce)
 	if (!IsPhysicsSimulated())
 		return;
 
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->ApplyForce(InForce);
@@ -192,7 +192,7 @@ void UGameObject::ApplyImpulse(const Vector3&& InImpulse)
 	if (!IsPhysicsSimulated())
 		return;
 
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->ApplyImpulse(InImpulse);
@@ -204,7 +204,7 @@ Vector3 UGameObject::GetCurrentVelocity() const
 	if (!IsPhysicsSimulated())
 		return Vector3::Zero;
 
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->GetVelocity();
@@ -217,7 +217,7 @@ float UGameObject::GetMass() const
 	if (!IsPhysicsSimulated())
 		return 0.0f;
 
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->GetMass();
@@ -230,7 +230,7 @@ bool UGameObject::IsGravity() const
 {
 	if (!IsPhysicsSimulated())
 		return false;
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->bGravity;
@@ -242,7 +242,7 @@ bool UGameObject::IsPhysicsSimulated() const
 {
 	if (!RootComponent.get())
 		return false;
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->IsActive();
@@ -254,7 +254,7 @@ void UGameObject::SetGravity(const bool InBool)
 {
 	if (!IsPhysicsSimulated())
 		return;
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		RigidPtr->bGravity = InBool;
@@ -267,7 +267,7 @@ void UGameObject::SetPhysics(const bool InBool)
 	if (!RootComponent.get())
 		return;
 
-	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		RigidPtr->SetActive(InBool);

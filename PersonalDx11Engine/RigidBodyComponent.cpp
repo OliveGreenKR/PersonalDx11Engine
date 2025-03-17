@@ -1,6 +1,7 @@
 ﻿#include "RigidBodyComponent.h"
 #include "Transform.h"
 #include "GameObject.h"
+#include "Debug.h"
 
 URigidBodyComponent::URigidBodyComponent()
 {
