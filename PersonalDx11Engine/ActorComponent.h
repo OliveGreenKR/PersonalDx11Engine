@@ -92,27 +92,31 @@ public:
 
     // 컴포넌트 검색 유틸리티
     template<typename T>
-    T* FindComponentByType(const bool SelfInclude = true)
+    std::weak_ptr<T> FindComponentByType(const bool SelfInclude = true)
     {
+
         if (SelfInclude)
         {
-            // 현재 컴포넌트 체크
-            if (auto ThisComponent = dynamic_cast<T*>(this))
-                return ThisComponent;
+             // 현재 컴포넌트 검사
+            if (dynamic_cast<const T*>(this))
+            {
+                // 안전하게 캐스팅하고 weak_ptr로 변환
+                return std::dynamic_pointer_cast<T>(shared_from_this());
+            }
         }
         
         // 자식 컴포넌트들 검색
         for (const auto& Child : ChildComponents)
         {
-            if (auto FoundComponent = Child->FindComponentByType<T>())
+            if (auto FoundComponent = Child->FindComponentByType<T>().lock())
                 return FoundComponent;
         }
 
-        return nullptr;
+        return std::weak_ptr<T>();
     }
 
     template<typename T>
-    T* FindChildByType()
+    std::weak_ptr<T> FindChildByType()
     {
         return FindComponentByType<T>(false);
     }
@@ -130,8 +134,12 @@ public:
 
         if (SelfInclude)
         {
-            std::shared_ptr<UActorComponent>& SharedThis = shared_from_this();
-            Found.push_back(SharedThis);
+             // 현재 컴포넌트 검사
+            if (dynamic_cast<const T*>(this))
+            {
+                // 안전하게 캐스팅하고 weak_ptr로 변환
+                Found.push_back(std::dynamic_pointer_cast<T>(shared_from_this()));
+            }
         }
         
         // 자식 컴포넌트들 검색
@@ -147,7 +155,6 @@ public:
         return Found;
     }
 
-private:
     template<typename T>
     std::vector<T*> FindComponentsRaw(const bool SelfInclude = true)
     {

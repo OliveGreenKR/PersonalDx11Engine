@@ -137,14 +137,14 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Begin("Camera", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIs2D", &Camera->bIs2D);
             ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-            ImGui::Text(Debug::ToString(*Camera->GetTransform()));
+            ImGui::Text(Debug::ToString(Camera->GetTransform()));
             ImGui::End();
         }
 
         if (Character)
         {
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
-            Vector3 CurrentPos = Character->GetTransform()->GetPosition();
+            Vector3 CurrentPos = Character->GetTransform().Position;
             bool bGravity = Character->IsGravity();
             bool bPhysics = Character->IsPhysicsSimulated();
             ImGui::Begin("Charcter", nullptr, UIWindowFlags);
@@ -463,10 +463,10 @@ void UGameplayScene02::SetupInput()
                                                           [this](const FKeyEventData& EventData) {
                                                               if (Character2.get())
                                                               {
-                                                                  Vector3 TargetPos = Character2->GetTransform()->GetPosition();
+                                                                  Vector3 TargetPos = Character2->GetTransform().Position;
                                                                   TargetPos += Vector3::Right * 0.15f;
                                                                   TargetPos += Vector3::Up * 0.15f;
-                                                                  Character2->GetRootComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
+                                                                  Character2->GetRootComp()->FindChildByType<URigidBodyComponent>().lock()->ApplyImpulse(
                                                                       Vector3::Right * 1.0f,
                                                                       TargetPos);
                                                               }
@@ -482,11 +482,11 @@ void UGameplayScene02::SetupBorderTriggers()
             std::abs(Position.z) < ZBorder;
         };
 
-    Character->GetTransform()->OnTransformChangedDelegate.Bind(Character,
+    Character->GetRootComp()->OnTransformChangedDelegate.Bind(Character,
                                                                [IsInBorder, this](const FTransform& InTransform) {
-                                                                   if (!IsInBorder(InTransform.GetPosition()))
+                                                                   if (!IsInBorder(InTransform.Position))
                                                                    {
-                                                                       const Vector3 Position = InTransform.GetPosition();
+                                                                       const Vector3 Position = InTransform.Position;
                                                                        Vector3 Normal = Vector3::Zero;
                                                                        Vector3 NewPosition = Position;
 
@@ -509,7 +509,7 @@ void UGameplayScene02::SetupBorderTriggers()
 
                                                                        Normal.Normalize();
                                                                        //Position correction
-                                                                       Character->GetTransform()->SetPosition(NewPosition);
+                                                                       Character->SetPosition(NewPosition);
 
                                                                        const Vector3 CurrentVelo = Character->GetCurrentVelocity();
                                                                        const float Restitution = 0.8f;
@@ -521,11 +521,11 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                },
                                                                "BorderCheck");
 
-    Character2->GetTransform()->OnTransformChangedDelegate.Bind(Character2,
+    Character2->GetRootComp()->OnTransformChangedDelegate.Bind(Character2,
                                                                 [IsInBorder, this](const FTransform& InTransform) {
-                                                                    if (!IsInBorder(InTransform.GetPosition()))
+                                                                    if (!IsInBorder(InTransform.Position))
                                                                     {
-                                                                        const Vector3 Position = InTransform.GetPosition();
+                                                                        const Vector3 Position = InTransform.Position;
                                                                         Vector3 Normal = Vector3::Zero;
                                                                         Vector3 NewPosition = Position;
 
@@ -548,7 +548,7 @@ void UGameplayScene02::SetupBorderTriggers()
 
                                                                         Normal.Normalize();
                                                                         //Position correction
-                                                                        Character2->GetTransform()->SetPosition(NewPosition);
+                                                                        Character2->SetPosition(NewPosition);
 
                                                                         const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
                                                                         const float Restitution = 0.8f;

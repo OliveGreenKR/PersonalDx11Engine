@@ -56,7 +56,7 @@ public:
 	void SetPosition(const Vector3& InPosition);
 	//{ Pitch, Yaw, Roll } in Degree
 	void SetRotationEuler(const Vector3& InEulerAngles);
-	void SetRotationQuaternion(const Quaternion& InQuaternion);
+	void SetRotation(const Quaternion& InQuaternion);
 	void SetScale(const Vector3& InScale);
 
 	void AddPosition(const Vector3& InDelta);
@@ -149,7 +149,6 @@ public:
 		if (!RootComponent) return {};
 		return RootComponent->FindChildrenRaw<T>();
 	}
-
 	USceneComponent* GetRootComp() { return RootComponent.get(); }
 
 protected:

@@ -78,7 +78,6 @@ public:
 	virtual const char* GetComponentClassName() const override { return "UCollision"; }
 
 private:
-	void OnOwnerTransformChanged(const FTransform& InChanged);
 	Vector3 CalculateRotationalInerteria(const float InMass);
 
 private:

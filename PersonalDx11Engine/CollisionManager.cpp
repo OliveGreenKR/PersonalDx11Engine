@@ -298,14 +298,14 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
 			{
 				//ccd
-				DetectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), *CompA->GetTransform(),
-															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), *CompB->GetTransform(), DeltaTime);
+				DetectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), CompA->GetWorldTransform(),
+															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), CompB->GetWorldTransform(), DeltaTime);
 			}
 			else
 			{
 				//dcd
-				DetectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(), *CompA->GetTransform(),
-																 CompB->GetCollisionShape(), *CompB->GetTransform());
+				DetectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(), CompA->GetWorldTransform(),
+																 CompB->GetCollisionShape(), CompB->GetWorldTransform());
 			}
 		}
 
@@ -333,13 +333,13 @@ void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionCompone
 
 	ResponseResult.Mass = RigidPtr->GetMass();
 	ResponseResult.RotationalInertia = RigidPtr->GetRotationalInertia();
-	ResponseResult.Position = RigidPtr->GetTransform()->GetPosition();
+	ResponseResult.Position = RigidPtr->GetLocalTransform().Position;
 	ResponseResult.Velocity = RigidPtr->GetVelocity();
 	ResponseResult.AngularVelocity = RigidPtr->GetAngularVelocity();
 	ResponseResult.Restitution = RigidPtr->GetRestitution();
 	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
 	ResponseResult.FrictionStatic = RigidPtr->GetFrictionStatic();
-	ResponseResult.Rotation = RigidPtr->GetTransform()->GetRotation();
+	ResponseResult.Rotation = RigidPtr->GetLocalTransform().Rotation;
 
 	return;
 }
@@ -451,18 +451,16 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 		// 각 물체를 반대 방향으로 밀어냄
 		if (!RigidA->IsStatic())
 		{
-			auto TransA = RigidA->GetTransform();
-			Vector3 newPos = TransA->GetPosition() - correction * ratioA;
-			//TransA->SetPosition(Math::Lerp(TransA->GetPosition(), newPos,DeltaTime));
-			TransA->SetPosition(newPos);
+			auto TransA = RigidA->GetLocalTransform();
+			Vector3 newPos = TransA.Position - correction * ratioA;
+			RigidA->SetLocalPosition(newPos);
 		}
 
 		if (!RigidB->IsStatic())
 		{
-			auto TransB = RigidB->GetTransform();
-			Vector3 newPos = TransB->GetPosition() + correction * ratioB;
-			//TransB->SetPosition(Math::Lerp(TransB->GetPosition(), newPos, DeltaTime));
-			TransB->SetPosition(newPos);
+			auto TransB = RigidB->GetLocalTransform();
+			Vector3 newPos = TransB.Position - correction * ratioA;
+			RigidA->SetLocalPosition(newPos);
 		}
 	}
 }

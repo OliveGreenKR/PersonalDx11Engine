@@ -26,7 +26,7 @@ void UGameObject::PostInitializedComponents()
 		CompPtr->BraodcastPostTreeInitialized();
 	}
 
-	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponent>())
+	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponent>().lock())
 	{
 		CollisionComp->OnCollisionEnter.Bind(shared_from_this(), &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
 		CollisionComp->OnCollisionExit.Bind(shared_from_this(), &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
@@ -53,7 +53,7 @@ void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 	RootComponent->SetLocalRotationEuler(InEulerAngles);
 }
 
-void UGameObject::SetRotationQuaternion(const Quaternion& InQuaternion)
+void UGameObject::SetRotation(const Quaternion& InQuaternion)
 {
 	RootComponent->SetLocalRotation(InQuaternion);
 }
@@ -180,9 +180,10 @@ void UGameObject::ApplyForce(const Vector3&& InForce)
 	if (!IsPhysicsSimulated())
 		return;
 
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->ApplyForce(InForce);
+		return RigidPtr->ApplyForce(InForce);
 	}
 }
 
@@ -191,9 +192,10 @@ void UGameObject::ApplyImpulse(const Vector3&& InImpulse)
 	if (!IsPhysicsSimulated())
 		return;
 
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->ApplyImpulse(InImpulse);
+		return RigidPtr->ApplyImpulse(InImpulse);
 	}
 }
 
@@ -202,11 +204,11 @@ Vector3 UGameObject::GetCurrentVelocity() const
 	if (!IsPhysicsSimulated())
 		return Vector3::Zero;
 
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->GetVelocity();
+		return RigidPtr->GetVelocity();
 	}
-
 	return Vector3::Zero;
 }
 
@@ -215,9 +217,10 @@ float UGameObject::GetMass() const
 	if (!IsPhysicsSimulated())
 		return 0.0f;
 
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->GetMass();
+		return RigidPtr->GetMass();
 	}
 
 	return 0.0f;
@@ -227,9 +230,10 @@ bool UGameObject::IsGravity() const
 {
 	if (!IsPhysicsSimulated())
 		return false;
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->bGravity;
+		return RigidPtr->bGravity;
 	}
 	return false;
 }
@@ -238,9 +242,10 @@ bool UGameObject::IsPhysicsSimulated() const
 {
 	if (!RootComponent.get())
 		return false;
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidComp->IsActive();
+		return RigidPtr->IsActive();
 	}
 	return false;
 }
@@ -249,9 +254,11 @@ void UGameObject::SetGravity(const bool InBool)
 {
 	if (!IsPhysicsSimulated())
 		return;
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		RigidComp->bGravity = InBool;
+		RigidPtr->bGravity = InBool;
+		return;
 	}
 }
 
@@ -260,8 +267,10 @@ void UGameObject::SetPhysics(const bool InBool)
 	if (!RootComponent.get())
 		return;
 
-	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
+	auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>();
+	if (auto RigidPtr = RigidComp.lock())
 	{
-		RigidComp->SetActive(InBool);
+		RigidPtr->SetActive(InBool);
+		return;
 	}
 }

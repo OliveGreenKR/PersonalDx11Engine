@@ -113,7 +113,7 @@ void UGameplayScene01::SubmitRenderUI()
             ImGui::Begin("Camera", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIs2D", &Camera->bIs2D);
             ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-            ImGui::Text(Debug::ToString(*Camera->GetTransform()));
+            ImGui::Text(Debug::ToString(Camera->GetTransform()));
             ImGui::End();
         }
 
@@ -224,14 +224,14 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
     // 약한 참조를 사용하여 순환 참조 방지
     std::weak_ptr<UElasticBody> WeakBody = InBody;
 
-    InBody->GetTransform()->OnTransformChangedDelegate.Bind(
+    InBody->GetRootComp()->OnTransformChangedDelegate.Bind(
         InBody, // 여기서는 객체를 전달해야 함
         [IsInBorder, this, WeakBody](const FTransform& InTransform) {
             // 약한 참조에서 유효한 공유 포인터를 획득
             if (auto Body = WeakBody.lock()) {
-                if (!IsInBorder(InTransform.GetPosition()))
+                if (!IsInBorder(InTransform.Position))
                 {
-                    const Vector3 Position = InTransform.GetPosition();
+                    const Vector3 Position = InTransform.Position;
                     Vector3 Normal = Vector3::Zero;
                     Vector3 NewPosition = Position;
 
@@ -255,7 +255,7 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
                     Normal.Normalize();
 
                     // Position correction
-                    Body->GetTransform()->SetPosition(NewPosition);
+                    Body->SetPosition(NewPosition);
 
                     const Vector3 CurrentVelo = Body->GetCurrentVelocity();
                     const float Restitution = 0.8f;

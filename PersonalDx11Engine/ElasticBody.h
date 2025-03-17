@@ -73,8 +73,9 @@ private:
     bool bIsActive = true;
     EShape Shape = EShape::Sphere;
 
+    //Rigid Root 빠른 접근
+    std::weak_ptr<class URigidBodyComponent> Rigid;
     // 컴포넌트 소유
-    std::shared_ptr<class URigidBodyComponent> Rigid;
     std::shared_ptr<class UCollisionComponent> Collision;
     std::shared_ptr<class UPrimitiveComponent> Primitive;
 

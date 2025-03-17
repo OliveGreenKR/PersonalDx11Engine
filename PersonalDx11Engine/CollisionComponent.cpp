@@ -20,28 +20,6 @@ Vector3 UCollisionComponent::GetHalfExtent() const
 	return Shape.HalfExtent;
 }
 
-const FTransform* UCollisionComponent::GetTransform() const
-{
-	auto RigidPtr = RigidBody.lock();
-
-	if (RigidPtr)
-	{
-		return RigidPtr->GetTransform();
-	}
-	return &LocalTransform;
-}
-
-FTransform* UCollisionComponent::GetTransform()
-{
-	auto RigidPtr = RigidBody.lock();
-
-	if (RigidPtr)
-	{
-		return RigidPtr->GetTransform();
-	}
-	return &LocalTransform;
-}
-
 bool UCollisionComponent::IsStatic() const
 {
 	return RigidBody.lock()->IsStatic();
@@ -81,7 +59,7 @@ void UCollisionComponent::SetHalfExtent(const Vector3& InHalfExtent)
 
 void UCollisionComponent::Activate()
 {
-	UPrimitiveComponent::Activate();
+	USceneComponent::Activate();
 	ActivateColiision();
 }
 
@@ -116,11 +94,6 @@ void UCollisionComponent::DeActivateCollision()
 {
 	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
 	UCollisionManager::Get()->UnRegisterCollision(shared);
-}
-
-void UCollisionComponent::OnOwnerTransformChanged(const FTransform& InChanged)
-{
-	bIsTransformDirty = true;
 }
 
 Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
