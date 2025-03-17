@@ -1,46 +1,46 @@
-#pragma once
+ï»¿#pragma once
 #pragma once
 #include "Math.h"
 #include <memory>
 #include "Transform.h"
 
-// Ãæµ¹Ã¼ ÇüÅÂ Á¤ÀÇ
+// ì¶©ëŒì²´ í˜•íƒœ ì •ì˜
 enum class ECollisionShapeType
 {
 	Box,
 	Sphere
 };
 
-// Ãæµ¹Ã¼ ±âÇÏ Á¤º¸
+// ì¶©ëŒì²´ ê¸°í•˜ ì •ë³´
 struct FCollisionShapeData
 {
 	inline float GetSphereRadius() const {
 		assert(Type == ECollisionShapeType::Sphere);
-		return HalfExtent.x;  // ±¸´Â x ¼ººĞ¸¸ »ç¿ë
+		return HalfExtent.x;  // êµ¬ëŠ” x ì„±ë¶„ë§Œ ì‚¬ìš©
 	}
 
 	inline const Vector3& GetBoxHalfExtents() const {
 		assert(Type == ECollisionShapeType::Box);
-		return HalfExtent;    // ¹Ú½º´Â ÀüÃ¼ º¤ÅÍ »ç¿ë
+		return HalfExtent;    // ë°•ìŠ¤ëŠ” ì „ì²´ ë²¡í„° ì‚¬ìš©
 	}
 
 	ECollisionShapeType Type = ECollisionShapeType::Box;
-	Vector3 HalfExtent = Vector3::Zero;  //Sphere´Â x°ª¸¸ »ç¿ë
+	Vector3 HalfExtent = Vector3::Zero;  //SphereëŠ” xê°’ë§Œ ì‚¬ìš©
 };
 
-// Ãæµ¹ °¨Áö °á°ú
+// ì¶©ëŒ ê°ì§€ ê²°ê³¼
 struct FCollisionDetectionResult
 {
 	bool bCollided = false;
-	Vector3 Normal = Vector3::Zero;      // Ãæµ¹ ¹ı¼±
-	Vector3 Point = Vector3::Zero;       // Ãæµ¹ ÁöÁ¡
-	float PenetrationDepth = 0.0f;       // Ä§Åõ ±íÀÌ
-	float TimeOfImpact = 0.0f;           // CCD¿ë Ãæµ¹ ½ÃÁ¡
+	Vector3 Normal = Vector3::Zero;      // ì¶©ëŒ ë²•ì„ 
+	Vector3 Point = Vector3::Zero;       // ì¶©ëŒ ì§€ì 
+	float PenetrationDepth = 0.0f;       // ì¹¨íˆ¬ ê¹Šì´
+	float TimeOfImpact = 0.0f;           // CCDìš© ì¶©ëŒ ì‹œì 
 };
 
 
-// Ãæµ¹ ÀÀ´ä °è»êÀ» À§ÇÑ ¸Å°³º¯¼ö, Ãæµ¹ ¹İÀÀ¿¡ ÇÊ¿äÇÑ ¹°¸® ¼Ó¼º Á¤º¸
-struct FCollisionResponseParameters
+// ì¶©ëŒ ë°˜ì‘ ê³„ì‚° ì— í•„ìš”í•œ ë¬¼ë¦¬ ì†ì„± ì •ë³´
+struct FPhysicsParameters
 {
 	//if negative mass, it means invalied params
 	float Mass = -1.0f;  
@@ -51,12 +51,12 @@ struct FCollisionResponseParameters
 	Vector3 AngularVelocity = Vector3::Zero;
 	Quaternion Rotation = Quaternion::Identity;
 
-	float Restitution = 0.5f; // ¹İ¹ß°è¼ö
+	float Restitution = 0.5f; // ë°˜ë°œê³„ìˆ˜
 	float FrictionStatic = 0.8f;
 	float FrictionKinetic = 0.5f;
 };
 
-//Á¦ÇÑÁ¶°Ç Ãæµ¹ °Ë»ç ¶÷´Ù ´©Àû
+//ì œí•œì¡°ê±´ ì¶©ëŒ ê²€ì‚¬ ëŒë‹¤ ëˆ„ì 
 struct FAccumulatedConstraint
 {
 	float normalLambda = 0.0f;
@@ -71,11 +71,11 @@ struct FAccumulatedConstraint
 
 struct FCollisionResponseResult
 {
-	Vector3 NetImpulse = Vector3::Zero; // ¸ğµç ¹°¸®Àû È¿°ú¸¦ ÅëÇÕÇÑ ÃÖÁ¾ Ãæ°İ·®
+	Vector3 NetImpulse = Vector3::Zero; // ëª¨ë“  ë¬¼ë¦¬ì  íš¨ê³¼ë¥¼ í†µí•©í•œ ìµœì¢… ì¶©ê²©ëŸ‰
 	Vector3 ApplicationPoint = Vector3::Zero;
 };
 
-// ´ÜÀÏ Ãæµ¹½Ö Ãæµ¹ ÀÌº¥Æ® Á¤º¸, Ãæµ¹ °á°ú µ¨¸®°ÔÀÌÆ® ÀüÆÄ
+// ë‹¨ì¼ ì¶©ëŒìŒ ì¶©ëŒ ì´ë²¤íŠ¸ ì •ë³´, ì¶©ëŒ ê²°ê³¼ ë¸ë¦¬ê²Œì´íŠ¸ ì „íŒŒ
 struct FCollisionEventData
 {
 	std::weak_ptr<class UCollisionComponent> OtherComponent;

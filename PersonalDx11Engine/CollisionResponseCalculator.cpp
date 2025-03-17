@@ -1,37 +1,37 @@
-#include "CollisionResponseCalculator.h"
+ï»¿#include "CollisionResponseCalculator.h"
 
 FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByImpulse(
     const FCollisionDetectionResult& DetectionResult,
-    const FCollisionResponseParameters& ParameterA,
-    const FCollisionResponseParameters& ParameterB)
+    const FPhysicsParameters& ParameterA,
+    const FPhysicsParameters& ParameterB)
 {
      FCollisionResponseResult ResponseData;
 
     if (!DetectionResult.bCollided || ParameterA.Mass < 0.0f || ParameterB.Mass < 0.0f )
         return ResponseData;
 
-    // ¹ı¼± º¤ÅÍ ·Îµå
+    // ë²•ì„  ë²¡í„° ë¡œë“œ
     XMVECTOR vNormal = XMLoadFloat3(&DetectionResult.Normal);
 
-    // Ãæµ¹ ÁöÁ¡¿¡¼­ÀÇ »ó´ë ¼Óµµ °è»ê
+    // ì¶©ëŒ ì§€ì ì—ì„œì˜ ìƒëŒ€ ì†ë„ ê³„ì‚°
     XMVECTOR vRelativeVel = CalculateRelativeVelocity(
         DetectionResult.Point, ParameterA, ParameterB);
 
-    // ¹ı¼± ¹æÇâ ¼Óµµ °Ë»ç
+    // ë²•ì„  ë°©í–¥ ì†ë„ ê²€ì‚¬
     float normalVelocity = XMVectorGetX(XMVector3Dot(vRelativeVel, vNormal));
     if (normalVelocity > 0)
         return ResponseData;
 
-    // ¼öÁ÷ Ãæ°İ·®°ú ¸¶Âû Ãæ°İ·® °è»ê
+    // ìˆ˜ì§ ì¶©ê²©ëŸ‰ê³¼ ë§ˆì°° ì¶©ê²©ëŸ‰ ê³„ì‚°
     XMVECTOR vNormalImpulse = CalculateNormalImpulse(
         DetectionResult, ParameterA, ParameterB);
     XMVECTOR vFrictionImpulse = CalculateFrictionImpulse(
         vNormalImpulse, DetectionResult, ParameterA, ParameterB);
 
-    // ÃÖÁ¾ Ãæ°İ·® °è»ê
+    // ìµœì¢… ì¶©ê²©ëŸ‰ ê³„ì‚°
     XMVECTOR vNetImpulse = XMVectorAdd(vNormalImpulse, vFrictionImpulse);
 
-    // ÀÀ´ä µ¥ÀÌÅÍ ¼³Á¤
+    // ì‘ë‹µ ë°ì´í„° ì„¤ì •
     XMStoreFloat3(&ResponseData.NetImpulse, vNetImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
 
@@ -39,7 +39,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByImpuls
 }
 
 FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContraints(const FCollisionDetectionResult& DetectionResult, 
-                                                                                     const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB,
+                                                                                     const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
                                                                                      FAccumulatedConstraint& Accumulation)
 {
     FCollisionResponseResult ResponseData;
@@ -49,18 +49,18 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 
     FConstraintSolverCache ConstraintCache = PrepareConstraintCache(DetectionResult, ParameterA, ParameterB);
 
-    //¼öÁ÷ Ãæ°İ·®
+    //ìˆ˜ì§ ì¶©ê²©ëŸ‰
     XMVECTOR vNormalImpulse = SolveNormalConstraint(DetectionResult, ConstraintCache, Accumulation);
 
-    //¸¶Âû Ãæ°İ·®
+    //ë§ˆì°° ì¶©ê²©ëŸ‰
     float StaticFriction = (ParameterA.FrictionStatic + ParameterB.FrictionStatic) * 0.5f;
     float KineticFriction = (ParameterA.FrictionKinetic + ParameterB.FrictionKinetic) * 0.5f;
     XMVECTOR vFrictionImpulse = SolveFrictionConstraint(ConstraintCache, StaticFriction, KineticFriction, Accumulation);
 
-    // ÃÖÁ¾ Ãæ°İ·® °è»ê
+    // ìµœì¢… ì¶©ê²©ëŸ‰ ê³„ì‚°
     XMVECTOR vNetImpulse = XMVectorAdd(vNormalImpulse, vFrictionImpulse);
 
-    // ÀÀ´ä µ¥ÀÌÅÍ ¼³Á¤
+    // ì‘ë‹µ ë°ì´í„° ì„¤ì •
     XMStoreFloat3(&ResponseData.NetImpulse, vNetImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
 
@@ -69,8 +69,8 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 
 XMVECTOR FCollisionResponseCalculator::CalculateRelativeVelocity(
     const Vector3& ContactPoint,
-    const FCollisionResponseParameters& ParameterA,
-    const FCollisionResponseParameters& ParameterB)
+    const FPhysicsParameters& ParameterA,
+    const FPhysicsParameters& ParameterB)
 {                
     XMVECTOR vContactPoint = XMLoadFloat3(&ContactPoint);
     XMVECTOR vPosA = XMLoadFloat3(&ParameterA.Position);
@@ -84,25 +84,25 @@ XMVECTOR FCollisionResponseCalculator::CalculateRelativeVelocity(
     XMVECTOR vVelA = XMLoadFloat3(&ParameterA.Velocity);
     XMVECTOR vVelB = XMLoadFloat3(&ParameterB.Velocity);
 
-    // °¢¼Óµµ¿¡ ÀÇÇÑ ¼±¼Óµµ °è»ê
+    // ê°ì†ë„ì— ì˜í•œ ì„ ì†ë„ ê³„ì‚°
     XMVECTOR vPointVelA = XMVector3Cross(vAngVelA, vRadiusA);
     XMVECTOR vPointVelB = XMVector3Cross(vAngVelB, vRadiusB);
 
-    // ÀüÃ¼ ¼Óµµ °è»ê
+    // ì „ì²´ ì†ë„ ê³„ì‚°
     XMVECTOR vTotalVelA = XMVectorAdd(vVelA, vPointVelA);
     XMVECTOR vTotalVelB = XMVectorAdd(vVelB, vPointVelB);
 
-    // »ó´ë ¼Óµµ °è»ê
+    // ìƒëŒ€ ì†ë„ ê³„ì‚°
     XMVECTOR vRelativeVel = XMVectorSubtract(vTotalVelB, vTotalVelA);
     return vRelativeVel;
 }
 
 FCollisionResponseCalculator::FConstraintSolverCache FCollisionResponseCalculator::PrepareConstraintCache(const FCollisionDetectionResult& DetectionResult, 
-                                                                                                          const FCollisionResponseParameters& ParameterA, const FCollisionResponseParameters& ParameterB)
+                                                                                                          const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB)
 {
     FConstraintSolverCache cache;
 
-    // À§Ä¡ ¹× ¼Óµµ °è»ê
+    // ìœ„ì¹˜ ë° ì†ë„ ê³„ì‚°
     XMVECTOR vContactPoint = XMLoadFloat3(&DetectionResult.Point);
     XMVECTOR vPosA = XMLoadFloat3(&ParameterA.Position);
     XMVECTOR vPosB = XMLoadFloat3(&ParameterB.Position);
@@ -115,21 +115,21 @@ FCollisionResponseCalculator::FConstraintSolverCache FCollisionResponseCalculato
     XMVECTOR vVelA = XMLoadFloat3(&ParameterA.Velocity);
     XMVECTOR vVelB = XMLoadFloat3(&ParameterB.Velocity);
 
-    // °¢¼Óµµ¿¡ ÀÇÇÑ ¼±¼Óµµ
+    // ê°ì†ë„ì— ì˜í•œ ì„ ì†ë„
     XMVECTOR vPointVelA = XMVector3Cross(vAngVelA, vRadiusA);
     XMVECTOR vPointVelB = XMVector3Cross(vAngVelB, vRadiusB);
 
-    // ÀüÃ¼ »ó´ë ¼Óµµ
+    // ì „ì²´ ìƒëŒ€ ì†ë„
     XMVECTOR vTotalVelA = XMVectorAdd(vVelA, vPointVelA);
     XMVECTOR vTotalVelB = XMVectorAdd(vVelB, vPointVelB);
     cache.vRelativeVel = XMVectorSubtract(vTotalVelB, vTotalVelA);
 
-    // Ãæµ¹ ¹æÇâ
+    // ì¶©ëŒ ë°©í–¥
     cache.vNormal = XMLoadFloat3(&DetectionResult.Normal);
     XMVECTOR vJA_Angular = XMVector3Cross(vRadiusA, cache.vNormal);
     XMVECTOR vJB_Angular = XMVector3Cross(vRadiusB, cache.vNormal);
 
-    // °ü¼º ÅÙ¼­ °è»ê
+    // ê´€ì„± í…ì„œ ê³„ì‚°
     Matrix RotA = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterA.Rotation));
     Matrix RotB = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterB.Rotation));
 
@@ -145,11 +145,11 @@ FCollisionResponseCalculator::FConstraintSolverCache FCollisionResponseCalculato
     XMVECTOR JA_Angular_Inertia = XMVector3Transform(vJA_Angular, mInvInertiaA);
     XMVECTOR JB_Angular_Inertia = XMVector3Transform(vJB_Angular, mInvInertiaB);
 
-    // Áú·® °ü·Ã
+    // ì§ˆëŸ‰ ê´€ë ¨
     float invMassA = ParameterA.Mass > KINDA_SMALL ? 1.0f / ParameterA.Mass : 0.0f;
     float invMassB = ParameterB.Mass > KINDA_SMALL ? 1.0f / ParameterB.Mass : 0.0f;
 
-    // À¯È¿ Áú·®
+    // ìœ íš¨ ì§ˆëŸ‰
     cache.effectiveMass = invMassA + invMassB +
         XMVectorGetX(XMVector3Dot(vJA_Angular, JA_Angular_Inertia)) +
         XMVectorGetX(XMVector3Dot(vJB_Angular, JB_Angular_Inertia));
@@ -159,59 +159,59 @@ FCollisionResponseCalculator::FConstraintSolverCache FCollisionResponseCalculato
 
 XMVECTOR FCollisionResponseCalculator::CalculateNormalImpulse(
     const FCollisionDetectionResult& DetectionResult,
-    const FCollisionResponseParameters& ParameterA,
-    const FCollisionResponseParameters& ParameterB)
+    const FPhysicsParameters& ParameterA,
+    const FPhysicsParameters& ParameterB)
 {
-    // SIMD º¤ÅÍ ·Îµå
+    // SIMD ë²¡í„° ë¡œë“œ
     XMVECTOR vNormal = XMLoadFloat3(&DetectionResult.Normal);
     XMVECTOR vPoint = XMLoadFloat3(&DetectionResult.Point);
     XMVECTOR vPosA = XMLoadFloat3(&ParameterA.Position);
     XMVECTOR vPosB = XMLoadFloat3(&ParameterB.Position);
 
-    // »ó´ë ¼Óµµ °è»ê
+    // ìƒëŒ€ ì†ë„ ê³„ì‚°
     XMVECTOR vRelVel = CalculateRelativeVelocity(DetectionResult.Point, ParameterA, ParameterB);
 
-    // ¼öÁ÷ ¹æÇâ »ó´ë ¼Óµµ
+    // ìˆ˜ì§ ë°©í–¥ ìƒëŒ€ ì†ë„
     float normalVelocity = XMVectorGetX(XMVector3Dot(vRelVel, vNormal));
 
-    // ¿ªÁú·® °è»ê
+    // ì—­ì§ˆëŸ‰ ê³„ì‚°
     float invMassA = ParameterA.Mass > KINDA_SMALL ? 1.0f / ParameterA.Mass : 0.0f;
     float invMassB = ParameterB.Mass > KINDA_SMALL ? 1.0f / ParameterB.Mass : 0.0f;
 
-    // È¸Àü È¿°ú °è»ê
+    // íšŒì „ íš¨ê³¼ ê³„ì‚°
     XMVECTOR vRadiusA = XMVectorSubtract(vPoint, vPosA);
     XMVECTOR vRadiusB = XMVectorSubtract(vPoint, vPosB);
 
     XMVECTOR vCrossA = XMVector3Cross(vRadiusA, vNormal);
     XMVECTOR vCrossB = XMVector3Cross(vRadiusB, vNormal);
 
-    // È¸Àü °ü¼º °è»ê
+    // íšŒì „ ê´€ì„± ê³„ì‚°
     Matrix RotA = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterA.Rotation));
     Matrix RotB = XMMatrixRotationQuaternion(XMLoadFloat4(&ParameterB.Rotation));
 
     XMVECTOR vInertiaA = XMLoadFloat3(&ParameterA.RotationalInertia);
     XMVECTOR vInertiaB = XMLoadFloat3(&ParameterB.RotationalInertia);
 
-    // ¿ùµå °ø°£À¸·Î È¸Àü °ü¼º º¯È¯
+    // ì›”ë“œ ê³µê°„ìœ¼ë¡œ íšŒì „ ê´€ì„± ë³€í™˜
     vInertiaA = XMVector3Transform(vInertiaA, RotA);
     vInertiaB = XMVector3Transform(vInertiaB, RotB);
 
 
-    //°¢¿îµ¿·® È¿°ú °è»ê
+    //ê°ìš´ë™ëŸ‰ íš¨ê³¼ ê³„ì‚°
     XMVECTOR vAngularEffectA = XMVector3Cross(vCrossA,
                                               XMVector3Cross(vRadiusA, vNormal) / vInertiaA);
     XMVECTOR vAngularEffectB = XMVector3Cross(vCrossB,
                                               XMVector3Cross(vRadiusB, vNormal) / vInertiaB);
 
-    //Ãæ°İ·® ºĞ¸ğ °è»ê
+    //ì¶©ê²©ëŸ‰ ë¶„ëª¨ ê³„ì‚°
     XMVECTOR vAngularSum = XMVectorAdd(vAngularEffectA, vAngularEffectB);
     float impulseDenominator = invMassA + invMassB +
         XMVectorGetX(XMVector3Dot(vAngularSum, vNormal));
 
-    //¹İ¹ß°è¼ö Æò±ÕÀ¸·Î ±Ù»ç
+    //ë°˜ë°œê³„ìˆ˜ í‰ê· ìœ¼ë¡œ ê·¼ì‚¬
     float Restitution = (ParameterA.Restitution + ParameterB.Restitution) * 0.5f;
 
-    //ÃÖÁ¾ Ãæ°İ·® °è»ê
+    //ìµœì¢… ì¶©ê²©ëŸ‰ ê³„ì‚°
     float impulseMagnitude = -(1.0f + Restitution) * normalVelocity / impulseDenominator;
     return XMVectorScale(vNormal, impulseMagnitude);
 }
@@ -219,15 +219,15 @@ XMVECTOR FCollisionResponseCalculator::CalculateNormalImpulse(
 XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(
         const XMVECTOR& NormalImpulse,
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB
     )
 {
-    // »ó´ë ¼Óµµ °è»ê 
+    // ìƒëŒ€ ì†ë„ ê³„ì‚° 
     XMVECTOR vRelVel = CalculateRelativeVelocity(DetectionResult.Point, ParameterA, ParameterB);
     XMVECTOR vNormal = XMLoadFloat3(&DetectionResult.Normal);
 
-    // Á¢¼± ¹æÇâ ¼Óµµ °è»ê
+    // ì ‘ì„  ë°©í–¥ ì†ë„ ê³„ì‚°
     XMVECTOR vNormalVel = XMVectorMultiply(vNormal,
                                            XMVector3Dot(vRelVel, vNormal));
     XMVECTOR vTangentVel = XMVectorSubtract(vRelVel, vNormalVel);
@@ -238,7 +238,7 @@ XMVECTOR FCollisionResponseCalculator::CalculateFrictionImpulse(
 
     XMVECTOR vTangentDir = XMVector3Normalize(vTangentVel);
 
-    // ¸¶Âû·Â °è»ê
+    // ë§ˆì°°ë ¥ ê³„ì‚°
     float normalMagnitude = XMVectorGetX(XMVector3Length(NormalImpulse));
     float frictionMagnitude;
 
@@ -259,21 +259,21 @@ XMVECTOR FCollisionResponseCalculator::SolveNormalConstraint(const FCollisionDet
                                                              const FConstraintSolverCache& ConstraintCache,
                                                              FAccumulatedConstraint& Accumulation)
 {
-    // ¶ó±×¶ûÁÖ ½Â¼ö °è»ê
+    // ë¼ê·¸ë‘ì£¼ ìŠ¹ìˆ˜ ê³„ì‚°
     float velocityError = XMVectorGetX(XMVector3Dot(ConstraintCache.vRelativeVel, ConstraintCache.vNormal));
     float positionError = -DetectionResult.PenetrationDepth;
-    float baumgarte = 0.05f; // À§Ä¡ ¿ÀÂ÷ º¸Á¤ °è¼ö
+    float baumgarte = 0.05f; // ìœ„ì¹˜ ì˜¤ì°¨ ë³´ì • ê³„ìˆ˜
 
 
-    //¶ó±×¶ûÁÖ ½Â¼ö ´©Àû
+    //ë¼ê·¸ë‘ì£¼ ìŠ¹ìˆ˜ ëˆ„ì 
     float deltaLambda = -(velocityError + baumgarte * positionError) / ConstraintCache.effectiveMass;
     float oldLambda = Accumulation.normalLambda;
-    Accumulation.normalLambda = Math::Max(oldLambda + deltaLambda, 0.0f); //À½¼ö Á¦ÇÑ
+    Accumulation.normalLambda = Math::Max(oldLambda + deltaLambda, 0.0f); //ìŒìˆ˜ ì œí•œ
 
-    // ½ÇÁ¦ Àû¿ëµÉ µ¨Å¸ ¶÷´Ù
+    // ì‹¤ì œ ì ìš©ë  ë¸íƒ€ ëŒë‹¤
     float appliedDelta = Accumulation.normalLambda - oldLambda;
 
-    // Á¦¾àÁ¶°Ç Èû °è»ê
+    // ì œì•½ì¡°ê±´ í˜ ê³„ì‚°
     return ConstraintCache.vNormal * appliedDelta;
 }
 
@@ -282,7 +282,7 @@ XMVECTOR FCollisionResponseCalculator::SolveFrictionConstraint(const FConstraint
                                                                const float KineticFriction,
                                                                FAccumulatedConstraint& Accumulation)
 {
-    // Á¢¼± ¹æÇâ °è»ê 
+    // ì ‘ì„  ë°©í–¥ ê³„ì‚° 
     XMVECTOR vTangent = XMVector3Normalize(
         XMVectorSubtract(ConstraintCache.vRelativeVel,
                          XMVectorMultiply(ConstraintCache.vNormal,
@@ -291,19 +291,19 @@ XMVECTOR FCollisionResponseCalculator::SolveFrictionConstraint(const FConstraint
 
     float tangentialVelocity = XMVectorGetX(XMVector3Dot(ConstraintCache.vRelativeVel, vTangent));
 
-    // ÃÖ´ë ¸¶Âû·Â °è»ê
+    // ìµœëŒ€ ë§ˆì°°ë ¥ ê³„ì‚°
     float maxFriction = std::abs(Accumulation.normalLambda) *
         (std::abs(tangentialVelocity) < KINDA_SMALL ? StaticFriction : KineticFriction);
 
-    // µ¨Å¸ ¶÷´Ù °è»ê
+    // ë¸íƒ€ ëŒë‹¤ ê³„ì‚°
     float deltaLambda = -tangentialVelocity / ConstraintCache.effectiveMass;
     float oldLambda = Accumulation.frictionLambda;
 
-    // ¸¶Âû·Â Á¦ÇÑ
+    // ë§ˆì°°ë ¥ ì œí•œ
     Accumulation.frictionLambda = std::max(-maxFriction,
                                            std::min(maxFriction, oldLambda + deltaLambda));
 
-    // ½ÇÁ¦ Àû¿ëµÉ µ¨Å¸
+    // ì‹¤ì œ ì ìš©ë  ë¸íƒ€
     float appliedDelta = Accumulation.frictionLambda - oldLambda;
 
     return XMVectorScale(vTangent, appliedDelta);

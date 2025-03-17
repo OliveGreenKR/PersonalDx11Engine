@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include <memory>
 #include "ActorComponent.h"
@@ -15,7 +15,7 @@ enum class ERigidBodyType
 class URigidBodyComponent : public UPrimitiveComponent
 {
 public:
-	// È¸Àü°ü¼º Á¢±ÙÁ¦¾î Åä±Ù
+	// íšŒì „ê´€ì„± ì ‘ê·¼ì œì–´ í† ê·¼
 	class RotationalInertiaToken
 	{
 		friend class UCollisionComponent;
@@ -32,13 +32,13 @@ public:
 	virtual const FTransform* GetTransform() const override;
 	virtual FTransform* GetTransform() override;
 
-	// ¼Óµµ ±â¹İ ÀÎÅÍÆäÀÌ½º
+	// ì†ë„ ê¸°ë°˜ ì¸í„°í˜ì´ìŠ¤
 	void SetVelocity(const Vector3& InVelocity);
 	void AddVelocity(const Vector3& InVelocityDelta);
 	void SetAngularVelocity(const Vector3& InAngularVelocity);
 	void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
 
-	// Èû ±â¹İ ÀÎÅÍÆäÀÌ½º (³»ºÎÀûÀ¸·Î °¡¼Óµµ·Î º¯È¯)
+	// í˜ ê¸°ë°˜ ì¸í„°í˜ì´ìŠ¤ (ë‚´ë¶€ì ìœ¼ë¡œ ê°€ì†ë„ë¡œ ë³€í™˜)
 	inline void ApplyForce(const Vector3& Force) { ApplyForce(Force, GetCenterOfMass()); }
 	void ApplyForce(const Vector3& Force, const Vector3& Location);
 	inline void ApplyImpulse(const Vector3& Impulse) { ApplyImpulse(Impulse, GetCenterOfMass()); }
@@ -54,7 +54,7 @@ public:
 	inline float GetFrictionKinetic() const { return FrictionKinetic; }
 	inline float GetFrictionStatic() const { return FrictionStatic; }
 
-	// ¹°¸® ¼Ó¼º ¼³Á¤
+	// ë¬¼ë¦¬ ì†ì„± ì„¤ì •
 	void SetMass(float InMass);
 	inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
 	inline void SetMaxAngularSpeed(float InSpeed) { MaxAngularSpeed = InSpeed; }
@@ -65,11 +65,13 @@ public:
 
 	inline void SetRigidType(ERigidBodyType&& InType) { RigidType = InType; }
 
-	//ÅäÅ«¼ÒÀ¯ÀÚ¸¸ Á¢±Ù °¡´É
+	//í† í°ì†Œìœ ìë§Œ ì ‘ê·¼ ê°€ëŠ¥
 	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { RotationalInertia = Value; } 
 
+	virtual const char* GetComponentClassName() const override { return "URigid"; }
+
 public:
-	// ½Ã¹Ä·¹ÀÌ¼Ç ÇÃ·¡±×
+	// ì‹œë®¬ë ˆì´ì…˜ í”Œë˜ê·¸
 	bool bGravity  =  false;
 	bool bSyncWithOwner = true;
 
@@ -85,10 +87,10 @@ private:
 	__forceinline bool IsAngularSpeedRestricted() { return !(MaxAngularSpeed < 0.0f); }
 
 private:
-	// ¹°¸® °´Ã¼ »óÅÂ
+	// ë¬¼ë¦¬ ê°ì²´ ìƒíƒœ
 	ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
-	// ¹°¸® »óÅÂ º¯¼ö
+	// ë¬¼ë¦¬ ìƒíƒœ ë³€ìˆ˜
 	Vector3 Velocity = Vector3::Zero;
 	Vector3 AngularVelocity = Vector3::Zero;
 	Vector3 AccumulatedForce = Vector3::Zero;
@@ -96,7 +98,7 @@ private:
 	Vector3 AccumulatedInstantForce = Vector3::Zero;
 	Vector3 AccumulatedInstantTorque = Vector3::Zero;
 
-	// ¹°¸® ¼Ó¼º
+	// ë¬¼ë¦¬ ì†ì„±
 	float Mass = 1.0f;
 	Vector3 RotationalInertia = Vector3::One;
 	float MaxSpeed = 4.0f;

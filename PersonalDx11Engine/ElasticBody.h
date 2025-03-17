@@ -58,7 +58,7 @@ public:
     void SetShape(EShape InShape);
     void SetShapeSphere();
     void SetShapeBox();
-    void SyncCollisionShape();
+    void SyncShapeExtent();
 
     // 활성화/비활성화
     virtual void Activate() override;
@@ -76,5 +76,6 @@ private:
     // 컴포넌트 소유
     std::shared_ptr<class URigidBodyComponent> Rigid;
     std::shared_ptr<class UCollisionComponent> Collision;
+    std::shared_ptr<class UPrimitiveComponent> Primitive;
 
 };

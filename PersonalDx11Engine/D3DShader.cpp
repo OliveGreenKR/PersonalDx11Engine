@@ -1,5 +1,6 @@
 ﻿#include "D3DShader.h"
 #include "d3d11shader.h"
+#include "Debug.h"
 
 
 UShader::~UShader()
@@ -14,8 +15,18 @@ void UShader::Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const 
 	//Create Shaders
 	ID3DBlob* VSBlob;
 	ID3DBlob* PSBlob;
+	ID3DBlob* errorBlob = nullptr;
 
-	result = D3DCompileFromFile(vertexShaderPath, nullptr, nullptr, "mainVS", "vs_5_0", 0, 0, &VSBlob, nullptr);
+	result = D3DCompileFromFile(vertexShaderPath, nullptr, nullptr,"mainVS", "vs_5_0",D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,0, &VSBlob, &errorBlob);
+
+	if (FAILED(result)) {
+		if (errorBlob) {
+			// 오류 메시지 출력
+			LOG(static_cast<const char*>(errorBlob->GetBufferPointer()));
+			errorBlob->Release();
+		}
+	}
+
 	assert(SUCCEEDED(result),"vertexvShader compile failed.");
 	result = D3DCompileFromFile(pixelShaderPath, nullptr, nullptr, "mainPS", "ps_5_0", 0, 0, &PSBlob, nullptr);
 	assert(SUCCEEDED(result), "pixel Shader compile failed.");
@@ -167,9 +178,9 @@ void UShader::BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& 
 	UpdateConstantBuffer<FMatrixBufferData>(DeviceContext, BufferData, EBufferSlot::Matrix);
 }
 
-void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& BufferData)
+void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FColorBufferData& BufferData)
 {
-	UpdateConstantBuffer<FDebugBufferData>(DeviceContext, BufferData, EBufferSlot::DebugColor);
+	UpdateConstantBuffer<FColorBufferData>(DeviceContext, BufferData, EBufferSlot::Color);
 }
 
 void UShader::GetShaderBytecode(const void** bytecode, size_t* length) const

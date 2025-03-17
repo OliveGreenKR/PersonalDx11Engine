@@ -138,7 +138,7 @@ private:
     //컴포넌트 트랜스폼 업데이트
     void UpdateCollisionTransform();
 
-    void GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& Result) const;
+    void GetPhysicsParams(const std::shared_ptr<UCollisionComponent>& InComp, FPhysicsParameters& Result) const;
 
     //일반적인 충돌반응 (충격량기반 속도 변화)
     void ApplyCollisionResponseByImpulse(

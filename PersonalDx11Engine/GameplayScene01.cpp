@@ -96,7 +96,7 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
     for (auto ebody : ElasticBodies)
     {
-        Renderer->SubmitRenderJob(Camera.get(), ebody.get(), TexturePole.get()->GetShaderResourceView());
+        Renderer->SubmitRenderJobsInObject(Camera.get(), ebody.get(), TexturePole.get()->GetShaderResourceView());
     }
 }
 
@@ -277,8 +277,7 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
     body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
     body->SetShapeSphere();
-    body->bDebug = true;
-    body->SetDebugColor((Vector4)FRandom::RandVector({ 0,0,0 }, { 1,1,1 }));
+
     body->SetMass(FRandom::RandF(1.0f, 5.0f));
     body->SetGravity(bGravity);
 

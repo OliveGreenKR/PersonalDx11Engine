@@ -322,7 +322,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 	}
 }
 
-void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UCollisionComponent>& InComp, FCollisionResponseParameters& DetectResult ) const
+void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionComponent>& InComp, FPhysicsParameters& ResponseResult ) const
 {
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
@@ -331,15 +331,15 @@ void UCollisionManager::GetCollisionDetectionParams(const std::shared_ptr<UColli
 	if (!RigidPtr)
 		return;
 
-	DetectResult.Mass = RigidPtr->GetMass();
-	DetectResult.RotationalInertia = RigidPtr->GetRotationalInertia();
-	DetectResult.Position = RigidPtr->GetTransform()->GetPosition();
-	DetectResult.Velocity = RigidPtr->GetVelocity();
-	DetectResult.AngularVelocity = RigidPtr->GetAngularVelocity();
-	DetectResult.Restitution = RigidPtr->GetRestitution();
-	DetectResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
-	DetectResult.FrictionStatic = RigidPtr->GetFrictionStatic();
-	DetectResult.Rotation = RigidPtr->GetTransform()->GetRotation();
+	ResponseResult.Mass = RigidPtr->GetMass();
+	ResponseResult.RotationalInertia = RigidPtr->GetRotationalInertia();
+	ResponseResult.Position = RigidPtr->GetTransform()->GetPosition();
+	ResponseResult.Velocity = RigidPtr->GetVelocity();
+	ResponseResult.AngularVelocity = RigidPtr->GetAngularVelocity();
+	ResponseResult.Restitution = RigidPtr->GetRestitution();
+	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
+	ResponseResult.FrictionStatic = RigidPtr->GetFrictionStatic();
+	ResponseResult.Rotation = RigidPtr->GetTransform()->GetRotation();
 
 	return;
 }
@@ -350,9 +350,9 @@ void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UC
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
 		return;
 
-	FCollisionResponseParameters ParamsA, ParamsB;
-	GetCollisionDetectionParams(ComponentA, ParamsA);
-	GetCollisionDetectionParams(ComponentB , ParamsB);
+	FPhysicsParameters ParamsA, ParamsB;
+	GetPhysicsParams(ComponentA, ParamsA);
+	GetPhysicsParams(ComponentB , ParamsB);
 	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByImpulse(DetectResult, ParamsA, ParamsB);
 
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
@@ -477,9 +477,9 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
 		return;
 
-	FCollisionResponseParameters ParamsA, ParamsB;
-	GetCollisionDetectionParams(ComponentA, ParamsA);
-	GetCollisionDetectionParams(ComponentB, ParamsB);
+	FPhysicsParameters ParamsA, ParamsB;
+	GetPhysicsParams(ComponentA, ParamsA);
+	GetPhysicsParams(ComponentB, ParamsB);
 
 	FAccumulatedConstraint Accumulation;
 

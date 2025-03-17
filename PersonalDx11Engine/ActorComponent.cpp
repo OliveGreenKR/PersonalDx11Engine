@@ -1,16 +1,18 @@
-#include "ActorComponent.h"
+ï»¿#include "ActorComponent.h"
 #include <cassert>
+#include <string>
+#include <iostream>
 
 void UActorComponent::BraodcastPostTreeInitialized()
 {
-    //ÃÊ±âÈ­´Â È°¼ºÈ­¿©ºÎ¿Í °ü°è¾÷½Ì µ¿ÀÛÇÏµµ·Ï º¯°æ
+    //ì´ˆê¸°í™”ëŠ” í™œì„±í™”ì—¬ë¶€ì™€ ê´€ê³„ì—…ì‹± ë™ì‘í•˜ë„ë¡ ë³€ê²½
     //if (!bIsActive)
     //    return;
 
-    // ÀÚ½ÅÀÇ PostInitialized È£Ãâ
+    // ìì‹ ì˜ PostInitialized í˜¸ì¶œ
     PostTreeInitialized();
 
-    // ¸ğµç ÀÚ½Ä ÄÄÆ÷³ÍÆ®¿¡ ´ëÇØ PostInitialized ÀüÆÄ
+    // ëª¨ë“  ìì‹ ì»´í¬ë„ŒíŠ¸ì— ëŒ€í•´ PostInitialized ì „íŒŒ
     for (const auto& Child : ChildComponents)
     {
         if (Child)
@@ -22,14 +24,14 @@ void UActorComponent::BraodcastPostTreeInitialized()
 
 void UActorComponent::BroadcastTick(float DeltaTime)
 {
-    // ºñÈ°¼ºÈ­µÈ °æ¿ì ÀüÆÄÇÏÁö ¾ÊÀ½
+    // ë¹„í™œì„±í™”ëœ ê²½ìš° ì „íŒŒí•˜ì§€ ì•ŠìŒ
     if (!bIsActive)
         return;
 
-    // ÀÚ½ÅÀÇ Tick È£Ãâ
+    // ìì‹ ì˜ Tick í˜¸ì¶œ
     Tick(DeltaTime);
 
-    // ¸ğµç È°¼ºÈ­ ÀÚ½Ä ÄÄÆ÷³ÍÆ®¿¡ ´ëÇØ Tick ÀüÆÄ
+    // ëª¨ë“  í™œì„±í™” ìì‹ ì»´í¬ë„ŒíŠ¸ì— ëŒ€í•´ Tick ì „íŒŒ
     for (const auto& Child : ChildComponents)
     {
         if (Child && Child->IsActive())
@@ -51,14 +53,14 @@ void UActorComponent::DeActivate()
 
 void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
 {
-    // ÀÚ±â ÀÚ½ÅÀ» ºÎ¸ğ·Î ¼³Á¤ÇÏ´Â °Í ¹æÁö
+    // ìê¸° ìì‹ ì„ ë¶€ëª¨ë¡œ ì„¤ì •í•˜ëŠ” ê²ƒ ë°©ì§€
     if (InParent.get() == this)
         return;
 
-    // ÀÌÀü ºÎ¸ğ·ÎºÎÅÍ ºĞ¸®
+    // ì´ì „ ë¶€ëª¨ë¡œë¶€í„° ë¶„ë¦¬
     DetachFromParent();
 
-    // »õ·Î¿î ºÎ¸ğ¿¡ ¿¬°á
+    // ìƒˆë¡œìš´ ë¶€ëª¨ì— ì—°ê²°
     if (InParent)
     {
         ParentComponent = InParent;
@@ -71,7 +73,7 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     if (!Child || Child.get() == this)
         return false;
 
-    // Áßº¹ Ãß°¡ ¹æÁö
+    // ì¤‘ë³µ ì¶”ê°€ ë°©ì§€
     auto it = std::find_if(ChildComponents.begin(), ChildComponents.end(),
                            [&Child](const auto& Existing) {
                                return Existing.get() == Child.get();
@@ -80,7 +82,7 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     if (it != ChildComponents.end())
         return false;
 
-    // ¼øÈ¯ ÂüÁ¶ °Ë»ç
+    // ìˆœí™˜ ì°¸ì¡° ê²€ì‚¬
     auto CurrentParent = GetParent();
     while (CurrentParent)
     {
@@ -89,16 +91,19 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
         CurrentParent = CurrentParent->GetParent();
     }
 
-    // ÀÚ½Ä ÄÄÆ÷³ÍÆ® Ãß°¡
+    // ê¸°ì¡´ ë¶€ëª¨ì—ì„œ ë¶„ë¦¬
+    Child->DetachFromParent();
+
+    // ìì‹ ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
     ChildComponents.push_back(Child);
     Child->ParentComponent = shared_from_this();
 
-    // ¼ÒÀ¯ÀÚ °ÔÀÓ¿ÀºêÁ§Æ® ÀüÆÄ
+    // ì†Œìœ ì ê²Œì„ì˜¤ë¸Œì íŠ¸ ì „íŒŒ
     UGameObject* RootOwner = GetOwner();
     if (RootOwner)
     {
         Child->SetOwner(RootOwner);
-        // ÀÚ½ÄÀÇ ÀÚ½Äµé¿¡°Ôµµ ¼ÒÀ¯ÀÚ ÀüÆÄ
+        // ìì‹ì˜ ìì‹ë“¤ì—ê²Œë„ ì†Œìœ ì ì „íŒŒ
         auto Descendants = Child->FindChildrenRaw<UActorComponent>();
         for (auto Descendant : Descendants)
         {
@@ -122,10 +127,10 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
     if (it == ChildComponents.end())
         return false;
 
-    // ÀÚ½ÄÀÇ ºÎ¸ğ ÂüÁ¶ Á¦°Å
+    // ìì‹ì˜ ë¶€ëª¨ ì°¸ì¡° ì œê±°
     (*it)->ParentComponent.reset();
 
-    // ÀÚ½Ä ¹× ±× ÇÏÀ§ ÄÄÆ÷³ÍÆ®µéÀÇ ¼ÒÀ¯ÀÚ Á¦°Å
+    // ìì‹ ë° ê·¸ í•˜ìœ„ ì»´í¬ë„ŒíŠ¸ë“¤ì˜ ì†Œìœ ì ì œê±°
     (*it)->SetOwner(nullptr);
     auto Descendants = (*it)->FindChildrenRaw<UActorComponent>();
     for (auto* Descendant : Descendants)
@@ -133,7 +138,7 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
         Descendant->SetOwner(nullptr);
     }
 
-    // ÀÚ½Ä ÄÄÆ÷³ÍÆ® Á¦°Å
+    // ìì‹ ì»´í¬ë„ŒíŠ¸ ì œê±°
     ChildComponents.erase(it);
     return true;
 }
@@ -154,4 +159,52 @@ UActorComponent* UActorComponent::GetRoot() const
         Current = Parent.get();
     }
     return const_cast<UActorComponent*>(Current);
+}
+
+void UActorComponent::PrintComponentTree(std::ostream& os) const
+{
+    // ë£¨íŠ¸ ì»´í¬ë„ŒíŠ¸ë¶€í„° íŠ¸ë¦¬ ì¶œë ¥ ì‹œì‘
+    PrintComponentTreeInternal(os, "", true);
+}
+
+void UActorComponent::PrintComponentTreeInternal(std::ostream& os, std::string prefix, bool isLast) const
+{
+    // í˜„ì¬ ì»´í¬ë„ŒíŠ¸ ì¶œë ¥ ë¼ì¸
+    os << prefix;
+
+    // ë§ˆì§€ë§‰ ìì‹ì¸ì§€ ì—¬ë¶€ì— ë”°ë¼ ë‹¤ë¥¸ ì ‘ë‘ì‚¬ ì‚¬ìš©
+    os << (isLast ? "â””â”€â”€ " : "â”œâ”€â”€ ");
+
+    // ì»´í¬ë„ŒíŠ¸ ì´ë¦„ ì¶œë ¥
+    os << GetComponentClassName() << std::endl;
+
+    // ë‹¤ìŒ ìì‹ë“¤ì„ ìœ„í•œ ìƒˆ ì ‘ë‘ì‚¬ ê³„ì‚°
+    std::string newPrefix = prefix + (isLast ? "    " : "â”‚   ");
+
+    // ìì‹ë“¤ì´ ìˆëŠ” ê²½ìš° ì¶œë ¥
+    if (!ChildComponents.empty())
+    {
+        // ë§ˆì§€ë§‰ ìì‹ ì¸ë±ìŠ¤ ê³„ì‚° 
+        size_t lastValidIndex = ChildComponents.size() - 1;
+        
+        //ìœ íš¨ìì‹ë§Œ ì¹´ìš´íŠ¸
+        //while (lastValidIndex > 0 && !ChildComponents[lastValidIndex])
+        //{
+        //    --lastValidIndex;
+        //}
+
+        // ê° ìì‹ ì»´í¬ë„ŒíŠ¸ ì¶œë ¥
+        for (size_t i = 0; i < ChildComponents.size(); ++i)
+        {
+            if (ChildComponents[i])
+            {
+                bool isChildLast = (i >= lastValidIndex);
+                ChildComponents[i]->PrintComponentTreeInternal(os, newPrefix, isChildLast);
+            }
+            else
+            {
+                os << "â””â”€â”€ " << "ERRORCHILD" << std::endl;
+            }
+        }
+    }
 }

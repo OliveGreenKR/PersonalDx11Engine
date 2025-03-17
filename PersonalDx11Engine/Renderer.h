@@ -4,22 +4,24 @@
 #include <vector>
 #include <memory>
 
+
 class UModel;
 class UShader;
 class UGameObject;
 class UCamera;
+class UPrimitiveComponent;
 
 // 렌더 작업을 정의하는 구조체
 struct FRenderJob
 {
 	UCamera* Camera;
-	const UGameObject* GameObject;
+	const class UPrimitiveComponent* Primitive;
 	ID3D11ShaderResourceView* Texture;
 
-	FRenderJob(UCamera* InCamera, const UGameObject* InGameObject,
+	FRenderJob(UCamera* InCamera, const UPrimitiveComponent* InPrimitive,
 			   ID3D11ShaderResourceView* InTexture = nullptr)
 		: Camera(InCamera)
-		, GameObject(InGameObject)
+		, Primitive(InPrimitive)
 		, Texture(InTexture)
 	{
 	}
@@ -46,12 +48,14 @@ public:
 	void BeforeRender();
 	void EndRender();
 
-	void RenderModel(UModel* InModel,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
+	void RenderModel(UModel* InModel,  UShader* InShader, ID3D11SamplerState * customSampler = nullptr);
 
-	void RenderGameObject(UCamera* InCamera, const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
-	void RenderGameObject(UCamera* InCamera, const UGameObject* InObject,  UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);
-	
-	void SubmitRenderJob(UCamera* InCamera, const UGameObject* InObject, ID3D11ShaderResourceView* InTexture);
+	void RenderGameObject(UCamera* InCamera, UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
+	void RenderGameObject(UCamera* InCamera, UGameObject* InObject,  UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);
+	void RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InPrimitive, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);
+
+	void SubmitRenderJobsInObject(UCamera* InCamera, UGameObject* InObject, ID3D11ShaderResourceView* InTexture);
+	void SubmitRenderJob(UCamera* InCamera, UPrimitiveComponent* InPrimitve, ID3D11ShaderResourceView* InTexture);
 	void ClearRenderJobs();
 	void ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCustomSampler = nullptr);
 

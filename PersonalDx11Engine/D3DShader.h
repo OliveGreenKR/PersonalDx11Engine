@@ -23,15 +23,15 @@ struct alignas(16) FMatrixBufferData
 		World(world), View(view), Projection(projection) {};
 };
 
-struct alignas(16) FDebugBufferData
+struct alignas(16) FColorBufferData
 {
-	XMFLOAT4 DebugColor = XMFLOAT4(1, 1, 1, 1);
+	XMFLOAT4 Color = XMFLOAT4(1, 1, 1, 1);
 
-	FDebugBufferData() = default;
-	FDebugBufferData(const XMFLOAT4 InColor) : DebugColor(InColor) {}
-	FDebugBufferData(float r, float g, float b, float a) 
+	FColorBufferData() = default;
+	FColorBufferData(const XMFLOAT4 InColor) : Color(InColor) {}
+	FColorBufferData(float r, float g, float b, float a) 
 	{
-		DebugColor = XMFLOAT4(r, g, b, a);
+		Color = XMFLOAT4(r, g, b, a);
 	};
 };
 
@@ -46,7 +46,7 @@ enum class ETextureSlot
 enum class EBufferSlot
 {
 	Matrix = 0,
-	DebugColor,
+	Color,
 	Max
 };
 /// <summary>
@@ -73,7 +73,7 @@ public:
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
 	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
 	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
-	void BindColor(ID3D11DeviceContext* DeviceContext, FDebugBufferData& Data);
+	void BindColor(ID3D11DeviceContext* DeviceContext, FColorBufferData& Data);
 
 	ID3D11InputLayout* GetInputLayout() const { return InputLayout;}
 

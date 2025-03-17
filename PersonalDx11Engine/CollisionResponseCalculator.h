@@ -1,21 +1,21 @@
-#pragma once
+ï»¿#pragma once
 #include "Math.h"
 #include "CollisionDefines.h"
 
 class FCollisionResponseCalculator
 {
 public:
-    // Ãæµ¹ ÀÀ´äÀ» °è»êÇÏ´Â ÁÖ ÇÔ¼ö
+    // ì¶©ëŒ ì‘ë‹µì„ ê³„ì‚°í•˜ëŠ” ì£¼ í•¨ìˆ˜
     FCollisionResponseResult CalculateResponseByImpulse(
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB
     );
 
     FCollisionResponseResult CalculateResponseByContraints(
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB,
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB,
         FAccumulatedConstraint& Accumulation
     );
 private:
@@ -27,40 +27,40 @@ private:
     };
 
 private:
-    // Ãæ°İ·® ±â¹İ : ¼öÁ÷ Ãæ°İ·® °è»ê (Åº¼º Ãæµ¹)
+    // ì¶©ê²©ëŸ‰ ê¸°ë°˜ : ìˆ˜ì§ ì¶©ê²©ëŸ‰ ê³„ì‚° (íƒ„ì„± ì¶©ëŒ)
     XMVECTOR CalculateNormalImpulse(
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB
     );
 
-    // Ãæ°İ·® ±â¹İ : ¸¶Âû·Â¿¡ ÀÇÇÑ Ãæ°İ·® °è»ê
+    // ì¶©ê²©ëŸ‰ ê¸°ë°˜ : ë§ˆì°°ë ¥ì— ì˜í•œ ì¶©ê²©ëŸ‰ ê³„ì‚°
     XMVECTOR CalculateFrictionImpulse(
         const XMVECTOR& NormalImpulse,
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB
     );
 
-    // Ãæ°İ·® ±â¹İ : »ó´ë ¼Óµµ °è»ê
+    // ì¶©ê²©ëŸ‰ ê¸°ë°˜ : ìƒëŒ€ ì†ë„ ê³„ì‚°
     XMVECTOR CalculateRelativeVelocity(
         const Vector3& ContactPoint,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB
     );
 
     FConstraintSolverCache PrepareConstraintCache(
         const FCollisionDetectionResult& DetectionResult,
-        const FCollisionResponseParameters& ParameterA,
-        const FCollisionResponseParameters& ParameterB);
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB);
 
-    //Á¦¾à Á¶°Ç ±â¹İ ¼öÁ÷ Ç×·Â 
+    //ì œì•½ ì¡°ê±´ ê¸°ë°˜ ìˆ˜ì§ í•­ë ¥ 
     XMVECTOR SolveNormalConstraint(
         const FCollisionDetectionResult& DetectionResult,
         const FConstraintSolverCache& ConstraintCache,
         FAccumulatedConstraint& Accumulation);
 
-    //Á¦¾àÁ¶°Ç ±â¹İ ¸¶Âû·Â 
+    //ì œì•½ì¡°ê±´ ê¸°ë°˜ ë§ˆì°°ë ¥ 
     XMVECTOR SolveFrictionConstraint(
         const FConstraintSolverCache& ConstraintCache,
         const float StaticFriction,

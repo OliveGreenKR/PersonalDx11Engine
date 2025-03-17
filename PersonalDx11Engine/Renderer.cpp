@@ -2,6 +2,7 @@
 #include "Model.h"
 #include "D3DShader.h"
 #include "GameObject.h"
+#include "PrimitiveComponent.h"
 #include "Camera.h"
 
 void URenderer::Initialize(HWND hWindow, IRenderHardware* InRenderHardware)
@@ -31,7 +32,7 @@ void URenderer::EndRender()
 	RenderHardware->EndFrame();
 }
 
-void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderModel(UModel* InModel, UShader* InShader ,ID3D11SamplerState* customSampler)
 {
 	if (!InModel || !InModel->IsInitialized()|| !InShader)
 		return;
@@ -71,48 +72,80 @@ void URenderer::RenderModel(UModel* InModel, UShader* InShader, ID3D11SamplerSta
 	else {
 		GetDeviceContext()->Draw(bufferResource->GetVertexCount(), 0);
 	}
-	
 }
 
-void URenderer::RenderGameObject(UCamera* InCamera,const UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
+void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler)
 {
 	if (!InObject || !InShader || !InObject->IsActive())
 		return;
 
-	Matrix WorldMatrix = InObject->GetWorldMatrix();
+
 	Matrix ViewMatrix = InCamera->GetViewMatrix();
 	Matrix ProjectionMatrix = InCamera->GetProjectionMatrix();
-	auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
-	
-	InShader->BindMatrix(GetDeviceContext(), BufferData);
 
-	RenderModel(InObject->GetModel(), InShader, customSampler);
+	const auto Primitives = InObject->GetComponentsByType<UPrimitiveComponent>();
+
+	for (auto Primitive : Primitives)
+	{
+		Matrix WorldMatrix = Primitive->GetTransform()->GetModelingMatrix();
+		auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
+		InShader->BindMatrix(GetDeviceContext(), BufferData);
+
+
+		FColorBufferData ColorBufferData(Primitive->GetColor());
+		InShader->BindColor(GetDeviceContext(), ColorBufferData);
+		RenderModel(Primitive->GetModel(), InShader, customSampler);
+	}
 }
-
-void URenderer::RenderGameObject(UCamera* InCamera, const UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
+	void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 {
 	if (!InObject || !InShader)
 		return;
 
-	Vector4 Color;
-	Color = InObject->bDebug ? InObject->GetDebugColor() : Color::White();
-	FDebugBufferData DebugBufferData(Color);
-	InShader->BindColor(GetDeviceContext(), DebugBufferData);
-	InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
-	RenderGameObject(InCamera, InObject, InShader, InCustomSampler);
+	const auto Primitives = InObject->GetComponentsByType<UPrimitiveComponent>();
+	for (auto Primitive : Primitives)
+	{
+		RenderPrimitve(InCamera, Primitive, InShader, InTexture, InCustomSampler);
+	}
 }
 
-void URenderer::SubmitRenderJob(UCamera* InCamera, const UGameObject* InObject, ID3D11ShaderResourceView* InTexture)
+	void URenderer::RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InPrimitive, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
+	{
+		if ( !InCamera || !InPrimitive || !InShader || !InPrimitive->IsActive())
+			return;
+
+		Matrix ViewMatrix = InCamera->GetViewMatrix();
+		Matrix ProjectionMatrix = InCamera->GetProjectionMatrix();
+		Matrix WorldMatrix = InPrimitive->GetTransform()->GetModelingMatrix();
+		auto BufferData = FMatrixBufferData(WorldMatrix, ViewMatrix, ProjectionMatrix);
+		InShader->BindMatrix(GetDeviceContext(), BufferData);
+
+		InShader->BindTexture(GetDeviceContext(), InTexture, ETextureSlot::Albedo);
+		FColorBufferData ColorBufferData(InPrimitive->GetColor());
+		InShader->BindColor(GetDeviceContext(), ColorBufferData);
+		RenderModel(InPrimitive->GetModel(), InShader, InCustomSampler);
+	}
+
+void URenderer::SubmitRenderJobsInObject(UCamera* InCamera, UGameObject* InObject, ID3D11ShaderResourceView* InTexture)
 {
 	if (!InCamera || !InObject)
 		return;
 
-	// 모델 유효성 검사
-	if (!InObject->GetModel() || !InObject->GetModel()->IsInitialized())
+	const auto Primitives = InObject->GetComponentsByType<UPrimitiveComponent>();
+
+	for (auto Primitive : Primitives)
+	{
+		SubmitRenderJob(InCamera, Primitive, InTexture);
+	}
+}
+
+void URenderer::SubmitRenderJob(UCamera* InCamera, UPrimitiveComponent* InPrimitve, ID3D11ShaderResourceView* InTexture)
+{
+	if (!InCamera || !InPrimitve || !InPrimitve->GetModel())
 		return;
 
 	// 렌더 작업 생성 및 추가
-	RenderJobs.emplace_back(InCamera, InObject, InTexture);
+	RenderJobs.emplace_back(InCamera, InPrimitve, InTexture);
 }
 
 void URenderer::ClearRenderJobs()
@@ -120,6 +153,7 @@ void URenderer::ClearRenderJobs()
 	// 렌더 작업 목록 비우기
 	RenderJobs.clear();
 }
+
 void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCustomSampler)
 {
 	if (!InShader)
@@ -128,9 +162,10 @@ void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCusto
 	// 모든 렌더 작업 처리
 	for (const auto& Job : RenderJobs)
 	{
-		RenderGameObject(Job.Camera, Job.GameObject, InShader, Job.Texture, InCustomSampler);
+		RenderPrimitve(Job.Camera, Job.Primitive, InShader, Job.Texture, InCustomSampler);
 	}
 }
+
 void URenderer::Release()
 {
 	RenderJobs.clear();

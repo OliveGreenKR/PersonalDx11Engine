@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
+#include <iostream>
 
 class UGameObject;
 
@@ -61,7 +62,27 @@ protected:
 public:
     // 컴포넌트 계층 구조 관리
     bool AddChild(const std::shared_ptr<UActorComponent>& Child);
+    
+    template<typename T>
+    bool AddChild(const std::shared_ptr<T>& Child) {
+        // T가 UActorComponent에서 파생되었는지 컴파일 타임에 검사
+        static_assert(std::is_base_of_v<UActorComponent, T> || std::is_same_v<T, UActorComponent>,
+                      "T must inherit from Base");
+        // 기존 AddChild 메서드 호출 (타입 캐스팅)
+        return AddChild(std::static_pointer_cast<UActorComponent>(Child));
+    }
+
     bool RemoveChild(const std::shared_ptr<UActorComponent>& Child);
+
+    template<typename T>
+    bool RemoveChild(const std::shared_ptr<T>& Child) {
+        // T가 UActorComponent에서 파생되었는지 컴파일 타임에 검사
+        static_assert(std::is_base_of_v<UActorComponent, T> || std::is_same_v<T, UActorComponent>,
+                      "T must inherit from Base");
+        // 기존 AddChild 메서드 호출 (타입 캐스팅)
+        return RemoveChild(std::static_pointer_cast<UActorComponent>(Child));
+    }
+
     void DetachFromParent();
 
     // 계층 구조 탐색
@@ -169,4 +190,18 @@ private:
     std::vector<std::shared_ptr<UActorComponent>> ChildComponents;
 
     friend class UGameObject;
+
+#pragma region debug
+    // ActorComponent.h에 추가
+public:
+    // 컴포넌트 트리 구조를 출력하는 메서드
+    void PrintComponentTree(std::ostream& os = std::cout) const;
+    // 컴포넌트의 클래스 이름을 반환하는 가상 메서드
+    virtual const char* GetComponentClassName() const { return "UActorComp"; }
+
+private:
+    // 내부적으로 트리 출력을 위한 재귀 메서드
+    void PrintComponentTreeInternal(std::ostream& os, std::string prefix = "", bool isLast = true) const;
+
+#pragma endregion
 };

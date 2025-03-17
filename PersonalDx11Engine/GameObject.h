@@ -4,6 +4,7 @@
 #include "Color.h"
 #include "Delegate.h"
 #include "ActorComponent.h"
+#include "SceneCompoent.h"
 
 using namespace std;
 
@@ -32,15 +33,6 @@ public:
 		return std::make_shared<ConstructorAccess<T>>();
 	}
 
-	template<typename T>
-	static std::shared_ptr<T> Create(const shared_ptr<UModel>& InModel)
-	{
-		static_assert(std::is_base_of_v<UGameObject, T> || std::is_same_v<UGameObject, T>,
-					  "T must be derived of UGameObject");
-
-		return std::make_shared<ConstructorAccess<T>>(InModel);
-	}
-
 	template<typename T, typename...Args>
 	static std::shared_ptr<T> Create(Args&&...args)
 	{
@@ -52,7 +44,6 @@ public:
 
 protected:
 	UGameObject();
-	UGameObject(const shared_ptr<UModel>& InModel);
 public:
 	virtual ~UGameObject() = default;
 
@@ -74,19 +65,20 @@ public:
 
 	const Vector3 GetNormalizedForwardVector() const;
 
-	__forceinline const FTransform* GetTransform() const { return &Transform; }
-	__forceinline FTransform* GetTransform() { return &Transform; }
-	Matrix GetWorldMatrix() const  { return Transform.GetModelingMatrix(); }
+	__forceinline const FTransform* GetTransform() const { return RootComponent->GetTransform(); }
+	__forceinline FTransform* GetTransform() { return RootComponent->GetTransform(); }
+	Matrix GetWorldMatrix() const  { return RootComponent->GetTransform()->GetModelingMatrix(); }
 
-	void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
-	UModel* GetModel() const;
+	//void SetModel(const std::shared_ptr<UModel>& InModel) { Model = InModel; }
+	//UModel* GetModel() const;
 
 protected:
 	virtual void UpdateComponents(const float DeltaTime);
 
 protected:
-	FTransform Transform;
-	std::weak_ptr<class UModel> Model;
+	//FTransform Transform;
+	//std::weak_ptr<class UModel> Model;
+
 #pragma region Activation
 public:
 		// 활성화/비활성화
@@ -104,7 +96,6 @@ private:
 	virtual void OnCollisionStay(const struct FCollisionEventData& InCollision) {}
 	virtual void OnCollisionEnd(const struct FCollisionEventData& InCollision);
 #pragma endregion
-
 #pragma region Coord Movement
 public:
 	void StartMove(const Vector3& InDirection);
@@ -135,23 +126,38 @@ public:
 #pragma endregion
 #pragma region ActorComp
 public:
+	// 컴포넌트  생성 및  추가 (루트 컴포넌트의 자식으로)
+	template<typename T, typename... Args>
+	std::shared_ptr<T> AddComponent(Args&&... args) {
+		auto component = UActorComponent::Create<T>(std::forward<Args>(args)...);
+		if (RootComponent) {
+			RootComponent->AddChild(component);
+		}
+		else {
+			RootComponent = component;
+		}
+		component->SetOwner(this);
+		return component;
+	}
 
-	//void AddActorComponent(shared_ptr<UActorComponent>& InActorComp);
-	void AddActorComponent(const shared_ptr<UActorComponent>& InActorComp);
-	UActorComponent* GetRootActorComp() { return RootActorComp.get(); }
+	// 타입으로 컴포넌트 찾기
+	template<typename T>
+	T* GetComponentByType() {
+		if (!RootComponent) return nullptr;
+		return RootComponent->FindComponentByType<T>();
+	}
+
+	// 특정 타입의 모든 컴포넌트 찾기
+	template<typename T>
+	std::vector<T*> GetComponentsByType() {
+		if (!RootComponent) return {};
+		return RootComponent->FindChildrenRaw<T>();
+	}
+
+	USceneComponent* GetRootComp() { return RootComponent.get(); }
 
 protected:
-	std::shared_ptr<UActorComponent> RootActorComp;
+	std::shared_ptr<USceneComponent> RootComponent;
 #pragma endregion
 
-#pragma region Debug
-public:
-	bool bDebug = false;
-
-	void SetDebugColor(const Vector4& InColor) { DebugColor = InColor; }
-	Vector4 GetDebugColor() const  { return DebugColor; }
-
-protected:
-	Vector4 DebugColor = Color::White();
-#pragma endregion
 };

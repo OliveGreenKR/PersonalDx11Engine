@@ -7,26 +7,18 @@
 
 UGameObject::UGameObject()
 {
-	RootActorComp = UActorComponent::Create<UActorComponent>();
-	
-}
-
-UGameObject::UGameObject(const shared_ptr<UModel>& InModel) : Model(InModel)
-{
-	RootActorComp = UActorComponent::Create<UActorComponent>();
-	auto CompPtr = RootActorComp.get();
-	CompPtr->SetOwner(this);
+	RootComponent = UActorComponent::Create<USceneComponent>();
 }
 
 void UGameObject::PostInitialized()
 {
-	auto CompPtr = RootActorComp.get();
+	auto CompPtr = RootComponent.get();
 	CompPtr->SetOwner(this);
 }
 
 void UGameObject::PostInitializedComponents()
 {
-	auto CompPtr = RootActorComp.get();
+	auto CompPtr = RootComponent.get();
 
 	//Comp Post Tree Initialize
 	if (CompPtr)
@@ -34,7 +26,7 @@ void UGameObject::PostInitializedComponents()
 		CompPtr->BraodcastPostTreeInitialized();
 	}
 
-	if( auto CollisionComp = RootActorComp.get()->FindChildByType<UCollisionComponent>())
+	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponent>())
 	{
 		CollisionComp->OnCollisionEnter.Bind(shared_from_this(), &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
 		CollisionComp->OnCollisionExit.Bind(shared_from_this(), &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
@@ -53,38 +45,37 @@ void UGameObject::Tick(const float DeltaTime)
 
 void UGameObject::SetPosition(const Vector3& InPosition)
 {
-	Transform.SetPosition(InPosition);
+	GetTransform()->SetPosition(InPosition);
 }
 
 void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 {
-	Transform.SetEulerRotation(InEulerAngles);
+	GetTransform()->SetEulerRotation(InEulerAngles);
 }
 
 void UGameObject::SetRotationQuaternion(const Quaternion& InQuaternion)
 {
-	Transform.SetRotation(InQuaternion);
+	GetTransform()->SetRotation(InQuaternion);
 }
 
 void UGameObject::SetScale(const Vector3& InScale)
 {
-	Transform.SetScale(InScale);
+	GetTransform()->SetScale(InScale);
 }
 
 void UGameObject::AddPosition(const Vector3& InDelta)
 {
-
-	Transform.AddPosition(InDelta);
+	GetTransform()->AddPosition(InDelta);
 }
 
 void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 {
-	Transform.AddEulerRotation(InEulerDelta);
+	GetTransform()->AddEulerRotation(InEulerDelta);
 }
 
 void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 {
-	Transform.AddRotation(InQuaternionDelta);
+	GetTransform()->AddRotation(InQuaternionDelta);
 }
 
 const Vector3 UGameObject::GetNormalizedForwardVector() const
@@ -99,19 +90,10 @@ const Vector3 UGameObject::GetNormalizedForwardVector() const
 	return Result;
 }
 
-UModel* UGameObject::GetModel() const
-{
-	if (auto ptr = Model.lock())
-	{
-		return ptr.get();
-	}
-	return nullptr;
-}
-
 void UGameObject::UpdateComponents(const float DeltaTime)
 {
 	//find all Tickable compo and call Tick
-	auto CompPtr = RootActorComp.get();
+	auto CompPtr = RootComponent.get();
 	if (CompPtr)
 	{
 		CompPtr->BroadcastTick(DeltaTime);
@@ -120,13 +102,13 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 
 void UGameObject::Activate()
 {
-	RootActorComp->SetActive(true);
+	RootComponent->SetActive(true);
 	bIsActive = true;
 }
 
 void UGameObject::DeActivate()
 {
-	RootActorComp->SetActive(false);
+	RootComponent->SetActive(false);
 	bIsActive = false;
 }
 
@@ -147,7 +129,7 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	TargetPosition = Transform.GetPosition() + InDirection.GetNormalized() * MaxSpeed;
+	TargetPosition = GetTransform()->GetPosition() + InDirection.GetNormalized() * MaxSpeed;
 }
 
 void UGameObject::StopMove()
@@ -166,7 +148,7 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	if (bIsMoving == false)
 		return;
 
-	Vector3 Current = Transform.GetPosition();
+	Vector3 Current = GetTransform()->GetPosition();
 	Vector3 Delta = TargetPosition - Current;
 
 	//정지
@@ -198,7 +180,7 @@ void UGameObject::ApplyForce(const Vector3&& InForce)
 	if (!IsPhysicsSimulated())
 		return;
 
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->ApplyForce(InForce);
 	}
@@ -209,7 +191,7 @@ void UGameObject::ApplyImpulse(const Vector3&& InImpulse)
 	if (!IsPhysicsSimulated())
 		return;
 
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->ApplyImpulse(InImpulse);
 	}
@@ -220,7 +202,7 @@ Vector3 UGameObject::GetCurrentVelocity() const
 	if (!IsPhysicsSimulated())
 		return Vector3::Zero;
 
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->GetVelocity();
 	}
@@ -233,7 +215,7 @@ float UGameObject::GetMass() const
 	if (!IsPhysicsSimulated())
 		return 0.0f;
 
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->GetMass();
 	}
@@ -245,7 +227,7 @@ bool UGameObject::IsGravity() const
 {
 	if (!IsPhysicsSimulated())
 		return false;
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->bGravity;
 	}
@@ -254,9 +236,9 @@ bool UGameObject::IsGravity() const
 
 bool UGameObject::IsPhysicsSimulated() const
 {
-	if (!RootActorComp.get())
+	if (!RootComponent.get())
 		return false;
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		return RigidComp->IsActive();
 	}
@@ -267,7 +249,7 @@ void UGameObject::SetGravity(const bool InBool)
 {
 	if (!IsPhysicsSimulated())
 		return;
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		RigidComp->bGravity = InBool;
 	}
@@ -275,19 +257,11 @@ void UGameObject::SetGravity(const bool InBool)
 
 void UGameObject::SetPhysics(const bool InBool)
 {
-	if (!RootActorComp.get())
+	if (!RootComponent.get())
 		return;
 
-	if (auto RigidComp = RootActorComp.get()->FindChildByType<URigidBodyComponent>())
+	if (auto RigidComp = RootComponent.get()->FindChildByType<URigidBodyComponent>())
 	{
 		RigidComp->SetActive(InBool);
 	}
 }
-
-void UGameObject::AddActorComponent(const shared_ptr<UActorComponent>& InActorComp)
-{
-	if (!InActorComp.get() || !RootActorComp.get())
-		return;
-	RootActorComp.get()->AddChild(InActorComp);
-}
-

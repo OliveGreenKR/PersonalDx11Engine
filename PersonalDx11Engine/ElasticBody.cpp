@@ -3,6 +3,7 @@
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
+#include "PrimitiveComponent.h"
 #include "Model.h"
 #include "ModelBufferManager.h"
 #include "random.h"
@@ -10,10 +11,9 @@
 
 UElasticBody::UElasticBody() : bIsActive(true)
 {
-	bDebug = true;
-	//SetDebugColor(Vector4(FRandom::RandVector(Vector3::Zero, Vector3::One)));
-	Rigid = UActorComponent::Create< URigidBodyComponent>();
-	Collision = UActorComponent::Create<UCollisionComponent>();
+	Rigid = AddComponent<URigidBodyComponent>();
+	Collision = AddComponent<UCollisionComponent>();
+	Primitive = AddComponent<UPrimitiveComponent>();
 }
 
 void UElasticBody::Tick(const float DeltaTime)
@@ -24,15 +24,15 @@ void UElasticBody::Tick(const float DeltaTime)
 void UElasticBody::PostInitialized()
 {
 	UGameObject::PostInitialized();
-	//attach actor Comp
-	if (auto RootComp = RootActorComp.get())
+
+	if (auto RootComp = RootComponent.get())
 	{
+
 		//rigid body 추가 및 초기화
 		if (Rigid.get())
 		{
 			Rigid.get()->bGravity = false;
 			Rigid.get()->bSyncWithOwner = true;
-			AddActorComponent(Rigid);
 		}
 
 		//collsion body 추가 및 초기화
@@ -48,9 +48,10 @@ void UElasticBody::PostInitialized()
 void UElasticBody::PostInitializedComponents()
 {
 	UGameObject::PostInitializedComponents();
+	RootComponent->PrintComponentTree();
 }
 
-void UElasticBody::SyncCollisionShape()
+void UElasticBody::SyncShapeExtent()
 {
 	if (Collision.get() && GetTransform())
 	{
@@ -216,22 +217,21 @@ void UElasticBody::SetShape(EShape InShape)
 		CollisionPtr->SetShape(GetCollisionShape(InShape));
 	}
 
-	//TODO : 형태에 따른 모델 설정
 	switch (InShape)
 	{
 		case EShape::Box:
 		{
-			Model = UModelBufferManager::Get()->GetCubeModel();
+			Primitive->SetModel(UModelBufferManager::Get()->GetCubeModel());
 			break;
 		}
 		case EShape::Sphere:
 		{
-			Model = UModelBufferManager::Get()->GetSphereModel();
+			Primitive->SetModel(UModelBufferManager::Get()->GetSphereModel());
 			break;
 		}
 	}
 
-	SyncCollisionShape();
+	SyncShapeExtent();
 }
 
 void UElasticBody::SetShapeSphere()

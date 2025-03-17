@@ -38,14 +38,12 @@ void UGameplayScene02::Initialize()
     Character->SetScale(0.75f * Vector3::One);
     Character->SetPosition({ 1, 0, 0 });
     Character->SetShapeSphere();
-    Character->bDebug = true;
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>();
     Character2->SetScale(0.75f * Vector3::One);
     Character2->SetPosition({ 1, 0, 0 });
     Character2->SetShapeSphere();
-    Character2->bDebug = true;
 
     // 초기화 및 설정
     Camera->PostInitialized();
@@ -122,8 +120,8 @@ void UGameplayScene02::Tick(float DeltaTime)
 
 void UGameplayScene02::SubmitRender(URenderer* Renderer)
 {
-    Renderer->SubmitRenderJob(Camera.get(), Character.get(), TextureTile.get()->GetShaderResourceView());
-    Renderer->SubmitRenderJob(Camera.get(), Character2.get(), TexturePole.get()->GetShaderResourceView());
+    Renderer->SubmitRenderJobsInObject(Camera.get(), Character.get(), TextureTile.get()->GetShaderResourceView());
+    Renderer->SubmitRenderJobsInObject(Camera.get(), Character2.get(), TexturePole.get()->GetShaderResourceView());
 }
 
 void UGameplayScene02::SubmitRenderUI()
@@ -151,7 +149,6 @@ void UGameplayScene02::SubmitRenderUI()
             bool bPhysics = Character->IsPhysicsSimulated();
             ImGui::Begin("Charcter", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-            ImGui::Checkbox("bDebug", &Character->bDebug);
             ImGui::Checkbox("bPhysicsBased", &bPhysics);
             ImGui::Checkbox("bGravity", &bGravity);
             Character->SetGravity(bGravity);
@@ -173,7 +170,6 @@ void UGameplayScene02::SubmitRenderUI()
             bool bIsActive2 = Character2->IsActive();
             ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-            ImGui::Checkbox("bDebug", &Character2->bDebug);
             ImGui::Checkbox("bPhysicsBased", &bPhysics2);
             ImGui::Checkbox("bGravity", &bGravity2);
             Character2->SetGravity(bGravity2);
@@ -470,7 +466,7 @@ void UGameplayScene02::SetupInput()
                                                                   Vector3 TargetPos = Character2->GetTransform()->GetPosition();
                                                                   TargetPos += Vector3::Right * 0.15f;
                                                                   TargetPos += Vector3::Up * 0.15f;
-                                                                  Character2->GetRootActorComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
+                                                                  Character2->GetRootComp()->FindChildByType<URigidBodyComponent>()->ApplyImpulse(
                                                                       Vector3::Right * 1.0f,
                                                                       TargetPos);
                                                               }
