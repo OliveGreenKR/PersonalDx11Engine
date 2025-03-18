@@ -90,5 +90,5 @@ protected:
     //void MarkWorldTransformDirty();
 
 private:
-    static constexpr float TRANSFORM_EPSILON = KINDA_SMALL;
+    static constexpr float TRANSFORM_EPSILON = 0.0f;
 };

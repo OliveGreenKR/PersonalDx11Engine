@@ -99,6 +99,39 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	return 0;
 }
+void LimitFrameRate(float targetFPS)
+{
+	static LARGE_INTEGER frequency;
+	static LARGE_INTEGER lastTime;
+	LARGE_INTEGER currentTime;
+
+	// 첫 호출 시 초기화
+	if (frequency.QuadPart == 0)
+	{
+		QueryPerformanceFrequency(&frequency);
+		QueryPerformanceCounter(&lastTime);
+	}
+
+	// 프레임당 필요한 시간 계산
+	float frameTime = 1.0f / targetFPS;
+
+	// 현재 시간 측정
+	QueryPerformanceCounter(&currentTime);
+
+	// 경과 시간 계산
+	float elapsedTime =
+		static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
+
+	// 남은 시간만큼 대기
+	if (elapsedTime < frameTime)
+	{
+		DWORD sleepTime = static_cast<DWORD>((frameTime - elapsedTime) * 1000.0f);
+		Sleep(sleepTime);
+	}
+
+	// 마지막 시간 업데이트
+	lastTime = currentTime;
+}
 
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -135,10 +168,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	TestSceneComponent::RunTransformTest(std::cout, 20, 3);
-	std::string input;
-	std::getline(std::cin, input); // 사용자 입력을 기다림
-	return 0;
+	//TestSceneComponent::RunTransformTest(std::cout, 20, 3);
+	//std::string input;
+	//std::getline(std::cin, input); // 사용자 입력을 기다림
+	//return 0;
 
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();

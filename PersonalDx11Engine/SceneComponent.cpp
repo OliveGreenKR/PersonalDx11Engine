@@ -80,7 +80,6 @@ void USceneComponent::OnChangeParent(const std::shared_ptr<USceneComponent>& New
     OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
 }
 
-
 void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 {
     bool bChanged = false;
@@ -372,11 +371,6 @@ void USceneComponent::PropagateWorldTransformToChildren()
         }
     }
 }
-
-//void USceneComponent::MarkWorldTransformDirty()
-//{
-//    bWorldTransformDirty = true;
-//}
 
 const FTransform& USceneComponent::GetWorldTransform() const
 {
