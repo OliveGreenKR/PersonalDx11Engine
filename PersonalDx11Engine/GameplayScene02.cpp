@@ -35,14 +35,14 @@ void UGameplayScene02::Initialize()
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
-    Character->SetScale(0.75f * Vector3::One);
-    Character->SetPosition({ 1.5f, 0, 0 });
+    Character->SetScale(0.5f * Vector3::One);
+    Character->SetPosition({ -0.5f, 0, 0 });
     Character->SetShapeSphere();
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>();
-    Character2->SetScale(0.75f * Vector3::One);
-    Character2->SetPosition({ -1.0f, 0, 0 });
+    Character2->SetScale(0.5f * Vector3::One);
+    Character2->SetPosition({ 0.5f, 0, 0 });
     Character2->SetShapeSphere();
 
     // 초기화 및 설정
@@ -72,6 +72,9 @@ void UGameplayScene02::Initialize()
 
     Character->SetGravity(false);
     Character2->SetGravity(false);
+
+    //트랜스폼 테스트
+    Character->GetRootComp()->AddChild(Character2->GetRootComp());
 
     // 입력 컨텍스트 등록
     UInputManager::Get()->RegisterInputContext(InputContext);

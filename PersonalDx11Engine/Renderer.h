@@ -3,13 +3,14 @@
 #include "Math.h"
 #include <vector>
 #include <memory>
-
+#include <queue>
 
 class UModel;
 class UShader;
 class UGameObject;
 class UCamera;
 class UPrimitiveComponent;
+
 
 // 렌더 작업을 정의하는 구조체
 struct FRenderJob
@@ -66,5 +67,5 @@ public:
 
 private:
 	IRenderHardware* RenderHardware;
-	std::vector<FRenderJob> RenderJobs;
+	std::queue<FRenderJob> RenderJobs;
 };

@@ -294,8 +294,8 @@ void USceneComponent::SetWorldPosition(const Vector3& WorldPosition)
 // 로컬 트랜스폼 상태 갱신을 필요로 표시
 void USceneComponent::MarkLocalTransformDirty()
 {
-    LocalTransformVersion++;
-    WorldTransformVersion = 0; // 월드 트랜스폼 캐시 무효화
+    //LocalTransformVersion++;
+    //WorldTransformVersion = 0; // 월드 트랜스폼 캐시 무효화
 
     // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
     PropagateUpdateFlagToSubtree();
@@ -315,36 +315,28 @@ void USceneComponent::CalculateWorldTransform() const
         const FTransform& ParentWorld = Parent->GetWorldTransform();
 
         // 상속된 트랜스폼 계산
+        // 1. 스케일: XMVector 활용
+        XMVECTOR ParentScaleV = XMLoadFloat3(&ParentWorld.Scale);
+        XMVECTOR LocalScaleV = XMLoadFloat3(&LocalTransform.Scale);
+        XMVECTOR WorldScaleV = XMVectorMultiply(ParentScaleV, LocalScaleV);
+        XMStoreFloat3(&CachedWorldTransform.Scale, WorldScaleV);
 
-        // 1. 스케일: 단순 곱셈
-		CachedWorldTransform.Scale ={ ParentWorld.Scale.x * LocalTransform.Scale.x,
-			ParentWorld.Scale.y * LocalTransform.Scale.y,
-			ParentWorld.Scale.z * LocalTransform.Scale.z };
-
-        // 2. 회전: 쿼터니언 곱셈
+        // 2. 회전: 기존 코드 유지 (최적)
         XMVECTOR ParentRotV = XMLoadFloat4(&ParentWorld.Rotation);
         XMVECTOR LocalRotV = XMLoadFloat4(&LocalTransform.Rotation);
         XMVECTOR WorldRotV = XMQuaternionMultiply(ParentRotV, LocalRotV);
         XMStoreFloat4(&CachedWorldTransform.Rotation, WorldRotV);
 
-        // 3. 위치: 부모 위치 + (부모 회전 * 부모 스케일 * 로컬 위치)
+        // 3. 위치 계산 최적화
         XMVECTOR LocalPosV = XMLoadFloat3(&LocalTransform.Position);
-        XMVECTOR ParentScaleV = XMLoadFloat3(&ParentWorld.Scale);
-
-        // 스케일 적용
-        XMVECTOR ScaledLocalPosV = XMVectorMultiply(LocalPosV, ParentScaleV);
-
-        // 회전 적용
+        XMVECTOR ScaledLocalPosV = XMVectorMultiply(LocalPosV, WorldScaleV);
         XMVECTOR RotatedScaledLocalPosV = XMVector3Rotate(ScaledLocalPosV, ParentRotV);
-
-        // 부모 위치에 더하기
         XMVECTOR ParentPosV = XMLoadFloat3(&ParentWorld.Position);
         XMVECTOR WorldPosV = XMVectorAdd(ParentPosV, RotatedScaledLocalPosV);
-
         XMStoreFloat3(&CachedWorldTransform.Position, WorldPosV);
 
-        // 부모 버전 저장
-        ParentWorldTransformVersion = Parent->GetWorldTransformVersion();
+        //// 부모 버전 저장
+        //ParentWorldTransformVersion = Parent->GetWorldTransformVersion();
     }
     else
     {
@@ -353,7 +345,7 @@ void USceneComponent::CalculateWorldTransform() const
     }
 
     // 월드 트랜스폼 버전 업데이트
-    WorldTransformVersion = LocalTransformVersion;
+    //WorldTransformVersion = LocalTransformVersion;
 }
 
 // Root 컴포넌트 찾기
@@ -392,7 +384,7 @@ void USceneComponent::PropagateUpdateFlagToSubtree() const
 void USceneComponent::UpdateWorldTransformIfNeeded() const
 {
     // 업데이트가 필요하지 않으면 바로 리턴
-    if (!IsWorldTransformDirty())
+    if (!IsWorldTransfromNeedUpdate())
         return;
 
     // 부모가 있다면 부모부터 업데이트
@@ -417,8 +409,8 @@ void USceneComponent::UpdateWorldTransformIfNeeded() const
 // OnParentTransformChanged 메서드 수정
 void USceneComponent::OnParentTransformChanged()
 {
-    // 월드 트랜스폼 캐시 무효화
-    WorldTransformVersion = 0;
+    //// 월드 트랜스폼 캐시 무효화
+    //WorldTransformVersion = 0;
 
     // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
     PropagateUpdateFlagToSubtree();

@@ -11,9 +11,9 @@ public:
 private:
     FTransform LocalTransform;
     mutable FTransform CachedWorldTransform;
-    mutable uint32_t LocalTransformVersion = 0;
-    mutable uint32_t WorldTransformVersion = 0;
-    mutable uint32_t ParentWorldTransformVersion = 0;
+    //mutable uint32_t LocalTransformVersion = 0;
+    //mutable uint32_t WorldTransformVersion = 0;
+    //mutable uint32_t ParentWorldTransformVersion = 0;
     // 추가 필드 및 메서드
     mutable bool bNeedsWorldTransformUpdate = false; // 트랜스폼 업데이트 플래그
 
@@ -51,8 +51,8 @@ public:
     Quaternion GetWorldRotation() const;
     Vector3 GetWorldScale() const; 
 
-    const size_t GetWorldTransformVersion() const { return WorldTransformVersion; }
-    const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
+    //const size_t GetWorldTransformVersion() const { return WorldTransformVersion; }
+    //const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
     const bool IsWorldTransfromNeedUpdate() const { return bNeedsWorldTransformUpdate; }
     //const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
 

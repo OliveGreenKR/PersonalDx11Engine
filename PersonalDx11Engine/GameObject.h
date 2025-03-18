@@ -149,7 +149,7 @@ public:
 		if (!RootComponent) return {};
 		return RootComponent->FindChildrenRaw<T>();
 	}
-	USceneComponent* GetRootComp() { return RootComponent.get(); }
+	std::shared_ptr<USceneComponent>& GetRootComp() { return RootComponent; }
 
 protected:
 	std::shared_ptr<USceneComponent> RootComponent;

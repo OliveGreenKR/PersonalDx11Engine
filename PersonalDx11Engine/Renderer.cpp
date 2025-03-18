@@ -12,8 +12,6 @@ void URenderer::Initialize(HWND hWindow, IRenderHardware* InRenderHardware)
 	bool result = true;
 	RenderHardware = InRenderHardware;
 	result = result && RenderHardware->IsDeviceReady();
-
-	RenderJobs.reserve(512);
 }
 
 void URenderer::BindShader(UShader* InShader)
@@ -144,13 +142,16 @@ void URenderer::SubmitRenderJob(UCamera* InCamera, UPrimitiveComponent* InPrimit
 		return;
 
 	// 렌더 작업 생성 및 추가
-	RenderJobs.emplace_back(InCamera, InPrimitve, InTexture);
+	RenderJobs.push({ InCamera, InPrimitve, InTexture });
 }
 
 void URenderer::ClearRenderJobs()
 {
-	// 렌더 작업 목록 비우기
-	RenderJobs.clear();
+	while (!RenderJobs.empty())
+	{
+		// 렌더 작업 목록 비우기
+		RenderJobs.pop();
+	}
 }
 
 void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCustomSampler)
@@ -159,14 +160,16 @@ void URenderer::ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCusto
 		return;
 
 	// 모든 렌더 작업 처리
-	for (const auto& Job : RenderJobs)
+	while (!RenderJobs.empty())
 	{
+		const auto& Job = RenderJobs.front();
+		RenderJobs.pop();
 		RenderPrimitve(Job.Camera, Job.Primitive, InShader, Job.Texture, InCustomSampler);
 	}
 }
 
 void URenderer::Release()
 {
-	RenderJobs.clear();
+
 }
 
