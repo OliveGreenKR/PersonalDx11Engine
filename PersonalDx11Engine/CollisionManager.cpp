@@ -333,13 +333,13 @@ void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionCompone
 
 	ResponseResult.Mass = RigidPtr->GetMass();
 	ResponseResult.RotationalInertia = RigidPtr->GetRotationalInertia();
-	ResponseResult.Position = RigidPtr->GetLocalTransform().Position;
+	ResponseResult.Position = RigidPtr->GetWorldTransform().Position;
 	ResponseResult.Velocity = RigidPtr->GetVelocity();
 	ResponseResult.AngularVelocity = RigidPtr->GetAngularVelocity();
 	ResponseResult.Restitution = RigidPtr->GetRestitution();
 	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
 	ResponseResult.FrictionStatic = RigidPtr->GetFrictionStatic();
-	ResponseResult.Rotation = RigidPtr->GetLocalTransform().Rotation;
+	ResponseResult.Rotation = RigidPtr->GetWorldTransform().Rotation;
 
 	return;
 }
@@ -451,14 +451,14 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 		// 각 물체를 반대 방향으로 밀어냄
 		if (!RigidA->IsStatic())
 		{
-			auto TransA = RigidA->GetLocalTransform();
+			auto TransA = RigidA->GetWorldTransform();
 			Vector3 newPos = TransA.Position - correction * ratioA;
 			RigidA->SetLocalPosition(newPos);
 		}
 
 		if (!RigidB->IsStatic())
 		{
-			auto TransB = RigidB->GetLocalTransform();
+			auto TransB = RigidB->GetWorldTransform();
 			Vector3 newPos = TransB.Position - correction * ratioA;
 			RigidA->SetLocalPosition(newPos);
 		}

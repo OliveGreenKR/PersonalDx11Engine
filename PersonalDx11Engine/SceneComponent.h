@@ -7,76 +7,93 @@
 class USceneComponent : public UActorComponent
 {
 public:
-    FDelegate<const FTransform&> OnTransformChangedDelegate;
+    // 트랜스폼 변경 이벤트 델리게이트
+    FDelegate<const FTransform&> OnLocalTransformChangedDelegate;
+    FDelegate<const FTransform&> OnWorldTransformChangedDelegate;
+
 private:
-    FTransform LocalTransform;
-    mutable FTransform CachedWorldTransform;
-    //mutable uint32_t LocalTransformVersion = 0;
-    //mutable uint32_t WorldTransformVersion = 0;
-    //mutable uint32_t ParentWorldTransformVersion = 0;
-    // 추가 필드 및 메서드
-    mutable bool bNeedsWorldTransformUpdate = false; // 트랜스폼 업데이트 플래그
+    FTransform LocalTransform;                      // 로컬 트랜스폼 (부모 기준)
+    mutable FTransform WorldTransform;              // 캐싱된 월드 트랜스폼
+    mutable bool bLocalTransformDirty = false;              // 로컬 트랜스폼 변경 플래그
+    mutable bool bWorldTransformDirty = false;              // 월드 트랜스폼 변경 플래그
 
 public:
-    const std::shared_ptr<USceneComponent>& GetSceneParent() const {
+    const bool IsLocalDirty() const { return bLocalTransformDirty; }
+    const bool IsWorldDirty() const { return bWorldTransformDirty; }
+
+public:
+    // 부모 접근자
+    std::shared_ptr<USceneComponent> GetSceneParent() const {
         return std::dynamic_pointer_cast<USceneComponent>(GetParent());
     }
-    // Setter
+
+    // 로컬 트랜스폼 설정자
     void SetLocalTransform(const FTransform& InTransform);
     void SetLocalPosition(const Vector3& InPosition);
     void SetLocalRotation(const Quaternion& InRotation);
     void SetLocalRotationEuler(const Vector3& InEuler);
     void SetLocalScale(const Vector3& InScale);
 
-    void AddLocalPosition(const Vector3& InPosition);
+    // 로컬 트랜스폼 추가자
+    void AddLocalPosition(const Vector3& InDeltaPosition);
+    void AddLocalRotation(const Quaternion& InDeltaRotation);
     void AddLocalRotationEuler(const Vector3& InDeltaEuler);
-    void AddLocalRotation(const Quaternion& InRotation);
 
-    void SetWorldPosition(const Vector3& WorldPosition);
+    // 월드 트랜스폼 설정자
+    void SetWorldTransform(const FTransform& InWorldTransform);
+    void SetWorldPosition(const Vector3& InWorldPosition);
+    void SetWorldRotation(const Quaternion& InWorldRotation);
+    void SetWorldRotationEuler(const Vector3& InWorldEuler);
+    void SetWorldScale(const Vector3& InWorldScale);
 
-    void RotateLocalAroundAxis(const Vector3& InAxis, float AngleDegrees);
-
-    void LookAt(const Vector3& WorldTargetPos);
+    // 월드 트랜스폼 추가자
+    void AddWorldPosition(const Vector3& InDeltaPosition);
+    void AddWorldRotation(const Quaternion& InDeltaRotation);
+    void AddWorldRotationEuler(const Vector3& InDeltaEuler);
 
     // 트랜스폼 접근자
-    const FTransform& GetLocalTransform() const { return LocalTransform; }
+    const FTransform& GetLocalTransform() const;
     const FTransform& GetWorldTransform() const;
 
-    //Getter
-    const Vector3& GetLocalPosition() const;
-    const Quaternion& GetLocalRotation() const;
-    const Vector3& GetLocalScale() const;
+    // 위치, 회전, 크기 개별 접근자
+	const Vector3& GetLocalPosition() const { return GetLocalTransform().Position; }
+	const Quaternion& GetLocalRotation() const { return GetLocalTransform().Rotation; }
+	const Vector3& GetLocalScale() const { return GetLocalTransform().Scale; }
 
-    Vector3 GetWorldPosition() const;
-    Quaternion GetWorldRotation() const;
-    Vector3 GetWorldScale() const; 
+    Vector3 GetWorldPosition() { return GetWorldTransform().Position; }
+    Quaternion GetWorldRotation() { return GetWorldTransform().Rotation; }
+    Vector3 GetWorldScale() { return GetWorldTransform().Scale; }
 
-    //const size_t GetWorldTransformVersion() const { return WorldTransformVersion; }
-    //const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
-    const bool IsWorldTransfromNeedUpdate() const { return bNeedsWorldTransformUpdate; }
-    //const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
+    // 특수 기능
+    void LookAt(const Vector3& TargetWorldPosition);
+    void RotateAroundAxis(const Vector3& Axis, float AngleDegrees);
 
+    // 유틸리티 함수
+    virtual const char* GetComponentClassName() const override { return "UScene"; }
 
-	virtual const char* GetComponentClassName() const override { return "UScene"; }
+    // 부모 설정 오버라이드
+    void SetParent(const std::shared_ptr<USceneComponent>& InParent);
 
-    // Root 컴포넌트 찾기
-    USceneComponent* FindRootSceneComponent() const;
+    //자식의 월드 좌표변환
+    static FTransform LocalToWorld(const FTransform& ChildLocal, const FTransform& ParentWorld);
+    //자식의 로컬 좌표 변환
+    static FTransform WorldToLocal(const FTransform& ChildWorld, const FTransform& ParentWorld);
 
-private:
+protected:
+    // 트랜스폼 변환 및 업데이트 함수
+    void UpdateWorldTransform() const;
+    void UpdateLocalTransform();
+    void PropagateWorldTransformToChildren();
+
+    //자식의 로컬 -> 월드 좌표변환
+    FTransform LocalToWorld(const FTransform& InParentWorldTransform) const;
+    //자식의 월드 -> 로컬 
+    FTransform WorldToLocal(const FTransform& InParentWorldTransform) const;
+
+    // 이벤트 설정 함수
     void MarkLocalTransformDirty();
-
-    void UpdateWorldTransformIfNeeded() const;
-    void CalculateWorldTransform() const;
-    void OnParentTransformChanged();
-
-    // 서브트리 전체에 업데이트 필요성 전파
-    void PropagateUpdateFlagToSubtree() const;
-
-    
-
+    void MarkWorldTransformDirty();
 
 private:
-    static constexpr float POSITION_THRESHOLD = KINDA_SMALL;
-    static constexpr float ROTATION_THRESHOLD = KINDA_SMALL;
-    static constexpr float SCALE_THRESHOLD = KINDA_SMALL;
+    static constexpr float TRANSFORM_EPSILON = KINDA_SMALL;
 };

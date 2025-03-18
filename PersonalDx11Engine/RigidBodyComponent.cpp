@@ -113,7 +113,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 		return;
 	}
 
-	FTransform TargetTransform = GetLocalTransform();
+	FTransform TargetTransform = GetWorldTransform();
 
 	// 위치 업데이트
 	Vector3 NewPosition = TargetTransform.Position + Velocity * DeltaTime;
@@ -137,7 +137,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 			Math::RadToDegree(Angle)
 		);
 	}
-	SetLocalTransform(TargetTransform);
+	SetWorldTransform(TargetTransform);
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -161,7 +161,7 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
-	return GetLocalTransform().Position;
+	return GetWorldTransform().Position;
 }
 
 void URigidBodyComponent::SetMass(float InMass)

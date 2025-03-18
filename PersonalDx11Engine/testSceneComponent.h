@@ -19,7 +19,7 @@ namespace TestSceneComponent
     private:
         int ID;
         Vector3 PrevWorldPosition; // 이전 월드 위치 저장
-        bool bWorldTransformChanged = false;
+        bool bWorldTransformNeedUpdate = false;
 
     public:
         FTestSceneComponent(int InID) : ID(InID)
@@ -32,24 +32,24 @@ namespace TestSceneComponent
         void CheckWorldTransformChanged()
         {
             Vector3 CurrentWorldPosition = GetWorldPosition();
-            bWorldTransformChanged = (PrevWorldPosition - CurrentWorldPosition).LengthSquared() > KINDA_SMALL;
+            bWorldTransformNeedUpdate = (PrevWorldPosition - CurrentWorldPosition).LengthSquared() > KINDA_SMALL;
             PrevWorldPosition = CurrentWorldPosition;
         }
 
         // 월드 트랜스폼을 체크하고 변경 여부 업데이트
         void CheckWorldTransformNeedUpdate()
         {
-            bWorldTransformChanged = IsWorldTransfromNeedUpdate();
+            bWorldTransformNeedUpdate = IsWorldDirty();
         }
 
         void ResetFlags()
         {
-            bWorldTransformChanged = false;
+            bWorldTransformNeedUpdate = false;
             PrevWorldPosition = GetWorldPosition();
         }
 
         int GetID() const { return ID; }
-        bool HasWorldTransformChanged() const { return bWorldTransformChanged; }
+        bool HasWorldTransformChanged() const { return bWorldTransformNeedUpdate; }
         // 디버깅 목적의 문자열 표현
         std::string ToString() const
         {
@@ -57,7 +57,7 @@ namespace TestSceneComponent
 
             // 트랜스폼 변경 상태에 따른 ID 표시
             std::string idStr;
-            if (bWorldTransformChanged)
+            if (bWorldTransformNeedUpdate)
                 idStr = "[" + std::to_string(ID) + "]";
             else
                 idStr = std::to_string(ID);
@@ -218,8 +218,8 @@ namespace TestSceneComponent
             os << "Try GetWorld in Node " << targetChild->GetID() << std::endl;
 
             targetChild->GetWorldPosition();
-            //CheckWorldTransformChanges();
-            CheckWorldTransformDirty();
+            CheckWorldTransformChanges();
+            //CheckWorldTransformDirty();
 
             os << "Step 3: World transform propagation" << std::endl;
             PrintHierarchy(os);

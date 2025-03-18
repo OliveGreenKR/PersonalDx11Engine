@@ -224,7 +224,7 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
     // 약한 참조를 사용하여 순환 참조 방지
     std::weak_ptr<UElasticBody> WeakBody = InBody;
 
-    InBody->GetRootComp()->OnTransformChangedDelegate.Bind(
+    InBody->GetRootComp()->OnWorldTransformChangedDelegate.Bind(
         InBody, // 여기서는 객체를 전달해야 함
         [IsInBorder, this, WeakBody](const FTransform& InTransform) {
             // 약한 참조에서 유효한 공유 포인터를 획득

@@ -74,7 +74,7 @@ void UGameplayScene02::Initialize()
     Character2->SetGravity(false);
 
     //트랜스폼 테스트
-    Character->GetRootComp()->AddChild(Character2->GetRootComp());
+    //Character->GetRootComp()->AddChild(Character2->GetRootComp());
 
     // 입력 컨텍스트 등록
     UInputManager::Get()->RegisterInputContext(InputContext);
@@ -505,7 +505,7 @@ void UGameplayScene02::SetupBorderTriggers()
             std::abs(Position.z) < ZBorder;
         };
 
-    Character->GetRootComp()->OnTransformChangedDelegate.Bind(Character,
+    Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character,
                                                                [IsInBorder, this](const FTransform& InTransform) {
                                                                    if (!IsInBorder(InTransform.Position))
                                                                    {
@@ -544,7 +544,7 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                },
                                                                "BorderCheck");
 
-    Character2->GetRootComp()->OnTransformChangedDelegate.Bind(Character2,
+    Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character2,
                                                                 [IsInBorder, this](const FTransform& InTransform) {
                                                                     if (!IsInBorder(InTransform.Position))
                                                                     {

@@ -1,417 +1,575 @@
 #include "SceneComponent.h"
 
-// 로컬 위치 설정
-void USceneComponent::SetLocalPosition(const Vector3& InPosition)
-{
-    if ((LocalTransform.Position - InPosition).LengthSquared() > POSITION_THRESHOLD)
-    {
-        LocalTransform.Position = InPosition;
-        MarkLocalTransformDirty();
-    }
-}
-
-// 로컬 회전 설정
-void USceneComponent::SetLocalRotation(const Quaternion& InRotation)
-{
-    // 회전 변화량 계산
-    float Dot = Quaternion::Dot(LocalTransform.Rotation, InRotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-    if (ChangeMagnitude > ROTATION_THRESHOLD)
-    {
-        float LengthSq = InRotation.LengthSquared();
-        // 정규화 필요성 확인
-        if (std::abs(LengthSq - 1.0f) > KINDA_SMALL)
-        {
-            LocalTransform.Rotation = InRotation.GetNormalized();
-        }
-        else
-        {
-            LocalTransform.Rotation = InRotation;
-        }
-        MarkLocalTransformDirty();
-    }
-}
-
-// 로컬 오일러 회전
-void USceneComponent::SetLocalRotationEuler(const Vector3& InEuler)
-{
-    const Quaternion Rot = Math::EulerToQuaternion(InEuler);
-    SetLocalRotation(Rot);
-}
-
-// 로컬 스케일 설정
-void USceneComponent::SetLocalScale(const Vector3& InScale)
-{
-    if ((LocalTransform.Scale - InScale).LengthSquared() > SCALE_THRESHOLD)
-    {
-        LocalTransform.Scale = InScale;
-        MarkLocalTransformDirty();
-    }
-}
-
-// 로컬 트랜스폼 한번에 설정
+// 로컬 트랜스폼 설정자
 void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 {
+    // 현재 트랜스폼과 동일한지 검사하여 불필요한 업데이트 방지
     bool bChanged = false;
 
-    // 위치 변경 확인
-    if ((LocalTransform.Position - InTransform.Position).LengthSquared() > POSITION_THRESHOLD)
+    if ((LocalTransform.Position - InTransform.Position).LengthSquared() > TRANSFORM_EPSILON)
     {
         LocalTransform.Position = InTransform.Position;
         bChanged = true;
     }
 
-    // 회전 변경 확인
-    float Dot = Quaternion::Dot(LocalTransform.Rotation, InTransform.Rotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-    if (ChangeMagnitude > ROTATION_THRESHOLD)
+    float RotDot = Quaternion::Dot(LocalTransform.Rotation, InTransform.Rotation);
+    if (std::abs(1.0f - std::abs(RotDot)) > TRANSFORM_EPSILON)
     {
         LocalTransform.Rotation = InTransform.Rotation;
         bChanged = true;
     }
 
-    // 스케일 변경 확인
-    if ((LocalTransform.Scale - InTransform.Scale).LengthSquared() > SCALE_THRESHOLD)
+    if ((LocalTransform.Scale - InTransform.Scale).LengthSquared() > TRANSFORM_EPSILON)
     {
         LocalTransform.Scale = InTransform.Scale;
         bChanged = true;
     }
 
-    // 변경사항이 있을 경우만 갱신
     if (bChanged)
     {
         MarkLocalTransformDirty();
     }
 }
 
-// 로컬 위치 반환
-const Vector3& USceneComponent::GetLocalPosition() const
+void USceneComponent::SetLocalPosition(const Vector3& InPosition)
 {
-    return LocalTransform.Position;
-}
-
-// 로컬 회전 반환
-const Quaternion& USceneComponent::GetLocalRotation() const
-{
-    return LocalTransform.Rotation;
-}
-
-// 로컬 스케일 반환
-const Vector3& USceneComponent::GetLocalScale() const
-{
-    return LocalTransform.Scale;
-}
-
-// 로컬 위치에 추가
-void USceneComponent::AddLocalPosition(const Vector3& InDeltaPosition)
-{
-    if (InDeltaPosition.LengthSquared() > POSITION_THRESHOLD)
+    if ((LocalTransform.Position - InPosition).LengthSquared() > TRANSFORM_EPSILON)
     {
-        LocalTransform.Position += InDeltaPosition;
+        LocalTransform.Position = InPosition;
         MarkLocalTransformDirty();
     }
 }
 
-// 로컬 회전에 추가 (오일러 각도)
-void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
+void USceneComponent::SetLocalRotation(const Quaternion& InRotation)
 {
-    Quaternion DeltaRotation = Math::EulerToQuaternion(InDeltaEuler);
-    AddLocalRotation(DeltaRotation);
+     // 변화량이 의미 있는지 확인
+    float Dot = Quaternion::Dot(Quaternion::Identity, InRotation);
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    {
+         // 정규화 및 저장
+        XMVECTOR RotQuat = XMLoadFloat4(&InRotation);
+        XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
+        XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
+
+        // 변경 플래그 설정 및 전파
+        MarkLocalTransformDirty();
+    }
 }
 
-// 로컬 회전에 추가 (쿼터니언)
+void USceneComponent::SetLocalRotationEuler(const Vector3& InEuler)
+{
+    Quaternion InQuat = Math::EulerToQuaternion(InEuler);
+    SetLocalRotation(InQuat);
+}
+
+void USceneComponent::SetLocalScale(const Vector3& InScale)
+{
+    if ((LocalTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON)
+    {
+        LocalTransform.Scale = InScale;
+        MarkLocalTransformDirty();
+    }
+}
+
+void USceneComponent::AddLocalPosition(const Vector3& InDeltaPosition)
+{
+    if (InDeltaPosition.LengthSquared() > TRANSFORM_EPSILON)
+    {
+        Vector3 New = GetLocalPosition() + InDeltaPosition;
+        SetLocalPosition(New);
+    }
+    
+}
+
 void USceneComponent::AddLocalRotation(const Quaternion& InDeltaRotation)
 {
     // 변화량이 의미 있는지 확인
     float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
-    if (ChangeMagnitude > ROTATION_THRESHOLD)
+    if (ChangeMagnitude > TRANSFORM_EPSILON)
     {
         // 현재 회전에 새 회전을 합성
-        XMVECTOR CurrentV = XMLoadFloat4(&LocalTransform.Rotation);
-        XMVECTOR DeltaV = XMLoadFloat4(&InDeltaRotation);
+        XMVECTOR CurrentQuat = XMLoadFloat4(&LocalTransform.Rotation);
+        XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
 
-        // 쿼터니언 곱셈으로 회전 결합
-        XMVECTOR ResultV = XMQuaternionMultiply(CurrentV, DeltaV);
-        ResultV = XMQuaternionNormalize(ResultV);
+        // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
+        XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
 
-        Quaternion Result;
-        XMStoreFloat4(&Result, ResultV);
+        // 정규화 및 저장
+        ResultQuat = XMQuaternionNormalize(ResultQuat);
+        XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
 
-        LocalTransform.Rotation = Result;
+        // 변경 플래그 설정 및 전파
         MarkLocalTransformDirty();
     }
 }
 
-// 주어진 축을 중심으로 회전
-void USceneComponent::RotateLocalAroundAxis(const Vector3& InAxis, float AngleDegrees)
+void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
 {
-    if (AngleDegrees <= KINDA_SMALL || InAxis.LengthSquared() < KINDA_SMALL)
+    Quaternion Delta = Math::EulerToQuaternion(InDeltaEuler);
+    AddLocalRotation(Delta);
+}
+
+// 월드 트랜스폼 설정자
+void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
+{
+    // 1. 나의 월드 변경
+    WorldTransform = InWorldTransform;
+    bWorldTransformDirty = false;
+
+    // 2. 나의 로컬 변경
+    UpdateLocalTransform();
+
+    // 3. 자식의 월드 변경
+    PropagateWorldTransformToChildren();
+
+    // 이벤트 발생
+    OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
+}
+
+void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
+{
+    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+
+    if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON)
+    {
+        FTransform NewWorldTransform = WorldTransform;
+        NewWorldTransform.Position = InWorldPosition;
+
+        SetWorldTransform(NewWorldTransform);
+    }
+}
+
+void USceneComponent::SetWorldRotation(const Quaternion& InWorldRotation)
+{
+    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+
+     // 변화량이 의미 있는지 확인
+    float Dot = Quaternion::Dot(Quaternion::Identity, InWorldRotation);
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    {
+        FTransform NewWorldTransform = WorldTransform;
+
+         // 정규화 및 저장
+        XMVECTOR RotQuat = XMLoadFloat4(&InWorldRotation);
+        XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
+        XMStoreFloat4(&NewWorldTransform.Rotation, ResultQuat);
+
+        SetWorldTransform(NewWorldTransform);
+    }
+}
+
+void USceneComponent::SetWorldRotationEuler(const Vector3& InWorldEuler)
+{
+    Quaternion InQuat = Math::EulerToQuaternion(InWorldEuler);
+    SetWorldRotation(InQuat);
+}
+
+void USceneComponent::SetWorldScale(const Vector3& InWorldScale)
+{
+    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+    if ((WorldTransform.Scale - InWorldScale).LengthSquared() > TRANSFORM_EPSILON)
+    {
+        FTransform NewWorldTransform = WorldTransform;
+        NewWorldTransform.Scale = InWorldScale;
+        SetWorldTransform(NewWorldTransform);
+    }
+}
+
+void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
+{
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+    Vector3  NewPosition = WorldTransform.Position + InDeltaPosition;
+    SetWorldPosition(NewPosition);
+}
+
+void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
+{
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+
+    // 변화량이 의미 있는지 확인
+    float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    {
+        FTransform NewTransform = WorldTransform;
+
+        // 현재 회전에 새 회전을 합성
+        XMVECTOR CurrentQuat = XMLoadFloat4(&NewTransform.Rotation);
+        XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
+
+        // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
+        XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
+
+        // 정규화 및 저장
+        ResultQuat = XMQuaternionNormalize(ResultQuat);
+        XMStoreFloat4(&NewTransform.Rotation, ResultQuat);
+
+        SetWorldTransform(NewTransform);
+    }
+
+}
+
+void USceneComponent::AddWorldRotationEuler(const Vector3& InDeltaEuler)
+{
+    Quaternion InQuat = Math::EulerToQuaternion(InDeltaEuler);
+    AddWorldRotation(InQuat);
+}
+
+// 트랜스폼 업데이트 함수
+void USceneComponent::UpdateWorldTransform() const
+{
+    if (!bWorldTransformDirty)
         return;
 
-    // 회전축 정규화
-    Vector3 NormalizedAxis = InAxis.GetNormalized();
-
-    // 회전 쿼터니언 생성
-    float AngleRadians = Math::DegreeToRad(AngleDegrees);
-
-    XMVECTOR Axis = XMLoadFloat3(&NormalizedAxis);
-    XMVECTOR DeltaRotation = XMQuaternionRotationAxis(Axis, AngleRadians);
-
-    // 현재 회전에 적용
-    XMVECTOR CurrentQuat = XMLoadFloat4(&LocalTransform.Rotation);
-    XMVECTOR FinalQuat = XMQuaternionMultiply(DeltaRotation, CurrentQuat);
-
-    // 결과 정규화 및 저장
-    FinalQuat = XMQuaternionNormalize(FinalQuat);
-
-    Quaternion Result;
-    XMStoreFloat4(&Result, FinalQuat);
-
-    SetLocalRotation(Result);
-}
-
-// 월드 트랜스폼 계산 및 반환
-const FTransform& USceneComponent::GetWorldTransform() const
-{
-    UpdateWorldTransformIfNeeded();
-    return CachedWorldTransform;
-}
-
-// 월드 위치 반환
-Vector3 USceneComponent::GetWorldPosition() const
-{
-    UpdateWorldTransformIfNeeded();
-    return CachedWorldTransform.Position;
-}
-
-// 월드 회전 반환
-Quaternion USceneComponent::GetWorldRotation() const
-{
-    UpdateWorldTransformIfNeeded();
-    return CachedWorldTransform.Rotation;
-}
-
-// 월드 스케일 반환 
-Vector3 USceneComponent::GetWorldScale() const
-{
-    UpdateWorldTransformIfNeeded();
-    return CachedWorldTransform.Scale;
-}
-
-// 특정 월드 위치를 바라보게 설정
-void USceneComponent::LookAt(const Vector3& WorldTargetPos)
-{
-    Vector3 WorldPos = GetWorldPosition();
-    Vector3 Direction = WorldTargetPos - WorldPos;
-
-    if (Direction.LengthSquared() < KINDA_SMALL)
-        return;
-
-    Direction.Normalize();
-
-    // 기본 업 벡터
-    Vector3 Up = Vector3::Up;
-
-    // World 기준 Forward는 Z축 (언리얼과 같은 좌표계 기준)
-    Vector3 Forward = Vector3::Forward;
-
-    // 현재 월드 회전 구하기
-    Quaternion WorldRot = GetWorldRotation();
-
-    // 목표 방향으로의 최소 회전 계산
-    Quaternion LookRotation = Vector4::LookRotation(Direction, Up);
-
-    // World 회전을 Local 회전으로 변환
-    // 부모의 역회전 필요
     auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        Quaternion ParentWorldRot = Parent->GetWorldRotation();
-
-        // 부모의 역회전 (inverse)을 구해 적용
-        XMVECTOR ParentWorldRotV = XMLoadFloat4(&ParentWorldRot);
-        XMVECTOR ParentWorldRotInvV = XMQuaternionInverse(ParentWorldRotV);
-
-        XMVECTOR LookRotationV = XMLoadFloat4(&LookRotation);
-        XMVECTOR LocalRotV = XMQuaternionMultiply(ParentWorldRotInvV, LookRotationV);
-
-        Quaternion LocalRot;
-        XMStoreFloat4(&LocalRot, LocalRotV);
-
-        SetLocalRotation(LocalRot);
-    }
-    else
-    {
-        // 부모가 없으면 월드 회전이 로컬 회전
-        SetLocalRotation(LookRotation);
-    }
-}
-
-// 월드 위치 직접 설정 (내부적으로 로컬로 변환)
-void USceneComponent::SetWorldPosition(const Vector3& WorldPosition)
-{
-    auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        // 부모 기준으로 로컬 위치 계산
-        FTransform ParentWorld = Parent->GetWorldTransform();
-
-        // 부모의 역변환 계산하여 적용
-        XMVECTOR WorldPosV = XMLoadFloat3(&WorldPosition);
-        XMVECTOR ParentPosV = XMLoadFloat3(&ParentWorld.Position);
-        XMVECTOR ParentRotV = XMLoadFloat4(&ParentWorld.Rotation);
-        XMVECTOR ParentScaleV = XMLoadFloat3(&ParentWorld.Scale);
-
-        // 부모 위치로부터의 차이
-        XMVECTOR RelativePosV = XMVectorSubtract(WorldPosV, ParentPosV);
-
-        // 부모 회전의 역회전
-        XMVECTOR ParentRotInvV = XMQuaternionInverse(ParentRotV);
-
-        // 역회전 적용
-        XMVECTOR LocalPosRotatedV = XMVector3Rotate(RelativePosV, ParentRotInvV);
-
-        // 스케일 역적용 (나누기)
-        XMVECTOR InvScaleV = XMVectorReciprocal(ParentScaleV);
-        XMVECTOR LocalPosV = XMVectorMultiply(LocalPosRotatedV, InvScaleV);
-
-        Vector3 LocalPos;
-        XMStoreFloat3(&LocalPos, LocalPosV);
-
-        SetLocalPosition(LocalPos);
-    }
-    else
-    {
-        // 부모가 없으면 월드 위치가 로컬 위치
-        SetLocalPosition(WorldPosition);
-    }
-}
-
-// 로컬 트랜스폼 상태 갱신을 필요로 표시
-void USceneComponent::MarkLocalTransformDirty()
-{
-    //LocalTransformVersion++;
-    //WorldTransformVersion = 0; // 월드 트랜스폼 캐시 무효화
-
-    // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
-    PropagateUpdateFlagToSubtree();
-
-    // 트랜스폼 변경 이벤트 발생
-    OnTransformChangedDelegate.Broadcast(LocalTransform);
-}
-
-// 월드 트랜스폼 실제 계산
-void USceneComponent::CalculateWorldTransform() const
-{
-    auto Parent = GetSceneParent();
-
     if (Parent)
     {
         // 부모의 월드 트랜스폼 가져오기
-        const FTransform& ParentWorld = Parent->GetWorldTransform();
+        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
 
-        // 상속된 트랜스폼 계산
-        // 1. 스케일: XMVector 활용
-        XMVECTOR ParentScaleV = XMLoadFloat3(&ParentWorld.Scale);
-        XMVECTOR LocalScaleV = XMLoadFloat3(&LocalTransform.Scale);
-        XMVECTOR WorldScaleV = XMVectorMultiply(ParentScaleV, LocalScaleV);
-        XMStoreFloat3(&CachedWorldTransform.Scale, WorldScaleV);
-
-        // 2. 회전: 기존 코드 유지 (최적)
-        XMVECTOR ParentRotV = XMLoadFloat4(&ParentWorld.Rotation);
-        XMVECTOR LocalRotV = XMLoadFloat4(&LocalTransform.Rotation);
-        XMVECTOR WorldRotV = XMQuaternionMultiply(ParentRotV, LocalRotV);
-        XMStoreFloat4(&CachedWorldTransform.Rotation, WorldRotV);
-
-        // 3. 위치 계산 최적화
-        XMVECTOR LocalPosV = XMLoadFloat3(&LocalTransform.Position);
-        XMVECTOR ScaledLocalPosV = XMVectorMultiply(LocalPosV, WorldScaleV);
-        XMVECTOR RotatedScaledLocalPosV = XMVector3Rotate(ScaledLocalPosV, ParentRotV);
-        XMVECTOR ParentPosV = XMLoadFloat3(&ParentWorld.Position);
-        XMVECTOR WorldPosV = XMVectorAdd(ParentPosV, RotatedScaledLocalPosV);
-        XMStoreFloat3(&CachedWorldTransform.Position, WorldPosV);
-
-        //// 부모 버전 저장
-        //ParentWorldTransformVersion = Parent->GetWorldTransformVersion();
+        // 로컬에서 월드로 변환
+        WorldTransform = LocalToWorld(ParentWorldTransform);
     }
     else
     {
-        // 부모가 없으면 로컬 트랜스폼이 월드 트랜스폼
-        CachedWorldTransform = LocalTransform;
+        // 부모가 없는 경우 로컬 트랜스폼이 월드 트랜스폼
+        WorldTransform = LocalTransform;
     }
 
-    // 월드 트랜스폼 버전 업데이트
-    //WorldTransformVersion = LocalTransformVersion;
+    bWorldTransformDirty = false;
 }
 
-// Root 컴포넌트 찾기
-USceneComponent* USceneComponent::FindRootSceneComponent() const
+void USceneComponent::UpdateLocalTransform()
 {
-    const USceneComponent* Current = this;
-    while (auto Parent = Current->GetSceneParent())
+    auto Parent = GetSceneParent();
+    if (Parent)
     {
-        Current = Parent.get();
+        // 부모의 월드 트랜스폼 가져오기
+        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
+
+        // 월드에서 로컬로 변환
+        LocalTransform = WorldToLocal(ParentWorldTransform);
     }
-    return const_cast<USceneComponent*>(Current);
+    else
+    {
+        // 부모가 없는 경우 월드 트랜스폼이 로컬 트랜스폼
+        LocalTransform = WorldTransform;
+    }
+
+    bLocalTransformDirty = false;
+
+    // 이벤트 발생
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
 }
 
-// 서브트리에 업데이트 필요성 전파
-void USceneComponent::PropagateUpdateFlagToSubtree() const
+// 트랜스폼 변환 함수
+FTransform USceneComponent::LocalToWorld(const FTransform& InParentWorldTransform) const
 {
-    // 이미 업데이트 필요로 표시되어 있다면 전파 중지 (이미 전파됨)
-    if (bNeedsWorldTransformUpdate)
-        return;
+    FTransform Result;
 
-    // 업데이트 필요 표시
-    bNeedsWorldTransformUpdate = true;
+    // 스케일: 부모 스케일 * 로컬 스케일
+    Result.Scale = Vector3(
+        InParentWorldTransform.Scale.x * LocalTransform.Scale.x,
+        InParentWorldTransform.Scale.y * LocalTransform.Scale.y,
+        InParentWorldTransform.Scale.z * LocalTransform.Scale.z
+    );
 
-    // 모든 자식 컴포넌트에 전파
-    auto SceneChildren = FindChildrenByType<USceneComponent>();
-    for (const auto& WeakChild : SceneChildren)
+    // 회전: 부모 회전 * 로컬 회전
+    XMVECTOR ParentRot = XMLoadFloat4(&InParentWorldTransform.Rotation);
+    XMVECTOR LocalRot = XMLoadFloat4(&LocalTransform.Rotation);
+    XMVECTOR WorldRot = XMQuaternionMultiply(ParentRot, LocalRot);
+    XMStoreFloat4(&Result.Rotation, WorldRot);
+
+    // 위치: 부모 위치 + (부모 회전 * 부모 스케일 * 로컬 위치)
+    XMVECTOR LocalPos = XMLoadFloat3(&LocalTransform.Position);
+    XMVECTOR ParentScale = XMLoadFloat3(&InParentWorldTransform.Scale);
+
+    // 스케일 적용
+    XMVECTOR ScaledPos = XMVectorMultiply(LocalPos, ParentScale);
+
+    // 회전 적용
+    XMVECTOR RotatedPos = XMVector3Rotate(ScaledPos, ParentRot);
+
+    // 부모 위치에 더하기
+    XMVECTOR ParentPos = XMLoadFloat3(&InParentWorldTransform.Position);
+    XMVECTOR WorldPos = XMVectorAdd(ParentPos, RotatedPos);
+
+    XMStoreFloat3(&Result.Position, WorldPos);
+
+    return Result;
+}
+
+FTransform USceneComponent::WorldToLocal(const FTransform& InParentWorldTransform) const
+{
+    FTransform Result;
+
+    // 스케일: 월드 스케일 / 부모 스케일
+    Result.Scale = Vector3(
+        WorldTransform.Scale.x / InParentWorldTransform.Scale.x,
+        WorldTransform.Scale.y / InParentWorldTransform.Scale.y,
+        WorldTransform.Scale.z / InParentWorldTransform.Scale.z
+    );
+
+    // 회전: 부모 회전의 역 * 월드 회전
+    XMVECTOR ParentRot = XMLoadFloat4(&InParentWorldTransform.Rotation);
+    XMVECTOR WorldRot = XMLoadFloat4(&WorldTransform.Rotation);
+    XMVECTOR InvParentRot = XMQuaternionInverse(ParentRot);
+    XMVECTOR LocalRot = XMQuaternionMultiply(InvParentRot, WorldRot);
+    XMStoreFloat4(&Result.Rotation, LocalRot);
+
+    // 위치: (부모 회전의 역 * (월드 위치 - 부모 위치)) / 부모 스케일
+    XMVECTOR WorldPos = XMLoadFloat3(&WorldTransform.Position);
+    XMVECTOR ParentPos = XMLoadFloat3(&InParentWorldTransform.Position);
+    XMVECTOR RelativePos = XMVectorSubtract(WorldPos, ParentPos);
+
+    // 부모 회전의 역 적용
+    XMVECTOR UnrotatedPos = XMVector3Rotate(RelativePos, InvParentRot);
+
+    // 부모 스케일의 역 적용
+    XMVECTOR InvParentScale = XMVectorReciprocal(XMLoadFloat3(&InParentWorldTransform.Scale));
+    XMVECTOR LocalPos = XMVectorMultiply(UnrotatedPos, InvParentScale);
+
+    XMStoreFloat3(&Result.Position, LocalPos);
+
+    return Result;
+}
+
+// 트랜스폼 전파 함수
+void USceneComponent::PropagateWorldTransformToChildren()
+{
+    // 자식 컴포넌트에 월드 트랜스폼 변경 전파
+    auto Children = GetChildren();
+    for (const auto& Child : Children)
     {
-        if (auto Child = WeakChild.lock())
+        auto SceneChild = std::dynamic_pointer_cast<USceneComponent>(Child);
+        if (SceneChild)
         {
-            Child->PropagateUpdateFlagToSubtree();
+            SceneChild->MarkWorldTransformDirty();
+            SceneChild->PropagateWorldTransformToChildren();
         }
     }
 }
 
-// UpdateWorldTransformIfNeeded 메서드 수정
-void USceneComponent::UpdateWorldTransformIfNeeded() const
+// 플래그 설정 함수
+void USceneComponent::MarkLocalTransformDirty()
 {
-    // 업데이트가 필요하지 않으면 바로 리턴
-    if (!IsWorldTransfromNeedUpdate())
+    bLocalTransformDirty = true;
+    bWorldTransformDirty = true;
+
+    // 이벤트 발생
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
+
+    // 자식들의 월드 트랜스폼도 더티로 표시
+    PropagateWorldTransformToChildren();
+}
+
+void USceneComponent::MarkWorldTransformDirty()
+{
+    bWorldTransformDirty = true;
+}
+
+// 트랜스폼 접근자
+const FTransform& USceneComponent::GetWorldTransform() const
+{
+    if (bWorldTransformDirty)
+    {
+        UpdateWorldTransform();
+    }
+    return WorldTransform;
+}
+
+const FTransform& USceneComponent::GetLocalTransform() const
+{
+    return LocalTransform;
+}
+
+void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
+{
+   // 현재 월드 위치 가져오기
+    Vector3 WorldPos = GetWorldPosition();
+
+    // 타겟 방향 벡터 계산
+    Vector3 Direction = TargetWorldPosition - WorldPos;
+
+    // 방향 벡터가 너무 작으면 회전하지 않음
+    if (Direction.LengthSquared() < TRANSFORM_EPSILON)
         return;
 
-    // 부모가 있다면 부모부터 업데이트
-    auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        Parent->UpdateWorldTransformIfNeeded();
+    // 방향을 정규화
+    Direction.Normalize();
 
-        // 월드 트랜스폼 계산
-        CalculateWorldTransform();
+    // 기본적으로 로컬 전방 벡터는 (0,0,1)이고, 상향 벡터는 (0,1,0)
+    Vector3 Forward = Vector3::Forward;
+    Vector3 Up = Vector3::Up;
+
+    // 방향에 맞는 회전 쿼터니언 생성
+    Quaternion NewRotation = Quaternion::LookRotation(Direction, Up);
+
+    // 월드 회전 설정
+    SetWorldRotation(NewRotation);
+}
+
+void USceneComponent::RotateAroundAxis(const Vector3& Axis, float AngleDegrees)
+{
+   // 각도가 너무 작거나 축이 너무 작으면 회전하지 않음
+    if (std::abs(AngleDegrees) < TRANSFORM_EPSILON || Axis.LengthSquared() < TRANSFORM_EPSILON)
+        return;
+
+    // 현재 월드 회전 가져오기
+    Quaternion WorldRot = GetWorldRotation();
+
+    // 회전축 정규화
+    Vector3 NormalizedAxis = Axis;
+    NormalizedAxis.Normalize();
+
+    // 라디안으로 변환
+    float AngleRadians = Math::DegreeToRad(AngleDegrees);
+
+    // 회전 쿼터니언 생성
+    XMVECTOR AxisVec = XMLoadFloat3(&NormalizedAxis);
+    XMVECTOR DeltaRot = XMQuaternionRotationAxis(AxisVec, AngleRadians);
+
+    // 현재 회전에 적용
+    XMVECTOR CurrentRot = XMLoadFloat4(&WorldRot);
+    XMVECTOR ResultRot = XMQuaternionMultiply(DeltaRot, CurrentRot);
+
+    // 정규화 및 적용
+    ResultRot = XMQuaternionNormalize(ResultRot);
+
+    Quaternion NewRotation;
+    XMStoreFloat4(&NewRotation, ResultRot);
+
+    // 월드 회전 설정
+    SetWorldRotation(NewRotation);
+}
+
+// 부모 설정 오버라이드
+void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent)
+{
+    // 부모 변경 전 현재 월드 트랜스폼 저장
+    FTransform CurrentWorldTransform = GetWorldTransform();
+
+    // 기존 부모에서 분리
+    auto OldParent = GetParent();
+    if (OldParent)
+    {
+        UActorComponent::SetParent(nullptr);
+    }
+
+    // 새 부모가 있으면 연결
+    if (InParent)
+    {
+        // 부모-자식 관계 설정
+        UActorComponent::SetParent(InParent);
+
+        // 월드 트랜스폼 유지를 위한 로컬 트랜스폼 계산
+        WorldTransform = CurrentWorldTransform;
+        bWorldTransformDirty = false;
+        UpdateLocalTransform();
     }
     else
     {
-        // Root 컴포넌트면 직접 계산
-        CalculateWorldTransform();
+        // 부모가 없는 경우, 월드 = 로컬
+        UActorComponent::SetParent(nullptr);
+        LocalTransform = CurrentWorldTransform;
+        WorldTransform = CurrentWorldTransform;
+        bLocalTransformDirty = false;
+        bWorldTransformDirty = false;
     }
-
-    // 업데이트 플래그 초기화
-    bNeedsWorldTransformUpdate = false;
 }
 
-// OnParentTransformChanged 메서드 수정
-void USceneComponent::OnParentTransformChanged()
+static FTransform LocalToWorld(const FTransform& ChildLocal, const FTransform& ParentWorld)
 {
-    //// 월드 트랜스폼 캐시 무효화
-    //WorldTransformVersion = 0;
+    FTransform Result;
 
-    // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
-    PropagateUpdateFlagToSubtree();
+    // 스케일: 부모 스케일 * 자식 로컬 스케일
+    Result.Scale = Vector3(
+        ParentWorld.Scale.x * ChildLocal.Scale.x,
+        ParentWorld.Scale.y * ChildLocal.Scale.y,
+        ParentWorld.Scale.z * ChildLocal.Scale.z
+    );
+
+    // 회전: 부모 회전 * 자식 로컬 회전
+    XMVECTOR ParentRot = XMLoadFloat4(&ParentWorld.Rotation);
+    XMVECTOR LocalRot = XMLoadFloat4(&ChildLocal.Rotation);
+    XMVECTOR WorldRot = XMQuaternionMultiply(ParentRot, LocalRot);
+    XMStoreFloat4(&Result.Rotation, WorldRot);
+
+    // 위치: 부모 위치 + (부모 회전 * 부모 스케일 * 자식 로컬 위치)
+    XMVECTOR LocalPos = XMLoadFloat3(&ChildLocal.Position);
+    XMVECTOR ParentScale = XMLoadFloat3(&ParentWorld.Scale);
+
+    // 스케일 적용
+    XMVECTOR ScaledPos = XMVectorMultiply(LocalPos, ParentScale);
+
+    // 회전 적용
+    XMVECTOR RotatedPos = XMVector3Rotate(ScaledPos, ParentRot);
+
+    // 부모 위치에 더하기
+    XMVECTOR ParentPos = XMLoadFloat3(&ParentWorld.Position);
+    XMVECTOR WorldPos = XMVectorAdd(ParentPos, RotatedPos);
+
+    XMStoreFloat3(&Result.Position, WorldPos);
+
+    return Result;
+}
+
+static FTransform WorldToLocal(const FTransform& ChildWorld, const FTransform& ParentWorld)
+{
+    FTransform Result;
+
+    // 스케일: 자식 월드 스케일 / 부모 스케일
+    Result.Scale = Vector3(
+        ChildWorld.Scale.x / ParentWorld.Scale.x,
+        ChildWorld.Scale.y / ParentWorld.Scale.y,
+        ChildWorld.Scale.z / ParentWorld.Scale.z
+    );
+
+    // 회전: 부모 회전의 역 * 자식 월드 회전
+    XMVECTOR ParentRot = XMLoadFloat4(&ParentWorld.Rotation);
+    XMVECTOR WorldRot = XMLoadFloat4(&ChildWorld.Rotation);
+    XMVECTOR InvParentRot = XMQuaternionInverse(ParentRot);
+    XMVECTOR LocalRot = XMQuaternionMultiply(InvParentRot, WorldRot);
+    XMStoreFloat4(&Result.Rotation, LocalRot);
+
+    // 위치: (부모 회전의 역 * (자식 월드 위치 - 부모 위치)) / 부모 스케일
+    XMVECTOR WorldPos = XMLoadFloat3(&ChildWorld.Position);
+    XMVECTOR ParentPos = XMLoadFloat3(&ParentWorld.Position);
+    XMVECTOR RelativePos = XMVectorSubtract(WorldPos, ParentPos);
+
+    // 부모 회전의 역 적용
+    XMVECTOR UnrotatedPos = XMVector3Rotate(RelativePos, InvParentRot);
+
+    // 부모 스케일의 역 적용
+    XMVECTOR InvParentScale = XMVectorReciprocal(XMLoadFloat3(&ParentWorld.Scale));
+    XMVECTOR LocalPos = XMVectorMultiply(UnrotatedPos, InvParentScale);
+
+    XMStoreFloat3(&Result.Position, LocalPos);
+
+    return Result;
 }
