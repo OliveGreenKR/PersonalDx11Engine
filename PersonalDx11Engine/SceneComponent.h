@@ -74,11 +74,6 @@ public:
     // 부모 설정 오버라이드
     void SetParent(const std::shared_ptr<USceneComponent>& InParent);
 
-    //자식의 월드 좌표변환
-    static FTransform LocalToWorld(const FTransform& ChildLocal, const FTransform& ParentWorld);
-    //자식의 로컬 좌표 변환
-    static FTransform WorldToLocal(const FTransform& ChildWorld, const FTransform& ParentWorld);
-
 protected:
     // 트랜스폼 변환 및 업데이트 함수
     void UpdateWorldTransform() const;

@@ -72,7 +72,6 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		TotalAngularAcceleration += frictionAccel;
 	}
 
-
 	// 저장된 충격량 처리 (순간적인 속도 변화)
 	Velocity += AccumulatedInstantForce / Mass;
 	AngularVelocity += Vector3(
@@ -145,6 +144,9 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 	if (!IsActive())
 		return;
 
+	if (Force.LengthSquared() < KINDA_SMALL)
+		return;
+
 	AccumulatedForce += Force;
 	AccumulatedTorque += Vector3::Cross(Location - GetCenterOfMass(), Force);
 }
@@ -152,6 +154,9 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
 	if (!IsActive())
+		return;
+
+	if (Impulse.LengthSquared() < KINDA_SMALL)
 		return;
 
 	AccumulatedInstantForce += Impulse;

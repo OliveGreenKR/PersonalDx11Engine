@@ -45,37 +45,37 @@ void UGameObject::Tick(const float DeltaTime)
 
 void UGameObject::SetPosition(const Vector3& InPosition)
 {
-	RootComponent->SetLocalPosition(InPosition);
+	RootComponent->SetWorldPosition(InPosition);
 }
 
 void UGameObject::SetRotationEuler(const Vector3& InEulerAngles)
 {
-	RootComponent->SetLocalRotationEuler(InEulerAngles);
+	RootComponent->SetWorldRotationEuler(InEulerAngles);
 }
 
 void UGameObject::SetRotation(const Quaternion& InQuaternion)
 {
-	RootComponent->SetLocalRotation(InQuaternion);
+	RootComponent->SetWorldRotation(InQuaternion);
 }
 
 void UGameObject::SetScale(const Vector3& InScale)
 {
-	RootComponent->SetLocalScale(InScale);
+	RootComponent->SetWorldScale(InScale);
 }
 
 void UGameObject::AddPosition(const Vector3& InDelta)
 {
-	RootComponent->AddLocalPosition(InDelta);
+	RootComponent->AddWorldPosition(InDelta);
 }
 
 void UGameObject::AddRotationEuler(const Vector3& InEulerDelta)
 {
-	RootComponent->AddLocalRotationEuler(InEulerDelta);
+	RootComponent->AddWorldRotationEuler(InEulerDelta);
 }
 
 void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 {
-	RootComponent->AddLocalRotation(InQuaternionDelta);
+	RootComponent->AddWorldRotation(InQuaternionDelta);
 }
 
 const Vector3 UGameObject::GetNormalizedForwardVector() const

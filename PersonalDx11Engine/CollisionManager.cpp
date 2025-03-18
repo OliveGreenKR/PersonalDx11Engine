@@ -453,14 +453,14 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 		{
 			auto TransA = RigidA->GetWorldTransform();
 			Vector3 newPos = TransA.Position - correction * ratioA;
-			RigidA->SetLocalPosition(newPos);
+			RigidA->SetWorldPosition(newPos);
 		}
 
 		if (!RigidB->IsStatic())
 		{
 			auto TransB = RigidB->GetWorldTransform();
 			Vector3 newPos = TransB.Position - correction * ratioA;
-			RigidA->SetLocalPosition(newPos);
+			RigidA->SetWorldPosition(newPos);
 		}
 	}
 }

@@ -535,7 +535,7 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                        Character->SetPosition(NewPosition);
 
                                                                        const Vector3 CurrentVelo = Character->GetCurrentVelocity();
-                                                                       const float Restitution = 0.8f;
+                                                                       const float Restitution = 1.0f;
                                                                        const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
                                                                        Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character->GetMass();
 
@@ -574,10 +574,10 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                         Character2->SetPosition(NewPosition);
 
                                                                         const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
-                                                                        const float Restitution = 0.8f;
+                                                                        const float Restitution = 1.0f;
                                                                         const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
                                                                         Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
-
+                                                                        LOG("impulse size : %d", NewImpulse.Length());
                                                                         Character2->ApplyImpulse(std::move(NewImpulse));
                                                                     }
                                                                 },
