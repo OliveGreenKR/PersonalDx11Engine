@@ -36,12 +36,6 @@ namespace TestSceneComponent
             PrevWorldPosition = CurrentWorldPosition;
         }
 
-        // 월드 트랜스폼을 체크하고 변경 여부 업데이트
-        void CheckWorldTransformNeedUpdate()
-        {
-            bWorldTransformNeedUpdate = IsWorldDirty();
-        }
-
         void ResetFlags()
         {
             bWorldTransformNeedUpdate = false;
@@ -166,15 +160,6 @@ namespace TestSceneComponent
             }
         }
 
-        // 노드의 월드 트랜스폼 변화 체크
-        void CheckWorldTransformDirty()
-        {
-            for (auto& Component : Components)
-            {
-                Component->CheckWorldTransformNeedUpdate();
-            }
-        }
-
         // 랜덤 노드의 트랜스폼 변경 테스트
         void TestRandomTransformChange(std::ostream& os = std::cout)
         {
@@ -212,12 +197,13 @@ namespace TestSceneComponent
 
             // 조회되는 USceneComponent가 내부적으로 변경사항을 즉시 전파함(의도대로 동작 시)
             auto children = TargetNode->FindChildrenByType<USceneComponent>();
-            std::uniform_int_distribution<> ChildDist(0, children.size() - 1);
-            int ChildIdx = ChildDist(gen);
-            auto targetChild = std::dynamic_pointer_cast<FTestSceneComponent>(children[ChildIdx].lock());
-            os << "Try GetWorld in Node " << targetChild->GetID() << std::endl;
-
-            targetChild->GetWorldPosition();
+            if (children.size() > 0)
+            {
+                std::uniform_int_distribution<> ChildDist(0, children.size() - 1);
+                int ChildIdx = ChildDist(gen);
+                auto targetChild = std::dynamic_pointer_cast<FTestSceneComponent>(children[ChildIdx].lock());
+            }
+  
             CheckWorldTransformChanges();
             //CheckWorldTransformDirty();
 

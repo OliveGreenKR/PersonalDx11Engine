@@ -14,12 +14,6 @@ public:
 private:
     FTransform LocalTransform;                      // 로컬 트랜스폼 (부모 기준)
     mutable FTransform WorldTransform;              // 캐싱된 월드 트랜스폼
-    mutable bool bLocalTransformDirty = false;              // 로컬 트랜스폼 변경 플래그
-    mutable bool bWorldTransformDirty = false;              // 월드 트랜스폼 변경 플래그
-
-public:
-    const bool IsLocalDirty() const { return bLocalTransformDirty; }
-    const bool IsWorldDirty() const { return bWorldTransformDirty; }
 
 public:
     // 부모 접근자
@@ -74,20 +68,26 @@ public:
     // 부모 설정 오버라이드
     void SetParent(const std::shared_ptr<USceneComponent>& InParent);
 
-protected:
-    // 트랜스폼 변환 및 업데이트 함수
-    void UpdateWorldTransform() const;
-    void UpdateLocalTransform();
-    void PropagateWorldTransformToChildren();
-
     //자식의 로컬 -> 월드 좌표변환
     FTransform LocalToWorld(const FTransform& InParentWorldTransform) const;
     //자식의 월드 -> 로컬 
     FTransform WorldToLocal(const FTransform& InParentWorldTransform) const;
 
-    // 이벤트 설정 함수
-    void MarkLocalTransformDirty();
-    void MarkWorldTransformDirty();
+protected:
+
+    void OnLocalTransformChanged();
+    void OnWorldTransformChanged();
+    void OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent);
+
+
+    // 트랜스폼 변환 및 업데이트 함수
+    //void UpdateWorldTransform() const;
+    //void UpdateLocalTransform();
+    void PropagateWorldTransformToChildren();
+
+
+
+    //void MarkWorldTransformDirty();
 
 private:
     static constexpr float TRANSFORM_EPSILON = KINDA_SMALL;

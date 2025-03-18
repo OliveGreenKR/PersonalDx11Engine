@@ -135,10 +135,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	//TestSceneComponent::RunTransformTest(std::cout, 20, 3);
-	//std::string input;
-	//std::getline(std::cin, input); // 사용자 입력을 기다림
-	//return 0;
+	TestSceneComponent::RunTransformTest(std::cout, 20, 3);
+	std::string input;
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	return 0;
 
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();

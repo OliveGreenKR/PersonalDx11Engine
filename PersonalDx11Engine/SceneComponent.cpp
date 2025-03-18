@@ -1,9 +1,88 @@
 #include "SceneComponent.h"
 
-// 로컬 트랜스폼 설정자
+
+// 로컬 트랜스폼 변경 시 호출되는 함수
+void USceneComponent::OnLocalTransformChanged()
+{
+    // 1. 나의 월드 트랜스폼 업데이트
+    auto Parent = GetSceneParent();
+    if (Parent)
+    {
+        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
+        WorldTransform = LocalToWorld(ParentWorldTransform);
+    }
+    else
+    {
+        WorldTransform = LocalTransform;
+    }
+
+    // 2. 변경 이벤트 발생
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
+    OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
+
+    // 3. 자식 컴포넌트들의 월드 트랜스폼 재귀적 업데이트
+    PropagateWorldTransformToChildren();
+}
+
+// 월드 트랜스폼 변경 시 호출되는 함수
+void USceneComponent::OnWorldTransformChanged()
+{
+    // 1. 나의 로컬 트랜스폼 업데이트
+    auto Parent = GetSceneParent();
+    if (Parent)
+    {
+        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
+        LocalTransform = WorldToLocal(ParentWorldTransform);
+    }
+    else
+    {
+        LocalTransform = WorldTransform;
+    }
+
+    // 2. 변경 이벤트 발생
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
+    OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
+
+    // 3. 자식 컴포넌트들의 월드 트랜스폼 재귀적 업데이트
+    PropagateWorldTransformToChildren();
+}
+
+// 부모 변경 시 호출되는 함수
+void USceneComponent::OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent)
+{
+    // 현재 월드 트랜스폼 저장
+    FTransform CurrentWorldTransform = GetWorldTransform();
+
+    // 1. ActorComponent 부모-자식 관계 설정
+    if (auto OldParent = GetParent())
+    {
+        UActorComponent::SetParent(nullptr);
+    }
+
+    // 2. 새 부모와의 관계 설정
+    if (NewParent)
+    {
+        UActorComponent::SetParent(NewParent);
+
+        // 3. 월드 트랜스폼 유지하며 로컬 트랜스폼 재계산
+        WorldTransform = CurrentWorldTransform;
+        const FTransform& ParentWorldTransform = NewParent->GetWorldTransform();
+        LocalTransform = WorldToLocal(ParentWorldTransform);
+    }
+    else
+    {
+        // 부모가 없는 경우 로컬=월드
+        LocalTransform = CurrentWorldTransform;
+        WorldTransform = CurrentWorldTransform;
+    }
+
+    // 4. 변경 이벤트 발생
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
+}
+
+
 void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 {
-    // 현재 트랜스폼과 동일한지 검사하여 불필요한 업데이트 방지
     bool bChanged = false;
 
     if ((LocalTransform.Position - InTransform.Position).LengthSquared() > TRANSFORM_EPSILON)
@@ -27,7 +106,7 @@ void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 
     if (bChanged)
     {
-        MarkLocalTransformDirty();
+        OnLocalTransformChanged();
     }
 }
 
@@ -36,7 +115,7 @@ void USceneComponent::SetLocalPosition(const Vector3& InPosition)
     if ((LocalTransform.Position - InPosition).LengthSquared() > TRANSFORM_EPSILON)
     {
         LocalTransform.Position = InPosition;
-        MarkLocalTransformDirty();
+        OnLocalTransformChanged();
     }
 }
 
@@ -54,7 +133,7 @@ void USceneComponent::SetLocalRotation(const Quaternion& InRotation)
         XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
 
         // 변경 플래그 설정 및 전파
-        MarkLocalTransformDirty();
+        OnLocalTransformChanged();
     }
 }
 
@@ -69,7 +148,7 @@ void USceneComponent::SetLocalScale(const Vector3& InScale)
     if ((LocalTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON)
     {
         LocalTransform.Scale = InScale;
-        MarkLocalTransformDirty();
+        OnLocalTransformChanged();
     }
 }
 
@@ -103,7 +182,7 @@ void USceneComponent::AddLocalRotation(const Quaternion& InDeltaRotation)
         XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
 
         // 변경 플래그 설정 및 전파
-        MarkLocalTransformDirty();
+        OnLocalTransformChanged();
     }
 }
 
@@ -118,26 +197,12 @@ void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
     // 1. 나의 월드 변경
     WorldTransform = InWorldTransform;
-    bWorldTransformDirty = false;
-
-    // 2. 나의 로컬 변경
-    UpdateLocalTransform();
-
-    // 3. 자식의 월드 변경
-    PropagateWorldTransformToChildren();
-
-    // 이벤트 발생
-    OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
+    OnWorldTransformChanged();
 }
 
 void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 {
-    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
-
+ 
     if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
@@ -149,12 +214,6 @@ void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 
 void USceneComponent::SetWorldRotation(const Quaternion& InWorldRotation)
 {
-    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
-
      // 변화량이 의미 있는지 확인
     float Dot = Quaternion::Dot(Quaternion::Identity, InWorldRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
@@ -180,11 +239,6 @@ void USceneComponent::SetWorldRotationEuler(const Vector3& InWorldEuler)
 
 void USceneComponent::SetWorldScale(const Vector3& InWorldScale)
 {
-    // 현재 월드 트랜스폼이 최신 상태가 아니면 업데이트
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
     if ((WorldTransform.Scale - InWorldScale).LengthSquared() > TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
@@ -195,21 +249,12 @@ void USceneComponent::SetWorldScale(const Vector3& InWorldScale)
 
 void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
 {
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
     Vector3  NewPosition = WorldTransform.Position + InDeltaPosition;
     SetWorldPosition(NewPosition);
 }
 
 void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
 {
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
-
     // 변화량이 의미 있는지 확인
     float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
@@ -238,53 +283,6 @@ void USceneComponent::AddWorldRotationEuler(const Vector3& InDeltaEuler)
 {
     Quaternion InQuat = Math::EulerToQuaternion(InDeltaEuler);
     AddWorldRotation(InQuat);
-}
-
-// 트랜스폼 업데이트 함수
-void USceneComponent::UpdateWorldTransform() const
-{
-    if (!bWorldTransformDirty)
-        return;
-
-    auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        // 부모의 월드 트랜스폼 가져오기
-        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
-
-        // 로컬에서 월드로 변환
-        WorldTransform = LocalToWorld(ParentWorldTransform);
-    }
-    else
-    {
-        // 부모가 없는 경우 로컬 트랜스폼이 월드 트랜스폼
-        WorldTransform = LocalTransform;
-    }
-
-    bWorldTransformDirty = false;
-}
-
-void USceneComponent::UpdateLocalTransform()
-{
-    auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        // 부모의 월드 트랜스폼 가져오기
-        const FTransform& ParentWorldTransform = Parent->GetWorldTransform();
-
-        // 월드에서 로컬로 변환
-        LocalTransform = WorldToLocal(ParentWorldTransform);
-    }
-    else
-    {
-        // 부모가 없는 경우 월드 트랜스폼이 로컬 트랜스폼
-        LocalTransform = WorldTransform;
-    }
-
-    bLocalTransformDirty = false;
-
-    // 이벤트 발생
-    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
 }
 
 // 트랜스폼 변환 함수
@@ -369,37 +367,19 @@ void USceneComponent::PropagateWorldTransformToChildren()
         auto SceneChild = std::dynamic_pointer_cast<USceneComponent>(Child);
         if (SceneChild)
         {
-            SceneChild->MarkWorldTransformDirty();
-            SceneChild->PropagateWorldTransformToChildren();
+            auto NewChildWorldTransform = SceneChild->LocalToWorld(GetWorldTransform());
+            SceneChild->SetWorldTransform(NewChildWorldTransform);
         }
     }
 }
 
-// 플래그 설정 함수
-void USceneComponent::MarkLocalTransformDirty()
-{
-    bLocalTransformDirty = true;
-    bWorldTransformDirty = true;
+//void USceneComponent::MarkWorldTransformDirty()
+//{
+//    bWorldTransformDirty = true;
+//}
 
-    // 이벤트 발생
-    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
-
-    // 자식들의 월드 트랜스폼도 더티로 표시
-    PropagateWorldTransformToChildren();
-}
-
-void USceneComponent::MarkWorldTransformDirty()
-{
-    bWorldTransformDirty = true;
-}
-
-// 트랜스폼 접근자
 const FTransform& USceneComponent::GetWorldTransform() const
 {
-    if (bWorldTransformDirty)
-    {
-        UpdateWorldTransform();
-    }
     return WorldTransform;
 }
 
@@ -474,12 +454,12 @@ void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent
     // 부모 변경 전 현재 월드 트랜스폼 저장
     FTransform CurrentWorldTransform = GetWorldTransform();
 
-    // 기존 부모에서 분리
+    // 기존 부모에서 분리 - 새부모설정과정에서 ActorComponent가 처리
     auto OldParent = GetParent();
-    if (OldParent)
-    {
-        UActorComponent::SetParent(nullptr);
-    }
+    //if (OldParent)
+    //{
+    //    DetachFromParent();
+    //}
 
     // 새 부모가 있으면 연결
     if (InParent)
@@ -488,17 +468,14 @@ void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent
         UActorComponent::SetParent(InParent);
 
         // 월드 트랜스폼 유지를 위한 로컬 트랜스폼 계산
-        WorldTransform = CurrentWorldTransform;
-        bWorldTransformDirty = false;
-        UpdateLocalTransform();
+        FTransform NewLocal = WorldToLocal(InParent->GetWorldTransform());
+        SetLocalTransform(NewLocal);
     }
     else
     {
-        // 부모가 없는 경우, 월드 = 로컬
+        // 부모가 없는 경우, 월드
         UActorComponent::SetParent(nullptr);
-        LocalTransform = CurrentWorldTransform;
+        LocalTransform = FTransform(); //초기화(0)
         WorldTransform = CurrentWorldTransform;
-        bLocalTransformDirty = false;
-        bWorldTransformDirty = false;
     }
 }
