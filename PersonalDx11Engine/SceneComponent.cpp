@@ -297,29 +297,11 @@ void USceneComponent::MarkLocalTransformDirty()
     LocalTransformVersion++;
     WorldTransformVersion = 0; // 월드 트랜스폼 캐시 무효화
 
-    // 트랜스폼 변경 알림
+    // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
+    PropagateUpdateFlagToSubtree();
+
+    // 트랜스폼 변경 이벤트 발생
     OnTransformChangedDelegate.Broadcast(LocalTransform);
-
-    // 자식 컴포넌트들에게 부모 변경 알림
-    NotifyChildrenOfTransformChange();
-}
-
-// 월드 트랜스폼 상태 갱신이 필요한지 확인하고 필요시 업데이트
-void USceneComponent::UpdateWorldTransformIfNeeded() const
-{
-    // 업데이트가 필요한지 확인
-    bool bNeedsUpdate = IsWorldTransformDirty();
-    auto Parent = GetSceneParent();
-    if (Parent)
-    {
-        uint32_t CurrentParentVersion = Parent->GetWorldTransformVersion();
-        bNeedsUpdate = bNeedsUpdate || (ParentWorldTransformVersion != CurrentParentVersion);
-    }
-
-    if (bNeedsUpdate)
-    {
-        CalculateWorldTransform();
-    }
 }
 
 // 월드 트랜스폼 실제 계산
@@ -374,25 +356,70 @@ void USceneComponent::CalculateWorldTransform() const
     WorldTransformVersion = LocalTransformVersion;
 }
 
-// 자식 컴포넌트들에게 트랜스폼 변경 알림
-void USceneComponent::NotifyChildrenOfTransformChange()
+// Root 컴포넌트 찾기
+USceneComponent* USceneComponent::FindRootSceneComponent() const
 {
-    auto SceneChildren = FindChildrenByType<USceneComponent>();
-    for (const auto& SceneChild : SceneChildren)
+    const USceneComponent* Current = this;
+    while (auto Parent = Current->GetSceneParent())
     {
-        if (SceneChild.lock())
+        Current = Parent.get();
+    }
+    return const_cast<USceneComponent*>(Current);
+}
+
+// 서브트리에 업데이트 필요성 전파
+void USceneComponent::PropagateUpdateFlagToSubtree() const
+{
+    // 이미 업데이트 필요로 표시되어 있다면 전파 중지 (이미 전파됨)
+    if (bNeedsWorldTransformUpdate)
+        return;
+
+    // 업데이트 필요 표시
+    bNeedsWorldTransformUpdate = true;
+
+    // 모든 자식 컴포넌트에 전파
+    auto SceneChildren = FindChildrenByType<USceneComponent>();
+    for (const auto& WeakChild : SceneChildren)
+    {
+        if (auto Child = WeakChild.lock())
         {
-            SceneChild.lock()->OnParentTransformChanged();
+            Child->PropagateUpdateFlagToSubtree();
         }
     }
 }
 
-// 부모 트랜스폼 변경 처리
+// UpdateWorldTransformIfNeeded 메서드 수정
+void USceneComponent::UpdateWorldTransformIfNeeded() const
+{
+    // 업데이트가 필요하지 않으면 바로 리턴
+    if (!IsWorldTransformDirty())
+        return;
+
+    // 부모가 있다면 부모부터 업데이트
+    auto Parent = GetSceneParent();
+    if (Parent)
+    {
+        Parent->UpdateWorldTransformIfNeeded();
+
+        // 월드 트랜스폼 계산
+        CalculateWorldTransform();
+    }
+    else
+    {
+        // Root 컴포넌트면 직접 계산
+        CalculateWorldTransform();
+    }
+
+    // 업데이트 플래그 초기화
+    bNeedsWorldTransformUpdate = false;
+}
+
+// OnParentTransformChanged 메서드 수정
 void USceneComponent::OnParentTransformChanged()
 {
     // 월드 트랜스폼 캐시 무효화
     WorldTransformVersion = 0;
 
-    // 변경 사항을 자식들에게 전파
-    NotifyChildrenOfTransformChange();
+    // 본인을 Root로 하는 모든 서브트리에 업데이트 필요성 전파
+    PropagateUpdateFlagToSubtree();
 }

@@ -29,6 +29,7 @@
 
 //test
 #include "testDynamicAABBTree.h"
+#include "testSceneComponent.h"
 
 constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 800;
@@ -133,6 +134,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::string input;
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
+
+	TestSceneComponent::RunTransformTest(std::cout, 20, 3);
+	std::string input;
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	return 0;
 
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();

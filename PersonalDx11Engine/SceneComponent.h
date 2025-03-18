@@ -14,6 +14,9 @@ private:
     mutable uint32_t LocalTransformVersion = 0;
     mutable uint32_t WorldTransformVersion = 0;
     mutable uint32_t ParentWorldTransformVersion = 0;
+    // 추가 필드 및 메서드
+    mutable bool bNeedsWorldTransformUpdate = false; // 트랜스폼 업데이트 플래그
+
 public:
     const std::shared_ptr<USceneComponent>& GetSceneParent() const {
         return std::dynamic_pointer_cast<USceneComponent>(GetParent());
@@ -49,22 +52,28 @@ public:
     Vector3 GetWorldScale() const; 
 
     const size_t GetWorldTransformVersion() const { return WorldTransformVersion; }
-    const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0;  }
+    const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
+    const bool IsWorldTransfromNeedUpdate() const { return bNeedsWorldTransformUpdate; }
+    //const bool IsWorldTransformDirty() const { return WorldTransformVersion == 0 || bNeedsWorldTransformUpdate; }
 
 
 	virtual const char* GetComponentClassName() const override { return "UScene"; }
 
-
+    // Root 컴포넌트 찾기
+    USceneComponent* FindRootSceneComponent() const;
 
 private:
-
     void MarkLocalTransformDirty();
 
     void UpdateWorldTransformIfNeeded() const;
-    void NotifyChildrenOfTransformChange();
-
     void CalculateWorldTransform() const;
     void OnParentTransformChanged();
+
+    // 서브트리 전체에 업데이트 필요성 전파
+    void PropagateUpdateFlagToSubtree() const;
+
+    
+
 
 private:
     static constexpr float POSITION_THRESHOLD = KINDA_SMALL;

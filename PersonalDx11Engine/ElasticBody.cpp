@@ -46,7 +46,6 @@ void UElasticBody::PostInitialized()
 void UElasticBody::PostInitializedComponents()
 {
 	UGameObject::PostInitializedComponents();
-	RootComponent->PrintComponentTree();
 }
 
 void UElasticBody::SyncShapeExtent()

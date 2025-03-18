@@ -215,6 +215,7 @@
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
+    <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="UIManager.h" />

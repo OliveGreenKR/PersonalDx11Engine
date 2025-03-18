@@ -92,6 +92,12 @@
     <ClCompile Include="GameplayScene02.cpp">
       <Filter>Contents\Scenes\Scene2</Filter>
     </ClCompile>
+    <ClCompile Include="PrimitiveComponent.cpp">
+      <Filter>Engine\Components\ActorComponent\Primitive</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneComponent.cpp">
+      <Filter>Engine\Components\ActorComponent\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -196,6 +202,15 @@
     <Filter Include="Contents\Scenes\Scene2">
       <UniqueIdentifier>{e9b29a5b-ecca-4913-93ab-6f047d3670ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Components\ActorComponent\Primitive">
+      <UniqueIdentifier>{ebbd8135-22e8-4dfb-b9a8-242f3b6fc427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\ActorComponent\Scene">
+      <UniqueIdentifier>{b340809a-6ee0-476d-921b-78c17dd988d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\ActorComponent\Scene\test">
+      <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -267,14 +282,8 @@
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="SceneCompoent.h">
-      <Filter>Engine\Components</Filter>
-    </ClInclude>
     <ClInclude Include="ActorComponent.h">
       <Filter>Engine\Components\ActorComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="PrimitiveComponent.h">
-      <Filter>Engine\Components</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawManager.h">
       <Filter>Engine\Managers\DebugDrawer</Filter>
@@ -356,6 +365,15 @@
     </ClInclude>
     <ClInclude Include="GameplayScene02.h">
       <Filter>Contents\Scenes\Scene2</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimitiveComponent.h">
+      <Filter>Engine\Components\ActorComponent\Primitive</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneComponent.h">
+      <Filter>Engine\Components\ActorComponent\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="testSceneComponent.h">
+      <Filter>Engine\Components\ActorComponent\Scene\test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

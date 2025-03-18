@@ -36,13 +36,13 @@ void UGameplayScene02::Initialize()
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
     Character->SetScale(0.75f * Vector3::One);
-    Character->SetPosition({ 1, 0, 0 });
+    Character->SetPosition({ 1.5f, 0, 0 });
     Character->SetShapeSphere();
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>();
     Character2->SetScale(0.75f * Vector3::One);
-    Character2->SetPosition({ 1, 0, 0 });
+    Character2->SetPosition({ -1.0f, 0, 0 });
     Character2->SetShapeSphere();
 
     // 초기화 및 설정
@@ -162,6 +162,23 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
                         CurrentPos.y,
                         CurrentPos.z);
+            auto Colli = Character->GetComponentByType<UCollisionComponent>();
+            if (Colli)
+            {
+                Vector3 ColliWorldPos = Colli->GetWorldPosition();
+                Vector3 ColliLocalPos = Colli->GetLocalPosition();
+                ImGui::Text("ColliWorldPosition : %.2f  %.2f  %.2f", ColliWorldPos.x,
+                            ColliWorldPos.y,
+                            ColliWorldPos.z);
+                ImGui::Text("ColliLocalPosition : %.2f  %.2f  %.2f", ColliLocalPos.x,
+                            ColliLocalPos.y,
+                            ColliLocalPos.z);
+            }
+
+            if (ImGui::Button("CompTree")) 
+            {
+                Character->GetRootComp()->PrintComponentTree();
+            }
             ImGui::End();
         }
 

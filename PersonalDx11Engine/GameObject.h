@@ -140,7 +140,7 @@ public:
 	template<typename T>
 	T* GetComponentByType() {
 		if (!RootComponent) return nullptr;
-		return RootComponent->FindComponentByType<T>();
+		return RootComponent->FindComponentRaw<T>();
 	}
 
 	// 특정 타입의 모든 컴포넌트 찾기
