@@ -144,9 +144,6 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 	if (!IsActive())
 		return;
 
-	if (Force.LengthSquared() < KINDA_SMALL)
-		return;
-
 	AccumulatedForce += Force;
 	AccumulatedTorque += Vector3::Cross(Location - GetCenterOfMass(), Force);
 }
@@ -154,9 +151,6 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
 	if (!IsActive())
-		return;
-
-	if (Impulse.LengthSquared() < KINDA_SMALL)
 		return;
 
 	AccumulatedInstantForce += Impulse;

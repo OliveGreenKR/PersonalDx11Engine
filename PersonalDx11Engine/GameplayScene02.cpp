@@ -73,6 +73,14 @@ void UGameplayScene02::Initialize()
     Character->SetGravity(false);
     Character2->SetGravity(false);
 
+    auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponent>();
+    Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEventData& InEvent) {
+        LOG("CollisionEnter"); }, "OnCollisionEnter_P1");
+    Colli.lock()->OnCollisionStay.BindSystem([](const FCollisionEventData& InEvent) {
+        LOG("CollisionStay"); }, "OnCollisionEnter_P1");
+    Colli.lock()->OnCollisionExit.BindSystem([](const FCollisionEventData& InEvent) {
+        LOG("CollisionExit"); }, "OnCollisionEnter_P1");
+
     //트랜스폼 테스트
     //Character->GetRootComp()->AddChild(Character2->GetRootComp());
 

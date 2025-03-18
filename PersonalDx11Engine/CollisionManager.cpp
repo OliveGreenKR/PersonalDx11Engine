@@ -310,9 +310,9 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		//response
-		ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+		//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 		//position correction
-		ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
+		//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
 
