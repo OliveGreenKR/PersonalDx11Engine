@@ -85,5 +85,5 @@ protected:
 
 
 private:
-    static constexpr float TRANSFORM_EPSILON = 0.0f;
+    static constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 };

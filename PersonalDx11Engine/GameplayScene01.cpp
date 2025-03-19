@@ -121,7 +121,6 @@ void UGameplayScene01::SubmitRenderUI()
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);
         if (ImGui::Checkbox("bGravity", &bGravity))
         {
-            LOG("%s", bGravity ? "T" : "F");
             for (auto ebody : ElasticBodies)
             {
                 ebody->SetGravity(bGravity);
