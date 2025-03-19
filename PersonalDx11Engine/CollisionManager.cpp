@@ -263,8 +263,27 @@ void UCollisionManager::UpdateCollisionPairs()
 				NewPair.PrevConstraints = ExistingPair->PrevConstraints;
 			}
 
-			NewCollisionPairs.insert(std::move(NewPair));
-									});
+			NewCollisionPairs.insert(std::move(NewPair));});
+	}
+
+	// Exit 상황이 확실한 쌍을 찾음
+	for (const auto& ExistingPair : ActiveCollisionPairs)
+	{
+		// 컴포넌트가 여전히 유효한지 확인
+		auto& CompA = RegisteredComponents[ExistingPair.TreeIdA];
+		auto& CompB = RegisteredComponents[ExistingPair.TreeIdB];
+
+		if (CompA && CompB && CompA->IsActive() && CompB->IsActive())
+		{
+			// 기존의 쌍에 존재 + 이전프레임 충돌 + 새로운 쌍에 없음
+			if (ExistingPair.bPrevCollided && 
+				NewCollisionPairs.find(ExistingPair) == NewCollisionPairs.end())
+			{
+				FCollisionDetectionResult ExitResult;
+				ExitResult.bCollided = false;
+				BroadcastCollisionEvents(ExistingPair, ExitResult);
+			}
+		}
 	}
 
 	ActiveCollisionPairs = std::move(NewCollisionPairs);
