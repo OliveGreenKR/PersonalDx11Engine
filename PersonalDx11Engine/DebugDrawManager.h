@@ -54,23 +54,23 @@ struct FDebugDrawArrow : public FDebugDrawElement
 };
 
 // 디버그 드로잉 매니저
-class FDebugDrawManager
+class UDebugDrawManager
 {
 private:
-    FDebugDrawManager() = default;
-    ~FDebugDrawManager() = default;
+    UDebugDrawManager() = default;
+    ~UDebugDrawManager() = default;
 
     // 복사/이동 및 대입 연산자 삭제
-    FDebugDrawManager(const FDebugDrawManager&) = delete;
-    FDebugDrawManager& operator=(const FDebugDrawManager&) = delete;
-    FDebugDrawManager(FDebugDrawManager&&) = delete;
-    FDebugDrawManager& operator=(FDebugDrawManager&&) = delete;
+    UDebugDrawManager(const UDebugDrawManager&) = delete;
+    UDebugDrawManager& operator=(const UDebugDrawManager&) = delete;
+    UDebugDrawManager(UDebugDrawManager&&) = delete;
+    UDebugDrawManager& operator=(UDebugDrawManager&&) = delete;
 
 public:
-    static FDebugDrawManager* Get()
+    static UDebugDrawManager* Get()
     {
-        static FDebugDrawManager* Instance = []() {
-            FDebugDrawManager* Manager = new FDebugDrawManager();
+        static UDebugDrawManager* Instance = []() {
+            UDebugDrawManager* Manager = new UDebugDrawManager();
             return Manager;
             }();
         return Instance;

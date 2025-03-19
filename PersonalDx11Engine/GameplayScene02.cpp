@@ -32,17 +32,16 @@ void UGameplayScene02::Initialize()
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
     Camera->SetPosition({ 0, 0.0f, -10.0f });
 
-
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
     Character->SetScale(0.5f * Vector3::One);
-    Character->SetPosition({ -0.5f, 0, 0 });
+    Character->SetPosition({ -0.75f, 0, 0 });
     Character->SetShapeSphere();
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>();
-    Character2->SetScale(0.5f * Vector3::One);
-    Character2->SetPosition({ 0.5f, 0, 0 });
+    Character2->SetScale(0.35f * Vector3::One);
+    Character2->SetPosition({ 0.75f, 0, 0 });
     Character2->SetShapeSphere();
 
     // 초기화 및 설정
@@ -60,6 +59,11 @@ void UGameplayScene02::Initialize()
 
     //물리속성 설정
     SetMaxSpeeds(MaxSpeed);
+    CharacterMass = Character->GetTransform().Scale.Length() * 20.0f;
+    Character->SetMass(CharacterMass);
+
+    Character2Mass = Character2->GetTransform().Scale.Length() * 20.0f;
+    Character->SetMass(Character2Mass);
     // 경계 충돌 감지 설정
     SetupBorderTriggers();
 
@@ -191,6 +195,10 @@ void UGameplayScene02::SubmitRenderUI()
                 Character->GetRootComp()->PrintComponentTree();
             }
             ImGui::End();
+
+            auto transform = Character->GetTransform();
+            Vector3 Start = transform.Position;
+            UDebugDrawManager::Get()->DrawArrow(Start, Vector3(1,0,0), transform.Scale.x,10.0f,Color::Green());
         }
 
         if (Character2)
@@ -585,7 +593,6 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                         const float Restitution = 1.0f;
                                                                         const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
                                                                         Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
-                                                                        LOG("impulse size : %d", NewImpulse.Length());
                                                                         Character2->ApplyImpulse(std::move(NewImpulse));
                                                                     }
                                                                 },

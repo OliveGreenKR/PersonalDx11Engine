@@ -253,7 +253,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		FDebugDrawManager::Get()->Tick(DeltaTime);
+		UDebugDrawManager::Get()->Tick(DeltaTime);
 		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
 #pragma endregion 
@@ -302,7 +302,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		UUIManager::Get()->RenderUI();
 
 		auto Camera = USceneManager::Get()->GetActiveCamera();
-		FDebugDrawManager::Get()->DrawAll(Camera);
+		UDebugDrawManager::Get()->DrawAll(Camera);
 
 		//end render
 		Renderer->EndRender();

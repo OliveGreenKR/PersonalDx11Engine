@@ -1,14 +1,14 @@
 ﻿#include "DebugDrawManager.h"
 #include "Camera.h"
 
-void FDebugDrawManager::DrawArrow(const Vector3& Start, const Vector3& Direction, float Length, float Size, const Vector4& Color, float Duration)
+void UDebugDrawManager::DrawArrow(const Vector3& Start, const Vector3& Direction, float Length, float Size, const Vector4& Color, float Duration)
 {
 	auto Arrow = std::make_unique<FDebugDrawArrow>(
 		Start, Direction, Length, Size, Color, Duration);
 	Elements.push_back(std::move(Arrow));
 }
 
-void FDebugDrawManager::Tick(const float DeltaTime)
+void UDebugDrawManager::Tick(const float DeltaTime)
 {
 	// 만료된 요소 제거
 	Elements.erase(
@@ -27,7 +27,7 @@ void FDebugDrawManager::Tick(const float DeltaTime)
 	}
 }
 
-void FDebugDrawManager::DrawAll(UCamera* Camera)
+void UDebugDrawManager::DrawAll(UCamera* Camera)
 {
 	if (!Camera)
 		return;
@@ -83,7 +83,6 @@ void FDebugDrawArrow::Draw(UCamera* Camera)
 	// 화살표 그리기
 	ImDrawList* DrawList = ImGui::GetForegroundDrawList();
 	//ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
-
 
 	// 메인 라인
 	DrawList->AddLine(
