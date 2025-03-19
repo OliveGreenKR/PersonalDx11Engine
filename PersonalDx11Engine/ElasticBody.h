@@ -59,6 +59,7 @@ public:
     void SetShapeSphere();
     void SetShapeBox();
     void SyncShapeExtent();
+    void SetColor(const Vector4& InColor);
 
     // 활성화/비활성화
     virtual void Activate() override;

@@ -51,21 +51,71 @@ void UActorComponent::DeActivate()
     bIsActive = false;
 }
 
-void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
+void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)
 {
     // 자기 자신을 부모로 설정하는 것 방지
     if (InParent.get() == this)
         return;
 
-    // 이전 부모로부터 분리
-    DetachFromParent();
+    // 현재 부모와 같은 경우 무시
+    auto currentParent = GetParent();
+    if (currentParent.get() == InParent.get())
+        return;
 
-    // 새로운 부모에 연결
+    // 순환 참조 검사
     if (InParent)
     {
-        ParentComponent = InParent;
-        InParent->AddChild(shared_from_this());
+        auto tempParent = InParent;
+        while (tempParent)
+        {
+            if (tempParent.get() == this)
+                return; // 순환 참조 발견
+            tempParent = tempParent->GetParent();
+        }
     }
+
+    // 이전 부모의 자식 목록에서 제거
+    if (auto oldParent = ParentComponent.lock())
+    {
+        auto& children = oldParent->ChildComponents;
+        children.erase(
+            std::remove_if(children.begin(), children.end(),
+                           [this](const auto& child) { return child.get() == this; }),
+            children.end());
+    }
+
+    // 새 부모 설정
+    ParentComponent = InParent;
+
+    // 새 부모의 자식 목록에 추가
+    if (InParent)
+    {
+        InParent->ChildComponents.push_back(shared_from_this());
+
+        // 게임 오브젝트 소유자 전파
+        UGameObject* RootOwner = InParent->GetOwner();
+        if (RootOwner)
+        {
+            SetOwner(RootOwner);
+            // 자식의 자식들에게도 소유자 전파
+            auto Descendants = FindChildrenRaw<UActorComponent>();
+            for (auto Descendant : Descendants)
+            {
+                Descendant->SetOwner(RootOwner);
+            }
+        }
+    }
+
+    // 이벤트 호출 여부에 따라 OnParentChanged 호출
+    if (bShouldCallEvent)
+    {
+        OnParentChanged(InParent);
+    }
+}
+
+void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
+{
+    SetParentInternal(InParent, true); // 이벤트 호출 포함
 }
 
 bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
@@ -82,36 +132,14 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     if (it != ChildComponents.end())
         return false;
 
-    // 순환 참조 검사
-    auto CurrentParent = GetParent();
-    while (CurrentParent)
-    {
-        if (CurrentParent.get() == Child.get())
-            return false;
-        CurrentParent = CurrentParent->GetParent();
-    }
-
-    // 기존 부모에서 분리
-    Child->DetachFromParent();
-
-    // 자식 컴포넌트 추가
-    ChildComponents.push_back(Child);
-    Child->ParentComponent = shared_from_this();
-
-    // 소유자 게임오브젝트 전파
-    UGameObject* RootOwner = GetOwner();
-    if (RootOwner)
-    {
-        Child->SetOwner(RootOwner);
-        // 자식의 자식들에게도 소유자 전파
-        auto Descendants = Child->FindChildrenRaw<UActorComponent>();
-        for (auto Descendant : Descendants)
-        {
-            Descendant->SetOwner(RootOwner);
-        }
-    }
-
+    // SetParentInternal을 통해 계층 구조 설정 (이벤트 호출 포함)
+    Child->SetParentInternal(shared_from_this(), true);
     return true;
+}
+
+void UActorComponent::DetachFromParent()
+{
+    SetParentInternal(nullptr, true);
 }
 
 bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
@@ -119,36 +147,20 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
     if (!Child)
         return false;
 
+    // 자식 검색
     auto it = std::find_if(ChildComponents.begin(), ChildComponents.end(),
                            [&Child](const auto& Existing) {
                                return Existing.get() == Child.get();
                            });
 
+    // 자식이 없으면 종료
     if (it == ChildComponents.end())
         return false;
 
-    // 자식의 부모 참조 제거
-    (*it)->ParentComponent.reset();
+    // 자식의 부모 제거
+    Child->DetachFromParent();
 
-    // 자식 및 그 하위 컴포넌트들의 소유자 제거
-    (*it)->SetOwner(nullptr);
-    auto Descendants = (*it)->FindChildrenRaw<UActorComponent>();
-    for (auto* Descendant : Descendants)
-    {
-        Descendant->SetOwner(nullptr);
-    }
-
-    // 자식 컴포넌트 제거
-    ChildComponents.erase(it);
     return true;
-}
-
-void UActorComponent::DetachFromParent()
-{
-    if (auto Parent = ParentComponent.lock())
-    {
-        Parent->RemoveChild(shared_from_this());
-    }
 }
 
 UActorComponent* UActorComponent::GetRoot() const

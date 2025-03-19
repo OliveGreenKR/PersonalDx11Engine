@@ -82,7 +82,7 @@ void UGameplayScene02::Initialize()
         LOG("CollisionExit"); }, "OnCollisionEnter_P1");
 
     //트랜스폼 테스트
-    //Character->GetRootComp()->AddChild(Character2->GetRootComp());
+    Character->GetRootComp()->AddChild(Character2->GetRootComp());
 
     // 입력 컨텍스트 등록
     UInputManager::Get()->RegisterInputContext(InputContext);

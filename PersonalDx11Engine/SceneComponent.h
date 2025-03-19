@@ -79,15 +79,9 @@ protected:
     void OnWorldTransformChanged();
     void OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent);
 
-
-    // 트랜스폼 변환 및 업데이트 함수
-    //void UpdateWorldTransform() const;
-    //void UpdateLocalTransform();
+    //월드 트랜스폼 업데이트 전파
     void PropagateWorldTransformToChildren();
 
-
-
-    //void MarkWorldTransformDirty();
 
 private:
     static constexpr float TRANSFORM_EPSILON = 0.0f;

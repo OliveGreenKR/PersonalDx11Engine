@@ -7,13 +7,11 @@
 
 UGameObject::UGameObject()
 {
-	RootComponent = UActorComponent::Create<USceneComponent>();
+	CreateRootComponent<USceneComponent>();
 }
 
 void UGameObject::PostInitialized()
-{
-	auto CompPtr = RootComponent.get();
-	CompPtr->SetOwner(this);
+{ 
 }
 
 void UGameObject::PostInitializedComponents()

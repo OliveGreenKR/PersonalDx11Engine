@@ -130,9 +130,10 @@ public:
 			RootComponent->AddChild(component);
 		}
 		else {
+			//최초 루트 설정
 			RootComponent = component;
+			RootComponent->RequestSetOwner(this, UActorComponent::OwnerToken());
 		}
-		component->SetOwner(this);
 		return component;
 	}
 
@@ -152,6 +153,24 @@ public:
 	std::shared_ptr<USceneComponent>& GetRootComp() { return RootComponent; }
 
 protected:
+	template <typename T>
+	std::weak_ptr<T> CreateRootComponent()
+	{
+		if (std::is_base_of_v<USceneComponent,T> || std::is_same_v<USceneComponent, T>)
+		{
+			if (RootComponent)
+			{
+				RootComponent = nullptr;
+			}
+			auto NewScene = USceneComponent::Create<T>();
+			RootComponent = NewScene;
+			RootComponent->RequestSetOwner(this, UActorComponent::OwnerToken());
+			return NewScene;
+		}
+		return std::weak_ptr<T>();
+	}
+
+private:
 	std::shared_ptr<USceneComponent> RootComponent;
 #pragma endregion
 

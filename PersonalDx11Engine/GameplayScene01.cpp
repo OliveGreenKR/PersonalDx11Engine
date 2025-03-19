@@ -268,6 +268,7 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
         "BorderCheck"
     );
 }
+
 void UGameplayScene01::SpawnElasticBody()
 {
     auto body = UGameObject::Create<UElasticBody>();
@@ -280,7 +281,7 @@ void UGameplayScene01::SpawnElasticBody()
 
     body->SetMass(FRandom::RandF(1.0f, 5.0f));
     body->SetGravity(bGravity);
-
+    body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
 
     SetupBorderTriggers(body);

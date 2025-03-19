@@ -145,4 +145,14 @@ public:
             RandF(MinVec.z, MaxVec.z)
         );
     }
+
+    static Vector4 RandColor()
+    {
+        return Vector4(
+            RandF(),
+            RandF(),
+            RandF(),
+            1.0f
+        );
+    }
 };

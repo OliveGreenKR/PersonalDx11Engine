@@ -12,10 +12,8 @@
 UElasticBody::UElasticBody() : bIsActive(true)
 {
 	//Root to 'Rigid' 
-	auto RigidPtr = UActorComponent::Create<URigidBodyComponent>();
-	RootComponent = RigidPtr;
+	auto RigidPtr = CreateRootComponent<URigidBodyComponent>();
 	Rigid = RigidPtr;
-
 	Collision = AddComponent<UCollisionComponent>();
 	Primitive = AddComponent<UPrimitiveComponent>();
 }
@@ -204,6 +202,7 @@ void UElasticBody::SetRestitution(float InRestitution) {
 		RigidPtr->SetRestitution(InRestitution);
 	}
 }
+#pragma endregion
 
 void UElasticBody::SetShape(EShape InShape)
 {
@@ -238,4 +237,12 @@ void UElasticBody::SetShapeBox()
 {
 	SetShape(EShape::Box);
 }
-#pragma endregion
+
+void UElasticBody::SetColor(const Vector4& InColor)
+{
+	if (Primitive.get())
+	{
+		Primitive.get()->SetColor(InColor);
+	}
+}
+

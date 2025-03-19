@@ -9,10 +9,20 @@ class UGameObject;
 
 class UActorComponent : public std::enable_shared_from_this<UActorComponent>
 {
+public:
+	// 토큰 클래스
+	class OwnerToken {
+		friend class UGameObject;  // UGameObject만 토큰 생성 가능
+	private:
+		OwnerToken() = default;
+	};
 
 public:
     UActorComponent() : bIsActive(true) {}
     virtual ~UActorComponent() = default;
+
+	// 토큰이 있어야만 호출 가능한 메서드(외부 설정을 위함)
+	void RequestSetOwner(UGameObject* InOwner, const OwnerToken&) { SetOwner(InOwner); }
 
     UGameObject* GetOwner() const { return ParentComponent.expired() ? OwnerObject : GetRoot()->OwnerObject; }
 
@@ -55,9 +65,18 @@ protected:
     }
 
     virtual void Tick(float DeltaTime) {}
-    // 소유 관계 설정
+
+protected:
+
+    // 소유자 설정
     void SetOwner(UGameObject* InOwner) { OwnerObject = InOwner; }
+	// 계층 구조 설정 내부 함수
     void SetParent(const std::shared_ptr<UActorComponent>& InParent);
+	// 부모 변경 시 호출되는 가상 함수
+	virtual void OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent){}
+private:
+	// 계층 구조 내부 헬퍼
+	void SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, const bool ShouldCallEvent );
 
 public:
     // 컴포넌트 계층 구조 관리
@@ -358,8 +377,6 @@ private:
     UGameObject* OwnerObject = nullptr;
     std::weak_ptr<UActorComponent> ParentComponent;
     std::vector<std::shared_ptr<UActorComponent>> ChildComponents;
-
-    friend class UGameObject;
 
 #pragma region debug
     // ActorComponent.h에 추가
