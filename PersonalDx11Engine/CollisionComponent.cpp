@@ -4,7 +4,6 @@
 #include "RigidBodyComponent.h"
 #include "CollisionManager.h"
 
-
 UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
 {
 	Shape.Type = InShape;
@@ -87,7 +86,10 @@ void UCollisionComponent::SetShapeBox()
 void UCollisionComponent::ActivateColiision()
 {
 	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
-	UCollisionManager::Get()->RegisterCollision(shared);
+	if (shared)
+	{
+		UCollisionManager::Get()->RegisterCollision(shared);
+	}
 }
 
 void UCollisionComponent::DeActivateCollision()

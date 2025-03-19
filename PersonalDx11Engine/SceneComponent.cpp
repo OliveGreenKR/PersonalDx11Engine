@@ -1,6 +1,5 @@
 #include "SceneComponent.h"
 
-
 // 로컬 트랜스폼 변경 시 호출되는 함수
 void USceneComponent::OnLocalTransformChanged()
 {
@@ -364,6 +363,7 @@ void USceneComponent::PropagateWorldTransformToChildren()
     for (const auto& Child : Children)
     {
         auto SceneChild = std::dynamic_pointer_cast<USceneComponent>(Child);
+
         if (SceneChild)
         {
             auto NewChildWorldTransform = SceneChild->LocalToWorld(GetWorldTransform());

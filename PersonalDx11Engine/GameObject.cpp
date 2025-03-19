@@ -7,7 +7,8 @@
 
 UGameObject::UGameObject()
 {
-	CreateRootComponent<USceneComponent>();
+	auto Scene = UActorComponent::Create<USceneComponent>();
+	SetRootComponent(Scene);
 }
 
 void UGameObject::PostInitialized()
@@ -271,4 +272,19 @@ void UGameObject::SetPhysics(const bool InBool)
 		RigidPtr->SetActive(InBool);
 		return;
 	}
+}
+
+void UGameObject::SetRootComponent(std::shared_ptr<USceneComponent>& InSceneComp)
+{
+	if (!InSceneComp)
+		return;
+
+	if (RootComponent)
+	{
+		RootComponent = nullptr;
+	}
+
+	RootComponent = InSceneComp;
+	RootComponent->RequestSetOwner(this, UActorComponent::OwnerToken());
+	return;
 }

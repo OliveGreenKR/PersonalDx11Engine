@@ -211,6 +211,9 @@
     <Filter Include="Engine\Components\ActorComponent\Scene\test">
       <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Core">
+      <UniqueIdentifier>{9706677a-0640-455f-b237-cc37c18e125a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -374,6 +377,9 @@
     </ClInclude>
     <ClInclude Include="testSceneComponent.h">
       <Filter>Engine\Components\ActorComponent\Scene\test</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeCast.h">
+      <Filter>Engine\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

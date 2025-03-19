@@ -153,22 +153,8 @@ public:
 	std::shared_ptr<USceneComponent>& GetRootComp() { return RootComponent; }
 
 protected:
-	template <typename T>
-	std::weak_ptr<T> CreateRootComponent()
-	{
-		if (std::is_base_of_v<USceneComponent,T> || std::is_same_v<USceneComponent, T>)
-		{
-			if (RootComponent)
-			{
-				RootComponent = nullptr;
-			}
-			auto NewScene = USceneComponent::Create<T>();
-			RootComponent = NewScene;
-			RootComponent->RequestSetOwner(this, UActorComponent::OwnerToken());
-			return NewScene;
-		}
-		return std::weak_ptr<T>();
-	}
+
+	void SetRootComponent(std::shared_ptr<USceneComponent>& InSceneComp);
 
 private:
 	std::shared_ptr<USceneComponent> RootComponent;

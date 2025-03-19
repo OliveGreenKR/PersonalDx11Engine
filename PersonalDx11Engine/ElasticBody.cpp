@@ -7,15 +7,21 @@
 #include "Model.h"
 #include "ModelBufferManager.h"
 #include "random.h"
-
+#include "TypeCast.h"
 
 UElasticBody::UElasticBody() : bIsActive(true)
 {
 	//Root to 'Rigid' 
-	auto RigidPtr = CreateRootComponent<URigidBodyComponent>();
-	Rigid = RigidPtr;
-	Collision = AddComponent<UCollisionComponent>();
-	Primitive = AddComponent<UPrimitiveComponent>();
+	auto RigidPtr = UActorComponent::Create<URigidBodyComponent>();
+	if (RigidPtr)
+	{
+		auto root = Engine::Cast<USceneComponent>(RigidPtr);
+		SetRootComponent(root);
+
+		Rigid = RigidPtr;
+		Collision = AddComponent<UCollisionComponent>();
+		Primitive = AddComponent<UPrimitiveComponent>();
+	}
 }
 
 void UElasticBody::Tick(const float DeltaTime)
