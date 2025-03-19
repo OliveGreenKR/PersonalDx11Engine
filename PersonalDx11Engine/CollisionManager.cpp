@@ -329,9 +329,9 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 		}
 
 		//response
-		//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+		ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 		//position correction
-		//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
+		ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
 
@@ -478,8 +478,8 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 		if (!RigidB->IsStatic())
 		{
 			auto TransB = RigidB->GetWorldTransform();
-			Vector3 newPos = TransB.Position - correction * ratioA;
-			RigidA->SetWorldPosition(newPos);
+			Vector3 newPos = TransB.Position + correction * ratioB;
+			RigidB->SetWorldPosition(newPos);
 		}
 	}
 }

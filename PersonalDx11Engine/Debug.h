@@ -39,8 +39,8 @@ namespace Debug
 		static char buffer[128];
 
 		snprintf(buffer, sizeof(buffer),
+				 "%s : %.2f  %.2f  %.2f\n",
 				 Name,
-				 " : %.2f  %.2f  %.2f\n",
 				 InVector.x, InVector.y, InVector.z);
 
 		return buffer;
