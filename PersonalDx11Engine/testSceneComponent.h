@@ -201,7 +201,7 @@ namespace TestSceneComponent
             {
                 std::uniform_int_distribution<> ChildDist(0, children.size() - 1);
                 int ChildIdx = ChildDist(gen);
-                auto targetChild = std::dynamic_pointer_cast<FTestSceneComponent>(children[ChildIdx].lock());
+                auto targetChild = Engine::Cast<FTestSceneComponent>(children[ChildIdx].lock());
             }
   
             CheckWorldTransformChanges();
@@ -243,7 +243,7 @@ namespace TestSceneComponent
             auto Children = Node->GetChildren();
             for (size_t i = 0; i < Children.size(); ++i)
             {
-                auto TestChild = std::dynamic_pointer_cast<FTestSceneComponent>(Children[i]);
+                auto TestChild = Engine::Cast<FTestSceneComponent>(Children[i]);
                 if (TestChild)
                 {
                     // 마지막 자식인지 여부 전달

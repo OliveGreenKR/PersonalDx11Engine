@@ -3,6 +3,7 @@
 #include "Transform.h"
 #include "Delegate.h"
 #include "Math.h"
+#include "TypeCast.h"
 
 class USceneComponent : public UActorComponent
 {
@@ -18,7 +19,7 @@ private:
 public:
     // 부모 접근자
     std::shared_ptr<USceneComponent> GetSceneParent() const {
-        return std::dynamic_pointer_cast<USceneComponent>(GetParent());
+        return Engine::Cast<USceneComponent>(GetParent());
     }
 
     // 로컬 트랜스폼 설정자

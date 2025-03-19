@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
 #include "CollisionManager.h"
+#include "TypeCast.h"
 
 UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
 {
@@ -85,7 +86,7 @@ void UCollisionComponent::SetShapeBox()
 
 void UCollisionComponent::ActivateColiision()
 {
-	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
+	auto shared = Engine::Cast<UCollisionComponent>(shared_from_this());
 	if (shared)
 	{
 		UCollisionManager::Get()->RegisterCollision(shared);
@@ -94,7 +95,7 @@ void UCollisionComponent::ActivateColiision()
 
 void UCollisionComponent::DeActivateCollision()
 {
-	auto shared = std::dynamic_pointer_cast<UCollisionComponent>(shared_from_this());
+	auto shared = Engine::Cast<UCollisionComponent>(shared_from_this());
 	UCollisionManager::Get()->UnRegisterCollision(shared);
 }
 

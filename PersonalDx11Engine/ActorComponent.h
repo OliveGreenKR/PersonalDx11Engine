@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <queue>
 #include <iostream>
+#include "TypeCast.h"
 
 class UGameObject;
 
@@ -120,7 +121,7 @@ public:
 			if (dynamic_cast<T*>(this))
 			{
 				// 안전하게 캐스팅하고 weak_ptr로 변환
-				return std::dynamic_pointer_cast<T>(shared_from_this());
+				return Engine::Cast<T>(shared_from_this());
 			}
 		}
 
@@ -155,7 +156,7 @@ public:
 			if (dynamic_cast<T*>(this))
 			{
 				// 안전하게 캐스팅하고 weak_ptr로 변환
-				Found.push_back(std::dynamic_pointer_cast<T>(shared_from_this()));
+				Found.push_back(Engine::Cast<T>(shared_from_this()));
 			}
 		}
 
@@ -249,7 +250,7 @@ public:
 				// const 객체에서는 shared_from_this()를 직접 호출할 수 없으므로
 				// const_cast를 사용하여 일시적으로 const를 제거
 				auto nonConstThis = const_cast<UActorComponent*>(this);
-				return std::dynamic_pointer_cast<T>(nonConstThis->shared_from_this());
+				return Engine::Cast<T>(nonConstThis->shared_from_this());
 			}
 		}
 
@@ -287,7 +288,7 @@ public:
 				// const 객체에서는 shared_from_this()를 직접 호출할 수 없으므로
 				// const_cast를 사용하여 일시적으로 const를 제거
 				auto nonConstThis = const_cast<UActorComponent*>(this);
-				Found.push_back(std::dynamic_pointer_cast<T>(nonConstThis->shared_from_this()));
+				Found.push_back(Engine::Cast<T>(nonConstThis->shared_from_this()));
 			}
 		}
 

@@ -362,7 +362,7 @@ void USceneComponent::PropagateWorldTransformToChildren()
     auto Children = GetChildren();
     for (const auto& Child : Children)
     {
-        auto SceneChild = std::dynamic_pointer_cast<USceneComponent>(Child);
+        auto SceneChild = Engine::Cast<USceneComponent>(Child);
 
         if (SceneChild)
         {
