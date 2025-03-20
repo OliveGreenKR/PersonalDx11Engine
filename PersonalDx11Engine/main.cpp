@@ -8,7 +8,6 @@
 #include "imGui/imgui_impl_win32.h"
 
 #include "Debug.h"
-#include "DebugDrawManager.h"
 #include <memory>
 #include "Renderer.h"
 #include "Math.h"
@@ -26,6 +25,7 @@
 
 #include "ResourceManager.h"
 #include "UIManager.h"
+#include "DebugDrawManager.h"
 
 //test
 #include "testDynamicAABBTree.h"
@@ -182,13 +182,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd, RenderHardware.get());
 
-
 	//ModelBufferManager Init
 	UModelBufferManager::Get()->SetDevice(Renderer->GetDevice());
 	assert(UModelBufferManager::Get()->Initialize());
 
 	//ResourceManager
 	UResourceManager::Get()->Initialize(RenderHardware.get());
+
+	//DebugDrawer
+	UDebugDrawManager::Get()->Initialize(RenderHardware.get());
 
 	//Shader
 	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
@@ -253,20 +255,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		UDebugDrawManager::Get()->Tick(DeltaTime);
 		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
+		UDebugDrawManager::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
 #pragma region Rendering
 		//before render
 		Renderer->BeforeRender();
 
+		//SceneRender Submit
 		USceneManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
 		Renderer->ProcessRenderJobs(Shader.get());
 		Renderer->ClearRenderJobs();
+
+		auto Camera = USceneManager::Get()->GetActiveCamera();
+		UDebugDrawManager::Get()->Render(Camera, Renderer.get(), RenderHardware.get());
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02]() {
@@ -295,14 +301,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::Text("FPS : %.0f", std::max(0.0f,1.0f / DeltaTime));
 			ImGui::End();
 											 });
-
 #pragma endregion
 
+		//UIRender
 		USceneManager::Get()->RenderUI();
 		UUIManager::Get()->RenderUI();
 
-		auto Camera = USceneManager::Get()->GetActiveCamera();
-		UDebugDrawManager::Get()->DrawAll(Camera);
 
 		//end render
 		Renderer->EndRender();
@@ -310,6 +314,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	}//end main Loop
 #pragma endregion 
+
+	UDebugDrawManager::Get()->ClearAll();
 
 	// 여기에서 ImGui 소멸
 	ImGui_ImplDX11_Shutdown();

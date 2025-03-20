@@ -17,18 +17,9 @@ void UShader::Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const 
 	ID3DBlob* PSBlob;
 	ID3DBlob* errorBlob = nullptr;
 
-	result = D3DCompileFromFile(vertexShaderPath, nullptr, nullptr,"mainVS", "vs_5_0",D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,0, &VSBlob, &errorBlob);
-
-	if (FAILED(result)) {
-		if (errorBlob) {
-			// 오류 메시지 출력
-			LOG(static_cast<const char*>(errorBlob->GetBufferPointer()));
-			errorBlob->Release();
-		}
-	}
-
+	result = CompileShader(vertexShaderPath,"mainVS", "vs_5_0",&VSBlob);
 	assert(SUCCEEDED(result),"vertexvShader compile failed.");
-	result = D3DCompileFromFile(pixelShaderPath, nullptr, nullptr, "mainPS", "ps_5_0", 0, 0, &PSBlob, nullptr);
+	result = CompileShader(pixelShaderPath, "mainPS", "ps_5_0", &PSBlob);
 	assert(SUCCEEDED(result), "pixel Shader compile failed.");
 
 	result = Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), nullptr, &VertexShader);
@@ -209,6 +200,27 @@ void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
 	{
 		SamplerState->AddRef();
 	}
+}
+
+HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob)
+{
+	ID3DBlob* pBlob = nullptr;
+	ID3DBlob* pErrorBlob = nullptr;
+
+	HRESULT hr = D3DCompileFromFile(filename, nullptr, nullptr, entryPoint, target, 0, 0, &pBlob, &pErrorBlob);
+	if (FAILED(hr))
+	{
+		if (pErrorBlob)
+		{
+			OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+			pErrorBlob->Release();
+		}
+		*ppBlob = nullptr; // 실패 시 nullptr 반환
+		return hr;
+	}
+
+	*ppBlob = pBlob;
+	return S_OK;
 }
 
 // 메모리 사용량 계산 메서드 추가

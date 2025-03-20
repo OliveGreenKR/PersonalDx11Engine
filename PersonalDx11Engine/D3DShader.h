@@ -87,6 +87,8 @@ public:
 	void SetSamplerState(ID3D11SamplerState* InSamplerState);
 
 private:
+
+	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 	// 메모리 사용량 계산 메서드
 	void CalculateMemoryUsage();
 

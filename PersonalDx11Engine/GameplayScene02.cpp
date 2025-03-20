@@ -198,7 +198,8 @@ void UGameplayScene02::SubmitRenderUI()
 
             auto transform = Character->GetTransform();
             Vector3 Start = transform.Position;
-            UDebugDrawManager::Get()->DrawArrow(Start, Vector3(1,0,0), transform.Scale.x,10.0f,Color::Green());
+            Vector3 End = transform.Position + 0.5f * Vector3::Right;
+            UDebugDrawManager::Get()->DrawLine(Start, End,Vector4(1,0,1,1),1.0f,1.0f);
         }
 
         if (Character2)
@@ -229,8 +230,6 @@ void UGameplayScene02::SubmitRenderUI()
         ImGui::InputFloat("PowerMags", &PowerMagnitude, 0.0f, 0.0f, "%.02f");
         ImGui::End();
         });
-
-
 }
 
 void UGameplayScene02::HandleInput(const FKeyEventData& EventData)
