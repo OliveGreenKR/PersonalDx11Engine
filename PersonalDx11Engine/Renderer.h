@@ -12,6 +12,15 @@ class UCamera;
 class UPrimitiveComponent;
 
 
+// 렌더 상태 클래스 (각 상태별 설정 포함)
+class FRenderState
+{
+public:
+	virtual void Apply(ID3D11DeviceContext* Context) = 0;
+	virtual void Restore(ID3D11DeviceContext* Context) = 0;
+};
+
+
 // 렌더 작업을 정의하는 구조체
 struct FRenderJob
 {

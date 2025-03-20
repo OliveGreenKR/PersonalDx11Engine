@@ -7,7 +7,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <directxmath.h>
-// IRenderHardware.h - 그래픽 하드웨어 인터페이스 추상화
+// IRenderHardware.h - 하드웨어 인터페이스
 class IRenderHardware
 {
 public:

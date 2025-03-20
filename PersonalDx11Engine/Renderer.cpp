@@ -94,7 +94,8 @@ void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject,  USha
 		RenderModel(Primitive->GetModel(), InShader, customSampler);
 	}
 }
-	void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
+
+void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 {
 	if (!InObject || !InShader)
 		return;
@@ -106,7 +107,7 @@ void URenderer::RenderGameObject(UCamera* InCamera, UGameObject* InObject,  USha
 	}
 }
 
-	void URenderer::RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InPrimitive, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
+void URenderer::RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InPrimitive, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler)
 	{
 		if ( !InCamera || !InPrimitive || !InShader || !InPrimitive->IsActive())
 			return;

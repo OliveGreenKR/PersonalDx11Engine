@@ -201,7 +201,9 @@
     <ClInclude Include="ModelBufferManager.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
+    <ClInclude Include="RenderContext.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
+    <ClInclude Include="RenderState.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="RigidBodyComponent.h" />
