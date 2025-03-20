@@ -8,10 +8,10 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 
-class FRenderState
+class IRenderState
 {
 public:
-    virtual ~FRenderState() = default;
+    virtual ~IRenderState() = default;
 
     // 상태 적용
     virtual void Apply(ID3D11DeviceContext* Context) = 0;
@@ -20,13 +20,3 @@ public:
     virtual void Restore(ID3D11DeviceContext* Context) = 0;
 };
 
-class FWireframeState : public FRenderState
-{
-private:
-    ID3D11RasterizerState* WireframeRasterizerState;
-    ID3D11RasterizerState* PreviousRasterizerState;
-
-public:
-    void Apply(ID3D11DeviceContext* Context) override;
-    void Restore(ID3D11DeviceContext* Context) override;
-};

@@ -50,7 +50,8 @@ enum class EBufferSlot
 	Max
 };
 /// <summary>
-/// 단일 SamplerState, 복수의 cBuffer를 지원하는 쉐이더 파일 관리
+/// TODO 컴파일된 쉐이더를 리플렉션을 통해 상수 버퍼 업데이트를 하고
+/// 디바이스 컨텍스트를 이용해 바인딩하는 것이 주 역할로 변경할것
 /// </summary>
 class UShader : public IResource
 {
@@ -69,7 +70,8 @@ public:
 	size_t GetMemorySize() const override { return MemorySize; }
 
 	void Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
-	//파이프라인 상태 설정, vs, ps, samplerstate
+	
+	//파이프라인 상태 설정, vs, ps, samplerstate 
 	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
 	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
 	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
@@ -80,6 +82,8 @@ public:
 	//쉐이더 바이트 코드 접근자
 	void GetShaderBytecode(const void** bytecode, size_t* length) const;
 
+	ID3D11VertexShader* GetVertexShader() { return VertexShader; }
+	ID3D11PixelShader* GetPixelShader() { return PixelShader; }
 public:
 	template<typename T>
 	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
@@ -89,8 +93,6 @@ public:
 private:
 
 	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
-	// 메모리 사용량 계산 메서드
-	void CalculateMemoryUsage();
 
 private:
 	ID3D11VertexShader* VertexShader = nullptr;

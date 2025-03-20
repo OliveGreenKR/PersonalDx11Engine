@@ -157,6 +157,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelBufferManager.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
+    <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
@@ -203,7 +204,9 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
-    <ClInclude Include="RenderState.h" />
+    <ClInclude Include="RenderJobs.h" />
+    <ClInclude Include="RenderStateInterface.h" />
+    <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="RigidBodyComponent.h" />
