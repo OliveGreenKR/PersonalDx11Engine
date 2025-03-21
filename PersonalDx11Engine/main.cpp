@@ -14,6 +14,7 @@
 #include "D3D.h"
 #include "D3DShader.h"
 #include "InputManager.h"
+#include "TypeCast.h"
 
 #include "Color.h"
 #include "define.h"
@@ -25,7 +26,6 @@
 
 #include "ResourceManager.h"
 #include "UIManager.h"
-#include "DebugDrawManager.h"
 
 //test
 #include "testDynamicAABBTree.h"
@@ -179,31 +179,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RenderHardware->SetVSync(false);
 
 	//Renderer
+	auto rhPtr = Engine::Cast<IRenderHardware>(RenderHardware);
 	auto Renderer = make_unique<URenderer>();
-	Renderer->Initialize(hWnd, RenderHardware.get());
+	Renderer->Initialize(hWnd, rhPtr);
 
 	//ModelBufferManager Init
-	UModelBufferManager::Get()->SetDevice(Renderer->GetDevice());
+	UModelBufferManager::Get()->SetDevice(Renderer->GetRenderContext()->GetDevice());
 	assert(UModelBufferManager::Get()->Initialize());
 
 	//ResourceManager
 	UResourceManager::Get()->Initialize(RenderHardware.get());
 
-	//DebugDrawer
-	UDebugDrawManager::Get()->Initialize(RenderHardware.get());
-
-	//Shader
-	//D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
-	//{
-	//	//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
-	//	// InputSlotClass,InstanceDataStepRate
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
 	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
-
-	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
-	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);
 	
 	//UIManager
 	UUIManager::Get()->Initialize(hWnd, RenderHardware->GetDevice(), RenderHardware->GetDeviceContext());
@@ -257,7 +244,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region logic
 		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
-		UDebugDrawManager::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
 #pragma region Rendering
@@ -268,11 +254,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		USceneManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
-		Renderer->ProcessJobs(Shader.get());
-		Renderer->ClearRenderJobs();
+		Renderer->ProcessJobs();
 
 		auto Camera = USceneManager::Get()->GetActiveCamera();
-		UDebugDrawManager::Get()->Render(Camera, Renderer.get(), RenderHardware.get());
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02]() {
@@ -314,8 +298,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	}//end main Loop
 #pragma endregion 
-
-	UDebugDrawManager::Get()->ClearAll();
 
 	// 여기에서 ImGui 소멸
 	ImGui_ImplDX11_Shutdown();

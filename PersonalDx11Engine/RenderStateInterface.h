@@ -10,6 +10,7 @@
 
 enum class ERenderStateType
 {
+    None,
     Solid,
     Wireframe,
     // 필요한 상태 추가

@@ -1,8 +1,38 @@
 // RenderContext.cpp
 #include "RenderContext.h"
 
+bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
+{
+    if (!InHardware || !InHardware->IsDeviceReady())
+        return false;
+
+    RenderHardware = InHardware;
+    return true; // 성공 시 true 반환
+}
+
+void FRenderContext::Release()
+{
+	//캐시 해제
+	CurrentVB = nullptr;
+	CurrentIB = nullptr;
+	CurrentVS = nullptr;
+	CurrentPS = nullptr;
+	CurrentLayout = nullptr;
+    
+    while (!StateStack.empty())
+    {
+        StateStack.pop();
+    }
+
+    if (RenderHardware)
+    {
+        RenderHardware = nullptr;
+    }
+}
+
 void FRenderContext::PushState(IRenderState* State)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!State || !DeviceContext) return;
 
     // 상태 스택에 푸시
@@ -12,6 +42,7 @@ void FRenderContext::PushState(IRenderState* State)
 
 void FRenderContext::PopState()
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (StateStack.empty() || !DeviceContext) return;
 
     IRenderState* CurrentState = StateStack.top();
@@ -32,6 +63,7 @@ void FRenderContext::PopState()
 
 void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!Buffer || !DeviceContext) return;
 
     // 현재 바인딩된 버퍼와 같은지 확인하여 중복 바인딩 방지
@@ -44,6 +76,7 @@ void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Of
 
 void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!Buffer || !DeviceContext) return;
 
     if (CurrentIB != Buffer)
@@ -55,6 +88,7 @@ void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
 
 void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!DeviceContext) return;
 
     if (VS && CurrentVS != VS)
@@ -78,6 +112,7 @@ void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, I
 
 void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!Buffer || !DeviceContext || !Data || Size == 0) return;
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -101,6 +136,7 @@ void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const v
 
 void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!SRV || !DeviceContext) return;
 
     DeviceContext->PSSetShaderResources(Slot, 1, &SRV);
@@ -108,6 +144,7 @@ void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV
 
 void FRenderContext::BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!Sampler || !DeviceContext) return;
 
     DeviceContext->PSSetSamplers(Slot, 1, &Sampler);
@@ -115,6 +152,7 @@ void FRenderContext::BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler)
 
 void FRenderContext::Draw(UINT VertexCount, UINT StartVertexLocation)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!DeviceContext || VertexCount == 0) return;
 
     DeviceContext->Draw(VertexCount, StartVertexLocation);
@@ -122,6 +160,7 @@ void FRenderContext::Draw(UINT VertexCount, UINT StartVertexLocation)
 
 void FRenderContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation)
 {
+    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!DeviceContext || IndexCount == 0) return;
 
     DeviceContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);

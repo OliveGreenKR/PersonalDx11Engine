@@ -7,7 +7,6 @@
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventDispatcher.h"
-#include "DebugDrawManager.h"
 #include "Debug.h"
 
 UCollisionManager::~UCollisionManager()

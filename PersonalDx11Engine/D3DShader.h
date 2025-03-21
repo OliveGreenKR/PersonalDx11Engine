@@ -4,6 +4,7 @@
 #include "ResourceInterface.h"
 #include "Math.h"
 #include <vector>
+#include <string>
 #include <type_traits>
 
 using namespace std;

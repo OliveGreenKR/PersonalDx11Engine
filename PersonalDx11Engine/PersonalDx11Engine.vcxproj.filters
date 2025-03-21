@@ -56,9 +56,6 @@
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Components\ActorComponent</Filter>
     </ClCompile>
-    <ClCompile Include="DebugDrawManager.cpp">
-      <Filter>Engine\Managers\DebugDrawer</Filter>
-    </ClCompile>
     <ClCompile Include="ElasticBody.cpp">
       <Filter>Contents\ElasticBody</Filter>
     </ClCompile>
@@ -98,8 +95,12 @@
     <ClCompile Include="SceneComponent.cpp">
       <Filter>Engine\Components\ActorComponent\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="RenderContext.cpp" />
-    <ClCompile Include="RenderStates.cpp" />
+    <ClCompile Include="RenderContext.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderStates.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -158,9 +159,6 @@
     </Filter>
     <Filter Include="Engine\Components\ActorComponent">
       <UniqueIdentifier>{31f86bb6-e4bf-499d-8b15-d73ae7bd0585}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\DebugDrawer">
-      <UniqueIdentifier>{a63c0d29-4c39-40b1-8c53-f9e7d2d88ede}</UniqueIdentifier>
     </Filter>
     <Filter Include="Contents">
       <UniqueIdentifier>{59fe685c-6920-4443-bf8d-3ab9ea70edbc}</UniqueIdentifier>
@@ -290,9 +288,6 @@
     <ClInclude Include="ActorComponent.h">
       <Filter>Engine\Components\ActorComponent</Filter>
     </ClInclude>
-    <ClInclude Include="DebugDrawManager.h">
-      <Filter>Engine\Managers\DebugDrawer</Filter>
-    </ClInclude>
     <ClInclude Include="ElasticBody.h">
       <Filter>Contents\ElasticBody</Filter>
     </ClInclude>
@@ -383,18 +378,19 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="DebugDrawElement.h" />
-    <ClInclude Include="DebugDrawSphere.h" />
-    <ClInclude Include="DebugDrawBox.h" />
-    <ClInclude Include="DebugDrawLine.h" />
-    <ClInclude Include="RenderContext.h" />
-    <ClInclude Include="RenderJobs.h" />
-    <ClInclude Include="RenderStateInterface.h" />
-    <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ConstantBufferManager.h">
       <Filter>Engine\Managers</Filter>
     </ClInclude>
-    <ClInclude Include="RenderJobInterface.h">
+    <ClInclude Include="RenderStates.h">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderContext.h">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderJobs.h">
+      <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
@@ -405,7 +401,9 @@
     <FxCompile Include="ShaderMy00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="ShaderDebug.hlsl" />
+    <FxCompile Include="ShaderDebug.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />

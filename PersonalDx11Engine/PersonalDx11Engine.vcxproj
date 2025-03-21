@@ -137,7 +137,6 @@
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DShader.cpp" />
-    <ClCompile Include="DebugDrawManager.cpp" />
     <ClCompile Include="DynamicAABBTree.cpp" />
     <ClCompile Include="ElasticBody.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -180,13 +179,8 @@
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="Debug.h" />
-    <ClInclude Include="DebugDrawElement.h" />
-    <ClInclude Include="DebugDrawManager.h" />
-    <ClInclude Include="DebugDrawSphere.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
-    <ClInclude Include="DebugDrawBox.h" />
-    <ClInclude Include="DebugDrawLine.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="ElasticBody.h">
@@ -206,7 +200,6 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
-    <ClInclude Include="RenderJobInterface.h" />
     <ClInclude Include="RenderJobs.h" />
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />

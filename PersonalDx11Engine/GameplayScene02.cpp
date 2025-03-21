@@ -6,7 +6,6 @@
 #include "CollisionManager.h"
 #include "InputManager.h"
 #include "Random.h"
-#include "DebugDrawManager.h"
 #include "define.h"
 #include "Color.h"
 #include "Debug.h"
@@ -138,8 +137,7 @@ void UGameplayScene02::Tick(float DeltaTime)
 
 void UGameplayScene02::SubmitRender(URenderer* Renderer)
 {
-    Renderer->SubmitRenderJobsInObject(Camera.get(), Character.get(), TextureTile.get()->GetShaderResourceView());
-    Renderer->SubmitRenderJobsInObject(Camera.get(), Character2.get(), TexturePole.get()->GetShaderResourceView());
+    //TODO Submit RenderJob
 }
 
 void UGameplayScene02::SubmitRenderUI()
@@ -196,10 +194,6 @@ void UGameplayScene02::SubmitRenderUI()
             }
             ImGui::End();
 
-            auto transform = Character->GetTransform();
-            Vector3 Start = transform.Position;
-            Vector3 End = transform.Position + 0.5f * Vector3::Right;
-            UDebugDrawManager::Get()->DrawLine(Start, End,Vector4(1,0,1,1),1.0f,1.0f);
         }
 
         if (Character2)

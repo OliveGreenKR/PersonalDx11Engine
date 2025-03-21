@@ -3,15 +3,17 @@
 #include "Renderer.h"
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
+#include "PrimitiveComponent.h"
+
 #include "CollisionManager.h"
 #include "InputManager.h"
 #include "Random.h"
-#include "DebugDrawManager.h"
 #include "define.h"
 #include "Color.h"
 #include "Debug.h"
 #include "ResourceManager.h"
 #include "Texture.h"
+#include "RenderJobs.h"
 #include "UIManager.h"
 
 UGameplayScene01::UGameplayScene01()
@@ -96,7 +98,21 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
     for (auto ebody : ElasticBodies)
     {
-        Renderer->SubmitRenderJobsInObject(Camera.get(), ebody.get(), TexturePole.get()->GetShaderResourceView());
+        FMeshRenderJob RenderJob;
+        RenderJob.Textures = { { 0 ,TextureTile->GetShaderResourceView() } };
+
+        auto Primitive = ebody->GetComponentByType<UPrimitiveComponent>();
+        auto BufferRsc = Primitive->GetModel()->GetBufferResource();
+
+        RenderJob.IndexBuffer = BufferRsc->GetIndexBuffer();
+        RenderJob.IndexCount = BufferRsc->GetIndexCount();
+        RenderJob.VertexBuffer = BufferRsc->GetVertexBuffer();
+        RenderJob.VertexCount = BufferRsc->GetVertexCount();
+        RenderJob.Offset = BufferRsc->GetOffset();
+        RenderJob.Stride = BufferRsc->GetStride();
+        RenderJob.StateType = ERenderStateType::Solid;
+
+        Renderer->SubmitJob(RenderJob);
     }
 }
 
