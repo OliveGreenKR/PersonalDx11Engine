@@ -30,6 +30,11 @@ public:
         Context->RSSetState(PreviousRasterizerState);
     }
 
+    ERenderStateType GetType() const override
+    {
+        return ERenderStateType::Wireframe;
+    }
+
     void SetWireFrameRSState(ID3D11RasterizerState* state)
     {
         WireframeRasterizerState = state;
@@ -67,6 +72,11 @@ public:
     void Restore(ID3D11DeviceContext* Context) override
     {
         Context->RSSetState(PreviousRasterizerState);
+    }
+
+    ERenderStateType GetType() const override
+    {
+        return ERenderStateType::Solid;
     }
 
     void SetSolidRSS(ID3D11RasterizerState* state)

@@ -9,7 +9,6 @@
 #include "RenderContext.h"
 #include "RenderJobs.h"
 
-
 class UModel;
 class UShader;
 class UGameObject;
@@ -24,45 +23,38 @@ struct FVertexSimple
 
 class URenderer 
 {
-
 private:
-	IRenderHardware* RenderHardware;
-	std::queue<FRenderJob> RenderJobs;
+	std::queue<IRenderJob> RenderJobs;
 
 	//상태별 렌더링 큐
-	std::map<ERenderStateType, std::vector<FRenderJob>> RenderQueue;
+	std::map<ERenderStateType, std::vector<IRenderJob>> RenderQueue;
 	
 	// 단일 렌더링 컨텍스트
 	FRenderContext Context;
 
+	// 렌더링 하드웨어
+	std::shared_ptr<IRenderHardware> RenderHardware;
+
 	// 상태 객체들
 	std::unordered_map<ERenderStateType, std::unique_ptr<IRenderState>> States;
-
 public:
 	URenderer() = default;
 	~URenderer() = default;
 
 public:
-	void Initialize(HWND hWindow, IRenderHardware* InRenderHardware);
+	void Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware);
 	void Release();
 
-	void BindShader(UShader* InShader);
-	void BeforeRender();
-	void EndRender();
+	void BeginFrame();
+	void ProcessJobs();
+	void EndFrame();
 
-	void RenderModel(UModel* InModel,  UShader* InShader, ID3D11SamplerState * customSampler = nullptr);
-
-	void RenderGameObject(UCamera* InCamera, UGameObject* InObject,  UShader* InShader, ID3D11SamplerState* customSampler = nullptr);
-	void RenderGameObject(UCamera* InCamera, UGameObject* InObject,  UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);
-	void RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InPrimitive, UShader* InShader, ID3D11ShaderResourceView* InTexture, ID3D11SamplerState* InCustomSampler = nullptr);
-	void SubmitRenderJobsInObject(UCamera* InCamera, UGameObject* InObject, ID3D11ShaderResourceView* InTexture);
-	void SubmitRenderJob(UCamera* InCamera, UPrimitiveComponent* InPrimitve, ID3D11ShaderResourceView* InTexture);
-	void ClearRenderJobs();
-	void ProcessRenderJobs(UShader* InShader, ID3D11SamplerState* InCustomSampler = nullptr);
+	// 렌더 작업 제출
+	void SubmitJob(const IRenderJob& InJob);
 
 	//컨텍스트, 스테이트 추상화
-	void SubmitRenderJob(const FRenderJob& InJob);
-	void ProcessRenderJobs();
+	void SubmitRenderJob(const IRenderJob& InJob);
+
 
 	void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS);
 

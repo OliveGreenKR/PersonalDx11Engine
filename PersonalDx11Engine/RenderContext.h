@@ -1,67 +1,60 @@
 #pragma once
+// RenderContext.h
+#pragma once
+#include <d3d11.h>
+#include "Math.h"
 #include <stack>
 #include <unordered_map>
-#include <map>
 #include <string>
-#include <array>
-
 #include "RenderStateInterface.h"
+
+// 전방 선언
+class IRenderJob;
 
 class FRenderContext
 {
-private:
-    ID3D11DeviceContext* DeviceContext;
-    std::stack<IRenderState*> StateStack;
-
-    std::unordered_map<std::string, ID3D11Buffer*> BoundBuffers;
-    std::unordered_map<std::string, ID3D11VertexShader*> VertexShaders;
-    std::unordered_map<std::string, ID3D11PixelShader*> PixelShaders;
-
-    ID3D11VertexShader* CurrentVS;
-    ID3D11PixelShader* CurrentPS;
-    ID3D11InputLayout* CurrentInputLayout = nullptr;
-
-    ID3D11SamplerState* SamplerState = nullptr;
-
-     // 각 슬롯에 현재 바인딩된 상수 버퍼
-    std::array<ID3D11Buffer*, 16> VSBoundConstantBuffers = {};
-    std::array<ID3D11Buffer*, 16> PSBoundConstantBuffers = {};
-
 public:
-    void SetDeviceContext(ID3D11DeviceContext* InContext) 
-	{
-		if (InContext)
-		{
-            DeviceContext = InContext;
-		}
-	}
+    FRenderContext() = default;
+    ~FRenderContext() = default;
 
-    // 상태 관리
+    void SetDeviceContext(ID3D11DeviceContext* InContext) { DeviceContext = InContext; }
+    void SetViewMatrix(const Matrix& InView) { ViewMatrix = InView; }
+    void SetProjectionMatrix(const Matrix& InProj) { ProjectionMatrix = InProj; }
+
+    const Matrix& GetViewMatrix() const { return ViewMatrix; }
+    const Matrix& GetProjectionMatrix() const { return ProjectionMatrix; }
+    ID3D11DeviceContext* GetDeviceContext() const { return DeviceContext; }
+    ID3D11SamplerState* GetDefaultSamplerState() const { return DefaultSamplerState; }
+    void SetDefaultSamplerState(ID3D11SamplerState* InSamplerState) { DefaultSamplerState = InSamplerState; }
+
+    // 렌더 상태 관리
     void PushState(IRenderState* State);
     void PopState();
 
-    // 상수 버퍼 바인딩 
-    void BindVSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer);
-    void BindPSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer);
-
-    // 상수 버퍼 데이터 업데이트 - DeviceContext 접근과 Map/Unmap 담당
-    void UpdateVSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize);
-    void UpdatePSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize);
-
-    // 리소스 바인딩
+    // 렌더링 메서드들 - 렌더 잡에서 호출됨
     void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
     void BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT);
-    void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS);
+    void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout);
+    void BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader);
+    void BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV);
+    void BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler);
+    void Draw(UINT VertexCount, UINT StartVertexLocation = 0);
+    void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
 
+private:
 
-    // 3. 텍스처 및 샘플러 바인딩
-    void BindShaderResource(UINT Slot, ID3D11ShaderResourceView* Texture);
-    void BindSampler(UINT Slot, ID3D11SamplerState* SamplerState);
+private:
+    ID3D11DeviceContext* DeviceContext = nullptr;
+    ID3D11SamplerState* DefaultSamplerState = nullptr;
+    Matrix ViewMatrix;
+    Matrix ProjectionMatrix;
 
-    // 렌더링 명령
-    void Draw(UINT VertexCount, UINT StartVertexLocation);
-    void DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation);
+    // 현재 바인딩된 리소스 캐싱
+    ID3D11Buffer* CurrentVB = nullptr;
+    ID3D11Buffer* CurrentIB = nullptr;
+    ID3D11VertexShader* CurrentVS = nullptr;
+    ID3D11PixelShader* CurrentPS = nullptr;
+    ID3D11InputLayout* CurrentLayout = nullptr;
 
-    // 컨텍스트 액세스
-    ID3D11DeviceContext* GetDeviceContext() { return DeviceContext; }
+    std::stack<IRenderState*> StateStack;
 };

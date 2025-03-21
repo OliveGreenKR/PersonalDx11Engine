@@ -1,209 +1,128 @@
+// RenderContext.cpp
 #include "RenderContext.h"
 
 void FRenderContext::PushState(IRenderState* State)
 {
-    if (State)
-    {
-        // 현재 상태를 적용
-        State->Apply(DeviceContext);
+    if (!State || !DeviceContext) return;
 
-        // 상태 스택에 추가
-        StateStack.push(State);
-    }
+    // 상태 스택에 푸시
+    State->Apply(DeviceContext);
+    StateStack.push(State);
 }
 
 void FRenderContext::PopState()
 {
+    if (StateStack.empty() || !DeviceContext) return;
+
+    IRenderState* CurrentState = StateStack.top();
+    StateStack.pop();
+
+    // 현재 상태 복원
+    if (CurrentState)
+    {
+        CurrentState->Restore(DeviceContext);
+    }
+
+    // 이전 상태가 있다면 다시 적용
     if (!StateStack.empty())
     {
-        IRenderState* currentState = StateStack.top();
-        StateStack.pop();
-
-        // 현재 상태 복원
-        if (currentState)
-        {
-            currentState->Restore(DeviceContext);
-        }
-
-        // 이전 상태 다시 적용(스택 최상위)
-        if (!StateStack.empty())
-        {
-            IRenderState* previousState = StateStack.top();
-            if (previousState)
-            {
-                previousState->Apply(DeviceContext);
-            }
-        }
+        StateStack.top()->Apply(DeviceContext);
     }
-}
-
-void FRenderContext::BindVSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer)
-{
-    if (!Buffer || !DeviceContext)
-        return;
-
-    // 중복 바인딩 방지를 위한 캐싱 체크 
-    if (VSBoundConstantBuffers[Slot] != Buffer)
-    {
-        // 새 버퍼 포인터를 사용하여 상수 버퍼 설정
-        DeviceContext->VSSetConstantBuffers(Slot, 1, &Buffer);
-
-        // 캐시 업데이트
-        VSBoundConstantBuffers[Slot] = Buffer;
-    }
-}
-
-void FRenderContext::BindPSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer)
-{
-    if (!Buffer || !DeviceContext)
-        return;
-
-    // 중복 바인딩 방지를 위한 캐싱 체크 
-    if (PSBoundConstantBuffers[Slot] != Buffer)
-    {
-        // 새 버퍼 포인터를 사용하여 상수 버퍼 설정
-        DeviceContext->PSSetConstantBuffers(Slot, 1, &Buffer);
-
-        // 캐시 업데이트
-        PSBoundConstantBuffers[Slot] = Buffer;
-    }
-}
-
-void FRenderContext::UpdateVSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize)
-{
-    if (!DeviceContext || (DataSize % 16) != 0)
-    {
-        return;
-    }
-
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    HRESULT result = DeviceContext->Map(VSBoundConstantBuffers[StartSlot], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-
-    if (FAILED(result))
-        return;
-
-    //from CPU to GPU memory
-    memcpy(MappedResource.pData, &Buffer, DataSize);
-    DeviceContext->Unmap(VSBoundConstantBuffers[StartSlot], 0);
-
-    //constant buffer bind
-    DeviceContext->VSSetConstantBuffers(StartSlot, 1, &VSBoundConstantBuffers[StartSlot]);
-}
-
-void FRenderContext::UpdatePSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize)
-{
-    if (!DeviceContext || (DataSize % 16) != 0)
-    {
-        return;
-    }
-
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    HRESULT result = DeviceContext->Map(PSBoundConstantBuffers[StartSlot], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-
-    if (FAILED(result))
-        return;
-
-    //from CPU to GPU memory
-    memcpy(MappedResource.pData, &Buffer, DataSize);
-    DeviceContext->Unmap(PSBoundConstantBuffers[StartSlot], 0);
-
-    //constant buffer bind
-    DeviceContext->VSSetConstantBuffers(StartSlot, 1, &PSBoundConstantBuffers[StartSlot]);
 }
 
 void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset)
 {
-    if (!Buffer)
-        return;
+    if (!Buffer || !DeviceContext) return;
 
-    // 버퍼 캐싱 추가 (최적화)
-    std::string bufferKey = "VB_" + std::to_string(reinterpret_cast<uintptr_t>(Buffer));
-    auto it = BoundBuffers.find(bufferKey);
-
-    if (it == BoundBuffers.end() || it->second != Buffer)
+    // 현재 바인딩된 버퍼와 같은지 확인하여 중복 바인딩 방지
+    if (CurrentVB != Buffer)
     {
         DeviceContext->IASetVertexBuffers(0, 1, &Buffer, &Stride, &Offset);
-        BoundBuffers[bufferKey] = Buffer;
+        CurrentVB = Buffer;
     }
 }
 
 void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
 {
-    if (!Buffer)
-        return;
+    if (!Buffer || !DeviceContext) return;
 
-    std::string bufferKey = "IB_" + std::to_string(reinterpret_cast<uintptr_t>(Buffer));
-    auto it = BoundBuffers.find(bufferKey);
-
-    if (it == BoundBuffers.end() || it->second != Buffer)
+    if (CurrentIB != Buffer)
     {
         DeviceContext->IASetIndexBuffer(Buffer, Format, 0);
-        BoundBuffers[bufferKey] = Buffer;
+        CurrentIB = Buffer;
     }
 }
 
-void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS)
+void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout)
 {
-    if (!DeviceContext)
-        return;
+    if (!DeviceContext) return;
 
-    if (VS)
+    if (VS && CurrentVS != VS)
     {
-        std::string key = "VS_" + std::to_string(reinterpret_cast<uintptr_t>(VS));
-        auto it = VertexShaders.find(key);
+        DeviceContext->VSSetShader(VS, nullptr, 0);
+        CurrentVS = VS;
+    }
 
-        if (it == VertexShaders.end() || it->second != VS)
+    if (PS && CurrentPS != PS)
+    {
+        DeviceContext->PSSetShader(PS, nullptr, 0);
+        CurrentPS = PS;
+    }
+
+    if (Layout && CurrentLayout != Layout)
+    {
+        DeviceContext->IASetInputLayout(Layout);
+        CurrentLayout = Layout;
+    }
+}
+
+void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader)
+{
+    if (!Buffer || !DeviceContext || !Data || Size == 0) return;
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    HRESULT Result = DeviceContext->Map(Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+
+    if (SUCCEEDED(Result))
+    {
+        memcpy(MappedResource.pData, Data, Size);
+        DeviceContext->Unmap(Buffer, 0);
+
+        if (IsVertexShader)
         {
-            DeviceContext->VSSetShader(VS, nullptr, 0);
-            CurrentVS = VS;
-            VertexShaders[key] = VS;
+            DeviceContext->VSSetConstantBuffers(Slot, 1, &Buffer);
+        }
+        else
+        {
+            DeviceContext->PSSetConstantBuffers(Slot, 1, &Buffer);
         }
     }
-
-    if (PS)
-    {
-        std::string key = "PS_" + std::to_string(reinterpret_cast<uintptr_t>(PS));
-        auto it = PixelShaders.find(key);
-
-        if (it == PixelShaders.end() || it->second != PS)
-        {
-            DeviceContext->PSSetShader(PS, nullptr, 0);
-            CurrentPS = PS;
-            PixelShaders[key] = PS;
-        }
-    }
 }
 
-void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* Texture)
+void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV)
 {
-    if (!DeviceContext || !Texture)
-    {
-        return;
-    }
-    DeviceContext->PSSetShaderResources(Slot, 1, &Texture);
+    if (!SRV || !DeviceContext) return;
+
+    DeviceContext->PSSetShaderResources(Slot, 1, &SRV);
 }
 
-void FRenderContext::BindSampler(UINT Slot, ID3D11SamplerState* SamplerState)
+void FRenderContext::BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler)
 {
-    if (!DeviceContext || !SamplerState)
-    {
-        return;
-    }
-    DeviceContext->PSSetSamplers(Slot, 1, &SamplerState);
+    if (!Sampler || !DeviceContext) return;
+
+    DeviceContext->PSSetSamplers(Slot, 1, &Sampler);
 }
 
 void FRenderContext::Draw(UINT VertexCount, UINT StartVertexLocation)
 {
-    if (VertexCount > 0)
-    {
-        DeviceContext->Draw(VertexCount, StartVertexLocation);
-    }
+    if (!DeviceContext || VertexCount == 0) return;
+
+    DeviceContext->Draw(VertexCount, StartVertexLocation);
 }
 
 void FRenderContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation)
 {
-    if (IndexCount > 0)
-    {
-        DeviceContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
-    }
+    if (!DeviceContext || IndexCount == 0) return;
+
+    DeviceContext->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }

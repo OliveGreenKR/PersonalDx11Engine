@@ -262,13 +262,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 #pragma region Rendering
 		//before render
-		Renderer->BeforeRender();
+		Renderer->BeginFrame();
 
 		//SceneRender Submit
 		USceneManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
-		Renderer->ProcessRenderJobs(Shader.get());
+		Renderer->ProcessJobs(Shader.get());
 		Renderer->ClearRenderJobs();
 
 		auto Camera = USceneManager::Get()->GetActiveCamera();
@@ -309,7 +309,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 		//end render
-		Renderer->EndRender();
+		Renderer->EndFrame();
 #pragma endregion
 
 	}//end main Loop

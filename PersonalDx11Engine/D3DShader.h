@@ -12,14 +12,6 @@ using namespace std;
 class UShader : public IResource
 {
 private:
-	ID3D11VertexShader* VertexShader;
-	ID3D11PixelShader* PixelShader;
-	ID3D11InputLayout* InputLayout;
-	ID3DBlob* VSByteCode;
-
-
-	bool bIsLoaded = false;
-	size_t MemorySize = 0;
 
 	// 상수 버퍼 정보
 	struct FConstantBufferVariable
@@ -42,9 +34,6 @@ private:
 		std::vector<FConstantBufferVariable> Variables;
 	};
 
-	std::vector<FConstantBufferInfo> VSConstantBuffers;
-	std::vector<FConstantBufferInfo> PSConstantBuffers;
-
 	// 리소스 바인딩 정보
 	struct FResourceBinding
 	{
@@ -54,6 +43,18 @@ private:
 		UINT BindCount;
 	};
 
+private:
+	ID3D11VertexShader* VertexShader;
+	ID3D11PixelShader* PixelShader;
+	ID3D11InputLayout* InputLayout;
+	ID3DBlob* VSByteCode;
+
+	std::vector<FConstantBufferInfo> VSConstantBuffers;
+	std::vector<FConstantBufferInfo> PSConstantBuffers;
+
+	bool bIsLoaded = false;
+	size_t MemorySize = 0;
+
 	std::vector<FResourceBinding> VSResourceBindings;
 	std::vector<FResourceBinding> PSResourceBindings;
 
@@ -62,8 +63,63 @@ public:
 
 	// 기본 접근자 메서드
 	ID3D11VertexShader* GetVertexShader() const { return VertexShader; }
-	ID3D11PixelShader* GetPixelShader() const { return PixelShader; }
-	ID3D11InputLayout* GetInputLayout() const { return InputLayout; }
+	ID3D11PixelShader* GetPixelShader() const	{ return PixelShader; }
+	ID3D11InputLayout* GetInputLayout() const	{ return InputLayout; }
+
+
+	ID3D11Buffer* GetVSConstantBuffer(uint32_t Slot) const
+	{
+		if (Slot < VSConstantBuffers.size())
+		{
+			return VSConstantBuffers[Slot].Buffer;
+		}
+		return nullptr;
+	}
+	uint32_t GetVSConstantBufferSize(uint32_t Slot) const
+	{
+		if (Slot < VSConstantBuffers.size())
+		{
+			return VSConstantBuffers[Slot].Size;
+		}
+		return 0;
+	}
+	const std::string& GetVSConstantBufferName(uint32_t Slot) const
+	{
+		if (Slot < VSConstantBuffers.size())
+		{
+			return VSConstantBuffers[Slot].Name;
+		}
+		return std::string();
+	}
+
+	ID3D11Buffer* GetPSConstantBuffer(uint32_t Slot) const
+	{
+		if (Slot < PSConstantBuffers.size())
+		{
+			return PSConstantBuffers[Slot].Buffer;
+		}
+		return nullptr;
+	}
+	uint32_t GetPSConstantBufferSize(uint32_t Slot) const
+	{
+		if (Slot < PSConstantBuffers.size())
+		{
+			return PSConstantBuffers[Slot].Size;
+		}
+		return 0;
+	}
+	const std::string& GetPSConstantBufferName(uint32_t Slot) const
+	{
+		if (Slot < PSConstantBuffers.size())
+		{
+			return PSConstantBuffers[Slot].Name;
+		}
+		return std::string();
+	}
+
+	// 상수 버퍼 레이아웃 정보
+	const std::vector<FConstantBufferInfo>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
+	const std::vector<FConstantBufferInfo>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
 
 	// 이름으로 상수 버퍼 변수 업데이트
 	template<typename T>
@@ -91,12 +147,11 @@ private:
 
 	void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
 								 std::vector<FResourceBinding>& OutBindings);
-
-
 };
 
 template<typename T>
-inline bool UShader::UpdateConstantBufferVariable(ID3D11DeviceContext* Context, const std::string& BufferName, const std::string& VariableName, const T& Value)
+inline bool UShader::UpdateConstantBufferVariable
+(ID3D11DeviceContext* Context, const std::string& BufferName, const std::string& VariableName, const T& Value)
 {
 	// 버퍼 찾기
 	FConstantBufferInfo* BufferInfo = nullptr;

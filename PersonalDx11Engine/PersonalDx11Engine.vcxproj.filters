@@ -99,6 +99,7 @@
       <Filter>Engine\Components\ActorComponent\Scene</Filter>
     </ClCompile>
     <ClCompile Include="RenderContext.cpp" />
+    <ClCompile Include="RenderStates.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -392,6 +393,9 @@
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ConstantBufferManager.h">
       <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderJobInterface.h">
+      <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

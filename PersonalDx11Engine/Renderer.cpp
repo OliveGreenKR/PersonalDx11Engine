@@ -6,13 +6,13 @@
 #include "Camera.h"
 #include "RenderStates.h"
 
-void URenderer::Initialize(HWND hWindow, IRenderHardware* InRenderHardware)
+void URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware)
 {
 	assert(InRenderHardware);
-
 	bool result = true;
 	RenderHardware = InRenderHardware;
 	Context.SetDeviceContext(InRenderHardware->GetDeviceContext());
+	Context.SetDefaultSamplerState(InRenderHardware->GetDefaultSamplerState());
 	result = result && RenderHardware->IsDeviceReady();
 }
 
@@ -23,12 +23,12 @@ void URenderer::BindShader(UShader* InShader)
 	InShader->Bind(RenderHardware->GetDeviceContext());
 }
 
-void URenderer::BeforeRender()
+void URenderer::BeginFrame()
 {
 	RenderHardware->BeginFrame();
 }
 
-void URenderer::EndRender()
+void URenderer::EndFrame()
 {
 	RenderHardware->EndFrame();
 }
@@ -128,12 +128,12 @@ void URenderer::RenderPrimitve(UCamera* InCamera, const UPrimitiveComponent* InP
 		RenderModel(InPrimitive->GetModel(), InShader, InCustomSampler);
 	}
 
-void URenderer::SubmitRenderJob(const FRenderJob& InJob)
+void URenderer::SubmitRenderJob(const IRenderJob& InJob)
 {
 	RenderQueue[InJob.StateType].push_back(InJob);
 }
 
-void URenderer::ProcessRenderJobs()
+void URenderer::ProcessJobs()
 {
 	 // 상태별로 렌더링 작업 처리 (상태 전환 최소화)
 	for (auto& [stateType, jobs] : RenderQueue)
@@ -180,7 +180,7 @@ void URenderer::CreateStates()
 		// 상태 객체 생성 및 저장
 		auto solidState = std::make_unique<FSolidState>();
 		solidState->SetSolidRSS(solidRasterizerState);
-		States[ERenderStateType::Default] = std::move(solidState);
+		States[ERenderStateType::Solid] = std::move(solidState);
 
 		// 참조 카운트 관리
 		solidRasterizerState->Release();

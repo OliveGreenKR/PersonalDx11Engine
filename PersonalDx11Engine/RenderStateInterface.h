@@ -8,6 +8,13 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 
+enum class ERenderStateType
+{
+    Solid,
+    Wireframe,
+    // 필요한 상태 추가
+};
+
 class IRenderState
 {
 public:
@@ -18,5 +25,7 @@ public:
 
     // 이전 상태로 복원
     virtual void Restore(ID3D11DeviceContext* Context) = 0;
+
+    virtual ERenderStateType GetType() const = 0;
 };
 
