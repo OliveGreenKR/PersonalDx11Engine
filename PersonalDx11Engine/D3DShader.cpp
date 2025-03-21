@@ -1,6 +1,79 @@
 ﻿#include "D3DShader.h"
 #include "d3d11shader.h"
 #include "Debug.h"
+#include <map>
+
+
+bool UShader::Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* PSPath)
+{
+	// 1. 쉐이더 컴파일
+	ID3DBlob* VSBlob = nullptr;
+	ID3DBlob* PSBlob = nullptr;
+
+	if (FAILED(CompileShader(VSPath, "mainVS", "vs_5_0", &VSBlob)) ||
+		FAILED(CompileShader(PSPath, "mainPS", "ps_5_0", &PSBlob)))
+	{
+		return false;
+	}
+
+	// 2. 리플렉션 객체 생성
+	ID3D11ShaderReflection* VSReflection = nullptr;
+	if (FAILED(D3DReflect(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(),
+						  IID_ID3D11ShaderReflection, (void**)&VSReflection)))
+	{
+		VSBlob->Release();
+		PSBlob->Release();
+		return false;
+	}
+
+	// 3. 입력 레이아웃 자동 생성
+	std::vector<D3D11_INPUT_ELEMENT_DESC> InputLayoutDesc;
+	if (!CreateInputLayoutFromReflection(VSReflection, InputLayoutDesc))
+	{
+		VSReflection->Release();
+		VSBlob->Release();
+		PSBlob->Release();
+		return false;
+	}
+
+	// 4. 쉐이더 객체 생성
+	if (FAILED(Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(),
+										  nullptr, &VertexShader)) ||
+		FAILED(Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(),
+										 nullptr, &PixelShader)) ||
+		FAILED(Device->CreateInputLayout(InputLayoutDesc.data(), InputLayoutDesc.size(),
+										 VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), &InputLayout)))
+	{
+		VSReflection->Release();
+		VSBlob->Release();
+		PSBlob->Release();
+		return false;
+	}
+
+	// 5. 상수 버퍼 정보 추출 및 생성
+	ExtractAndCreateConstantBuffers(Device, VSReflection, VSConstantBuffers);
+
+	// 픽셀 쉐이더 리플렉션도 동일하게 처리
+	ID3D11ShaderReflection* PSReflection = nullptr;
+	if (SUCCEEDED(D3DReflect(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(),
+							 IID_ID3D11ShaderReflection, (void**)&PSReflection)))
+	{
+		ExtractAndCreateConstantBuffers(Device, PSReflection, PSConstantBuffers);
+		PSReflection->Release();
+	}
+
+	// 6. 쉐이더 리소스 및 샘플러 정보 추출
+	ExtractResourceBindings(VSReflection, VSResourceBindings);
+	if (PSReflection)
+		ExtractResourceBindings(PSReflection, PSResourceBindings);
+
+	// 리소스 정리
+	VSReflection->Release();
+	VSByteCode = VSBlob; // 나중에 쓸 수 있으므로 보관
+	PSBlob->Release();
+
+	return true;
+}
 
 
 UShader::~UShader()
@@ -8,102 +81,14 @@ UShader::~UShader()
 	Release();
 }
 
-void UShader::Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize)
-{
-	HRESULT result;
-
-	//Create Shaders
-	ID3DBlob* VSBlob;
-	ID3DBlob* PSBlob;
-	ID3DBlob* errorBlob = nullptr;
-
-	result = CompileShader(vertexShaderPath,"mainVS", "vs_5_0",&VSBlob);
-	assert(SUCCEEDED(result),"vertexvShader compile failed.");
-	result = CompileShader(pixelShaderPath, "mainPS", "ps_5_0", &PSBlob);
-	assert(SUCCEEDED(result), "pixel Shader compile failed.");
-
-	result = Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), nullptr, &VertexShader);
-	assert(SUCCEEDED(result), "vetex Shader create failed");
-
-	result = Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &PixelShader);
-	assert(SUCCEEDED(result), "pixel Shader create failed.");
-
-	//Creatr InputLayout
-	result = Device->CreateInputLayout(layout, layoutSize, VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), &InputLayout);
-	assert(SUCCEEDED(result), "input layout create failed.");
-		
-
-	//Create ConstantBuffer - Only vertex reference
-	ID3D11ShaderReflection* Reflector = nullptr;
-	result = D3DReflect(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&Reflector);
-
-	if (SUCCEEDED(result))
-	{
-		D3D11_SHADER_DESC ShaderDesc;
-		Reflector->GetDesc(&ShaderDesc);
-
-		// 상수 버퍼 생성
-		for (unsigned int i = 0; i < ShaderDesc.ConstantBuffers; i++)
-		{
-			ID3D11ShaderReflectionConstantBuffer* CBReflection =
-				Reflector->GetConstantBufferByIndex(i);
-
-			D3D11_SHADER_BUFFER_DESC BufferDesc;
-			CBReflection->GetDesc(&BufferDesc);
-
-			D3D11_BUFFER_DESC ConstantBufferDesc = {};
-			ConstantBufferDesc.ByteWidth = BufferDesc.Size;
-			ConstantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-			ConstantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-			ConstantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			ConstantBufferDesc.MiscFlags = 0;
-			ConstantBufferDesc.StructureByteStride = 0;
-
-
-			ID3D11Buffer* ConstantBuffer = nullptr;
-			
-			result = Device->CreateBuffer(&ConstantBufferDesc, nullptr, &ConstantBuffer);
-			assert(SUCCEEDED(result), "Constatnt BUffer [%d] create failed.", i);
-			if(SUCCEEDED(result))
-			{
-				ConstantBuffers.push_back(ConstantBuffer);
-			}
-		}
-		Reflector->Release();
-	}
-
-	//VSBlob->Release();
-	// VSBlob 저장
-	VSByteCode = VSBlob;
-	PSBlob->Release();
-
-	// 로드 상태 업데이트
-	bIsLoaded = true;
-}
-
 void UShader::Release()
 {
-	if (SamplerState)
-	{
-		SamplerState->Release();
-		SamplerState = nullptr;
-	}
-	
+
 	if (VSByteCode)
 	{
 		VSByteCode->Release();
 		VSByteCode = nullptr;
 	}
-
-	for (ID3D11Buffer* Buffer : ConstantBuffers)
-	{
-		if (Buffer)
-		{
-			Buffer->Release();
-			Buffer = nullptr;
-		}
-	}
-	ConstantBuffers.clear();
 
 	if (InputLayout)
 	{
@@ -130,72 +115,140 @@ void UShader::Release()
 	bIsLoaded = false;
 }
 
-void UShader::Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState)
+bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection, std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout)
 {
-	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
-	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-	DeviceContext->IASetInputLayout(InputLayout);
+	D3D11_SHADER_DESC ShaderDesc;
+	Reflection->GetDesc(&ShaderDesc);
 
-	if (InSamplerState)
+	// 시맨틱 이름 중복 방지를 위한 카운터
+	std::map<std::string, UINT> SemanticIndexMap;
+
+	for (UINT i = 0; i < ShaderDesc.InputParameters; i++)
 	{
-		SetSamplerState(InSamplerState);
-	}
+		D3D11_SIGNATURE_PARAMETER_DESC ParamDesc;
+		Reflection->GetInputParameterDesc(i, &ParamDesc);
 
-	if(SamplerState)
-	{
-		DeviceContext->PSSetSamplers(0, 1, &SamplerState);
-	}
-}
+		// 시맨틱 인덱스 결정
+		std::string SemanticName = ParamDesc.SemanticName;
+		UINT SemanticIndex = 0;
 
-void UShader::BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture, ETextureSlot Slot)
-{
-	if (!DeviceContext)
-	{
-		return;
-	}
+		if (SemanticIndexMap.find(SemanticName) != SemanticIndexMap.end())
+			SemanticIndex = SemanticIndexMap[SemanticName]++;
+		else
+			SemanticIndexMap[SemanticName] = 1;
 
-	UINT SlotIndex = static_cast<UINT>(Slot);
-	DeviceContext->PSSetShaderResources(SlotIndex, 1, &Texture);
-}
-
-void UShader::BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& BufferData)
-{
-	BufferData.World = XMMatrixTranspose(BufferData.World);
-	BufferData.View = XMMatrixTranspose(BufferData.View);
-	BufferData.Projection = XMMatrixTranspose(BufferData.Projection);
-	UpdateConstantBuffer<FMatrixBufferData>(DeviceContext, BufferData, EBufferSlot::Matrix);
-}
-
-void UShader::BindColor(ID3D11DeviceContext* DeviceContext, FColorBufferData& BufferData)
-{
-	UpdateConstantBuffer<FColorBufferData>(DeviceContext, BufferData, EBufferSlot::Color);
-}
-
-void UShader::GetShaderBytecode(const void** bytecode, size_t* length) const
-{
-	// 컴파일된 셰이더 바이트코드 저장 필요
-		if (VSByteCode) {
-			*bytecode = VSByteCode->GetBufferPointer();
-			*length = VSByteCode->GetBufferSize();
+		// DXGI 포맷 결정
+		DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN;
+		if (ParamDesc.Mask == 1) // 단일 컴포넌트
+		{
+			switch (ParamDesc.ComponentType)
+			{
+				case D3D_REGISTER_COMPONENT_FLOAT32: Format = DXGI_FORMAT_R32_FLOAT; break;
+				case D3D_REGISTER_COMPONENT_SINT32: Format = DXGI_FORMAT_R32_SINT; break;
+				case D3D_REGISTER_COMPONENT_UINT32: Format = DXGI_FORMAT_R32_UINT; break;
+			}
 		}
-		else {
-			*bytecode = nullptr;
-			*length = 0;
+		else if (ParamDesc.Mask <= 3) // 2 컴포넌트
+		{
+			switch (ParamDesc.ComponentType)
+			{
+				case D3D_REGISTER_COMPONENT_FLOAT32: Format = DXGI_FORMAT_R32G32_FLOAT; break;
+				case D3D_REGISTER_COMPONENT_SINT32: Format = DXGI_FORMAT_R32G32_SINT; break;
+				case D3D_REGISTER_COMPONENT_UINT32: Format = DXGI_FORMAT_R32G32_UINT; break;
+			}
 		}
+		else if (ParamDesc.Mask <= 7) // 3 컴포넌트
+		{
+			switch (ParamDesc.ComponentType)
+			{
+				case D3D_REGISTER_COMPONENT_FLOAT32: Format = DXGI_FORMAT_R32G32B32_FLOAT; break;
+				case D3D_REGISTER_COMPONENT_SINT32: Format = DXGI_FORMAT_R32G32B32_SINT; break;
+				case D3D_REGISTER_COMPONENT_UINT32: Format = DXGI_FORMAT_R32G32B32_UINT; break;
+			}
+		}
+		else if (ParamDesc.Mask <= 15) // 4 컴포넌트
+		{
+			switch (ParamDesc.ComponentType)
+			{
+				case D3D_REGISTER_COMPONENT_FLOAT32: Format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+				case D3D_REGISTER_COMPONENT_SINT32: Format = DXGI_FORMAT_R32G32B32A32_SINT; break;
+				case D3D_REGISTER_COMPONENT_UINT32: Format = DXGI_FORMAT_R32G32B32A32_UINT; break;
+			}
+		}
+
+		if (Format == DXGI_FORMAT_UNKNOWN)
+			continue; // 지원되지 않는 포맷
+
+		// 입력 레이아웃 요소 생성
+		D3D11_INPUT_ELEMENT_DESC ElementDesc;
+		ElementDesc.SemanticName = _strdup(ParamDesc.SemanticName); // 주의: 메모리 해제 필요
+		ElementDesc.SemanticIndex = SemanticIndex;
+		ElementDesc.Format = Format;
+		ElementDesc.InputSlot = 0;
+		ElementDesc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+		ElementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		ElementDesc.InstanceDataStepRate = 0;
+
+		OutLayout.push_back(ElementDesc);
+	}
+
+	return !OutLayout.empty();
 }
 
-void UShader::SetSamplerState(ID3D11SamplerState* InSamplerState)
+// 상수 버퍼 정보 추출 및 생성
+void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FConstantBufferInfo>& OutBuffers)
 {
-	// 새로운 샘플러 설정
-		//COM객체이므로 참조 카운트 관리 필요
-	if (SamplerState)
+	D3D11_SHADER_DESC ShaderDesc;
+	Reflection->GetDesc(&ShaderDesc);
+
+	for (UINT i = 0; i < ShaderDesc.ConstantBuffers; i++)
 	{
-		SamplerState->Release();
-	}
-	SamplerState = InSamplerState;
-	if (InSamplerState)
-	{
-		SamplerState->AddRef();
+		ID3D11ShaderReflectionConstantBuffer* CBReflection = Reflection->GetConstantBufferByIndex(i);
+		D3D11_SHADER_BUFFER_DESC BufferDesc;
+		CBReflection->GetDesc(&BufferDesc);
+
+		FConstantBufferInfo BufferInfo;
+		BufferInfo.Name = BufferDesc.Name;
+		BufferInfo.Size = BufferDesc.Size;
+		BufferInfo.BindPoint = i; // 쉐이더에서의 바인딩 포인트 (b0, b1, ...)
+
+		// 상수 버퍼의 변수 정보 추출
+		for (UINT j = 0; j < BufferDesc.Variables; j++)
+		{
+			ID3D11ShaderReflectionVariable* VarReflection = CBReflection->GetVariableByIndex(j);
+			D3D11_SHADER_VARIABLE_DESC VarDesc;
+			VarReflection->GetDesc(&VarDesc);
+
+			FConstantBufferVariable Variable;
+			Variable.Name = VarDesc.Name;
+			Variable.Offset = VarDesc.StartOffset;
+			Variable.Size = VarDesc.Size;
+
+			// 변수 타입 정보
+			ID3D11ShaderReflectionType* TypeReflection = VarReflection->GetType();
+			D3D11_SHADER_TYPE_DESC TypeDesc;
+			TypeReflection->GetDesc(&TypeDesc);
+			Variable.Type = TypeDesc.Class;
+			Variable.Elements = TypeDesc.Elements;
+			Variable.Columns = TypeDesc.Columns;
+			Variable.Rows = TypeDesc.Rows;
+
+			BufferInfo.Variables.push_back(Variable);
+		}
+
+		// D3D 상수 버퍼 생성
+		D3D11_BUFFER_DESC D3DBufferDesc = {};
+		D3DBufferDesc.ByteWidth = BufferDesc.Size;
+		D3DBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		D3DBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		D3DBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		ID3D11Buffer* Buffer = nullptr;
+		if (SUCCEEDED(Device->CreateBuffer(&D3DBufferDesc, nullptr, &Buffer)))
+		{
+			BufferInfo.Buffer = Buffer;
+			OutBuffers.push_back(BufferInfo);
+		}
 	}
 }
 
@@ -218,5 +271,26 @@ HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, 
 
 	*ppBlob = pBlob;
 	return S_OK;
+}
+
+ // 쉐이더 리소스 바인딩 정보 추출
+void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FResourceBinding>& OutBindings)
+{
+	D3D11_SHADER_DESC ShaderDesc;
+	Reflection->GetDesc(&ShaderDesc);
+
+	for (UINT i = 0; i < ShaderDesc.BoundResources; i++)
+	{
+		D3D11_SHADER_INPUT_BIND_DESC BindDesc;
+		Reflection->GetResourceBindingDesc(i, &BindDesc);
+
+		FResourceBinding Binding;
+		Binding.Name = BindDesc.Name;
+		Binding.Type = BindDesc.Type;  // 텍스처, 샘플러 등
+		Binding.BindPoint = BindDesc.BindPoint;  // t0, s0 등
+		Binding.BindCount = BindDesc.BindCount;
+
+		OutBindings.push_back(Binding);
+	}
 }
 

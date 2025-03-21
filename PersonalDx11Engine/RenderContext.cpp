@@ -37,6 +37,80 @@ void FRenderContext::PopState()
     }
 }
 
+void FRenderContext::BindVSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer)
+{
+    if (!Buffer || !DeviceContext)
+        return;
+
+    // 중복 바인딩 방지를 위한 캐싱 체크 
+    if (VSBoundConstantBuffers[Slot] != Buffer)
+    {
+        // 새 버퍼 포인터를 사용하여 상수 버퍼 설정
+        DeviceContext->VSSetConstantBuffers(Slot, 1, &Buffer);
+
+        // 캐시 업데이트
+        VSBoundConstantBuffers[Slot] = Buffer;
+    }
+}
+
+void FRenderContext::BindPSConstantBuffer(UINT Slot, ID3D11Buffer* Buffer)
+{
+    if (!Buffer || !DeviceContext)
+        return;
+
+    // 중복 바인딩 방지를 위한 캐싱 체크 
+    if (PSBoundConstantBuffers[Slot] != Buffer)
+    {
+        // 새 버퍼 포인터를 사용하여 상수 버퍼 설정
+        DeviceContext->PSSetConstantBuffers(Slot, 1, &Buffer);
+
+        // 캐시 업데이트
+        PSBoundConstantBuffers[Slot] = Buffer;
+    }
+}
+
+void FRenderContext::UpdateVSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize)
+{
+    if (!DeviceContext || (DataSize % 16) != 0)
+    {
+        return;
+    }
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    HRESULT result = DeviceContext->Map(VSBoundConstantBuffers[StartSlot], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+
+    if (FAILED(result))
+        return;
+
+    //from CPU to GPU memory
+    memcpy(MappedResource.pData, &Buffer, DataSize);
+    DeviceContext->Unmap(VSBoundConstantBuffers[StartSlot], 0);
+
+    //constant buffer bind
+    DeviceContext->VSSetConstantBuffers(StartSlot, 1, &VSBoundConstantBuffers[StartSlot]);
+}
+
+void FRenderContext::UpdatePSConstantBuffer(UINT StartSlot, ID3D11Buffer* Buffer, const void* Data, size_t DataSize)
+{
+    if (!DeviceContext || (DataSize % 16) != 0)
+    {
+        return;
+    }
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    HRESULT result = DeviceContext->Map(PSBoundConstantBuffers[StartSlot], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+
+    if (FAILED(result))
+        return;
+
+    //from CPU to GPU memory
+    memcpy(MappedResource.pData, &Buffer, DataSize);
+    DeviceContext->Unmap(PSBoundConstantBuffers[StartSlot], 0);
+
+    //constant buffer bind
+    DeviceContext->VSSetConstantBuffers(StartSlot, 1, &PSBoundConstantBuffers[StartSlot]);
+}
+
 void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset)
 {
     if (!Buffer)
@@ -68,9 +142,11 @@ void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
     }
 }
 
-
 void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS)
 {
+    if (!DeviceContext)
+        return;
+
     if (VS)
     {
         std::string key = "VS_" + std::to_string(reinterpret_cast<uintptr_t>(VS));
@@ -96,6 +172,24 @@ void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS)
             PixelShaders[key] = PS;
         }
     }
+}
+
+void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* Texture)
+{
+    if (!DeviceContext || !Texture)
+    {
+        return;
+    }
+    DeviceContext->PSSetShaderResources(Slot, 1, &Texture);
+}
+
+void FRenderContext::BindSampler(UINT Slot, ID3D11SamplerState* SamplerState)
+{
+    if (!DeviceContext || !SamplerState)
+    {
+        return;
+    }
+    DeviceContext->PSSetSamplers(Slot, 1, &SamplerState);
 }
 
 void FRenderContext::Draw(UINT VertexCount, UINT StartVertexLocation)

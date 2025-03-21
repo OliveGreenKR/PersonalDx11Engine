@@ -98,6 +98,7 @@
     <ClCompile Include="SceneComponent.cpp">
       <Filter>Engine\Components\ActorComponent\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="RenderContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -381,6 +382,17 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="DebugDrawElement.h" />
+    <ClInclude Include="DebugDrawSphere.h" />
+    <ClInclude Include="DebugDrawBox.h" />
+    <ClInclude Include="DebugDrawLine.h" />
+    <ClInclude Include="RenderContext.h" />
+    <ClInclude Include="RenderJobs.h" />
+    <ClInclude Include="RenderStateInterface.h" />
+    <ClInclude Include="RenderStates.h" />
+    <ClInclude Include="ConstantBufferManager.h">
+      <Filter>Engine\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">
@@ -389,6 +401,7 @@
     <FxCompile Include="ShaderMy00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="ShaderDebug.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />

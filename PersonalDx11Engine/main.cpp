@@ -193,14 +193,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UDebugDrawManager::Get()->Initialize(RenderHardware.get());
 
 	//Shader
-	D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
-	{
-		//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
-		// InputSlotClass,InstanceDataStepRate
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER, textureShaderLayout, ARRAYSIZE(textureShaderLayout));
+	//D3D11_INPUT_ELEMENT_DESC textureShaderLayout[] =
+	//{
+	//	//SemanticName, SemanticIndex, Foramt, InputSlot, AlignByteOffset, 
+	//	// InputSlotClass,InstanceDataStepRate
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
+	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 
 	ID3D11SamplerState* SamplerState = Renderer->GetDefaultSamplerState();
 	Shader->Bind(Renderer->GetDeviceContext(), SamplerState);

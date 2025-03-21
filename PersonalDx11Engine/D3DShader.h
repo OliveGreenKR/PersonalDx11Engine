@@ -8,127 +8,152 @@
 
 using namespace std;
 
-struct alignas(16) FMatrixBufferData
-{
-	XMMATRIX World;      // 월드 변환 행렬
-	XMMATRIX View;       // 뷰 변환 행렬 
-	XMMATRIX Projection; // 투영 변환 행렬
 
-	FMatrixBufferData()
-		: World(XMMatrixIdentity())
-		, View(XMMatrixIdentity())
-		, Projection(XMMatrixIdentity())
-	{}
-	FMatrixBufferData(const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection) :
-		World(world), View(view), Projection(projection) {};
-};
-
-struct alignas(16) FColorBufferData
-{
-	XMFLOAT4 Color = XMFLOAT4(1, 1, 1, 1);
-
-	FColorBufferData() = default;
-	FColorBufferData(const XMFLOAT4 InColor) : Color(InColor) {}
-	FColorBufferData(float r, float g, float b, float a) 
-	{
-		Color = XMFLOAT4(r, g, b, a);
-	};
-};
-
-enum class ETextureSlot
-{
-	Albedo = 0,
-	Normal,
-	Specular,
-	Max,
-};
-
-enum class EBufferSlot
-{
-	Matrix = 0,
-	Color,
-	Max
-};
-/// <summary>
-/// TODO 컴파일된 쉐이더를 리플렉션을 통해 상수 버퍼 업데이트를 하고
-/// 디바이스 컨텍스트를 이용해 바인딩하는 것이 주 역할로 변경할것
-/// </summary>
 class UShader : public IResource
 {
 private:
+	ID3D11VertexShader* VertexShader;
+	ID3D11PixelShader* PixelShader;
+	ID3D11InputLayout* InputLayout;
+	ID3DBlob* VSByteCode;
 
+
+	bool bIsLoaded = false;
+	size_t MemorySize = 0;
+
+	// 상수 버퍼 정보
+	struct FConstantBufferVariable
+	{
+		std::string Name;
+		UINT Offset;
+		UINT Size;
+		D3D_SHADER_VARIABLE_CLASS Type;
+		UINT Elements;
+		UINT Rows;
+		UINT Columns;
+	};
+
+	struct FConstantBufferInfo
+	{
+		std::string Name;
+		UINT Size;
+		UINT BindPoint;
+		ID3D11Buffer* Buffer = nullptr;
+		std::vector<FConstantBufferVariable> Variables;
+	};
+
+	std::vector<FConstantBufferInfo> VSConstantBuffers;
+	std::vector<FConstantBufferInfo> PSConstantBuffers;
+
+	// 리소스 바인딩 정보
+	struct FResourceBinding
+	{
+		std::string Name;
+		D3D_SHADER_INPUT_TYPE Type;
+		UINT BindPoint;
+		UINT BindCount;
+	};
+
+	std::vector<FResourceBinding> VSResourceBindings;
+	std::vector<FResourceBinding> PSResourceBindings;
+
+public:
+	bool Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* PSPath);
+
+	// 기본 접근자 메서드
+	ID3D11VertexShader* GetVertexShader() const { return VertexShader; }
+	ID3D11PixelShader* GetPixelShader() const { return PixelShader; }
+	ID3D11InputLayout* GetInputLayout() const { return InputLayout; }
+
+	// 이름으로 상수 버퍼 변수 업데이트
+	template<typename T>
+	bool UpdateConstantBufferVariable(ID3D11DeviceContext* Context, const std::string& BufferName,
+									  const std::string& VariableName, const T& Value);
 
 public:
 	UShader() = default;
 	~UShader();
 
 public:
-
 	// IResource 인터페이스 구현
 	bool IsLoaded() const override { return bIsLoaded; }
 	void Release() override;
 	size_t GetMemorySize() const override { return MemorySize; }
 
-	void Load(ID3D11Device* Device, const wchar_t* vertexShaderPath, const wchar_t* pixelShaderPath, D3D11_INPUT_ELEMENT_DESC* layout, const unsigned int layoutSize);
-	
-	//파이프라인 상태 설정, vs, ps, samplerstate 
-	void Bind(ID3D11DeviceContext* DeviceContext, ID3D11SamplerState* InSamplerState = nullptr);
-	void BindTexture(ID3D11DeviceContext* DeviceContext, ID3D11ShaderResourceView* Texture , ETextureSlot Slot);
-	void BindMatrix(ID3D11DeviceContext* DeviceContext, FMatrixBufferData& Data);
-	void BindColor(ID3D11DeviceContext* DeviceContext, FColorBufferData& Data);
-
-	ID3D11InputLayout* GetInputLayout() const { return InputLayout;}
-
-	//쉐이더 바이트 코드 접근자
-	void GetShaderBytecode(const void** bytecode, size_t* length) const;
-
-	ID3D11VertexShader* GetVertexShader() { return VertexShader; }
-	ID3D11PixelShader* GetPixelShader() { return PixelShader; }
-public:
-	template<typename T>
-	void UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex = 0);
-
-	void SetSamplerState(ID3D11SamplerState* InSamplerState);
-
 private:
+	bool CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection,
+										 std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout);
+	void ExtractAndCreateConstantBuffers(ID3D11Device* Device,
+										 ID3D11ShaderReflection* Reflection,
+										 std::vector<FConstantBufferInfo>& OutBuffers);
 
 	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 
-private:
-	ID3D11VertexShader* VertexShader = nullptr;
-	ID3D11PixelShader* PixelShader = nullptr;
-	ID3D11InputLayout* InputLayout = nullptr;
+	void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
+								 std::vector<FResourceBinding>& OutBindings);
 
-	vector<ID3D11Buffer*> ConstantBuffers;
-	ID3D11SamplerState* SamplerState = nullptr;
 
-	ID3DBlob* VSByteCode = nullptr; // 컴파일된 버텍스 셰이더 바이트코드 저장
-
-	bool bIsLoaded = false;
-	size_t MemorySize = 0;
 };
 
 template<typename T>
-inline void UShader::UpdateConstantBuffer(ID3D11DeviceContext* DeviceContext, T& BufferData, const EBufferSlot BufferIndex)
+inline bool UShader::UpdateConstantBufferVariable(ID3D11DeviceContext* Context, const std::string& BufferName, const std::string& VariableName, const T& Value)
 {
-	static_assert(sizeof(T) % 16 == 0, "Constant buffer size must be 16-byte aligned");
-
-	UINT idx = static_cast<UINT>(BufferIndex);
-	if (!DeviceContext || idx >= ConstantBuffers.size())
+	// 버퍼 찾기
+	FConstantBufferInfo* BufferInfo = nullptr;
+	for (auto& Buffer : VSConstantBuffers)
 	{
-		return;
+		if (Buffer.Name == BufferName)
+		{
+			BufferInfo = &Buffer;
+			break;
+		}
 	}
 
+	if (!BufferInfo)
+	{
+		for (auto& Buffer : PSConstantBuffers)
+		{
+			if (Buffer.Name == BufferName)
+			{
+				BufferInfo = &Buffer;
+				break;
+			}
+		}
+	}
+
+	if (!BufferInfo || !BufferInfo->Buffer)
+		return false;
+
+	// 변수 찾기
+	FConstantBufferVariable* Variable = nullptr;
+	for (auto& Var : BufferInfo->Variables)
+	{
+		if (Var.Name == VariableName)
+		{
+			Variable = &Var;
+			break;
+		}
+	}
+
+	if (!Variable || Variable->Size < sizeof(T))
+		return false;
+
+	// 상수 버퍼 매핑
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
-	HRESULT result = DeviceContext->Map(ConstantBuffers[idx], 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+	if (FAILED(Context->Map(BufferInfo->Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource)))
+		return false;
 
-	if (FAILED(result))
-		return;
+	// 변수 데이터 업데이트
+	memcpy((uint8_t*)MappedResource.pData + Variable->Offset, &Value, sizeof(T));
 
-	//from CPU to GPU memory
-	memcpy(MappedResource.pData, &BufferData, sizeof(T));
-	DeviceContext->Unmap(ConstantBuffers[idx], 0);
+	// 언매핑
+	Context->Unmap(BufferInfo->Buffer, 0);
 
-	//constant buffer bind
-	DeviceContext->VSSetConstantBuffers(idx, 1, &ConstantBuffers[idx]);
+	// 쉐이더에 바인딩
+	if (std::find(VSConstantBuffers.begin(), VSConstantBuffers.end(), *BufferInfo) != VSConstantBuffers.end())
+		Context->VSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
+	else
+		Context->PSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
+
+	return true;
 }

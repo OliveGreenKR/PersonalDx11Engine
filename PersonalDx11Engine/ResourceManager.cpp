@@ -49,8 +49,7 @@ std::shared_ptr<UTexture2D> UResourceManager::LoadTexture(
     return nullptr; // 로드 실패
 }
 
-std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& VSPath, const std::wstring& PSPath,
-                                                            D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize)
+std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& VSPath, const std::wstring& PSPath)
 {
     assert(bInitialized && "ResourceManager not initialized");
 
@@ -68,7 +67,7 @@ std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& 
 
     // 새 셰이더 로드
     auto Shader = std::make_shared<UShader>();
-    Shader->Load(RenderHardware->GetDevice(), VSPath.c_str(), PSPath.c_str(), Layout, LayoutSize);
+    Shader->Load(RenderHardware->GetDevice(), VSPath.c_str(), PSPath.c_str());
     if (!Shader->IsLoaded())
     {
         return nullptr; // 로드 실패

@@ -175,6 +175,7 @@
     <ClInclude Include="CollisionEventDispatcher.h" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
+    <ClInclude Include="ConstantBufferManager.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="Debug.h" />
