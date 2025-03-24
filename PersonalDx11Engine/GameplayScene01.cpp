@@ -100,7 +100,7 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
     for (auto ebody : ElasticBodies)
     {
-        FMeshRenderJob RenderJob;
+        FTextureRenderJob RenderJob;
         RenderJob.Textures = { { 0 ,TextureTile->GetShaderResourceView() } };
 
         auto Primitive = ebody->GetComponentByType<UPrimitiveComponent>();
@@ -122,7 +122,7 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
 
         for (const auto& info : constantinfos)
         {
-            FMeshRenderJob::ConstantBufferInfo bufferInfo;
+            FTextureRenderJob::ConstantBufferInfo bufferInfo;
             bufferInfo.Buffer = info.Buffer;
           
             //TODO : test renderJob system

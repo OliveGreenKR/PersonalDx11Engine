@@ -1,10 +1,10 @@
-// RenderJob.h
+ï»¿// RenderJob.h
 #pragma once
 #include "RenderStateInterface.h"
 #include "Math.h"
 #include <d3d11.h>
 
-// Àü¹æ ¼±¾ð
+// ì „ë°© ì„ ì–¸
 class FRenderContext;
 
 
@@ -17,29 +17,29 @@ public:
 };
 
 
-// ¸Þ½Ã-ÅØ½ºÃ³ ·»´õ¸µ ÀÛ¾÷
-class FMeshRenderJob : public FRenderJobBase
+// í…ìŠ¤ì²˜ë§ ë Œë”ë§ ìž‘ì—…
+class FTextureRenderJob : public FRenderJobBase
 {
 public:
-    FMeshRenderJob(ERenderStateType InStateType = ERenderStateType::Solid)
+    FTextureRenderJob(ERenderStateType InStateType = ERenderStateType::Solid)
         : StateType(InStateType) {
     }
 
     void Execute(FRenderContext* Context) override
 	{
-        // ·»´õ ÄÁÅØ½ºÆ®ÀÇ ¸Þ¼­µå¸¦ È°¿ëÇÏ¿© ·»´õ¸µ ¼öÇà
+        // ë Œë” ì»¨í…ìŠ¤íŠ¸ì˜ ë©”ì„œë“œë¥¼ í™œìš©í•˜ì—¬ ë Œë”ë§ ìˆ˜í–‰
 
-        // 1. ¹öÆÛ ¹ÙÀÎµù
+        // 1. ë²„í¼ ë°”ì¸ë”©
         Context->BindVertexBuffer(VertexBuffer, Stride, Offset);
 		if (IndexBuffer)
 		{
             Context->BindIndexBuffer(IndexBuffer);
 		}
 
-		// 2. ½¦ÀÌ´õ ¹ÙÀÎµù
+		// 2. ì‰ì´ë” ë°”ì¸ë”©
         Context->BindShader(VS, PS, InputLayout);
 
-		// 3. »ó¼ö ¹öÆÛ ¾÷µ¥ÀÌÆ® ¹× ¹ÙÀÎµù
+		// 3. ìƒìˆ˜ ë²„í¼ ì—…ë°ì´íŠ¸ ë° ë°”ì¸ë”©
 		for (const auto& CB : VSConstantBuffers)
 		{
             Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data.data(), CB.Data.size(), true);
@@ -50,7 +50,7 @@ public:
             Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data.data(), CB.Data.size(), false);
 		}
 
-		// 4. ÅØ½ºÃ³ ¹× »ùÇÃ·¯ ¹ÙÀÎµù
+		// 4. í…ìŠ¤ì²˜ ë° ìƒ˜í”ŒëŸ¬ ë°”ì¸ë”©
 		for (const auto& Tex : Textures)
 		{
             Context->BindShaderResource(Tex.Slot, Tex.SRV);
@@ -61,7 +61,7 @@ public:
             Context->BindSamplerState(Samp.Slot, Samp.Sampler);
 		}
 
-		// 5. µå·Î¿ì ÄÝ ½ÇÇà
+		// 5. ë“œë¡œìš° ì½œ ì‹¤í–‰
 		if (IndexBuffer && IndexCount > 0)
 		{
             Context->DrawIndexed(IndexCount);
@@ -103,7 +103,6 @@ public:
     ID3D11VertexShader* VS = nullptr;
     ID3D11PixelShader* PS = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
-
 
     std::vector<ConstantBufferInfo> VSConstantBuffers;
     std::vector<ConstantBufferInfo> PSConstantBuffers;

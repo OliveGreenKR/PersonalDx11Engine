@@ -13,6 +13,8 @@
 #include "D3DShader.h"
 #include "Texture.h"
 #include "UIManager.h"
+#include "RenderJobs.h"
+#include "PrimitiveComponent.h"
 
 UGameplayScene02::UGameplayScene02()
 {
@@ -115,8 +117,14 @@ void UGameplayScene02::Unload()
     Camera = nullptr;
 
     // 텍스처 해제
+    TextureTile->Release();
     TextureTile = nullptr;
+    TexturePole->Release();
     TexturePole = nullptr;
+
+    //쉐이더
+    Shader->Release();
+    Shader = nullptr;
 }
 
 void UGameplayScene02::Tick(float DeltaTime)
@@ -141,7 +149,40 @@ void UGameplayScene02::Tick(float DeltaTime)
 
 void UGameplayScene02::SubmitRender(URenderer* Renderer)
 {
-    //TODO Submit RenderJob
+    //TODO : Submit RenderJob
+    FTextureRenderJob RenderJob;
+    RenderJob.Textures = { { 0 ,TextureTile->GetShaderResourceView() } };
+
+    auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
+    auto BufferRsc = Primitive->GetModel()->GetBufferResource();
+
+    RenderJob.IndexBuffer = BufferRsc->GetIndexBuffer();
+    RenderJob.IndexCount = BufferRsc->GetIndexCount();
+    RenderJob.VertexBuffer = BufferRsc->GetVertexBuffer();
+    RenderJob.VertexCount = BufferRsc->GetVertexCount();
+    RenderJob.Offset = BufferRsc->GetOffset();
+    RenderJob.Stride = BufferRsc->GetStride();
+    RenderJob.StateType = ERenderStateType::Solid;
+
+    RenderJob.VS = Shader->GetVertexShader();
+    RenderJob.PS = Shader->GetPixelShader();
+    RenderJob.InputLayout = Shader->GetInputLayout();
+
+    //shader resource - texture
+    RenderJob.Textures = { {0, TextureTile.get()->GetShaderResourceView()}};
+    //shader resource -  sampler
+        //default -> null
+
+    // update matrix cbuffer
+    FTextureRenderJob::ConstantBufferInfo MatrixBufferInfo;
+
+    XMMATRIX world = Character->GetTransform().GetModelingMatrix();
+    XMMATRIX view = Camera->GetViewMatrix();
+    XMMATRIX proj = Camera->GetProjectionMatrix();
+
+    // update color buffer
+
+    //
 }
 
 void UGameplayScene02::SubmitRenderUI()

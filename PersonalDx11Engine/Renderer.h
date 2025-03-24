@@ -16,11 +16,6 @@ class UGameObject;
 class UCamera;
 class UPrimitiveComponent;
 
-struct FVertexSimple
-{
-	float x, y, z;    // Position
-	float r, g, b, a; // Color
-};
 
 class URenderer 
 {
@@ -51,7 +46,9 @@ public:
 	void SubmitJob(const FRenderJobBase& InJob);
 
 private:
+	//상태 객체 생성 및 초기화
 	void CreateStates();
+
 
 public:
 	__forceinline FRenderContext* GetRenderContext() { return Context.get(); }

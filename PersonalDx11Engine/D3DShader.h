@@ -14,7 +14,7 @@ class UShader : public IResource
 {
 private:
 
-	// 상수 버퍼 정보
+	// 상수 버퍼 변수 정보
 	struct FConstantBufferVariable
 	{
 		std::string Name;
@@ -25,7 +25,7 @@ private:
 		UINT Rows;
 		UINT Columns;
 	};
-
+	// 상수 버퍼  정보
 	struct FConstantBufferInfo
 	{
 		std::string Name;

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <d3d11.h>
 #include "Math.h"
 #include <stack>
@@ -15,7 +15,7 @@ public:
     bool Initialize(std::shared_ptr<IRenderHardware> InHardware);
     void Release();
 
-    // ·»´õ »óÅÂ °ü¸®
+    // ë Œë” ìƒíƒœ ê´€ë¦¬
     void PushState(IRenderState* State);
     void PopState();
 
@@ -28,7 +28,7 @@ public:
         RenderHardware->EndFrame();
     }
 
-    // ·»´õ¸µ ¸Ş¼­µåµé
+    // ë Œë”ë§ ë©”ì„œë“œë“¤
     void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
     void BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT);
     void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout);
@@ -38,12 +38,12 @@ public:
     void Draw(UINT VertexCount, UINT StartVertexLocation = 0);
     void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
 
-    // ÇöÀç µğ¹ÙÀÌ½º ÄÁÅØ½ºÆ® Á¢±ÙÀÚ
+    // í˜„ì¬ ë””ë°”ì´ìŠ¤ ì»¨í…ìŠ¤íŠ¸ ì ‘ê·¼ì
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }
     ID3D11Device* GetDevice() const { return RenderHardware ? RenderHardware->GetDevice() : nullptr; }
 
 private:
-    // ÇöÀç ¹ÙÀÎµùµÈ ¸®¼Ò½º Ä³½Ã
+    // í˜„ì¬ ë°”ì¸ë”©ëœ ë¦¬ì†ŒìŠ¤ ìºì‹œ
     ID3D11Buffer* CurrentVB = nullptr;
     ID3D11Buffer* CurrentIB = nullptr;
     ID3D11VertexShader* CurrentVS = nullptr;
