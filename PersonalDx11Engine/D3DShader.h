@@ -67,7 +67,6 @@ public:
 	ID3D11PixelShader* GetPixelShader() const	{ return PixelShader; }
 	ID3D11InputLayout* GetInputLayout() const	{ return InputLayout; }
 
-
 	ID3D11Buffer* GetVSConstantBuffer(uint32_t Slot) const
 	{
 		if (Slot < VSConstantBuffers.size())
@@ -122,10 +121,19 @@ public:
 	const std::vector<FConstantBufferInfo>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
 	const std::vector<FConstantBufferInfo>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
 
-	// 이름으로 상수 버퍼 변수 업데이트
-	template<typename T>
-	bool UpdateConstantBufferVariable(ID3D11DeviceContext* Context, const std::string& BufferName,
-									  const std::string& VariableName, const T& Value);
+	/// <param name="Slot"> '-1'일 경우 이름을 통해 검색, 슬롯이 명시될 경우 슬롯으로 검색됨</param>
+	/// <returns></returns>
+	bool BindTexture(ID3D11DeviceContext* Context, ID3D11ShaderResourceView* SRV,
+					 uint32_t Slot, const std::string& ResourceName = "");
+
+	/// </summary>
+	/// <param name="Slot"> '-1'일 경우 이름을 통해 검색, 슬롯이 명시될 경우 슬롯으로 검색됨</param>
+	/// <returns></returns>
+	bool BindSampler(ID3D11DeviceContext* Context, ID3D11SamplerState* Sampler,
+					 uint32_t Slot, const std::string& SamplerName = "");
+
+	//전체 상수 버퍼 업데이트
+	bool UpdateConstantBuffer(ID3D11DeviceContext* Context, const std::string& BufferName, const void* Data, uint32_t DataSize);
 
 public:
 	UShader() = default;
@@ -149,67 +157,3 @@ private:
 	void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
 								 std::vector<FResourceBinding>& OutBindings);
 };
-
-template<typename T>
-inline bool UShader::UpdateConstantBufferVariable
-(ID3D11DeviceContext* Context, const std::string& BufferName, const std::string& VariableName, const T& Value)
-{
-	// 버퍼 찾기
-	FConstantBufferInfo* BufferInfo = nullptr;
-	for (auto& Buffer : VSConstantBuffers)
-	{
-		if (Buffer.Name == BufferName)
-		{
-			BufferInfo = &Buffer;
-			break;
-		}
-	}
-
-	if (!BufferInfo)
-	{
-		for (auto& Buffer : PSConstantBuffers)
-		{
-			if (Buffer.Name == BufferName)
-			{
-				BufferInfo = &Buffer;
-				break;
-			}
-		}
-	}
-
-	if (!BufferInfo || !BufferInfo->Buffer)
-		return false;
-
-	// 변수 찾기
-	FConstantBufferVariable* Variable = nullptr;
-	for (auto& Var : BufferInfo->Variables)
-	{
-		if (Var.Name == VariableName)
-		{
-			Variable = &Var;
-			break;
-		}
-	}
-
-	if (!Variable || Variable->Size < sizeof(T))
-		return false;
-
-	// 상수 버퍼 매핑
-	D3D11_MAPPED_SUBRESOURCE MappedResource;
-	if (FAILED(Context->Map(BufferInfo->Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource)))
-		return false;
-
-	// 변수 데이터 업데이트
-	memcpy((uint8_t*)MappedResource.pData + Variable->Offset, &Value, sizeof(T));
-
-	// 언매핑
-	Context->Unmap(BufferInfo->Buffer, 0);
-
-	// 쉐이더에 바인딩
-	if (std::find(VSConstantBuffers.begin(), VSConstantBuffers.end(), *BufferInfo) != VSConstantBuffers.end())
-		Context->VSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
-	else
-		Context->PSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
-
-	return true;
-}
