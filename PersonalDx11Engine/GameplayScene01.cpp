@@ -46,6 +46,8 @@ void UGameplayScene01::Load()
     // 텍스처 로드
     TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
 	TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
+
+    Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 }
 
 void UGameplayScene01::Unload()
@@ -111,6 +113,32 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
         RenderJob.Offset = BufferRsc->GetOffset();
         RenderJob.Stride = BufferRsc->GetStride();
         RenderJob.StateType = ERenderStateType::Solid;
+
+        RenderJob.VS = Shader->GetVertexShader();
+        RenderJob.PS = Shader->GetPixelShader();
+        RenderJob.InputLayout = Shader->GetInputLayout();
+
+        auto constantinfos = Shader->GetVSConstantBufferInfo();
+
+        for (const auto& info : constantinfos)
+        {
+            FMeshRenderJob::ConstantBufferInfo bufferInfo;
+            bufferInfo.Buffer = info.Buffer;
+          
+            //TODO : test renderJob system
+        }
+       
+
+
+   /*     ID3D11VertexShader* VS = nullptr;
+        ID3D11PixelShader* PS = nullptr;
+        ID3D11InputLayout* InputLayout = nullptr;
+
+
+        std::vector<ConstantBufferInfo> VSConstantBuffers;
+        std::vector<ConstantBufferInfo> PSConstantBuffers;
+        std::vector<TextureBinding> Textures;
+        std::vector<SamplerBinding> Samplers;*/
 
         Renderer->SubmitJob(RenderJob);
     }

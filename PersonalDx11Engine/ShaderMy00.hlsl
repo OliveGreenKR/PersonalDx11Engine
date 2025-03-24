@@ -1,5 +1,6 @@
 Texture2D shaderTexture : register(t0);
 SamplerState SampleType : register(s0);
+
 cbuffer MATRIX_BUFFER : register(b0)
 {
     matrix worldMatrix;

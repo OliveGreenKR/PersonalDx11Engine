@@ -11,10 +11,19 @@ bool UShader::Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* P
 	ID3DBlob* PSBlob = nullptr;
 
 	if (FAILED(CompileShader(VSPath, "mainVS", "vs_5_0", &VSBlob)) ||
-		FAILED(CompileShader(PSPath, "mainPS", "ps_5_0", &PSBlob)))
+		FAILED(CompileShader(PSPath, "mainPS", "ps_5_0", &PSBlob)) ||
+		!PSBlob || !VSBlob)
 	{
 		return false;
 	}
+
+	//ID3DBlob* disasmBlob = nullptr;
+	//D3DDisassemble(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), 0, nullptr, &disasmBlob);
+	//if (disasmBlob)
+	//{
+	//	LOG("Disassembled PS:\n%s\n", (char*)disasmBlob->GetBufferPointer());
+	//	disasmBlob->Release();
+	//}
 
 	// 2. 리플렉션 객체 생성
 	ID3D11ShaderReflection* VSReflection = nullptr;
@@ -59,19 +68,22 @@ bool UShader::Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* P
 							 IID_ID3D11ShaderReflection, (void**)&PSReflection)))
 	{
 		ExtractAndCreateConstantBuffers(Device, PSReflection, PSConstantBuffers);
-		PSReflection->Release();
 	}
 
 	// 6. 쉐이더 리소스 및 샘플러 정보 추출
 	ExtractResourceBindings(VSReflection, VSResourceBindings);
 	if (PSReflection)
+	{
 		ExtractResourceBindings(PSReflection, PSResourceBindings);
-
+	}
+		
 	// 리소스 정리
 	VSReflection->Release();
+	PSReflection->Release();
 	VSByteCode = VSBlob; // 나중에 쓸 수 있으므로 보관
 	PSBlob->Release();
 
+	bIsLoaded = true;
 	return true;
 }
 
@@ -257,15 +269,25 @@ HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, 
 	ID3DBlob* pBlob = nullptr;
 	ID3DBlob* pErrorBlob = nullptr;
 
-	HRESULT hr = D3DCompileFromFile(filename, nullptr, nullptr, entryPoint, target, 0, 0, &pBlob, &pErrorBlob);
+	//UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+	UINT compileFlags = D3DCOMPILE_DEBUG;
+
+	HRESULT hr = D3DCompileFromFile(filename, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+									entryPoint, target, compileFlags, 0, &pBlob, &pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
 		{
-			OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+			const char* errorMsg = (const char*)pErrorBlob->GetBufferPointer();
+			LOG("Shader compile error in %S: %s", filename, errorMsg);
+			OutputDebugStringA(errorMsg);
 			pErrorBlob->Release();
 		}
-		*ppBlob = nullptr; // 실패 시 nullptr 반환
+		else
+		{
+			LOG("Failed to compile shader %S with unknown error", filename);
+		}
+		*ppBlob = nullptr;
 		return hr;
 	}
 
@@ -284,13 +306,28 @@ void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::v
 		D3D11_SHADER_INPUT_BIND_DESC BindDesc;
 		Reflection->GetResourceBindingDesc(i, &BindDesc);
 
-		FResourceBinding Binding;
-		Binding.Name = BindDesc.Name;
-		Binding.Type = BindDesc.Type;  // 텍스처, 샘플러 등
-		Binding.BindPoint = BindDesc.BindPoint;  // t0, s0 등
-		Binding.BindCount = BindDesc.BindCount;
-
-		OutBindings.push_back(Binding);
+		// 리소스 타입에 따른 필터링
+		switch (BindDesc.Type)
+		{
+			case D3D_SIT_TEXTURE:       // 텍스처
+			case D3D_SIT_UAV_RWTYPED:   // UAV
+			case D3D_SIT_SAMPLER:       // 샘플러
+			case D3D_SIT_STRUCTURED:    // 구조화 버퍼
+			{
+				FResourceBinding Binding;
+				Binding.Name = BindDesc.Name;
+				Binding.Type = BindDesc.Type;
+				Binding.BindPoint = BindDesc.BindPoint;
+				Binding.BindCount = BindDesc.BindCount;
+				OutBindings.push_back(Binding);
+				break;
+			}
+			// 상수 버퍼와 기타 타입은 무시
+			case D3D_SIT_CBUFFER:
+			case D3D_SIT_TBUFFER:
+			default:
+				break;
+		}
 	}
 }
 

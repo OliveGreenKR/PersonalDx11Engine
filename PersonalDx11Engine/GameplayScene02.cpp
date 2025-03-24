@@ -10,6 +10,7 @@
 #include "Color.h"
 #include "Debug.h"
 #include "ResourceManager.h"
+#include "D3DShader.h"
 #include "Texture.h"
 #include "UIManager.h"
 
@@ -85,7 +86,7 @@ void UGameplayScene02::Initialize()
         LOG("CollisionExit"); }, "OnCollisionEnter_P1");
 
     //트랜스폼 테스트
-    Character->GetRootComp()->AddChild(Character2->GetRootComp());
+    //Character->GetRootComp()->AddChild(Character2->GetRootComp());
 
     // 입력 컨텍스트 등록
     UInputManager::Get()->RegisterInputContext(InputContext);
@@ -96,6 +97,9 @@ void UGameplayScene02::Load()
     // 텍스처 로드
     TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
     TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
+
+    //쉐이더 로드'
+    Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 }
 
 void UGameplayScene02::Unload()

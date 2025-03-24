@@ -1,6 +1,7 @@
 ﻿#include "ResourceManager.h"
 #include "D3DShader.h"
 #include "Texture.h"
+#include "Debug.h"
 
 std::shared_ptr<UTexture2D> UResourceManager::LoadTexture(
     const std::wstring& FilePath,
@@ -70,6 +71,7 @@ std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& 
     Shader->Load(RenderHardware->GetDevice(), VSPath.c_str(), PSPath.c_str());
     if (!Shader->IsLoaded())
     {
+        LOG("Shader Load Failed");
         return nullptr; // 로드 실패
     }
 

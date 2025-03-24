@@ -57,6 +57,7 @@ private:
     // 텍스처 
     std::shared_ptr<class UTexture2D> TextureTile;
     std::shared_ptr<class UTexture2D> TexturePole;
+    std::shared_ptr<class UShader> Shader;
 
     // 경계 값
     const float XBorder = 3.0f;

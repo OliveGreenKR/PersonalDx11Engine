@@ -189,8 +189,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//ResourceManager
 	UResourceManager::Get()->Initialize(RenderHardware.get());
-
-	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 	
 	//UIManager
 	UUIManager::Get()->Initialize(hWnd, RenderHardware->GetDevice(), RenderHardware->GetDeviceContext());
