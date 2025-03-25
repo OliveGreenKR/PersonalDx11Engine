@@ -101,6 +101,9 @@
     <ClCompile Include="RenderStates.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="RenderJobs.cpp">
+      <Filter>Engine\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -213,6 +216,9 @@
     </Filter>
     <Filter Include="Engine\Core">
       <UniqueIdentifier>{9706677a-0640-455f-b237-cc37c18e125a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DataStructure\MemoryPool">
+      <UniqueIdentifier>{1aea0121-5587-49b2-aba7-b4f3ce240883}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -392,6 +398,15 @@
     </ClInclude>
     <ClInclude Include="RenderStateInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectPool.h">
+      <Filter>Engine\DataStructure\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameMemoryPool.h">
+      <Filter>Engine\DataStructure\MemoryPool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

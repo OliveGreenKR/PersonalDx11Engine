@@ -158,6 +158,7 @@
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RenderJobs.cpp" />
     <ClCompile Include="RenderStates.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="ElasticBody.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="FrameMemoryPool.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="GameplayScene01.h" />
@@ -196,6 +198,7 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ModelBufferManager.h" />
+    <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
@@ -219,6 +222,7 @@
     <ClInclude Include="SceneInterface.h" />
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="ShaderInterface.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
     <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />

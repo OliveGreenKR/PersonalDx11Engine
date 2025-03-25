@@ -2,6 +2,7 @@
 
 #include "RenderHardwareInterface.h"
 #include "ResourceInterface.h"
+#include "ShaderInterface.h"
 #include "Math.h"
 #include <vector>
 #include <string>
@@ -10,7 +11,7 @@
 using namespace std;
 
 
-class UShader : public IResource
+class UShader : public IResource, public IShader
 {
 private:
 
@@ -34,7 +35,6 @@ private:
 		ID3D11Buffer* Buffer = nullptr;
 		std::vector<FConstantBufferVariable> Variables;
 	};
-
 	// 리소스 바인딩 정보
 	struct FResourceBinding
 	{
@@ -60,12 +60,10 @@ private:
 	std::vector<FResourceBinding> PSResourceBindings;
 
 public:
-	bool Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* PSPath);
+	UShader() = default;
+	~UShader();
 
-	// 기본 접근자 메서드
-	ID3D11VertexShader* GetVertexShader() const { return VertexShader; }
-	ID3D11PixelShader* GetPixelShader() const	{ return PixelShader; }
-	ID3D11InputLayout* GetInputLayout() const	{ return InputLayout; }
+	bool Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* PSPath);
 
 	ID3D11Buffer* GetVSConstantBuffer(uint32_t Slot) const
 	{
@@ -117,6 +115,57 @@ public:
 		return std::string();
 	}
 
+public:
+	//Inherited by IShader
+	ID3D11VertexShader* GetVertexShader() const override { return VertexShader; }
+	ID3D11PixelShader* GetPixelShader() const override { return PixelShader; }
+	ID3D11InputLayout* GetInputLayout() const override { return InputLayout; }
+
+	std::vector<ConstantBufferInfo> GetVSConstantBuffers() const override
+	{
+		std::vector<ConstantBufferInfo> result;
+		for (const auto& cb : VSConstantBuffers)
+		{
+			result.push_back({ cb.BindPoint, cb.Buffer, cb.Size, cb.Name });
+		}
+			
+		return result;
+	}
+
+	std::vector<ConstantBufferInfo> GetPSConstantBuffers() const override
+	{
+		std::vector<ConstantBufferInfo> result;
+		for (const auto& cb : PSConstantBuffers)
+			result.push_back({ cb.BindPoint, cb.Buffer, cb.Size, cb.Name });
+		return result;
+	}
+
+	//SRV는 외부에서 설정해야함
+	std::vector<TextureBinding> GetTextures() const override
+	{
+		std::vector<TextureBinding> result;
+		for (const auto& binding : VSResourceBindings)
+			if (binding.Type == D3D_SIT_TEXTURE)
+				result.push_back({ binding.BindPoint, nullptr, binding.Name }); // SRV는 외부에서 설정
+		for (const auto& binding : PSResourceBindings)
+			if (binding.Type == D3D_SIT_TEXTURE)
+				result.push_back({ binding.BindPoint, nullptr, binding.Name });
+		return result;
+	}
+
+	//Sampler는 외부에서 설정해야함
+	std::vector<SamplerBinding> GetSamplers() const override
+	{
+		std::vector<SamplerBinding> result;
+		for (const auto& binding : VSResourceBindings)
+			if (binding.Type == D3D_SIT_SAMPLER)
+				result.push_back({ binding.BindPoint, nullptr, binding.Name }); // Sampler는 외부에서 설정
+		for (const auto& binding : PSResourceBindings)
+			if (binding.Type == D3D_SIT_SAMPLER)
+				result.push_back({ binding.BindPoint, nullptr, binding.Name });
+		return result;
+	}
+
 	// 상수 버퍼 레이아웃 정보
 	const std::vector<FConstantBufferInfo>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
 	const std::vector<FConstantBufferInfo>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
@@ -134,10 +183,6 @@ public:
 
 	//전체 상수 버퍼 업데이트
 	bool UpdateConstantBuffer(ID3D11DeviceContext* Context, const std::string& BufferName, const void* Data, uint32_t DataSize);
-
-public:
-	UShader() = default;
-	~UShader();
 
 public:
 	// IResource 인터페이스 구현

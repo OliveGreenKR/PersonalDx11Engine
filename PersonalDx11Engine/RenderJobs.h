@@ -3,10 +3,10 @@
 #include "RenderStateInterface.h"
 #include "Math.h"
 #include <d3d11.h>
+#include <vector>
 
 // 전방 선언
 class FRenderContext;
-
 
 class FRenderJobBase
 {
@@ -16,96 +16,70 @@ public:
     virtual ERenderStateType GetStateType() const { return ERenderStateType::None; }
 };
 
-
-// 텍스처링 렌더링 작업
 class FTextureRenderJob : public FRenderJobBase
 {
 public:
+    ~FTextureRenderJob() override = default;
+     
     FTextureRenderJob(ERenderStateType InStateType = ERenderStateType::Solid)
         : StateType(InStateType) {
     }
 
-    void Execute(FRenderContext* Context) override
-	{
-        // 렌더 컨텍스트의 메서드를 활용하여 렌더링 수행
-
-        // 1. 버퍼 바인딩
-        Context->BindVertexBuffer(VertexBuffer, Stride, Offset);
-		if (IndexBuffer)
-		{
-            Context->BindIndexBuffer(IndexBuffer);
-		}
-
-		// 2. 쉐이더 바인딩
-        Context->BindShader(VS, PS, InputLayout);
-
-		// 3. 상수 버퍼 업데이트 및 바인딩
-		for (const auto& CB : VSConstantBuffers)
-		{
-            Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data.data(), CB.Data.size(), true);
-		}
-
-		for (const auto& CB : PSConstantBuffers)
-		{
-            Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data.data(), CB.Data.size(), false);
-		}
-
-		// 4. 텍스처 및 샘플러 바인딩
-		for (const auto& Tex : Textures)
-		{
-            Context->BindShaderResource(Tex.Slot, Tex.SRV);
-		}
-
-		for (const auto& Samp : Samplers)
-		{
-            Context->BindSamplerState(Samp.Slot, Samp.Sampler);
-		}
-
-		// 5. 드로우 콜 실행
-		if (IndexBuffer && IndexCount > 0)
-		{
-            Context->DrawIndexed(IndexCount);
-		}
-		else if (VertexCount > 0)
-		{
-            Context->Draw(VertexCount);
-		}
-	}
+    void Execute(class FRenderContext* Context) override;
 
     ERenderStateType GetStateType() const override { return StateType; }
 
-    struct ConstantBufferInfo {
-        UINT Slot;
+    //데이터 추가를 위한 외부 인터페이스 
+    void SetShaderResources(class IShader* InShader);
+
+    void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
+
+    void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer);
+
+    void AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV);
+
+    void AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler);
+
+    // 데이터 구조
+    struct ConstantBufferBindData {
+        uint32_t Slot;
         ID3D11Buffer* Buffer;
-        std::vector<uint8_t> Data;
+        void* Data;
+        size_t DataSize;
     };
 
-    struct TextureBinding {
-        UINT Slot;
+    struct TextureBindData {
+        uint32_t Slot;
         ID3D11ShaderResourceView* SRV;
     };
 
-    struct SamplerBinding {
-        UINT Slot;
+    struct SamplerBindData {
+        uint32_t Slot;
         ID3D11SamplerState* Sampler;
     };
 
-
+    // 멤버 변수
     ERenderStateType StateType;
 
+    // 버퍼 관련
     ID3D11Buffer* VertexBuffer = nullptr;
     ID3D11Buffer* IndexBuffer = nullptr;
-    UINT VertexCount = 0;
-    UINT IndexCount = 0;
-    UINT Stride = 0;
-    UINT Offset = 0;
+    uint32_t VertexCount = 0;
+    uint32_t IndexCount = 0;
+    uint32_t Stride = 0;
+    uint32_t Offset = 0;
+    uint32_t StartVertex = 0; // 드로우 시작 위치
+    int32_t BaseVertex = 0;   // 인덱스 드로우의 베이스 버텍스
+    uint32_t StartIndex = 0;  // 인덱스 시작 위치
 
-    ID3D11VertexShader* VS = nullptr;
-    ID3D11PixelShader* PS = nullptr;
+    // 쉐이더
+    ID3D11VertexShader* VertexShader = nullptr;
+    ID3D11PixelShader* PixelShader = nullptr;
     ID3D11InputLayout* InputLayout = nullptr;
 
-    std::vector<ConstantBufferInfo> VSConstantBuffers;
-    std::vector<ConstantBufferInfo> PSConstantBuffers;
-    std::vector<TextureBinding> Textures;
-    std::vector<SamplerBinding> Samplers;
+    // 리소스
+    std::vector<ConstantBufferBindData> VSConstantBuffers;
+    std::vector<ConstantBufferBindData> PSConstantBuffers;
+    std::vector<TextureBindData> Textures;
+    std::vector<SamplerBindData> Samplers;
 };

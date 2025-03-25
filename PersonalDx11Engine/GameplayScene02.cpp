@@ -164,21 +164,25 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob.Stride = BufferRsc->GetStride();
     RenderJob.StateType = ERenderStateType::Solid;
 
-    RenderJob.VS = Shader->GetVertexShader();
-    RenderJob.PS = Shader->GetPixelShader();
-    RenderJob.InputLayout = Shader->GetInputLayout();
+
+    //쉐이더 버퍼 업데이트
+    //쉐이더 정보 넘기기
+    RenderJob.SetShaderResources(Shader.get());
+
 
     //shader resource - texture
     RenderJob.Textures = { {0, TextureTile.get()->GetShaderResourceView()}};
     //shader resource -  sampler
         //default -> null
 
-    // update matrix cbuffer
-    FTextureRenderJob::ConstantBufferInfo MatrixBufferInfo;
 
     XMMATRIX world = Character->GetTransform().GetModelingMatrix();
     XMMATRIX view = Camera->GetViewMatrix();
     XMMATRIX proj = Camera->GetProjectionMatrix();
+
+    //BufferData.World = XMMatrixTranspose(BufferData.World);
+    //BufferData.View = XMMatrixTranspose(BufferData.View);
+    //BufferData.Projection = XMMatrixTranspose(BufferData.Projection);
 
     // update color buffer
 

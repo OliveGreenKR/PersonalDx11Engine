@@ -98,50 +98,7 @@ void UGameplayScene01::Tick(float DeltaTime)
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
-    for (auto ebody : ElasticBodies)
-    {
-        FTextureRenderJob RenderJob;
-        RenderJob.Textures = { { 0 ,TextureTile->GetShaderResourceView() } };
-
-        auto Primitive = ebody->GetComponentByType<UPrimitiveComponent>();
-        auto BufferRsc = Primitive->GetModel()->GetBufferResource();
-
-        RenderJob.IndexBuffer = BufferRsc->GetIndexBuffer();
-        RenderJob.IndexCount = BufferRsc->GetIndexCount();
-        RenderJob.VertexBuffer = BufferRsc->GetVertexBuffer();
-        RenderJob.VertexCount = BufferRsc->GetVertexCount();
-        RenderJob.Offset = BufferRsc->GetOffset();
-        RenderJob.Stride = BufferRsc->GetStride();
-        RenderJob.StateType = ERenderStateType::Solid;
-
-        RenderJob.VS = Shader->GetVertexShader();
-        RenderJob.PS = Shader->GetPixelShader();
-        RenderJob.InputLayout = Shader->GetInputLayout();
-
-        auto constantinfos = Shader->GetVSConstantBufferInfo();
-
-        for (const auto& info : constantinfos)
-        {
-            FTextureRenderJob::ConstantBufferInfo bufferInfo;
-            bufferInfo.Buffer = info.Buffer;
-          
-            //TODO : test renderJob system
-        }
-       
-
-
-   /*     ID3D11VertexShader* VS = nullptr;
-        ID3D11PixelShader* PS = nullptr;
-        ID3D11InputLayout* InputLayout = nullptr;
-
-
-        std::vector<ConstantBufferInfo> VSConstantBuffers;
-        std::vector<ConstantBufferInfo> PSConstantBuffers;
-        std::vector<TextureBinding> Textures;
-        std::vector<SamplerBinding> Samplers;*/
-
-        Renderer->SubmitJob(RenderJob);
-    }
+ 
 }
 
 void UGameplayScene01::SubmitRenderUI()
