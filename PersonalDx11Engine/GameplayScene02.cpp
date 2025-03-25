@@ -102,10 +102,26 @@ void UGameplayScene02::Load()
 
     //쉐이더 로드'
     Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+
+    auto VSBufferInfo = Shader->GetVSConstantBufferInfo();
+    for (auto info : VSBufferInfo)
+    {
+        if (info.Name == "MATRIX_BUFFER")
+        {
+            MatrixBufferData = new unsigned char[info.Size];
+        }
+        else if (info.Name == "COLOR_BUFFER")
+        {
+            ColorBufferData = new unsigned char[info.Size];
+        }
+    }
 }
 
 void UGameplayScene02::Unload()
 {
+    delete MatrixBufferData;
+    delete ColorBufferData;
+
     // 입력 컨텍스트 삭제
     UInputManager::Get()->UnregisterInputContext(SceneName);
 
@@ -173,20 +189,27 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     //shader resource - texture
     RenderJob.Textures = { {0, TextureTile.get()->GetShaderResourceView()}};
     //shader resource -  sampler
-        //default -> null
-
 
     XMMATRIX world = Character->GetTransform().GetModelingMatrix();
     XMMATRIX view = Camera->GetViewMatrix();
     XMMATRIX proj = Camera->GetProjectionMatrix();
 
-    //BufferData.World = XMMatrixTranspose(BufferData.World);
-    //BufferData.View = XMMatrixTranspose(BufferData.View);
-    //BufferData.Projection = XMMatrixTranspose(BufferData.Projection);
+    world = XMMatrixTranspose(world);
+    view = XMMatrixTranspose(view);
+    proj = XMMatrixTranspose(proj);
 
-    // update color buffer
+    std::memcpy(MatrixBufferData, &world, sizeof(XMMATRIX));
+    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX), &view, sizeof(XMMATRIX));
+    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX) * 2, &proj, sizeof(XMMATRIX));
 
-    //
+    Vector4 color(1, 1, 1, 1);
+    std::memcpy(ColorBufferData, &color, sizeof(Vector4));
+
+    auto MatrixBuffer = Shader->GetVSConstantBuffer(0);
+    auto ColorBuffer = Shader->GetVSConstantBuffer(1);
+    RenderJob.AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
+    RenderJob.AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
+
 }
 
 void UGameplayScene02::SubmitRenderUI()

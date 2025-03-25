@@ -59,6 +59,10 @@ private:
     std::shared_ptr<class UTexture2D> TexturePole;
     std::shared_ptr<class UShader> Shader;
 
+    //tmp
+    void* MatrixBufferData = nullptr;
+    void* ColorBufferData = nullptr;
+
     // 경계 값
     const float XBorder = 3.0f;
     const float YBorder = 2.0f;

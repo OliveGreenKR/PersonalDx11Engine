@@ -38,17 +38,24 @@ public:
     void Draw(UINT VertexCount, UINT StartVertexLocation = 0);
     void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
 
+    ID3D11SamplerState* GetDefaultSamplerState() { return DefaultSamplerState; }
+
     // 현재 디바이스 컨텍스트 접근자
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }
     ID3D11Device* GetDevice() const { return RenderHardware ? RenderHardware->GetDevice() : nullptr; }
+ 
 
 private:
+    void CreateDefaultSamplerState();
+
     // 현재 바인딩된 리소스 캐시
     ID3D11Buffer* CurrentVB = nullptr;
     ID3D11Buffer* CurrentIB = nullptr;
     ID3D11VertexShader* CurrentVS = nullptr;
     ID3D11PixelShader* CurrentPS = nullptr;
     ID3D11InputLayout* CurrentLayout = nullptr;
+
+    ID3D11SamplerState* DefaultSamplerState = nullptr;
 
     std::shared_ptr<IRenderHardware> RenderHardware;
     std::stack<IRenderState*> StateStack;

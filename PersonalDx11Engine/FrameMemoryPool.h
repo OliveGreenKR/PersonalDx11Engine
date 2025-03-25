@@ -7,6 +7,7 @@
 
 using byte = unsigned char;
 
+//Arena allocation방식의 메모리 풀
 class FrameMemoryPool {
 private:
     std::vector<byte*> buffers;
