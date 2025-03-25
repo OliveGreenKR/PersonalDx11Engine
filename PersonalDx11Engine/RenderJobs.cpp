@@ -24,11 +24,11 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
     // 3. 상수 버퍼 바인딩 
     for (const auto& CB : VSConstantBuffers)
     {
-        Context->BindConstantBuffer(CB.Slot, CB.Buffer, nullptr, 0, true);
+        Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data, CB.DataSize, true);
     }
     for (const auto& CB : PSConstantBuffers)
     {
-        Context->BindConstantBuffer(CB.Slot, CB.Buffer, nullptr, 0, false);
+        Context->BindConstantBuffer(CB.Slot, CB.Buffer, CB.Data, CB.DataSize, false);
     }
         
     // 4. 텍스처 및 샘플러 바인딩
@@ -115,10 +115,17 @@ void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer)
 
 void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
 {
-    Textures.push_back({ Slot, SRV });
+    if (SRV)
+    {
+        Textures.push_back({ Slot, SRV });
+    }
+    
 }
 
 void FTextureRenderJob::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
 {
-    Samplers.push_back({ Slot, Sampler });
+    if (Sampler)
+    {
+        Samplers.push_back({ Slot, Sampler });
+    }
 }

@@ -13,17 +13,21 @@ bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRen
 	bool result = true;
 
 	Context = make_unique<FRenderContext>();
+	JobPool = make_unique<FFrameMemoryPool>();
 
 	result = result && InRenderHardware->IsDeviceReady();
 	result = result && Context->Initialize(InRenderHardware);
 
 	CreateStates();
+
+
 	return result;
 }
 
 void URenderer::Release()
 {
 	Context->Release();
+	JobPool->Reset();
 }
 
 
@@ -35,11 +39,12 @@ void URenderer::BeginFrame()
 void URenderer::EndFrame()
 {
 	Context->EndFrame();
+	JobPool->Clear();
 }
 
-void URenderer::SubmitJob(const FRenderJobBase& InJob)
+void URenderer::SubmitJob(FRenderJobBase* InJob)
 {
-	auto state = InJob.GetStateType();
+	auto state = InJob->GetStateType();
 	RenderQueue[state].push_back(InJob);
 }
 
@@ -56,7 +61,7 @@ void URenderer::ProcessJobs()
 		// 같은 상태의 작업들 일괄 처리
 		for (auto& job : jobs)
 		{
-			job.Execute(Context.get());
+			job->Execute(Context.get());
 		}
 
 		// 상태 복원

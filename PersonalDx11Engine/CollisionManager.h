@@ -62,7 +62,7 @@ struct FCollisionSystemConfig
     int MaxSubSteps = 5;                 // 최대 서브스텝 수
 
     // AABB Tree 관련 설정
-    size_t InitialCapacity = 1024;       // 초기 컴포넌트 및 트리 용량
+    size_t InitialCapacity = 512;       // 초기 컴포넌트 및 트리 용량
     float AABBMargin = 0.1f;             // AABB 여유 공간
 };
 

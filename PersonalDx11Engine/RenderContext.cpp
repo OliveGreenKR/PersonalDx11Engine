@@ -7,18 +7,24 @@ bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
         return false;
 
     RenderHardware = InHardware;
+
+    CreateDefaultSamplerState();
     return true; // 성공 시 true 반환
 }
 
 void FRenderContext::Release()
 {
+    //기본 샘플러 
+    DefaultSamplerState->Release();
+    DefaultSamplerState = nullptr;
+
 	//캐시 해제
 	CurrentVB = nullptr;
 	CurrentIB = nullptr;
 	CurrentVS = nullptr;
 	CurrentPS = nullptr;
 	CurrentLayout = nullptr;
-    
+   
     while (!StateStack.empty())
     {
         StateStack.pop();

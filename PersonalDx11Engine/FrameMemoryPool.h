@@ -8,7 +8,7 @@
 using byte = unsigned char;
 
 //Arena allocation방식의 메모리 풀
-class FrameMemoryPool {
+class FFrameMemoryPool {
 private:
     std::vector<byte*> buffers;
     byte* currentBuffer;
@@ -24,17 +24,17 @@ private:
     }
 
 public:
-    explicit FrameMemoryPool(size_t singleBufferSize = 1024 * 1024)
+    explicit FFrameMemoryPool(size_t singleBufferSize = 1024 * 1024)
         : bufferSize(singleBufferSize), usedBytes(0), totalAllocated(0) {
         currentBuffer = AllocateNewBuffer();
     }
 
-    ~FrameMemoryPool() {
+    ~FFrameMemoryPool() {
         Clear();
     }
 
     template<typename T = void>
-    T* Allocate(size_t size = sizeof(T)) {
+    void* AllocateVoid(size_t size = sizeof(T)) {
         size_t alignedSize = (size + alignof(T) - 1) & ~(alignof(T) - 1);
         if (usedBytes + alignedSize > bufferSize) {
             currentBuffer = AllocateNewBuffer();
@@ -42,7 +42,25 @@ public:
         }
         byte* ptr = currentBuffer + usedBytes;
         usedBytes += alignedSize;
-        return reinterpret_cast<T*>(ptr);
+
+        return (ptr);
+    }
+
+    template<typename T>
+    T* Allocate() {
+        void* ptr = AllocateVoid<T>();
+        return new(ptr) T(); // 기본 생성자 호출
+    }
+
+    template<typename T = void, typename... Args>
+    T* Allocate(Args&&... args) {
+
+        static_assert(std::is_constructible<T, Args...>::value,
+                      "T must be constructible with the provided arguments");
+
+        void* ptr = AllocateVoid<T>();
+        // placement new에 가변 인자를 전달
+        return new(ptr) T(std::forward<Args>(args)...);
     }
 
     // 복사 생성 가능한 경우에만 동작하도록 제한

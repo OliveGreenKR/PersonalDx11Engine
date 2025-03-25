@@ -384,9 +384,6 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBufferManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="RenderStates.h">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>

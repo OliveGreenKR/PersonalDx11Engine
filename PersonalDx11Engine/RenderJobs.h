@@ -11,18 +11,20 @@ class FRenderContext;
 class FRenderJobBase
 {
 public:
+    FRenderJobBase() = default;
     virtual ~FRenderJobBase() = default;
-    virtual void Execute(FRenderContext* Context) {};
-    virtual ERenderStateType GetStateType() const { return ERenderStateType::None; }
+    virtual void Execute(FRenderContext* Context) = 0 ;
+    virtual ERenderStateType GetStateType() const = 0;
 };
 
 class FTextureRenderJob : public FRenderJobBase
 {
 public:
     ~FTextureRenderJob() override = default;
-     
-    FTextureRenderJob(ERenderStateType InStateType = ERenderStateType::Solid)
-        : StateType(InStateType) {
+
+    FTextureRenderJob() : StateType(ERenderStateType::Solid)
+    { 
+
     }
 
     virtual void Execute(class FRenderContext* Context) override;
@@ -83,8 +85,8 @@ public:
     ID3D11InputLayout* InputLayout = nullptr;
 
     // 리소스
-    std::vector<ConstantBufferBindData> VSConstantBuffers;
-    std::vector<ConstantBufferBindData> PSConstantBuffers;
-    std::vector<TextureBindData> Textures;
-    std::vector<SamplerBindData> Samplers;
+    std::vector<ConstantBufferBindData> VSConstantBuffers = std::vector<ConstantBufferBindData>();
+    std::vector<ConstantBufferBindData> PSConstantBuffers = std::vector<ConstantBufferBindData>();
+    std::vector<TextureBindData> Textures = std::vector<TextureBindData>();
+    std::vector<SamplerBindData> Samplers = std::vector<SamplerBindData>();
 };

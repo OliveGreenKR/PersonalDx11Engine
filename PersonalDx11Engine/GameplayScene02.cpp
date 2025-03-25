@@ -165,26 +165,23 @@ void UGameplayScene02::Tick(float DeltaTime)
 
 void UGameplayScene02::SubmitRender(URenderer* Renderer)
 {
-    //TODO : Submit RenderJob
-    FTextureRenderJob RenderJob;
-    RenderJob.Textures = { { 0 ,TextureTile->GetShaderResourceView() } };
-
     auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
     auto BufferRsc = Primitive->GetModel()->GetBufferResource();
 
-    RenderJob.IndexBuffer = BufferRsc->GetIndexBuffer();
-    RenderJob.IndexCount = BufferRsc->GetIndexCount();
-    RenderJob.VertexBuffer = BufferRsc->GetVertexBuffer();
-    RenderJob.VertexCount = BufferRsc->GetVertexCount();
-    RenderJob.Offset = BufferRsc->GetOffset();
-    RenderJob.Stride = BufferRsc->GetStride();
-    RenderJob.StateType = ERenderStateType::Solid;
+    //TODO : Submit RenderJob
+    auto RenderJob = Renderer->AcquireJob<FTextureRenderJob>();
 
+    RenderJob->IndexBuffer = BufferRsc->GetIndexBuffer();
+    RenderJob->IndexCount = BufferRsc->GetIndexCount();
+    RenderJob->VertexBuffer = BufferRsc->GetVertexBuffer();
+    RenderJob->VertexCount = BufferRsc->GetVertexCount();
+    RenderJob->Offset = BufferRsc->GetOffset();
+    RenderJob->Stride = BufferRsc->GetStride();
+    RenderJob->StateType = ERenderStateType::Solid;
 
-    //shader resource - texture
-    RenderJob.AddTexture(0, TextureTile.get()->GetShaderResourceView());
-    //shader resource -  sampler
-    RenderJob.AddSampler(0, Renderer->GetDefaultSamplerState());
+    //shader resource - texture, sampler
+    RenderJob->AddSampler(0, Renderer->GetDefaultSamplerState());
+    RenderJob->AddTexture(0, TextureTile->GetShaderResourceView());
 
     XMMATRIX world = Character->GetTransform().GetModelingMatrix();
     XMMATRIX view = Camera->GetViewMatrix();
@@ -203,9 +200,8 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
 
     auto MatrixBuffer = Shader->GetVSConstantBuffer(0);
     auto ColorBuffer = Shader->GetVSConstantBuffer(1);
-    RenderJob.AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
-    RenderJob.AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
-
+    RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
+    RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
 
     Renderer->SubmitJob(RenderJob);
 }
