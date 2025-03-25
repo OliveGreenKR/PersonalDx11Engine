@@ -31,7 +31,6 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
         Context->BindConstantBuffer(CB.Slot, CB.Buffer, nullptr, 0, false);
     }
         
-
     // 4. 텍스처 및 샘플러 바인딩
     for (const auto& Tex : Textures)
     {
@@ -42,7 +41,6 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
     {
         Context->BindSamplerState(Samp.Slot, Samp.Sampler);
     }
-        
 
     // 5. 드로우 콜 실행
     if (IndexCount > 0)
@@ -110,17 +108,17 @@ void FTextureRenderJob::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer,
     VSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
 }
 
-inline void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer)
+void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer)
 {
     PSConstantBuffers.push_back({ Slot, Buffer });
 }
 
-inline void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
+void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
 {
     Textures.push_back({ Slot, SRV });
 }
 
-inline void FTextureRenderJob::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
+void FTextureRenderJob::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
 {
     Samplers.push_back({ Slot, Sampler });
 }

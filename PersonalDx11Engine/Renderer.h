@@ -45,6 +45,8 @@ public:
 	// 렌더 작업 제출
 	void SubmitJob(const FRenderJobBase& InJob);
 
+	ID3D11SamplerState* GetDefaultSamplerState() { return Context->GetDefaultSamplerState(); }
+
 private:
 	//상태 객체 생성 및 초기화
 	void CreateStates();

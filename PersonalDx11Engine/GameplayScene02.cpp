@@ -181,14 +181,10 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob.StateType = ERenderStateType::Solid;
 
 
-    //쉐이더 버퍼 업데이트
-    //쉐이더 정보 넘기기
-    RenderJob.SetShaderResources(Shader.get());
-
-
     //shader resource - texture
-    RenderJob.Textures = { {0, TextureTile.get()->GetShaderResourceView()}};
+    RenderJob.AddTexture(0, TextureTile.get()->GetShaderResourceView());
     //shader resource -  sampler
+    RenderJob.AddSampler(0, Renderer->GetDefaultSamplerState());
 
     XMMATRIX world = Character->GetTransform().GetModelingMatrix();
     XMMATRIX view = Camera->GetViewMatrix();
@@ -210,6 +206,8 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob.AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
     RenderJob.AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
 
+
+    Renderer->SubmitJob(RenderJob);
 }
 
 void UGameplayScene02::SubmitRenderUI()

@@ -25,11 +25,16 @@ public:
         : StateType(InStateType) {
     }
 
-    void Execute(class FRenderContext* Context) override;
+    virtual void Execute(class FRenderContext* Context) override;
 
     ERenderStateType GetStateType() const override { return StateType; }
 
     //데이터 추가를 위한 외부 인터페이스 
+    
+    /// <summary>
+    /// 상수 버퍼  : 슬롯, 데이터 크기, 버퍼
+    /// 리소스 : 텍스처, 샘플러 
+    /// </summary>
     void SetShaderResources(class IShader* InShader);
 
     void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
