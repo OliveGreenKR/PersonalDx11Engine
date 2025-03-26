@@ -1,6 +1,7 @@
 ﻿#include "RenderJobs.h"
 #include "ShaderInterface.h"
 #include "RenderContext.h"
+#include "Debug.h"
 
 void FTextureRenderJob::Execute(FRenderContext* Context)
 {
@@ -84,29 +85,57 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
 //    }
 //}
 
-void FTextureRenderJob::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
-{
-    VSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
+void FTextureRenderJob::SetShader(ID3D11VertexShader* InVSShader, ID3D11PixelShader* InPSShader, ID3D11InputLayout* InInputLayout)
+{ 
+    if (!InVSShader || !InPSShader || !InInputLayout)
+    {
+        LOG("Wrong Shader. Cantnot Set Shadern  in Job");
+        return;
+    }
+    VertexShader = InVSShader;
+    PixelShader = InPSShader;
+    InputLayout = InInputLayout;
 }
 
-void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer)
+void FTextureRenderJob::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
 {
-    PSConstantBuffers.push_back({ Slot, Buffer });
+    if (!Buffer || !Data)
+    {
+        LOG("Wrong ConstantBuffer");
+        return;
+    }
+	VSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
+}
+
+void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
+{
+    if (!Buffer || !Data)
+    {
+        LOG("Wrong ConstantBuffer");
+        return;
+    }
+    PSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
+   
 }
 
 void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
 {
-    if (SRV)
+    if (!SRV)
     {
-        Textures.push_back({ Slot, SRV });
+        LOG("Wrong Texture");
+        return;
     }
+    Textures.push_back({ Slot, SRV });
+    
     
 }
 
 void FTextureRenderJob::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
 {
-    if (Sampler)
+    if (!Sampler)
     {
-        Samplers.push_back({ Slot, Sampler });
+        LOG("Wrong Sampler");
+        return;
     }
+    Samplers.push_back({ Slot, Sampler });
 }

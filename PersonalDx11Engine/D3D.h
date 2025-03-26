@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "RenderHardwareInterface.h"
 
 using namespace DirectX;
@@ -14,7 +14,7 @@ public:
     void Release() override;
     void BeginFrame() override;
     void EndFrame() override;
-    ID3D11SamplerState* GetDefaultSamplerState() override;
+
     bool IsDeviceReady() override { return bIsInitialized; }
 
     __forceinline ID3D11Device* GetDevice() override               { return Device; }
@@ -28,8 +28,7 @@ public:
     bool bVSync = true;
 
 private:
-
-    void PrepareRender();
+    void InitRenderContext();
    
     bool CreateDeviceAndSwapChain(HWND Hwnd);
     bool CreateFrameBuffer();
@@ -56,12 +55,8 @@ private:
     ID3D11DepthStencilState* DepthStencilState = nullptr;
     ID3D11BlendState* BlendState = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
-    //RenderTargetView는 렌더링 결과물을 저장할 메모리 영역 지정, 
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RasterizerState* RasterizerState = nullptr;
-    ID3D11SamplerState* DefaultSamplerState = nullptr;
-
-
 
     D3D11_VIEWPORT ViewportInfo;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };

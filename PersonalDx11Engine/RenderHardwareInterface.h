@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #pragma comment(lib, "user32")
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
@@ -22,9 +22,6 @@ public:
     // 하드웨어 접근자
     virtual ID3D11Device* GetDevice() = 0;
     virtual ID3D11DeviceContext* GetDeviceContext() = 0;
-
-    // 기본 상태 객체 생성
-    virtual ID3D11SamplerState* GetDefaultSamplerState() = 0;
 
     // 비동기 작업용 추가 메서드
     virtual bool IsDeviceReady() = 0;

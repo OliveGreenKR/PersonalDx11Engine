@@ -407,9 +407,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ShaderW0.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="ShaderMy00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>

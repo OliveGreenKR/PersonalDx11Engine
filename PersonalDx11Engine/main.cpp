@@ -1,4 +1,4 @@
-﻿#include <windows.h>
+#include <windows.h>
 #include <iostream>
 
 //ImGui
@@ -249,12 +249,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->BeginFrame();
 
 		//SceneRender Submit
-		USceneManager::Get()->Render(Renderer.get());
+		//USceneManager::Get()->Render(Renderer.get());
+
+		// 테스트 삼각형 렌더링
+		auto Camera = USceneManager::Get()->GetActiveCamera();
 
 		//Actual Render 
 		Renderer->ProcessJobs();
 
-		auto Camera = USceneManager::Get()->GetActiveCamera();
+		
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02]() {

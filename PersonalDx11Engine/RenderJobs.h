@@ -34,10 +34,11 @@ public:
     //데이터 추가를 위한 외부 인터페이스 
 
     //void SetShaderResources(class IShader* InShader);
+    void SetShader(ID3D11VertexShader* InVSShader, ID3D11PixelShader* InPSShader, ID3D11InputLayout* InInputLayout);
 
     void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
 
-    void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer);
+    void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
 
     void AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV);
 

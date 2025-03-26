@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GameplayScene02.h"
 #include "Renderer.h"
 #include "RigidBodyComponent.h"
@@ -32,7 +32,7 @@ void UGameplayScene02::Initialize()
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
-    Camera->SetPosition({ 0, 0.0f, -10.0f });
+    Camera->SetPosition({ 0, 0.0f, -2.0f });
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
@@ -180,7 +180,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->StateType = ERenderStateType::Solid;
 
     //shader
-    
+    RenderJob->SetShader(Shader->GetVertexShader(), Shader->GetPixelShader(), Shader->GetInputLayout());
 
     //shader resource - texture, sampler
     RenderJob->AddSampler(0, Renderer->GetDefaultSamplerState());

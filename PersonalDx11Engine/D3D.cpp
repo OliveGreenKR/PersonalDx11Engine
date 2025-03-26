@@ -1,4 +1,4 @@
-﻿#include "D3D.h"
+#include "D3D.h"
 
 FD3D::~FD3D()
 {
@@ -17,9 +17,9 @@ bool FD3D::Initialize(HWND Hwnd)
 		CreateDepthStencilState() &&
 		CreateDepthStencillView() &&
 		CreateBlendState();
-
 	bIsInitialized = result;
 	assert(result);
+	InitRenderContext();
 	return result;
 }
 
@@ -37,7 +37,9 @@ void FD3D::Release()
 
 void FD3D::BeginFrame()
 {
-	PrepareRender();
+	DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);
+	DeviceContext->ClearDepthStencilView(DepthStencilView,
+										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void FD3D::EndFrame()
@@ -90,14 +92,8 @@ bool FD3D::CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer)
 	return SUCCEEDED(hr);
 }
 
-void FD3D::PrepareRender()
+void FD3D::InitRenderContext()
 {
-	DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor);
-	//깊이버퍼 최댓값 초기화
-	DeviceContext->ClearDepthStencilView(DepthStencilView, 
-										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-
 	//Input Assembly
 	DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//Rasterizer
@@ -341,16 +337,4 @@ void FD3D::ReleaseDepthStencil()
 	
 }
 
-ID3D11SamplerState* FD3D::GetDefaultSamplerState()
-{
-	if (!DefaultSamplerState)
-	{
-		if (!CreateDefaultSamplerState())
-		{
-			return nullptr;
-		}
-	}
-
-	return DefaultSamplerState;
-}
 

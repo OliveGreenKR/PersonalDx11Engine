@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d3d11.h>
 #include "Math.h"
 #include <stack>
@@ -19,14 +19,8 @@ public:
     void PushState(IRenderState* State);
     void PopState();
 
-    void BeginFrame()
-    {
-        RenderHardware->BeginFrame();
-    }
-    void EndFrame()
-    {
-        RenderHardware->EndFrame();
-    }
+    void BeginFrame();
+    void EndFrame();
 
     // 렌더링 메서드들
     void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
@@ -40,22 +34,25 @@ public:
 
     ID3D11SamplerState* GetDefaultSamplerState() { return DefaultSamplerState; }
 
-    // 현재 디바이스 컨텍스트 접근자
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }
     ID3D11Device* GetDevice() const { return RenderHardware ? RenderHardware->GetDevice() : nullptr; }
  
-
 private:
-    void CreateDefaultSamplerState();
-
     // 현재 바인딩된 리소스 캐시
     ID3D11Buffer* CurrentVB = nullptr;
     ID3D11Buffer* CurrentIB = nullptr;
+
+    //쉐이더 리소스
     ID3D11VertexShader* CurrentVS = nullptr;
     ID3D11PixelShader* CurrentPS = nullptr;
     ID3D11InputLayout* CurrentLayout = nullptr;
+    
 
+    //기본 렌더링 상태
+    ID3D11RasterizerState* DefaultRasterizerState = nullptr;
     ID3D11SamplerState* DefaultSamplerState = nullptr;
+
+    FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 
     std::shared_ptr<IRenderHardware> RenderHardware;
     std::stack<IRenderState*> StateStack;
