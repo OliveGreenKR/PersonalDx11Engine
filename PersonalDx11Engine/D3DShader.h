@@ -114,7 +114,7 @@ public:
 		return std::string();
 	}
 
-public:
+public: 
 	//Inherited by IShader
 	ID3D11VertexShader* GetVertexShader() const override { return VertexShader; }
 	ID3D11PixelShader* GetPixelShader() const override { return PixelShader; }

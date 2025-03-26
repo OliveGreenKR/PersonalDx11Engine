@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #pragma comment(lib, "user32")
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")

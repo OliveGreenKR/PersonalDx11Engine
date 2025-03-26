@@ -1,4 +1,4 @@
-// RenderJob.h
+﻿// RenderJob.h
 #pragma once
 #include "RenderStateInterface.h"
 #include "Math.h"
@@ -52,7 +52,7 @@ public:
 
     struct TextureBindData {
         uint32_t Slot;
-        ID3D11ShaderResourceView* SRV;
+        ID3D11ShaderResourceView* SRV; 
     };
 
     struct SamplerBindData {

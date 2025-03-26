@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "SceneInterface.h"
 #include <string>
 #include <unordered_map>
@@ -59,10 +59,10 @@ public:
 
             ActiveScene = PendingScene;
             PendingScene = nullptr;
-
-            ActiveScene->Initialize();
+            
             ActiveScene->Load();
-
+            ActiveScene->Initialize();
+     
             bIsTransitioning = false;
         }
 

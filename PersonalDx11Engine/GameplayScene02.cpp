@@ -179,9 +179,6 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->Stride = BufferRsc->GetStride();
     RenderJob->StateType = ERenderStateType::Solid;
 
-    //shader
-    RenderJob->SetShader(Shader->GetVertexShader(), Shader->GetPixelShader(), Shader->GetInputLayout());
-
     //shader resource - texture, sampler
     RenderJob->AddSampler(0, Renderer->GetDefaultSamplerState());
     RenderJob->AddTexture(0, TextureTile->GetShaderResourceView());
@@ -206,7 +203,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
     RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
 
-    Renderer->SubmitJob(RenderJob);
+    //Renderer->SubmitJob(RenderJob);
 }
 
 void UGameplayScene02::SubmitRenderUI()

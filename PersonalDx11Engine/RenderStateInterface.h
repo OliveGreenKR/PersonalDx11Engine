@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 #pragma comment(lib, "user32")
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
 #pragma comment(lib, "dxguid")
 
 #include <d3d11.h>
-#include <d3dcompiler.h>
+#include <d3dcompiler.h> 
 #include <directxmath.h>
 
 enum class ERenderStateType
@@ -13,7 +13,7 @@ enum class ERenderStateType
     None,
     Solid,
     Wireframe,
-    // ÇÊ¿äÇÑ »óÅÂ Ãß°¡
+    // í•„ìš”í•œ ìƒíƒœ ì¶”ê°€
 };
 
 class IRenderState
@@ -21,10 +21,10 @@ class IRenderState
 public:
     virtual ~IRenderState() = default;
 
-    // »óÅÂ Àû¿ë
+    // ìƒíƒœ ì ìš©
     virtual void Apply(ID3D11DeviceContext* Context) = 0;
 
-    // ÀÌÀü »óÅÂ·Î º¹¿ø
+    // ì´ì „ ìƒíƒœë¡œ ë³µì›
     virtual void Restore(ID3D11DeviceContext* Context) = 0;
 
     virtual ERenderStateType GetType() const = 0;

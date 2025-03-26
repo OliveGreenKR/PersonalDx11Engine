@@ -15,7 +15,7 @@ private:
     size_t bufferSize;
     size_t usedBytes;
     size_t totalAllocated;
-
+     
     byte* AllocateNewBuffer() {
         byte* newBuffer = new byte[bufferSize];
         buffers.push_back(newBuffer);

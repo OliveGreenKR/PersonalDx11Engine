@@ -13,7 +13,7 @@ private:
     std::vector<T*> ActiveObjects;             // 현재 사용 중인 오브젝트들
     size_t MaxSize;                            // 풀의 최대 크기
 
-    // call new Object construct 
+    // call new Object construct  
     template<typename... Args>
     T* CreateObject(Args&&... args) {
         return new T(std::forward<Args>(args)...);

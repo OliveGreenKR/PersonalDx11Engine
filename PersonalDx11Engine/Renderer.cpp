@@ -55,7 +55,7 @@ void URenderer::ProcessJobs()
 	{
 		if (jobs.empty()) continue;
 
-		// 현재 상태 적용
+		// 현재 상태 적용 
 		Context->PushState(States[stateType].get());
 
 		// 같은 상태의 작업들 일괄 처리

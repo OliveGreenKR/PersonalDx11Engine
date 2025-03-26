@@ -38,7 +38,7 @@ private:
 public:
 	URenderer() = default;
 	~URenderer() = default;
-
+	 
 public:
 	bool Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware);
 	void Release();

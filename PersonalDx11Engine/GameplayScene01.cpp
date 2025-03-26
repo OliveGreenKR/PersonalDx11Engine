@@ -22,7 +22,7 @@ UGameplayScene01::UGameplayScene01()
 }
 
 void UGameplayScene01::Initialize()
-{
+{ 
     // 모델 가져오기
     auto CubeModel = UModelBufferManager::Get()->GetCubeModel();
     auto SphereModel = UModelBufferManager::Get()->GetSphereModel();

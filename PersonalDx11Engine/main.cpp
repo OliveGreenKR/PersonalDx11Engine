@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <iostream>
 
 //ImGui
@@ -203,6 +203,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceFrequency(&frequency);
 	QueryPerformanceCounter(&lastTime);
 
+	//Default Shader for renderng
+	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+	if (Shader)
+	{
+		Renderer->GetRenderContext()->BindShader(Shader->GetVertexShader(), Shader->GetPixelShader(), Shader->GetInputLayout());
+	}
+
 	//Scene
 	auto GameplayScene01 = make_shared<UGameplayScene01>();
 	USceneManager::Get()->RegisterScene(GameplayScene01);
@@ -246,18 +253,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 #pragma region Rendering
 		//before render
-		Renderer->BeginFrame();
+		Renderer->BeginFrame(); 
 
 		//SceneRender Submit
-		//USceneManager::Get()->Render(Renderer.get());
-
-		// 테스트 삼각형 렌더링
-		auto Camera = USceneManager::Get()->GetActiveCamera();
+		USceneManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
-		Renderer->ProcessJobs();
-
-		
+		//Renderer->ProcessJobs();
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02]() {
@@ -291,7 +293,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//UIRender
 		USceneManager::Get()->RenderUI();
 		UUIManager::Get()->RenderUI();
-
 
 		//end render
 		Renderer->EndFrame();

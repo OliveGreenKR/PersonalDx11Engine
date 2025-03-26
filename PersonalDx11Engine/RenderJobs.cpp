@@ -1,4 +1,4 @@
-#include "RenderJobs.h"
+﻿#include "RenderJobs.h"
 #include "ShaderInterface.h"
 #include "RenderContext.h"
 #include "Debug.h"
@@ -30,7 +30,7 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
     {
         Context->BindShaderResource(Tex.Slot, Tex.SRV);
     }
-    // 5. 샘플ㄹ
+    // 5. 샘플러
     for (const auto& Samp : Samplers)
     {
         Context->BindSamplerState(Samp.Slot, Samp.Sampler);
@@ -67,7 +67,6 @@ void FTextureRenderJob::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer,
         return;
     }
     PSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
-   
 }
 
 void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
@@ -76,10 +75,8 @@ void FTextureRenderJob::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
     {
         LOG("Wrong Texture");
         return;
-    }
+    } 
     Textures.push_back({ Slot, SRV });
-    
-    
 }
 
 void FTextureRenderJob::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)

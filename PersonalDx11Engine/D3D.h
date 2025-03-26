@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "RenderHardwareInterface.h"
 
 using namespace DirectX;
@@ -14,7 +14,7 @@ public:
     void Release() override;
     void BeginFrame() override;
     void EndFrame() override;
-
+     
     bool IsDeviceReady() override { return bIsInitialized; }
 
     __forceinline ID3D11Device* GetDevice() override               { return Device; }
@@ -37,7 +37,7 @@ private:
     bool CreateDepthStencilState();
     bool CreateDepthStencillView();
     bool CreateBlendState();
-    bool CreateDefaultSamplerState();
+    //bool CreateDefaultSamplerState();
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();

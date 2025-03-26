@@ -389,7 +389,7 @@ bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection
 // 상수 버퍼 정보 추출 및 생성
 void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FConstantBufferInfo>& OutBuffers)
 {
-	D3D11_SHADER_DESC ShaderDesc;
+	D3D11_SHADER_DESC ShaderDesc; 
 	Reflection->GetDesc(&ShaderDesc);
 
 	for (UINT i = 0; i < ShaderDesc.ConstantBuffers; i++)
