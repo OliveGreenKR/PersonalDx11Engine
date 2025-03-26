@@ -5,25 +5,7 @@ bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
 {
     if (!InHardware || !InHardware->IsDeviceReady())
         return false;
-
     RenderHardware = InHardware;
-	FrameBufferRTV = RenderHardware->GetRenderTargetView();
-
-    CreateDefaultSamplerState();
-
-	bool result =
-		CreateDefaultSamplerState() &&
-		CreateDefaultRasterizerState() &&
-		CreateDpethStencilBuffer() &&
-		CreateDepthStencilState() &&
-		CreateDepthStencillView() &&
-		CreateBlendState();
-
-	RenderHardware->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	RenderHardware->GetDeviceContext()->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView);
-	RenderHardware->GetDeviceContext()->OMSetBlendState(BlendState, nullptr, 0xffffffff);
-	RenderHardware->GetDeviceContext()->OMSetDepthStencilState(DepthStencilState, 1);
-
     return true; // 성공 시 true 반환
 }
 
@@ -86,19 +68,12 @@ void FRenderContext::PopState()
 
 void FRenderContext::BeginFrame()
 {
-	RenderHardware->GetDeviceContext()->ClearRenderTargetView(RenderHardware->GetRenderTargetView(), ClearColor);
-	RenderHardware->GetDeviceContext()->ClearDepthStencilView(DepthStencilView,
-										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	RenderHardware->BeginFrame();
+}
 
-	//OutputMerge
-	
-
-	//Rasterizer
-	RenderHardware->GetDeviceContext()->RSSetViewports(1, &ViewportInfo);
-	RenderHardware->GetDeviceContext()->RSSetState(RasterizerState);
-
-	//Input Assembly
-	
+void FRenderContext::EndFrame()
+{
+	RenderHardware->EndFrame();
 }
 
 void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset)
@@ -206,134 +181,3 @@ void FRenderContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT B
     RenderHardware->GetDeviceContext()->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }
 
-bool FRenderContext::CreateDefaultRasterizerState()
-{
-	D3D11_RASTERIZER_DESC rasterizerdesc = {};
-	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
-	rasterizerdesc.CullMode = D3D11_CULL_BACK; // 백 페이스 컬링
-
-	return SUCCEEDED(RenderHardware->GetDevice()->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
-}
-
-bool FRenderContext::CreateDpethStencilBuffer()
-{
-
-	auto ViewportInfo = RenderHardware->GetViewPort();
-
-	D3D11_TEXTURE2D_DESC depthBufferDesc = {};
-	depthBufferDesc.Width = static_cast<UINT>(ViewportInfo.Width);
-	depthBufferDesc.Height = static_cast<UINT>(ViewportInfo.Height);
-	depthBufferDesc.MipLevels = 1;
-	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthBufferDesc.SampleDesc.Count = 1;
-	depthBufferDesc.SampleDesc.Quality = 0;
-	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthBufferDesc.CPUAccessFlags = 0;
-	depthBufferDesc.MiscFlags = 0;
-
-	HRESULT hr = RenderHardware->GetDevice()->CreateTexture2D(&depthBufferDesc, nullptr, &DepthStencilBuffer);
-	return SUCCEEDED(hr);
-}
-
-bool FRenderContext::CreateDepthStencilState()
-{
-	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
-	depthStencilDesc.DepthEnable = TRUE;
-	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-
-	// Stencil test parameters
-	depthStencilDesc.StencilEnable = TRUE;
-	depthStencilDesc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-	depthStencilDesc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
-
-	// Stencil operations if pixel is front-facing
-	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-	depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-	// Stencil operations if pixel is back-facing
-	depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-	depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-	HRESULT hr = RenderHardware->GetDevice()->CreateDepthStencilState(&depthStencilDesc, &DepthStencilState);
-	return SUCCEEDED(hr);
-}
-
-bool FRenderContext::CreateDepthStencillView()
-{
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	depthStencilViewDesc.Texture2D.MipSlice = 0;
-
-	HRESULT hr = RenderHardware->GetDevice()->CreateDepthStencilView(DepthStencilBuffer, &depthStencilViewDesc, &DepthStencilView);
-	return SUCCEEDED(hr);
-}
-
-bool FRenderContext::CreateBlendState()
-{
-	D3D11_BLEND_DESC blendDesc = {};
-	blendDesc.RenderTarget[0].BlendEnable = TRUE;
-	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	return SUCCEEDED(RenderHardware->GetDevice()->CreateBlendState(&blendDesc, &BlendState));
-}
-
-bool FRenderContext::CreateDefaultSamplerState()
-{
-	D3D11_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;  // 바이리니어 필터링, 부드러운 텍스처 표시
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // U좌표 반복
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;     // V좌표 반복  
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;     // W좌표 반복
-	samplerDesc.MinLOD = 0;                                // 최소 LOD 레벨
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;               // 최대 LOD 제한 없음
-	samplerDesc.MipLODBias = 0;                           // LOD 레벨 조정 없음
-	samplerDesc.MaxAnisotropy = 1;                        // 비등방성 필터링 사용 안함
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // 비교 샘플링 사용 안함
-
-	HRESULT result = GetDevice()->CreateSamplerState(&samplerDesc, &DefaultSamplerState);
-	return SUCCEEDED(result);
-}
-
-void FRenderContext::ReleaseRasterizerState()
-{
-	if (RasterizerState)
-	{
-		RasterizerState->Release();
-		RasterizerState = nullptr;
-	}
-}
-
-void FRenderContext::ReleaseDepthStencil()
-{
-	if (DepthStencilView)
-	{
-		DepthStencilView->Release();
-		DepthStencilView = nullptr;
-	}
-	if (DepthStencilState)
-	{
-		DepthStencilState->Release();
-		DepthStencilState = nullptr;
-	}
-	if (DepthStencilBuffer)
-	{
-		DepthStencilBuffer->Release();
-		DepthStencilBuffer = nullptr;
-	}
-
-}
