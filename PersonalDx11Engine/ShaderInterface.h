@@ -22,23 +22,20 @@ public:
         std::string Name;
     };
 
-    virtual std::vector<ConstantBufferInfo> GetVSConstantBuffers() const = 0;
-    virtual std::vector<ConstantBufferInfo> GetPSConstantBuffers() const = 0;
+    virtual std::vector<ConstantBufferInfo> GetVSConstantBufferInfos() const = 0;
+    virtual std::vector<ConstantBufferInfo> GetPSConstantBufferInfos() const = 0;
 
     // 텍스처와 샘플러 정보
-    struct TextureBinding {
+    struct TextureBindingInfo {
         uint32_t Slot;
-        ID3D11ShaderResourceView* SRV;
         std::string Name;
     };
 
-    struct SamplerBinding {
+    struct SamplerBindingInfo {
         uint32_t Slot;
-        ID3D11SamplerState* Sampler;
         std::string Name;
     };
 
-
-    virtual std::vector<TextureBinding> GetTextures() const = 0;
-    virtual std::vector<SamplerBinding> GetSamplers() const = 0;
+    virtual std::vector<TextureBindingInfo> GetTextureInfos() const = 0;
+    virtual std::vector<SamplerBindingInfo> GetSamplerInfos() const = 0;
 };

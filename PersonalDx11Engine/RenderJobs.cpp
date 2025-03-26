@@ -54,54 +54,35 @@ void FTextureRenderJob::Execute(FRenderContext* Context)
         
 }
 
-void FTextureRenderJob::SetShaderResources(IShader* InShader)
-{
-    if (!InShader)
-        return;
-
-    VertexShader = InShader->GetVertexShader();
-    PixelShader = InShader->GetPixelShader();
-    InputLayout = InShader->GetInputLayout();
-
-    // VS 상수 버퍼
-    auto vsCBs = InShader->GetVSConstantBuffers();
-    VSConstantBuffers.resize(vsCBs.size()); 
-    for (size_t i = 0; i < vsCBs.size(); ++i)
-    {
-        VSConstantBuffers[i].Slot = vsCBs[i].Slot;
-        VSConstantBuffers[i].Buffer = vsCBs[i].Buffer;
-        VSConstantBuffers[i].DataSize = vsCBs[i].Size;
-    }
-
-    // PS 상수 버퍼
-    auto psCBs = InShader->GetPSConstantBuffers();
-    PSConstantBuffers.resize(psCBs.size());
-    for (size_t i = 0; i < psCBs.size(); ++i)
-    {
-        PSConstantBuffers[i].Slot = psCBs[i].Slot;
-        PSConstantBuffers[i].Buffer = psCBs[i].Buffer;
-        PSConstantBuffers[i].DataSize = psCBs[i].Size;
-    }
-
-    // 텍스처
-    auto textures = InShader->GetTextures();
-    Textures.resize(textures.size());
-    for (size_t i = 0; i < textures.size(); ++i)
-    {
-        Textures[i].Slot = textures[i].Slot;
-        Textures[i].SRV = textures[i].SRV;
-    }
-
-
-    // 샘플러
-    auto samplers = InShader->GetSamplers();;
-    Samplers.resize(samplers.size());
-    for (size_t i = 0; i < samplers.size(); ++i)
-    {
-        Samplers[i].Slot = samplers[i].Slot;
-        Samplers[i].Sampler = samplers[i].Sampler;
-    }
-}
+//void FTextureRenderJob::SetShaderResources(IShader* InShader)
+//{
+//    if (!InShader)
+//        return;
+//
+//    VertexShader = InShader->GetVertexShader();
+//    PixelShader = InShader->GetPixelShader();
+//    InputLayout = InShader->GetInputLayout();
+//
+//    // VS 상수 버퍼
+//    auto vsCBs = InShader->GetVSConstantBufferInfos();
+//    VSConstantBuffers.resize(vsCBs.size()); 
+//    for (size_t i = 0; i < vsCBs.size(); ++i)
+//    {
+//        VSConstantBuffers[i].Slot = vsCBs[i].Slot;
+//        VSConstantBuffers[i].Buffer = vsCBs[i].Buffer;
+//        VSConstantBuffers[i].DataSize = vsCBs[i].Size;
+//    }
+//
+//    // PS 상수 버퍼
+//    auto psCBs = InShader->GetPSConstantBufferInfos();
+//    PSConstantBuffers.resize(psCBs.size());
+//    for (size_t i = 0; i < psCBs.size(); ++i)
+//    {
+//        PSConstantBuffers[i].Slot = psCBs[i].Slot;
+//        PSConstantBuffers[i].Buffer = psCBs[i].Buffer;
+//        PSConstantBuffers[i].DataSize = psCBs[i].Size;
+//    }
+//}
 
 void FTextureRenderJob::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
 {

@@ -130,7 +130,7 @@ bool UShader::BindTexture(ID3D11DeviceContext* Context, ID3D11ShaderResourceView
 						  uint32_t Slot, const std::string& ResourceName )
 {
 	// Vertex Shader와 Pixel Shader에서 리소스 바인딩 검색
-	FResourceBinding* Binding = nullptr;
+	FResourceBindInfo* Binding = nullptr;
 	bool IsVertexShader = false;
 
 	// 슬롯이 명시되지 않은 경우 이름으로 검색
@@ -197,7 +197,7 @@ bool UShader::BindTexture(ID3D11DeviceContext* Context, ID3D11ShaderResourceView
 bool UShader::BindSampler(ID3D11DeviceContext* Context, ID3D11SamplerState* Sampler, 
 						  uint32_t Slot, const std::string& SamplerName )
 {
-	FResourceBinding* Binding = nullptr;
+	FResourceBindInfo* Binding = nullptr;
 	bool IsVertexShader = false;
 
 	if (Slot == static_cast<uint32_t>(-1))
@@ -475,7 +475,7 @@ HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, 
 }
 
  // 쉐이더 리소스 바인딩 정보 추출
-void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FResourceBinding>& OutBindings)
+void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FResourceBindInfo>& OutBindings)
 {
 	D3D11_SHADER_DESC ShaderDesc;
 	Reflection->GetDesc(&ShaderDesc);
@@ -493,7 +493,7 @@ void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::v
 			case D3D_SIT_SAMPLER:       // 샘플러
 			case D3D_SIT_STRUCTURED:    // 구조화 버퍼
 			{
-				FResourceBinding Binding;
+				FResourceBindInfo Binding;
 				Binding.Name = BindDesc.Name;
 				Binding.Type = BindDesc.Type;
 				Binding.BindPoint = BindDesc.BindPoint;

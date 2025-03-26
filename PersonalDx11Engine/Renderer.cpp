@@ -94,6 +94,7 @@ void URenderer::CreateStates()
 
 		// 참조 카운트 관리
 		solidRasterizerState->Release();
+		solidRasterizerState = nullptr;
 	}
 
 
@@ -115,6 +116,7 @@ void URenderer::CreateStates()
 
 		// 참조 카운트 관리를 위해 Release
 		wireframeRasterizerState->Release();
+		wireframeRasterizerState = nullptr;
 	}
 }
 

@@ -14,7 +14,6 @@ using namespace std;
 class UShader : public IResource, public IShader
 {
 private:
-
 	// 상수 버퍼 변수 정보
 	struct FConstantBufferVariable
 	{
@@ -36,7 +35,7 @@ private:
 		std::vector<FConstantBufferVariable> Variables;
 	};
 	// 리소스 바인딩 정보
-	struct FResourceBinding
+	struct FResourceBindInfo
 	{
 		std::string Name;
 		D3D_SHADER_INPUT_TYPE Type;
@@ -56,8 +55,8 @@ private:
 	bool bIsLoaded = false;
 	size_t MemorySize = 0;
 
-	std::vector<FResourceBinding> VSResourceBindings;
-	std::vector<FResourceBinding> PSResourceBindings;
+	std::vector<FResourceBindInfo> VSResourceBindings;
+	std::vector<FResourceBindInfo> PSResourceBindings;
 
 public:
 	UShader() = default;
@@ -121,7 +120,7 @@ public:
 	ID3D11PixelShader* GetPixelShader() const override { return PixelShader; }
 	ID3D11InputLayout* GetInputLayout() const override { return InputLayout; }
 
-	std::vector<ConstantBufferInfo> GetVSConstantBuffers() const override
+	std::vector<ConstantBufferInfo> GetVSConstantBufferInfos() const override
 	{
 		std::vector<ConstantBufferInfo> result;
 		for (const auto& cb : VSConstantBuffers)
@@ -132,7 +131,7 @@ public:
 		return result;
 	}
 
-	std::vector<ConstantBufferInfo> GetPSConstantBuffers() const override
+	std::vector<ConstantBufferInfo> GetPSConstantBufferInfos() const override
 	{
 		std::vector<ConstantBufferInfo> result;
 		for (const auto& cb : PSConstantBuffers)
@@ -141,28 +140,28 @@ public:
 	}
 
 	//SRV는 외부에서 설정해야함
-	std::vector<TextureBinding> GetTextures() const override
+	std::vector<TextureBindingInfo> GetTextureInfos() const override
 	{
-		std::vector<TextureBinding> result;
+		std::vector<TextureBindingInfo> result;
 		for (const auto& binding : VSResourceBindings)
 			if (binding.Type == D3D_SIT_TEXTURE)
-				result.push_back({ binding.BindPoint, nullptr, binding.Name }); // SRV는 외부에서 설정
+				result.push_back({ binding.BindPoint, binding.Name }); // SRV는 외부에서 설정
 		for (const auto& binding : PSResourceBindings)
 			if (binding.Type == D3D_SIT_TEXTURE)
-				result.push_back({ binding.BindPoint, nullptr, binding.Name });
+				result.push_back({ binding.BindPoint, binding.Name });
 		return result;
 	}
 
 	//Sampler는 외부에서 설정해야함
-	std::vector<SamplerBinding> GetSamplers() const override
+	std::vector<SamplerBindingInfo> GetSamplerInfos() const override
 	{
-		std::vector<SamplerBinding> result;
+		std::vector<SamplerBindingInfo> result;
 		for (const auto& binding : VSResourceBindings)
 			if (binding.Type == D3D_SIT_SAMPLER)
-				result.push_back({ binding.BindPoint, nullptr, binding.Name }); // Sampler는 외부에서 설정
+				result.push_back({ binding.BindPoint, binding.Name }); // Sampler는 외부에서 설정
 		for (const auto& binding : PSResourceBindings)
 			if (binding.Type == D3D_SIT_SAMPLER)
-				result.push_back({ binding.BindPoint, nullptr, binding.Name });
+				result.push_back({ binding.BindPoint, binding.Name });
 		return result;
 	}
 
@@ -200,5 +199,5 @@ private:
 	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 
 	void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
-								 std::vector<FResourceBinding>& OutBindings);
+								 std::vector<FResourceBindInfo>& OutBindings);
 };

@@ -179,6 +179,9 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->Stride = BufferRsc->GetStride();
     RenderJob->StateType = ERenderStateType::Solid;
 
+    //shader
+    
+
     //shader resource - texture, sampler
     RenderJob->AddSampler(0, Renderer->GetDefaultSamplerState());
     RenderJob->AddTexture(0, TextureTile->GetShaderResourceView());
