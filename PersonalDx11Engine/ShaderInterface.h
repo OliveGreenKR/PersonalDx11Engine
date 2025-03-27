@@ -15,27 +15,27 @@ public:
     virtual ID3D11InputLayout* GetInputLayout() const = 0;
 
     // 상수 버퍼 정보
-    struct ConstantBufferInfo {
+    struct FConstantBufferInfo {
         uint32_t Slot;
         ID3D11Buffer* Buffer;
         uint32_t Size;
         std::string Name;
     };
 
-    virtual std::vector<ConstantBufferInfo> GetVSConstantBufferInfos() const = 0;
-    virtual std::vector<ConstantBufferInfo> GetPSConstantBufferInfos() const = 0;
+    virtual std::vector<FConstantBufferInfo> GetVSConstantBufferInfo() const = 0;
+    virtual std::vector<FConstantBufferInfo> GetPSConstantBufferInfo() const = 0;
 
     // 텍스처와 샘플러 정보
-    struct TextureBindingInfo {
+    struct FTextureBindingInfo {
         uint32_t Slot;
         std::string Name;
     };
 
-    struct SamplerBindingInfo {
+    struct FSamplerBindingInfo {
         uint32_t Slot;
         std::string Name;
     };
 
-    virtual std::vector<TextureBindingInfo> GetTextureInfos() const = 0;
-    virtual std::vector<SamplerBindingInfo> GetSamplerInfos() const = 0;
+    virtual std::vector<FTextureBindingInfo> GetTextureInfo() const = 0;
+    virtual std::vector<FSamplerBindingInfo> GetSamplerInfo() const = 0;
 };

@@ -207,7 +207,7 @@ bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection
 }
 
 // 상수 버퍼 정보 추출 및 생성
-void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FConstantBuffer>& OutBuffers)
+void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FInternalConstantBufferInfo>& OutBuffers)
 {
 	D3D11_SHADER_DESC ShaderDesc; 
 	Reflection->GetDesc(&ShaderDesc);
@@ -218,7 +218,7 @@ void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11Shader
 		D3D11_SHADER_BUFFER_DESC BufferDesc;
 		CBReflection->GetDesc(&BufferDesc);
 
-		FConstantBuffer BufferInfo;
+		FInternalConstantBufferInfo BufferInfo;
 		BufferInfo.Name = BufferDesc.Name;
 		BufferInfo.Size = BufferDesc.Size;
 		BufferInfo.BindPoint = i; // 쉐이더에서의 바인딩 포인트 (b0, b1, ...)
@@ -230,7 +230,7 @@ void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11Shader
 			D3D11_SHADER_VARIABLE_DESC VarDesc;
 			VarReflection->GetDesc(&VarDesc);
 
-			FConstantBufferVariable Variable;
+			FInternalConstantBufferVariable Variable;
 			Variable.Name = VarDesc.Name;
 			Variable.Offset = VarDesc.StartOffset;
 			Variable.Size = VarDesc.Size;
@@ -295,7 +295,7 @@ HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, 
 }
 
  // 쉐이더 리소스 바인딩 정보 추출
-void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FResourceBindInfo>& OutBindings)
+void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FInternalResourceBindInfo>& OutBindings)
 {
 	D3D11_SHADER_DESC ShaderDesc;
 	Reflection->GetDesc(&ShaderDesc);
@@ -313,7 +313,7 @@ void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::v
 			case D3D_SIT_SAMPLER:       // 샘플러
 			case D3D_SIT_STRUCTURED:    // 구조화 버퍼
 			{
-				FResourceBindInfo Binding;
+				FInternalResourceBindInfo Binding;
 				Binding.Name = BindDesc.Name;
 				Binding.Type = BindDesc.Type;
 				Binding.BindPoint = BindDesc.BindPoint;

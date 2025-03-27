@@ -6,6 +6,9 @@
 #include "RenderStateInterface.h"
 #include "RenderHardwareInterface.h"
 
+
+class FD3DContextDebugger;
+
 class FRenderContext
 {
 public:
@@ -40,6 +43,13 @@ public:
     //접근자
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }
     ID3D11Device* GetDevice() const { return RenderHardware ? RenderHardware->GetDevice() : nullptr; }
+
+    // 디버그 메소드
+    void ValidateDeviceContextBindings();
+public:
+    //디버그 설정
+    bool bDebugValidationEnabled = false;
+    bool bDebugBreakOnError = false;
  
 private:
     bool CreateDefaultSamplerState();
@@ -59,4 +69,9 @@ private:
 
     std::shared_ptr<IRenderHardware> RenderHardware;
     std::stack<IRenderState*> StateStack;
+
+
+#ifdef _DEBUG
+    class FD3DContextDebugger* ContextDebugger;
+#endif
 };

@@ -178,7 +178,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RenderHardware = make_shared<FD3D>();
 	assert(RenderHardware->Initialize(hWnd));
 	RenderHardware->SetVSync(false);
-	RenderHardware->SetDebugValidation(true);
 
 	//Renderer
 	auto rhPtr = Engine::Cast<IRenderHardware>(RenderHardware);
@@ -264,7 +263,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->ProcessJobs();
 
 #pragma region SystemUI
-		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02, &RenderHardware]() {
+		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer]() {
 			ImGui::SetNextWindowSize(ImVec2(400, 60));
 			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 410, 0));
 			ImGui::Begin("SystemUI", nullptr,
@@ -289,9 +288,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::SameLine();
 			ImGui::Text("FPS : %.0f", std::max(0.0f,1.0f / DeltaTime));
 
-			ImGui::Checkbox("ContextDebug", &RenderHardware->bDebugValidationEnabled);
+			
+			ImGui::Checkbox("ContextDebug", &(Renderer->GetRenderContext()->bDebugValidationEnabled));
 			ImGui::SameLine();
-			ImGui::Checkbox("ContextDebugBreak", &RenderHardware->bDebugBreakOnError);
+			ImGui::Checkbox("ContextDebugBreak", &(Renderer->GetRenderContext()->bDebugBreakOnError));
 			ImGui::End();
 											 });
 #pragma endregion

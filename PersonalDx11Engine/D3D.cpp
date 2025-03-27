@@ -1,5 +1,4 @@
 ﻿#include "D3D.h"
-#include "D3DContextDebugger.h"
 
 FD3D::~FD3D()
 {
@@ -26,10 +25,6 @@ bool FD3D::Initialize(HWND Hwnd)
 
 void FD3D::Release()
 {
-	if (ContextDebugger)
-	{
-		delete ContextDebugger;
-	}
 	ReleaseRasterizerState();
 	ReleaseFrameBuffer();
 	ReleaseDeviceAndSwapChain();
@@ -52,13 +47,6 @@ void FD3D::BeginFrame()
 
 void FD3D::EndFrame()
 {
-#ifdef _DEBUG
-	ValidateDeviceContextBindings();
-	//ContextDebugger->InspectConstantBuffer(Device, DeviceContext);
-	//ContextDebugger->InspectVertexBuffer(Device, DeviceContext);
-#endif
-
-
 	//swap buffer
 	SwapChain->Present(bVSync, 0);
 }
@@ -356,56 +344,4 @@ void FD3D::ReleaseDepthStencil()
 		DepthStencilBuffer = nullptr;
 	}
 	
-}
-
-void FD3D::SetDebugValidation(bool bEnable)
-{
-	bDebugValidationEnabled = bEnable;
-#ifndef _DEBUG
-	if (bEnable)
-	{
-		OutputDebugStringA("Warning: Debug validation enabled in Release mode. This may impact performance.\n");
-	}
-#endif
-}
-
-void FD3D::SetDebugBreakOnError(bool bBreak)
-{
-	bDebugBreakOnError = bBreak;
-}
-
-void FD3D::ValidateDeviceContextBindings()
-{
-#ifdef _DEBUG
-	if (!bDebugValidationEnabled || !DeviceContext)
-		return;
-
-	// 최초 호출 시 디버거 생성
-	if (!ContextDebugger)
-	{
-		ContextDebugger = new FD3DContextDebugger();
-	}
-
-	// 현재 바인딩된 리소스 상태 캡처
-	ContextDebugger->CaptureBindings(DeviceContext);
-
-	// 리소스 유효성 검사
-	if (!ContextDebugger->ValidateAllBindings())
-	{
-		// 오류 발견 시 상세 정보 출력
-		ContextDebugger->PrintBindings();
-
-		// 사용자 지정 오류 메시지
-		OutputDebugStringA("======== D3D11 디바이스 컨텍스트 유효성 검사 실패 ========\n");
-		OutputDebugStringA("렌더링 파이프라인에 유효하지 않은 리소스가 바인딩되어 있습니다.\n");
-		OutputDebugStringA("자세한 내용은 디버그 출력을 확인하세요.\n");
-		OutputDebugStringA("===========================================================\n");
-
-		// 디버그 모드에서 브레이크 포인트 설정(옵션)
-		if (bDebugBreakOnError)
-		{
-			__debugbreak();
-		}
-	}
-#endif
 }

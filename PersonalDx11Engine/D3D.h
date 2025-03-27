@@ -24,15 +24,8 @@ public:
 
     void SetVSync(const bool InBool) { bVSync = InBool; }
     
-    // 디버그 설정
-    void SetDebugValidation(bool bEnable = true);
-    void SetDebugBreakOnError(bool bBreak = true);
-
 public:
     bool bVSync = true;
-    //디버그 설정
-    bool bDebugValidationEnabled = false;
-    bool bDebugBreakOnError = false;
 
 private:
     void InitRenderContext();
@@ -51,8 +44,6 @@ private:
     void ReleaseRasterizerState();
     void ReleaseDepthStencil();
 
-    // 디버그 메소드
-    void ValidateDeviceContextBindings();
 private:
     bool bIsInitialized = false;
 
@@ -71,7 +62,4 @@ private:
     D3D11_VIEWPORT ViewportInfo;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 
-#ifdef _DEBUG
-    class FD3DContextDebugger* ContextDebugger = nullptr;
-#endif
 };

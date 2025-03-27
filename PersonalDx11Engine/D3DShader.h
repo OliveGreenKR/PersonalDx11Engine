@@ -15,7 +15,7 @@ class UShader : public IResource, public IShader
 {
 private:
 	// 상수 버퍼 변수 정보
-	struct FConstantBufferVariable
+	struct FInternalConstantBufferVariable
 	{
 		std::string Name;
 		UINT Offset;
@@ -26,16 +26,16 @@ private:
 		UINT Columns;
 	};
 	// 상수 버퍼 
-	struct FConstantBuffer
+	struct FInternalConstantBufferInfo
 	{
 		std::string Name;
 		UINT Size;
 		UINT BindPoint;
 		ID3D11Buffer* Buffer = nullptr;
-		std::vector<FConstantBufferVariable> Variables;
+		std::vector<FInternalConstantBufferVariable> Variables;
 	};
 	// 리소스 바인딩 정보
-	struct FResourceBindInfo
+	struct FInternalResourceBindInfo
 	{
 		std::string Name;
 		D3D_SHADER_INPUT_TYPE Type;
@@ -49,14 +49,14 @@ private:
 	ID3D11InputLayout* InputLayout;
 	ID3DBlob* VSByteCode;
 
-	std::vector<FConstantBuffer> VSConstantBuffers;
-	std::vector<FConstantBuffer> PSConstantBuffers;
+	std::vector<FInternalConstantBufferInfo> VSConstantBuffers;
+	std::vector<FInternalConstantBufferInfo> PSConstantBuffers;
 
 	bool bIsLoaded = false;
 	size_t MemorySize = 0;
 
-	std::vector<FResourceBindInfo> VSResourceBindingMeta;
-	std::vector<FResourceBindInfo> PSResourceBindingMeta;
+	std::vector<FInternalResourceBindInfo> VSResourceBindingMeta;
+	std::vector<FInternalResourceBindInfo> PSResourceBindingMeta;
 
 public:
 	UShader() = default;
@@ -120,9 +120,9 @@ public:
 	ID3D11PixelShader* GetPixelShader() const override { return PixelShader; }
 	ID3D11InputLayout* GetInputLayout() const override { return InputLayout; }
 
-	std::vector<ConstantBufferInfo> GetVSConstantBufferInfos() const override
+	std::vector<FConstantBufferInfo> GetVSConstantBufferInfo() const override
 	{
-		std::vector<ConstantBufferInfo> result;
+		std::vector<FConstantBufferInfo> result;
 		for (const auto& cb : VSConstantBuffers)
 		{
 			result.push_back({ cb.BindPoint, cb.Buffer, cb.Size, cb.Name });
@@ -131,17 +131,17 @@ public:
 		return result;
 	}
 
-	std::vector<ConstantBufferInfo> GetPSConstantBufferInfos() const override
+	std::vector<FConstantBufferInfo> GetPSConstantBufferInfo() const override
 	{
-		std::vector<ConstantBufferInfo> result;
+		std::vector<FConstantBufferInfo> result;
 		for (const auto& cb : PSConstantBuffers)
 			result.push_back({ cb.BindPoint, cb.Buffer, cb.Size, cb.Name });
 		return result;
 	}
 
-	std::vector<TextureBindingInfo> GetTextureInfos() const override
+	std::vector<FTextureBindingInfo> GetTextureInfo() const override
 	{
-		std::vector<TextureBindingInfo> result;
+		std::vector<FTextureBindingInfo> result;
 		for (const auto& binding : VSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_TEXTURE)
 				result.push_back({ binding.BindPoint, binding.Name });
@@ -151,9 +151,9 @@ public:
 		return result;
 	}
 
-	std::vector<SamplerBindingInfo> GetSamplerInfos() const override
+	std::vector<FSamplerBindingInfo> GetSamplerInfo() const override
 	{
-		std::vector<SamplerBindingInfo> result;
+		std::vector<FSamplerBindingInfo> result;
 		for (const auto& binding : VSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_SAMPLER)
 				result.push_back({ binding.BindPoint, binding.Name }); 
@@ -162,10 +162,6 @@ public:
 				result.push_back({ binding.BindPoint, binding.Name });
 		return result;
 	}
-
-	// 상수 버퍼 레이아웃 정보
-	const std::vector<FConstantBuffer>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
-	const std::vector<FConstantBuffer>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
 
 public:
 	// IResource 인터페이스 구현
@@ -178,10 +174,10 @@ private:
 										 std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout);
 	void ExtractAndCreateConstantBuffers(ID3D11Device* Device,
 										 ID3D11ShaderReflection* Reflection,
-										 std::vector<FConstantBuffer>& OutBuffers);
+										 std::vector<FInternalConstantBufferInfo>& OutBuffers);
 
 	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 
 	void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
-								 std::vector<FResourceBindInfo>& OutBindings);
+								 std::vector<FInternalResourceBindInfo>& OutBindings);
 };

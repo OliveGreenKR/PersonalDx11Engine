@@ -44,8 +44,6 @@ public:
     bool InspectConstantBuffer(ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);
     bool InspectVertexBuffer(ID3D11Device* device, ID3D11DeviceContext* context, UINT maxDisplayBytes = 64);
 
-
-
 private:
     // 버퍼 내용 검사
     bool InspectBufferContent(ID3D11Buffer* buffer, ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);

@@ -198,10 +198,12 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     Vector4 color(1, 1, 1, 1);
     std::memcpy(ColorBufferData, &color, sizeof(Vector4));
 
-    auto MatrixBuffer = Shader->GetVSConstantBuffer(0);
-    auto ColorBuffer = Shader->GetVSConstantBuffer(1);
-    RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
-    RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
+    auto cbVS = Shader->GetVSConstantBufferInfo();
+    auto MatrixBuffer = cbVS[0].Buffer;
+    auto ColorBuffer = cbVS[1].Buffer;
+    
+    RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, cbVS[0].Size);
+    RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, cbVS[1].Size);
 
     Renderer->SubmitJob(RenderJob);
 }
