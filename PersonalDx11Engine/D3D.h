@@ -30,6 +30,9 @@ public:
 
 public:
     bool bVSync = true;
+    //디버그 설정
+    bool bDebugValidationEnabled = false;
+    bool bDebugBreakOnError = false;
 
 private:
     void InitRenderContext();
@@ -52,8 +55,6 @@ private:
     void ValidateDeviceContextBindings();
 private:
     bool bIsInitialized = false;
-    bool bDebugValidationEnabled = false;
-    bool bDebugBreakOnError = false;
 
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;

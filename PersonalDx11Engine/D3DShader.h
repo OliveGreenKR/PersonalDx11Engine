@@ -25,8 +25,8 @@ private:
 		UINT Rows;
 		UINT Columns;
 	};
-	// 상수 버퍼  정보
-	struct FConstantBufferInfo
+	// 상수 버퍼 
+	struct FConstantBuffer
 	{
 		std::string Name;
 		UINT Size;
@@ -49,14 +49,14 @@ private:
 	ID3D11InputLayout* InputLayout;
 	ID3DBlob* VSByteCode;
 
-	std::vector<FConstantBufferInfo> VSConstantBuffers;
-	std::vector<FConstantBufferInfo> PSConstantBuffers;
+	std::vector<FConstantBuffer> VSConstantBuffers;
+	std::vector<FConstantBuffer> PSConstantBuffers;
 
 	bool bIsLoaded = false;
 	size_t MemorySize = 0;
 
-	std::vector<FResourceBindInfo> VSResourceBindings;
-	std::vector<FResourceBindInfo> PSResourceBindings;
+	std::vector<FResourceBindInfo> VSResourceBindingMeta;
+	std::vector<FResourceBindInfo> PSResourceBindingMeta;
 
 public:
 	UShader() = default;
@@ -139,49 +139,33 @@ public:
 		return result;
 	}
 
-	//SRV는 외부에서 설정해야함
 	std::vector<TextureBindingInfo> GetTextureInfos() const override
 	{
 		std::vector<TextureBindingInfo> result;
-		for (const auto& binding : VSResourceBindings)
+		for (const auto& binding : VSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_TEXTURE)
-				result.push_back({ binding.BindPoint, binding.Name }); // SRV는 외부에서 설정
-		for (const auto& binding : PSResourceBindings)
+				result.push_back({ binding.BindPoint, binding.Name });
+		for (const auto& binding : PSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_TEXTURE)
 				result.push_back({ binding.BindPoint, binding.Name });
 		return result;
 	}
 
-	//Sampler는 외부에서 설정해야함
 	std::vector<SamplerBindingInfo> GetSamplerInfos() const override
 	{
 		std::vector<SamplerBindingInfo> result;
-		for (const auto& binding : VSResourceBindings)
+		for (const auto& binding : VSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_SAMPLER)
-				result.push_back({ binding.BindPoint, binding.Name }); // Sampler는 외부에서 설정
-		for (const auto& binding : PSResourceBindings)
+				result.push_back({ binding.BindPoint, binding.Name }); 
+		for (const auto& binding : PSResourceBindingMeta)
 			if (binding.Type == D3D_SIT_SAMPLER)
 				result.push_back({ binding.BindPoint, binding.Name });
 		return result;
 	}
 
 	// 상수 버퍼 레이아웃 정보
-	const std::vector<FConstantBufferInfo>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
-	const std::vector<FConstantBufferInfo>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
-
-	/// <param name="Slot"> '-1'일 경우 이름을 통해 검색, 슬롯이 명시될 경우 슬롯으로 검색됨</param>
-	/// <returns></returns>
-	bool BindTexture(ID3D11DeviceContext* Context, ID3D11ShaderResourceView* SRV,
-					 uint32_t Slot, const std::string& ResourceName = "");
-
-	/// </summary>
-	/// <param name="Slot"> '-1'일 경우 이름을 통해 검색, 슬롯이 명시될 경우 슬롯으로 검색됨</param>
-	/// <returns></returns>
-	bool BindSampler(ID3D11DeviceContext* Context, ID3D11SamplerState* Sampler,
-					 uint32_t Slot, const std::string& SamplerName = "");
-
-	//전체 상수 버퍼 업데이트
-	bool UpdateConstantBuffer(ID3D11DeviceContext* Context, const std::string& BufferName, const void* Data, uint32_t DataSize);
+	const std::vector<FConstantBuffer>& GetVSConstantBufferInfo() const { return VSConstantBuffers; }
+	const std::vector<FConstantBuffer>& GetPSConstantBufferInfo() const { return PSConstantBuffers; }
 
 public:
 	// IResource 인터페이스 구현
@@ -194,7 +178,7 @@ private:
 										 std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout);
 	void ExtractAndCreateConstantBuffers(ID3D11Device* Device,
 										 ID3D11ShaderReflection* Reflection,
-										 std::vector<FConstantBufferInfo>& OutBuffers);
+										 std::vector<FConstantBuffer>& OutBuffers);
 
 	HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 

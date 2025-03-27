@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "GameplayScene02.h"
 #include "Renderer.h"
 #include "RigidBodyComponent.h"
@@ -203,7 +203,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, sizeof(MatrixBufferData));
     RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, sizeof(ColorBufferData));
 
-    //Renderer->SubmitJob(RenderJob);
+    Renderer->SubmitJob(RenderJob);
 }
 
 void UGameplayScene02::SubmitRenderUI()

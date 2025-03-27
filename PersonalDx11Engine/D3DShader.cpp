@@ -71,10 +71,10 @@ bool UShader::Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* P
 	}
 
 	// 6. 쉐이더 리소스 및 샘플러 정보 추출
-	ExtractResourceBindings(VSReflection, VSResourceBindings);
+	ExtractResourceBindings(VSReflection, VSResourceBindingMeta);
 	if (PSReflection)
 	{
-		ExtractResourceBindings(PSReflection, PSResourceBindings);
+		ExtractResourceBindings(PSReflection, PSResourceBindingMeta);
 	}
 		
 	// 리소스 정리
@@ -124,186 +124,6 @@ void UShader::Release()
 
 	// 로드 상태 업데이트
 	bIsLoaded = false;
-}
-
-bool UShader::BindTexture(ID3D11DeviceContext* Context, ID3D11ShaderResourceView* SRV,
-						  uint32_t Slot, const std::string& ResourceName )
-{
-	// Vertex Shader와 Pixel Shader에서 리소스 바인딩 검색
-	FResourceBindInfo* Binding = nullptr;
-	bool IsVertexShader = false;
-
-	// 슬롯이 명시되지 않은 경우 이름으로 검색
-	if (Slot == static_cast<uint32_t>(-1))
-	{
-		for (auto& Bind : VSResourceBindings)
-		{
-			if (Bind.Name == ResourceName && Bind.Type == D3D_SIT_TEXTURE)
-			{
-				Binding = &Bind;
-				IsVertexShader = true;
-				break;
-			}
-		}
-		if (!Binding)
-		{
-			for (auto& Bind : PSResourceBindings)
-			{
-				if (Bind.Name == ResourceName && Bind.Type == D3D_SIT_TEXTURE)
-				{
-					Binding = &Bind;
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		// 슬롯으로 직접 검색
-		for (auto& Bind : VSResourceBindings)
-		{
-			if (Bind.BindPoint == Slot && Bind.Type == D3D_SIT_TEXTURE)
-			{
-				Binding = &Bind;
-				IsVertexShader = true;
-				break;
-			}
-		}
-		if (!Binding)
-		{
-			for (auto& Bind : PSResourceBindings)
-			{
-				if (Bind.BindPoint == Slot && Bind.Type == D3D_SIT_TEXTURE)
-				{
-					Binding = &Bind;
-					break;
-				}
-			}
-		}
-	}
-
-	if (!Binding || !SRV || !Context)
-		return false;
-
-	// 쉐이더에 텍스처 바인딩
-	if (IsVertexShader)
-		Context->VSSetShaderResources(Binding->BindPoint, 1, &SRV);
-	else
-		Context->PSSetShaderResources(Binding->BindPoint, 1, &SRV);
-
-	return true;
-}
-
-bool UShader::BindSampler(ID3D11DeviceContext* Context, ID3D11SamplerState* Sampler, 
-						  uint32_t Slot, const std::string& SamplerName )
-{
-	FResourceBindInfo* Binding = nullptr;
-	bool IsVertexShader = false;
-
-	if (Slot == static_cast<uint32_t>(-1))
-	{
-		for (auto& Bind : VSResourceBindings)
-		{
-			if (Bind.Name == SamplerName && Bind.Type == D3D_SIT_SAMPLER)
-			{
-				Binding = &Bind;
-				IsVertexShader = true;
-				break;
-			}
-		}
-		if (!Binding)
-		{
-			for (auto& Bind : PSResourceBindings)
-			{
-				if (Bind.Name == SamplerName && Bind.Type == D3D_SIT_SAMPLER)
-				{
-					Binding = &Bind;
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		for (auto& Bind : VSResourceBindings)
-		{
-			if (Bind.BindPoint == Slot && Bind.Type == D3D_SIT_SAMPLER)
-			{
-				Binding = &Bind;
-				IsVertexShader = true;
-				break;
-			}
-		}
-		if (!Binding)
-		{
-			for (auto& Bind : PSResourceBindings)
-			{
-				if (Bind.BindPoint == Slot && Bind.Type == D3D_SIT_SAMPLER)
-				{
-					Binding = &Bind;
-					break;
-				}
-			}
-		}
-	}
-
-	if (!Binding || !Sampler || !Context)
-		return false;
-
-	if (IsVertexShader)
-		Context->VSSetSamplers(Binding->BindPoint, 1, &Sampler);
-	else
-		Context->PSSetSamplers(Binding->BindPoint, 1, &Sampler);
-
-	return true;
-}
-
-bool UShader::UpdateConstantBuffer(ID3D11DeviceContext* Context, const std::string& BufferName,
-								   const void* Data, uint32_t DataSize)
-{
-	FConstantBufferInfo* BufferInfo = nullptr;
-	bool IsVertexShader = false;
-
-	// 상수 버퍼 검색
-	for (auto& Buffer : VSConstantBuffers)
-	{
-		if (Buffer.Name == BufferName)
-		{
-			BufferInfo = &Buffer;
-			IsVertexShader = true;
-			break;
-		}
-	}
-	if (!BufferInfo)
-	{
-		for (auto& Buffer : PSConstantBuffers)
-		{
-			if (Buffer.Name == BufferName)
-			{
-				BufferInfo = &Buffer;
-				break;
-			}
-		}
-	}
-
-	if (!BufferInfo || !BufferInfo->Buffer || !Data || DataSize > BufferInfo->Size)
-		return false;
-
-	// 상수 버퍼 매핑 및 업데이트
-	D3D11_MAPPED_SUBRESOURCE MappedResource;
-	if (FAILED(Context->Map(BufferInfo->Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource)))
-		return false;
-
-	memcpy(MappedResource.pData, Data, DataSize);
-	Context->Unmap(BufferInfo->Buffer, 0);
-
-	// 쉐이더에 바인딩
-	if (IsVertexShader)
-		Context->VSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
-	else
-		Context->PSSetConstantBuffers(BufferInfo->BindPoint, 1, &BufferInfo->Buffer);
-
-	return true;
 }
 
 bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection, std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout)
@@ -387,7 +207,7 @@ bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection
 }
 
 // 상수 버퍼 정보 추출 및 생성
-void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FConstantBufferInfo>& OutBuffers)
+void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FConstantBuffer>& OutBuffers)
 {
 	D3D11_SHADER_DESC ShaderDesc; 
 	Reflection->GetDesc(&ShaderDesc);
@@ -398,7 +218,7 @@ void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11Shader
 		D3D11_SHADER_BUFFER_DESC BufferDesc;
 		CBReflection->GetDesc(&BufferDesc);
 
-		FConstantBufferInfo BufferInfo;
+		FConstantBuffer BufferInfo;
 		BufferInfo.Name = BufferDesc.Name;
 		BufferInfo.Size = BufferDesc.Size;
 		BufferInfo.BindPoint = i; // 쉐이더에서의 바인딩 포인트 (b0, b1, ...)
