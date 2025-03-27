@@ -21,6 +21,7 @@ public:
 
     // 컨텍스트의 모든 바인딩 리소스 캡처
     void CaptureBindings(ID3D11DeviceContext* DeviceContext);
+    void EnableD3D11DebugMessages(ID3D11Device* device);
 
     // 캡처된 리소스의 유효성 검사
     bool ValidateAllBindings() const;
@@ -40,7 +41,15 @@ public:
     bool ValidateBlendState() const;
     bool ValidateDepthStencilState() const;
 
+    bool InspectConstantBuffer(ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);
+    bool InspectVertexBuffer(ID3D11Device* device, ID3D11DeviceContext* context, UINT maxDisplayBytes = 64);
+
+
+
 private:
+    // 버퍼 내용 검사
+    bool InspectBufferContent(ID3D11Buffer* buffer, ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);
+
     // 캡처된 리소스 저장
     std::vector<FResourceBinding> VertexBuffers;
     std::vector<FResourceBinding> IndexBuffers;
@@ -59,4 +68,5 @@ private:
 
     // 리소스 유효성 검사 (nullptr 체크 및 추가 검증)
     bool ValidateResource(const FResourceBinding& Resource) const;
+
 };

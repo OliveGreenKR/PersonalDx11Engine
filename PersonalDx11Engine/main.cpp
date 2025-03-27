@@ -261,7 +261,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		USceneManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
-		//Renderer->ProcessJobs();
+		Renderer->ProcessJobs();
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02, &RenderHardware]() {

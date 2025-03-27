@@ -54,7 +54,11 @@ void FD3D::EndFrame()
 {
 #ifdef _DEBUG
 	ValidateDeviceContextBindings();
+	//ContextDebugger->InspectConstantBuffer(Device, DeviceContext);
+	//ContextDebugger->InspectVertexBuffer(Device, DeviceContext);
 #endif
+
+
 	//swap buffer
 	SwapChain->Present(bVSync, 0);
 }
@@ -184,6 +188,8 @@ bool FD3D::CreateRasterizerState()
 	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
 	rasterizerdesc.CullMode = D3D11_CULL_BACK; // 백 페이스 컬링
 
+	rasterizerdesc.CullMode = D3D11_CULL_NONE;
+
 	return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
 }
 
@@ -211,6 +217,10 @@ bool FD3D::CreateDepthStencilState()
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = TRUE;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+
+	depthStencilDesc.DepthEnable = FALSE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+
 	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
 	//depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 
