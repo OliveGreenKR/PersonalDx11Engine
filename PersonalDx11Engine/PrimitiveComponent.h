@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 #include "SceneComponent.h"
 #include "Model.h"
+
 //렌더링 가능
 class UPrimitiveComponent : public USceneComponent
 {
@@ -19,5 +20,4 @@ public:
 protected:
 	std::shared_ptr<UModel> Model;
 	Vector4 Color = Vector4(1, 1, 1, 1); //White
-
 };

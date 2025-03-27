@@ -177,7 +177,6 @@ void FRenderContext::Draw(UINT VertexCount, UINT StartVertexLocation)
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!DeviceContext || VertexCount == 0) return;
 
-    ValidateDeviceContextBindings();
     RenderHardware->GetDeviceContext()->Draw(VertexCount, StartVertexLocation);
 }
 
@@ -186,11 +185,6 @@ void FRenderContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT B
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     if (!DeviceContext || IndexCount == 0) return;
 
-    ValidateDeviceContextBindings();
-    if (ContextDebugger)
-    {
-        ContextDebugger->InspectVertexBuffer(GetDevice(), GetDeviceContext(), 20);
-    }
     RenderHardware->GetDeviceContext()->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }
 

@@ -15,7 +15,6 @@
 #include "UIManager.h"
 #include "RenderJobs.h"
 #include "PrimitiveComponent.h"
-#include "D3DContextDebugger.h"
 
 UGameplayScene02::UGameplayScene02()
 {
@@ -172,16 +171,11 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     //TODO : Submit RenderJob
     auto RenderJob = Renderer->AcquireJob<FTextureRenderJob>();
 
+
     RenderJob->IndexBuffer = BufferRsc->GetIndexBuffer();
     RenderJob->IndexCount = BufferRsc->GetIndexCount();
     RenderJob->VertexBuffer = BufferRsc->GetVertexBuffer();
     
-    FD3DContextDebugger Debugger;
-    auto result = Debugger.GetBufferData<FVertexFormat>(BufferRsc->GetVertexBuffer(),
-                                          Renderer->GetRenderContext()->GetDevice(),
-                                          Renderer->GetRenderContext()->GetDeviceContext()
-    );
-
     RenderJob->VertexCount = BufferRsc->GetVertexCount();
     RenderJob->Offset = BufferRsc->GetOffset();
     RenderJob->Stride = BufferRsc->GetStride();
