@@ -1,7 +1,45 @@
-﻿#include "ResourceManager.h"
+#include "ResourceManager.h"
 #include "D3DShader.h"
 #include "Texture.h"
 #include "Debug.h"
+
+
+// 리소스 접근 시간 업데이트
+void UResourceManager::UpdateResourceAccessTime(const std::wstring& Key, std::unordered_map<std::wstring, FResourceData>& Cache)
+{
+    auto it = Cache.find(Key);
+    if (it != Cache.end())
+    {
+        it->second.LastAccessTick = CurrentTick;
+    }
+}
+
+void UResourceManager::Initialize(IRenderHardware* InHardware)
+{
+    assert(InHardware && "RenderHardware cannot be null");
+    RenderHardware = InHardware;
+    bInitialized = true;
+}
+
+void UResourceManager::Shutdown()
+{
+    // 리소스 해제
+    TextureCache.clear();
+    ShaderCache.clear();
+
+    bInitialized = false;
+}
+
+void UResourceManager::Tick(const float DeltaTime)
+{
+    CurrentTick += DeltaTime;
+
+    if (abs(CurrentTick / (MAX_UNUSED_TIME *0.5f) - 
+            round(CurrentTick / (MAX_UNUSED_TIME * 0.5f))) < KINDA_SMALL)
+    {
+        UnloadUnusedResources(MAX_UNUSED_TIME);
+    }
+}
 
 std::shared_ptr<UTexture2D> UResourceManager::LoadTexture(
     const std::wstring& FilePath,
@@ -82,4 +120,48 @@ std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& 
     ShaderCache[ShaderKey] = ResourceData;
 
     return Shader;
+}
+
+// 미사용 리소스 언로드
+void UResourceManager::UnloadUnusedResources(float TimeSinceLastUseSeconds)
+{
+    const float TimeThreshold = TimeSinceLastUseSeconds;
+
+    // 텍스처 캐시 정리
+    auto texIt = TextureCache.begin();
+    while (texIt != TextureCache.end())
+    {
+        if (CurrentTick - texIt->second.LastAccessTick > TimeThreshold)
+        {
+            texIt = TextureCache.erase(texIt);
+            LOG("Texture deleted in ResourceManager");
+        }
+        else
+        {
+            ++texIt;
+        }
+    }
+
+    // 셰이더 캐시 정리
+    auto shaderIt = ShaderCache.begin();
+    while (shaderIt != ShaderCache.end())
+    {
+        if (CurrentTick - shaderIt->second.LastAccessTick > TimeThreshold)
+        {
+            shaderIt = ShaderCache.erase(shaderIt);
+            LOG("Shader deleted in ResourceManager");
+        }
+        else
+        {
+            ++shaderIt;
+        }
+    }
+}
+
+// 디버깅용 리소스 통계
+void UResourceManager::PrintResourceStats()
+{
+    printf("Resource Statistics:\n");
+    printf("- Textures: %zu\n", TextureCache.size());
+    printf("- Shaders: %zu\n", ShaderCache.size());
 }
