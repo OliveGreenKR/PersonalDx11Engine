@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GameplayScene02.h"
 #include "Renderer.h"
 #include "RigidBodyComponent.h"
@@ -15,6 +15,7 @@
 #include "UIManager.h"
 #include "RenderJobs.h"
 #include "PrimitiveComponent.h"
+#include "D3DContextDebugger.h"
 
 UGameplayScene02::UGameplayScene02()
 {
@@ -32,13 +33,13 @@ void UGameplayScene02::Initialize()
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
-    Camera->SetPosition({ 0, 0.0f, -2.0f });
+    Camera->SetPosition({ 0, 0.0f, -8.0f });
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>();
     Character->SetScale(0.5f * Vector3::One);
     Character->SetPosition({ -0.75f, 0, 0 });
-    Character->SetShapeSphere();
+    Character->SetShapeBox();
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>();
@@ -174,6 +175,13 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     RenderJob->IndexBuffer = BufferRsc->GetIndexBuffer();
     RenderJob->IndexCount = BufferRsc->GetIndexCount();
     RenderJob->VertexBuffer = BufferRsc->GetVertexBuffer();
+    
+    FD3DContextDebugger Debugger;
+    auto result = Debugger.GetBufferData<FVertexFormat>(BufferRsc->GetVertexBuffer(),
+                                          Renderer->GetRenderContext()->GetDevice(),
+                                          Renderer->GetRenderContext()->GetDeviceContext()
+    );
+
     RenderJob->VertexCount = BufferRsc->GetVertexCount();
     RenderJob->Offset = BufferRsc->GetOffset();
     RenderJob->Stride = BufferRsc->GetStride();

@@ -46,13 +46,13 @@ private:
     const float SPAWN_FREQUENCY = 0.75f;
     bool bSpawnBody = true;
     bool bGravity = false;
+
     //쉐이더
     std::shared_ptr<class UShader> Shader;
+    
     // 텍스처 
     std::shared_ptr<class UTexture2D> TextureTile;
     std::shared_ptr<class UTexture2D> TexturePole;
-
-
 
     // 경계 값
     const float XBorder = 3.0f;

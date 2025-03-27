@@ -13,7 +13,7 @@ cbuffer COLOR_BUFFER : register(b1)
 };
 struct VS_INPUT
 {
-    float4 position : POSITION;
+    float3 position : POSITION;
     float2 tex : TEXCOORD0;
 };
 struct PS_INPUT
@@ -25,8 +25,11 @@ struct PS_INPUT
 PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
-    input.position.w = 1.0f;
-    output.position = mul(input.position, worldMatrix);
+    
+    float4 Inposition = input.position.xyzx;
+    Inposition.w = 1.0f;
+    
+    output.position = mul(Inposition, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
     output.tex = input.tex;
@@ -36,5 +39,6 @@ PS_INPUT mainVS(VS_INPUT input)
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float4 textureColor = shaderTexture.Sample(SampleType, input.tex);
+    //float4 textureColor = float4(input.tex.x, input.tex.y, 0, 1);
     return textureColor * input.color;
 }

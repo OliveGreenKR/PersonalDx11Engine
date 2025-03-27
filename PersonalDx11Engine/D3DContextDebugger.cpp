@@ -1,4 +1,4 @@
-﻿// D3DContextDebugger.cpp
+// D3DContextDebugger.cpp
 #include "D3DContextDebugger.h"
 #include "Debug.h" // 로깅을 위한 자체 헤더 가정
 
@@ -503,6 +503,7 @@ bool FD3DContextDebugger::InspectVertexBuffer(ID3D11Device* device, ID3D11Device
     }
     return !VertexBuffers.empty();
 }
+
 
 bool FD3DContextDebugger::ValidateResource(const FResourceBinding& Resource) const
 {

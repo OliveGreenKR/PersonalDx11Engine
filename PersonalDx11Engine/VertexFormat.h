@@ -1,10 +1,10 @@
 #pragma once
 #include "Math.h"
 
-// ±âº» Á¤Á¡ Çü½Ä (À§Ä¡¿Í ÅØ½ºÆ®ÁÂÇ¥)
+// ê¸°ë³¸ ì •ì  í˜•ì‹ (ìœ„ì¹˜ì™€ í…ìŠ¤íŠ¸ì¢Œí‘œ)
 struct alignas(16) FVertexFormat
 {
-    Vector3 Position;  // Á¤Á¡ À§Ä¡
+    Vector3 Position;  // ì •ì  ìœ„ì¹˜
     Vector2 TexCoord;
     Vector3 Padding;
 };

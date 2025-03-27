@@ -23,10 +23,6 @@ UGameplayScene01::UGameplayScene01()
 
 void UGameplayScene01::Initialize()
 { 
-    // 모델 가져오기
-    auto CubeModel = UModelBufferManager::Get()->GetCubeModel();
-    auto SphereModel = UModelBufferManager::Get()->GetSphereModel();
-
     const int VIEW_WIDTH = 800;
     const int VIEW_HEIGHT = 800;
 
@@ -47,7 +43,7 @@ void UGameplayScene01::Load()
     TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
 	TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
 
-    Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+    //Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 }
 
 void UGameplayScene01::Unload()

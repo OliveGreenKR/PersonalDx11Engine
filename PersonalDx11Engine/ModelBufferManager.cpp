@@ -3,7 +3,7 @@
 #include <functional>
 #include "Model.h"
 
-// FBufferResource ¸Ş¼­µå ±¸Çö
+// FBufferResource ë©”ì„œë“œ êµ¬í˜„
 FBufferResource::~FBufferResource()
 {
     Release();
@@ -34,7 +34,7 @@ bool FBufferResource::Initialize(ID3D11Device* InDevice, const FVertexDataContai
     if (!InDevice || InVertexData.Vertices.empty())
         return false;
 
-    // Á¤Á¡ ¹öÆÛ »ı¼º
+    // ì •ì  ë²„í¼ ìƒì„±
     D3D11_BUFFER_DESC vertexBufferDesc = {};
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
     vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(FVertexFormat) * InVertexData.Vertices.size());
@@ -48,7 +48,7 @@ bool FBufferResource::Initialize(ID3D11Device* InDevice, const FVertexDataContai
     if (FAILED(hr))
         return false;
 
-    // ÀÎµ¦½º°¡ ÀÖ´Â °æ¿ì ÀÎµ¦½º ¹öÆÛ »ı¼º
+    // ì¸ë±ìŠ¤ê°€ ìˆëŠ” ê²½ìš° ì¸ë±ìŠ¤ ë²„í¼ ìƒì„±
     if (!InVertexData.Indices.empty())
     {
         D3D11_BUFFER_DESC indexBufferDesc = {};
@@ -77,6 +77,10 @@ bool FBufferResource::Initialize(ID3D11Device* InDevice, const FVertexDataContai
 
     return true;
 }
+
+///////////////////////
+/// BufferManager
+////////////////////////
 
 UModelBufferManager::~UModelBufferManager()
 {
@@ -118,7 +122,7 @@ bool UModelBufferManager::Initialize()
     if (!Device)
         return false;
 
-    // ±âº» ÇÁ¸®¹ÌÆ¼ºê ¸ğµ¨ »ı¼º
+    // ê¸°ë³¸ í”„ë¦¬ë¯¸í‹°ë¸Œ ëª¨ë¸ ìƒì„±
     CreateDefaultPrimitives();
     return true;
 }
@@ -132,17 +136,17 @@ void UModelBufferManager::Release()
 
 void UModelBufferManager::CreateDefaultPrimitives()
 {
-    // Å¥ºê Á¤Á¡ µ¥ÀÌÅÍ »ı¼º ¹× µî·Ï
+    // íë¸Œ ì •ì  ë°ì´í„° ìƒì„± ë° ë“±ë¡
     FVertexDataContainer cubeData = CreateCubeVertexData();
     CubeModelHash = RegisterVertexData(cubeData);
     DefaultModelFlags[CubeModelHash] = true;
 
-    // ±¸ Á¤Á¡ µ¥ÀÌÅÍ »ı¼º ¹× µî·Ï
+    // êµ¬ ì •ì  ë°ì´í„° ìƒì„± ë° ë“±ë¡
     FVertexDataContainer sphereData = CreateSphereVertexData();
     SphereModelHash = RegisterVertexData(sphereData);
     DefaultModelFlags[SphereModelHash] = true;
 
-    // Æò¸é Á¤Á¡ µ¥ÀÌÅÍ »ı¼º ¹× µî·Ï
+    // í‰ë©´ ì •ì  ë°ì´í„° ìƒì„± ë° ë“±ë¡
     FVertexDataContainer planeData = CreatePlaneVertexData();
     PlaneModelHash = RegisterVertexData(planeData);
     DefaultModelFlags[PlaneModelHash] = true;
@@ -152,69 +156,69 @@ FVertexDataContainer UModelBufferManager::CreateCubeVertexData()
 {
     FVertexDataContainer data;
 
-    // Å¥ºê Á¤Á¡ µ¥ÀÌÅÍ (À§Ä¡¿Í ÅØ½ºÃ³ ÁÂÇ¥¸¸ Æ÷ÇÔ)
+    // íë¸Œ ì •ì  ë°ì´í„° (ìœ„ì¹˜ì™€ í…ìŠ¤ì²˜ ì¢Œí‘œë§Œ í¬í•¨)
     float size = 0.5f;
 
-    // 24°³ÀÇ Á¤Á¡ (¸éº°·Î ´Ù¸¥ Á¤Á¡, ÅØ½ºÃ³ ÁÂÇ¥¸¦ À§ÇØ)
-    // Àü¸é (Z+)
-    data.Vertices.push_back({ {-size, -size, size}, {0.0f, 1.0f} });  // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {size, -size, size}, {1.0f, 1.0f} });   // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {size, size, size}, {1.0f, 0.0f} });    // ¿ì»ó´Ü
-    data.Vertices.push_back({ {-size, size, size}, {0.0f, 0.0f} });   // ÁÂ»ó´Ü
+    // 24ê°œì˜ ì •ì  (ë©´ë³„ë¡œ ë‹¤ë¥¸ ì •ì , í…ìŠ¤ì²˜ ì¢Œí‘œë¥¼ ìœ„í•´)
+    // ì „ë©´ (Z+)
+    data.Vertices.push_back({ {-size, -size, size}, {0.0f, 1.0f} });  // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {size, -size, size}, {1.0f, 1.0f} });   // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {size, size, size}, {1.0f, 0.0f} });    // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {-size, size, size}, {0.0f, 0.0f} });   // ì¢Œìƒë‹¨
 
-    // ÈÄ¸é (Z-)
-    data.Vertices.push_back({ {size, -size, -size}, {0.0f, 1.0f} });  // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {-size, -size, -size}, {1.0f, 1.0f} }); // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {-size, size, -size}, {1.0f, 0.0f} });  // ¿ì»ó´Ü
-    data.Vertices.push_back({ {size, size, -size}, {0.0f, 0.0f} });   // ÁÂ»ó´Ü
+    // í›„ë©´ (Z-)
+    data.Vertices.push_back({ {size, -size, -size}, {0.0f, 1.0f} });  // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {-size, -size, -size}, {1.0f, 1.0f} }); // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {-size, size, -size}, {1.0f, 0.0f} });  // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {size, size, -size}, {0.0f, 0.0f} });   // ì¢Œìƒë‹¨
 
-    // ¿ìÃø¸é (X+)
-    data.Vertices.push_back({ {size, -size, size}, {0.0f, 1.0f} });   // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {size, -size, -size}, {1.0f, 1.0f} });  // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {size, size, -size}, {1.0f, 0.0f} });   // ¿ì»ó´Ü
-    data.Vertices.push_back({ {size, size, size}, {0.0f, 0.0f} });    // ÁÂ»ó´Ü
+    // ìš°ì¸¡ë©´ (X+)
+    data.Vertices.push_back({ {size, -size, size}, {0.0f, 1.0f} });   // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {size, -size, -size}, {1.0f, 1.0f} });  // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {size, size, -size}, {1.0f, 0.0f} });   // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {size, size, size}, {0.0f, 0.0f} });    // ì¢Œìƒë‹¨
 
-    // ÁÂÃø¸é (X-)
-    data.Vertices.push_back({ {-size, -size, -size}, {0.0f, 1.0f} }); // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {-size, -size, size}, {1.0f, 1.0f} });  // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {-size, size, size}, {1.0f, 0.0f} });   // ¿ì»ó´Ü
-    data.Vertices.push_back({ {-size, size, -size}, {0.0f, 0.0f} });  // ÁÂ»ó´Ü
+    // ì¢Œì¸¡ë©´ (X-)
+    data.Vertices.push_back({ {-size, -size, -size}, {0.0f, 1.0f} }); // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {-size, -size, size}, {1.0f, 1.0f} });  // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {-size, size, size}, {1.0f, 0.0f} });   // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {-size, size, -size}, {0.0f, 0.0f} });  // ì¢Œìƒë‹¨
 
-    // »ó¸é (Y+)
-    data.Vertices.push_back({ {-size, size, size}, {0.0f, 1.0f} });   // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {size, size, size}, {1.0f, 1.0f} });    // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {size, size, -size}, {1.0f, 0.0f} });   // ¿ì»ó´Ü
-    data.Vertices.push_back({ {-size, size, -size}, {0.0f, 0.0f} });  // ÁÂ»ó´Ü
+    // ìƒë©´ (Y+)
+    data.Vertices.push_back({ {-size, size, size}, {0.0f, 1.0f} });   // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {size, size, size}, {1.0f, 1.0f} });    // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {size, size, -size}, {1.0f, 0.0f} });   // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {-size, size, -size}, {0.0f, 0.0f} });  // ì¢Œìƒë‹¨
 
-    // ÇÏ¸é (Y-)
-    data.Vertices.push_back({ {-size, -size, -size}, {0.0f, 1.0f} }); // ÁÂÇÏ´Ü
-    data.Vertices.push_back({ {size, -size, -size}, {1.0f, 1.0f} });  // ¿ìÇÏ´Ü
-    data.Vertices.push_back({ {size, -size, size}, {1.0f, 0.0f} });   // ¿ì»ó´Ü
-    data.Vertices.push_back({ {-size, -size, size}, {0.0f, 0.0f} });  // ÁÂ»ó´Ü
+    // í•˜ë©´ (Y-)
+    data.Vertices.push_back({ {-size, -size, -size}, {0.0f, 1.0f} }); // ì¢Œí•˜ë‹¨
+    data.Vertices.push_back({ {size, -size, -size}, {1.0f, 1.0f} });  // ìš°í•˜ë‹¨
+    data.Vertices.push_back({ {size, -size, size}, {1.0f, 0.0f} });   // ìš°ìƒë‹¨
+    data.Vertices.push_back({ {-size, -size, size}, {0.0f, 0.0f} });  // ì¢Œìƒë‹¨
 
-    // 12°³ »ï°¢Çü (6¸é * 2 »ï°¢Çü)ÀÇ ÀÎµ¦½º
+    // 12ê°œ ì‚¼ê°í˜• (6ë©´ * 2 ì‚¼ê°í˜•)ì˜ ì¸ë±ìŠ¤
     data.Indices = {
-        // Àü¸é (Z+)
+        // ì „ë©´ (Z+)
         0, 1, 2,
         0, 2, 3,
 
-        // ÈÄ¸é (Z-)
+        // í›„ë©´ (Z-)
         4, 5, 6,
         4, 6, 7,
 
-        // ¿ìÃø¸é (X+)
+        // ìš°ì¸¡ë©´ (X+)
         8, 9, 10,
         8, 10, 11,
 
-        // ÁÂÃø¸é (X-)
+        // ì¢Œì¸¡ë©´ (X-)
         12, 13, 14,
         12, 14, 15,
 
-        // »ó¸é (Y+)
+        // ìƒë©´ (Y+)
         16, 17, 18,
         16, 18, 19,
 
-        // ÇÏ¸é (Y-)
+        // í•˜ë©´ (Y-)
         20, 21, 22,
         20, 22, 23
     };
@@ -226,25 +230,25 @@ FVertexDataContainer UModelBufferManager::CreateSphereVertexData(int InSegments)
 {
     FVertexDataContainer data;
 
-    // ±¸ Á¤Á¡ µ¥ÀÌÅÍ »ı¼º
+    // êµ¬ ì •ì  ë°ì´í„° ìƒì„±
     const float radius = 0.5f;
     const int segments = InSegments;
-    const int rings = segments;  // ´õ ºÎµå·¯¿î ¸ğµ¨À» À§ÇØ ¸µ ¼ö Áõ°¡
+    const int rings = segments;  // ë” ë¶€ë“œëŸ¬ìš´ ëª¨ë¸ì„ ìœ„í•´ ë§ ìˆ˜ ì¦ê°€
 
-    // UV ÅØ½ºÃ³ ¸ÅÇÎÀ» À§ÇÑ Á¤Á¡ »ı¼º (±ØÁ¡ Æ÷ÇÔ)
+    // UV í…ìŠ¤ì²˜ ë§¤í•‘ì„ ìœ„í•œ ì •ì  ìƒì„± (ê·¹ì  í¬í•¨)
     for (int ring = 0; ring <= rings; ++ring)
     {
-        // À§µµ°¢ (0 = ºÏ±Ø, ¥ğ = ³²±Ø)
+        // ìœ„ë„ê° (0 = ë¶ê·¹, Ï€ = ë‚¨ê·¹)
         float phi = static_cast<float>(PI) * static_cast<float>(ring) / static_cast<float>(rings);
-        float v = static_cast<float>(ring) / static_cast<float>(rings); // v ÅØ½ºÃ³ ÁÂÇ¥ (0 ~ 1)
+        float v = static_cast<float>(ring) / static_cast<float>(rings); // v í…ìŠ¤ì²˜ ì¢Œí‘œ (0 ~ 1)
 
         for (int segment = 0; segment <= segments; ++segment)
         {
-            // °æµµ°¢ (0 ~ 2¥ğ)
+            // ê²½ë„ê° (0 ~ 2Ï€)
             float theta = static_cast<float>(2.0 * PI) * static_cast<float>(segment) / static_cast<float>(segments);
-            float u = static_cast<float>(segment) / static_cast<float>(segments); // u ÅØ½ºÃ³ ÁÂÇ¥ (0 ~ 1)
+            float u = static_cast<float>(segment) / static_cast<float>(segments); // u í…ìŠ¤ì²˜ ì¢Œí‘œ (0 ~ 1)
 
-            // ±¸¸é ÁÂÇ¥¸¦ µ¥Ä«¸£Æ® ÁÂÇ¥·Î º¯È¯
+            // êµ¬ë©´ ì¢Œí‘œë¥¼ ë°ì¹´ë¥´íŠ¸ ì¢Œí‘œë¡œ ë³€í™˜
             float x = radius * sin(phi) * cos(theta);
             float y = radius * cos(phi);
             float z = radius * sin(phi) * sin(theta);
@@ -253,12 +257,12 @@ FVertexDataContainer UModelBufferManager::CreateSphereVertexData(int InSegments)
         }
     }
 
-    // ÀÎµ¦½º »ı¼º (¶ì ±¸Á¶·Î ¿¬°á)
+    // ì¸ë±ìŠ¤ ìƒì„± (ë  êµ¬ì¡°ë¡œ ì—°ê²°)
     for (int ring = 0; ring < rings; ++ring)
     {
         for (int segment = 0; segment < segments; ++segment)
         {
-            // ÇöÀç ¸µ°ú ´ÙÀ½ ¸µÀÇ Á¤Á¡ ÀÎµ¦½º °è»ê
+            // í˜„ì¬ ë§ê³¼ ë‹¤ìŒ ë§ì˜ ì •ì  ì¸ë±ìŠ¤ ê³„ì‚°
             int currentRingStart = ring * (segments + 1);
             int nextRingStart = (ring + 1) * (segments + 1);
 
@@ -267,7 +271,7 @@ FVertexDataContainer UModelBufferManager::CreateSphereVertexData(int InSegments)
             int currentVertexNextRing = nextRingStart + segment;
             int nextVertexNextRing = nextRingStart + segment + 1;
 
-            // µÎ »ï°¢Çü »ı¼º (»ç°¢Çü)
+            // ë‘ ì‚¼ê°í˜• ìƒì„± (ì‚¬ê°í˜•)
             data.Indices.push_back(currentVertex);
             data.Indices.push_back(nextVertex);
             data.Indices.push_back(currentVertexNextRing);
@@ -285,21 +289,21 @@ FVertexDataContainer UModelBufferManager::CreatePlaneVertexData()
 {
     FVertexDataContainer data;
     
-    // °£´ÜÇÑ Æò¸é Á¤Á¡ µ¥ÀÌÅÍ »ı¼º (XZ Æò¸é)
+    // ê°„ë‹¨í•œ í‰ë©´ ì •ì  ë°ì´í„° ìƒì„± (XZ í‰ë©´)
     float size = 0.5f;
     
-    // 4°³ Á¤Á¡ (Á¤»ç°¢Çü)
+    // 4ê°œ ì •ì  (ì •ì‚¬ê°í˜•)
     data.Vertices = {
-        { {-size, 0.0f, -size}, {0.0f, 1.0f} }, // ÁÂÇÏ´Ü
-        { {size, 0.0f, -size}, {1.0f, 1.0f} },  // ¿ìÇÏ´Ü
-        { {size, 0.0f, size}, {1.0f, 0.0f} },   // ¿ì»ó´Ü
-        { {-size, 0.0f, size}, {0.0f, 0.0f} }   // ÁÂ»ó´Ü
+        { {-size, 0.0f, -size}, {0.0f, 1.0f} }, // ì¢Œí•˜ë‹¨
+        { {size, 0.0f, -size}, {1.0f, 1.0f} },  // ìš°í•˜ë‹¨
+        { {size, 0.0f, size}, {1.0f, 0.0f} },   // ìš°ìƒë‹¨
+        { {-size, 0.0f, size}, {0.0f, 0.0f} }   // ì¢Œìƒë‹¨
     };
     
-    // 2°³ »ï°¢ÇüÀÇ ÀÎµ¦½º
+    // 2ê°œ ì‚¼ê°í˜•ì˜ ì¸ë±ìŠ¤
     data.Indices = {
-        0, 1, 2,  // Ã¹ ¹øÂ° »ï°¢Çü
-        0, 2, 3   // µÎ ¹øÂ° »ï°¢Çü
+        0, 1, 2,  // ì²« ë²ˆì§¸ ì‚¼ê°í˜•
+        0, 2, 3   // ë‘ ë²ˆì§¸ ì‚¼ê°í˜•
     };
     
     return data;
@@ -307,23 +311,23 @@ FVertexDataContainer UModelBufferManager::CreatePlaneVertexData()
 
 size_t UModelBufferManager::CalculateHash(const FVertexDataContainer& InVertexData) const
 {
-    // ÇØ½Ã °è»êÀ» À§ÇÑ °£´ÜÇÑ ±¸Çö
+    // í•´ì‹œ ê³„ì‚°ì„ ìœ„í•œ ê°„ë‹¨í•œ êµ¬í˜„
     std::size_t hash = 0;
 
-    // Á¤Á¡ µ¥ÀÌÅÍÀÇ ¸ğµç ¿ä¼Ò¸¦ ÇØ½Ã¿¡ °áÇÕ
+    // ì •ì  ë°ì´í„°ì˜ ëª¨ë“  ìš”ì†Œë¥¼ í•´ì‹œì— ê²°í•©
     for (const auto& vertex : InVertexData.Vertices)
     {
-        // À§Ä¡ ÇØ½Ã
+        // ìœ„ì¹˜ í•´ì‹œ
         hash ^= std::hash<float>{}(vertex.Position.x) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         hash ^= std::hash<float>{}(vertex.Position.y) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         hash ^= std::hash<float>{}(vertex.Position.z) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 
-        // »ö»ó ÇØ½Ã
+        // ìƒ‰ìƒ í•´ì‹œ
         hash ^= std::hash<float>{}(vertex.TexCoord.x) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         hash ^= std::hash<float>{}(vertex.TexCoord.y) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
     }
 
-    // ÀÎµ¦½º µ¥ÀÌÅÍ ÇØ½Ã Ãß°¡
+    // ì¸ë±ìŠ¤ ë°ì´í„° í•´ì‹œ ì¶”ê°€
     for (const auto& index : InVertexData.Indices)
     {
         hash ^= std::hash<UINT>{}(index)+0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -339,16 +343,16 @@ bool UModelBufferManager::IsMoreRecentlyUsed(size_t tickA, size_t tickB)
 
 size_t UModelBufferManager::RegisterVertexData(const FVertexDataContainer& InVertexData)
 {
-    // ÇØ½Ã °è»ê
+    // í•´ì‹œ ê³„ì‚°
     size_t hash = CalculateHash(InVertexData);
 
-    // ÀÌ¹Ì µî·ÏµÈ Á¤Á¡ µ¥ÀÌÅÍÀÎÁö È®ÀÎ
+    // ì´ë¯¸ ë“±ë¡ëœ ì •ì  ë°ì´í„°ì¸ì§€ í™•ì¸
     if (VertexDataMap.find(hash) == VertexDataMap.end())
     {
-        // »õ·Î¿î Á¤Á¡ µ¥ÀÌÅÍ µî·Ï
+        // ìƒˆë¡œìš´ ì •ì  ë°ì´í„° ë“±ë¡
         VertexDataMap[hash] = InVertexData;
 
-        // ¹öÆÛ Ç®¿¡ Ãß°¡
+        // ë²„í¼ í’€ì— ì¶”ê°€
         AddBufferToPool(hash, InVertexData);
     }
 
@@ -357,7 +361,7 @@ size_t UModelBufferManager::RegisterVertexData(const FVertexDataContainer& InVer
 
 const FVertexDataContainer* UModelBufferManager::GetVertexDataByHash(size_t InHash) const
 {
-    // ÇØ½Ã¿¡ ÇØ´çÇÏ´Â Á¤Á¡ µ¥ÀÌÅÍ ¹İÈ¯
+    // í•´ì‹œì— í•´ë‹¹í•˜ëŠ” ì •ì  ë°ì´í„° ë°˜í™˜
     auto it = VertexDataMap.find(InHash);
     if (it != VertexDataMap.end())
     {
@@ -369,11 +373,11 @@ const FVertexDataContainer* UModelBufferManager::GetVertexDataByHash(size_t InHa
 
 FBufferResource* UModelBufferManager::GetBufferByHash(size_t InHash)
 {
-    // ¿äÃ»µÈ ÇØ½Ã¿¡ ÇØ´çÇÏ´Â ¹öÆÛ ¸®¼Ò½º Ã£±â
+    // ìš”ì²­ëœ í•´ì‹œì— í•´ë‹¹í•˜ëŠ” ë²„í¼ ë¦¬ì†ŒìŠ¤ ì°¾ê¸°
     auto it = BufferPool.find(InHash);
     if (it != BufferPool.end())
     {
-        // Á¢±Ù ½Ã°£ ¾÷µ¥ÀÌÆ® (LRU ¾Ë°í¸®ÁòÀ» À§ÇØ)
+        // ì ‘ê·¼ ì‹œê°„ ì—…ë°ì´íŠ¸ (LRU ì•Œê³ ë¦¬ì¦˜ì„ ìœ„í•´)
         it->second->UpdateAccessTick(++CurrentTick);
         return it->second.get();
     }
@@ -383,24 +387,24 @@ FBufferResource* UModelBufferManager::GetBufferByHash(size_t InHash)
 
 bool UModelBufferManager::AddBufferToPool(size_t InHash, const FVertexDataContainer& InVertexData)
 {
-    // Ç®ÀÌ ÀÌ¹Ì ÃÖ´ë Å©±âÀÎÁö È®ÀÎ
+    // í’€ì´ ì´ë¯¸ ìµœëŒ€ í¬ê¸°ì¸ì§€ í™•ì¸
     if (BufferPool.size() >= MAX_BUFFER_POOL_SIZE)
     {
-        // Ç®ÀÌ ²Ë Ã¡À¸¸é LRU ±â¹İÀ¸·Î ¹öÆÛ ±³Ã¼
+        // í’€ì´ ê½‰ ì°¼ìœ¼ë©´ LRU ê¸°ë°˜ìœ¼ë¡œ ë²„í¼ êµì²´
         ReplaceBufferInPool();
     }
 
-    // »õ·Î¿î ¹öÆÛ ¸®¼Ò½º »ı¼º
+    // ìƒˆë¡œìš´ ë²„í¼ ë¦¬ì†ŒìŠ¤ ìƒì„±
     auto newBuffer = std::make_unique<FBufferResource>();
     if (!newBuffer->Initialize(Device, InVertexData))
     {
         return false;
     }
 
-    // ÇöÀç Á¢±Ù ½Ã°£ ¼³Á¤
+    // í˜„ì¬ ì ‘ê·¼ ì‹œê°„ ì„¤ì •
     newBuffer->UpdateAccessTick(++CurrentTick);
 
-    // Ç®¿¡ ¹öÆÛ Ãß°¡
+    // í’€ì— ë²„í¼ ì¶”ê°€
     BufferPool[InHash] = std::move(newBuffer);
 
     return true;
@@ -408,13 +412,13 @@ bool UModelBufferManager::AddBufferToPool(size_t InHash, const FVertexDataContai
 
 void UModelBufferManager::ReplaceBufferInPool()
 {
-    // LRU ¾Ë°í¸®ÁòÀ» »ç¿ëÇÏ¿© °¡Àå ¿À·¡ »ç¿ëµÇÁö ¾ÊÀº ¹öÆÛ Ã£±â
+    // LRU ì•Œê³ ë¦¬ì¦˜ì„ ì‚¬ìš©í•˜ì—¬ ê°€ì¥ ì˜¤ë˜ ì‚¬ìš©ë˜ì§€ ì•Šì€ ë²„í¼ ì°¾ê¸°
     size_t lruHash = 0;
     size_t oldestTick = SIZE_MAX;
 
     for (const auto& pair : BufferPool)
     {
-        // ±âº» ¸ğµ¨Àº ±³Ã¼ÇÏÁö ¾ÊÀ½
+        // ê¸°ë³¸ ëª¨ë¸ì€ êµì²´í•˜ì§€ ì•ŠìŒ
         if (DefaultModelFlags.find(pair.first) != DefaultModelFlags.end() && DefaultModelFlags[pair.first])
         {
             continue;
@@ -427,10 +431,10 @@ void UModelBufferManager::ReplaceBufferInPool()
         }
     }
 
-    // ±³Ã¼ °¡´ÉÇÑ ¹öÆÛ¸¦ Ã£¾Ò´ÂÁö È®ÀÎ
+    // êµì²´ ê°€ëŠ¥í•œ ë²„í¼ë¥¼ ì°¾ì•˜ëŠ”ì§€ í™•ì¸
     if (lruHash != 0)
     {
-        // °¡Àå ¿À·¡ »ç¿ëµÇÁö ¾ÊÀº ¹öÆÛ Á¦°Å
+        // ê°€ì¥ ì˜¤ë˜ ì‚¬ìš©ë˜ì§€ ì•Šì€ ë²„í¼ ì œê±°
         BufferPool.erase(lruHash);
     }
 }

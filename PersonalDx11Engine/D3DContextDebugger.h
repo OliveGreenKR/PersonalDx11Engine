@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d3d11.h>
 #include <string>
 #include <vector>
@@ -43,6 +43,58 @@ public:
 
     bool InspectConstantBuffer(ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);
     bool InspectVertexBuffer(ID3D11Device* device, ID3D11DeviceContext* context, UINT maxDisplayBytes = 64);
+
+    template<typename T>
+    std::vector<T> GetBufferData(ID3D11Buffer* buffer, ID3D11Device* device, ID3D11DeviceContext* context)
+    {
+        std::vector<T> result;
+
+        if (!buffer || !context)
+            return result; // 유효성 체크: nullptr이면 빈 벡터 반환
+
+        // 1. 버퍼 설명 가져오기
+        D3D11_BUFFER_DESC desc;
+        buffer->GetDesc(&desc);
+
+        // 버퍼 크기에서 요소 개수 계산
+        UINT elementCount = desc.ByteWidth / sizeof(T);
+        if (desc.ByteWidth % sizeof(T) != 0)
+            return result; // 크기가 T의 배수가 아니면 오류 방지
+
+        // 2. 스테이징 버퍼 생성 (CPU 읽기 가능)
+        D3D11_BUFFER_DESC stagingDesc = desc;
+        stagingDesc.Usage = D3D11_USAGE_STAGING;
+        stagingDesc.BindFlags = 0; // 바인딩 없음
+        stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+        ID3D11Buffer* stagingBuffer = nullptr;
+        HRESULT hr = device->CreateBuffer(&stagingDesc, nullptr, &stagingBuffer);
+        if (FAILED(hr))
+            return result; // 생성 실패 시 빈 벡터 반환
+
+        // 3. 원본 버퍼 데이터를 스테이징 버퍼로 복사
+        context->CopyResource(stagingBuffer, buffer);
+
+        // 4. 스테이징 버퍼를 매핑하여 데이터 읽기
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mappedResource);
+        if (SUCCEEDED(hr))
+        {
+            // 데이터 크기에 맞게 벡터 크기 예약
+            result.resize(elementCount);
+
+            // 매핑된 메모리에서 데이터 복사
+            memcpy(result.data(), mappedResource.pData, desc.ByteWidth);
+
+            // 매핑 해제
+            context->Unmap(stagingBuffer, 0);
+        }
+
+        // 5. 스테이징 버퍼 해제
+        stagingBuffer->Release();
+
+        return result;
+    }
 
 private:
     // 버퍼 내용 검사
