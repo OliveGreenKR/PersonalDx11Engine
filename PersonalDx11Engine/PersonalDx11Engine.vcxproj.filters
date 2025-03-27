@@ -104,6 +104,9 @@
     <ClCompile Include="RenderJobs.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="D3DContextDebugger.cpp">
+      <Filter>D3D\Debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -219,6 +222,9 @@
     </Filter>
     <Filter Include="Engine\DataStructure\MemoryPool">
       <UniqueIdentifier>{1aea0121-5587-49b2-aba7-b4f3ce240883}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D\Debug">
+      <UniqueIdentifier>{27ac65cd-f332-4dc5-844a-d1052006c884}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -404,6 +410,9 @@
     </ClInclude>
     <ClInclude Include="FrameMemoryPool.h">
       <Filter>Engine\DataStructure\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DContextDebugger.h">
+      <Filter>D3D\Debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

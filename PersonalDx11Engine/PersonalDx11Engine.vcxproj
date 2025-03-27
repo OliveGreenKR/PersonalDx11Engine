@@ -136,6 +136,7 @@
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="D3D.cpp" />
+    <ClCompile Include="D3DContextDebugger.cpp" />
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="DynamicAABBTree.cpp" />
     <ClCompile Include="ElasticBody.cpp">
@@ -177,6 +178,7 @@
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="D3D.h" />
+    <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="define.h" />

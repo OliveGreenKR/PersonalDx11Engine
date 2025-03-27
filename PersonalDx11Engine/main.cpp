@@ -99,6 +99,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	return 0;
 }
+
 void LimitFrameRate(float targetFPS)
 {
 	static LARGE_INTEGER frequency;
@@ -177,6 +178,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto RenderHardware = make_shared<FD3D>();
 	assert(RenderHardware->Initialize(hWnd));
 	RenderHardware->SetVSync(false);
+	RenderHardware->SetDebugValidation(true);
 
 	//Renderer
 	auto rhPtr = Engine::Cast<IRenderHardware>(RenderHardware);

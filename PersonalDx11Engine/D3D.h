@@ -23,6 +23,10 @@ public:
     bool CopyBuffer(ID3D11Buffer* SrcBuffer, OUT ID3D11Buffer** DestBuffer);
 
     void SetVSync(const bool InBool) { bVSync = InBool; }
+    
+    // 디버그 설정
+    void SetDebugValidation(bool bEnable = true);
+    void SetDebugBreakOnError(bool bBreak = true);
 
 public:
     bool bVSync = true;
@@ -43,8 +47,13 @@ private:
     void ReleaseFrameBuffer();
     void ReleaseRasterizerState();
     void ReleaseDepthStencil();
+
+    // 디버그 메소드
+    void ValidateDeviceContextBindings();
 private:
     bool bIsInitialized = false;
+    bool bDebugValidationEnabled = false;
+    bool bDebugBreakOnError = false;
 
     ID3D11Device* Device = nullptr;
     ID3D11DeviceContext* DeviceContext = nullptr;
@@ -60,4 +69,8 @@ private:
 
     D3D11_VIEWPORT ViewportInfo;
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
+
+#ifdef _DEBUG
+    class FD3DContextDebugger* ContextDebugger = nullptr;
+#endif
 };
