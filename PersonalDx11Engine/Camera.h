@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GameObject.h"
 #include "Frustum.h"
 #include "Delegate.h"
@@ -85,7 +85,7 @@ private:
 	float DistanceSpeedScale = 1.0f;
 
 	//목표와의 각도차이
-	float MinTrackAngle = KINDA_SMALL;
+	float MinTrackAngle = KINDA_SMALLER;
 	float MaxTrackAngle = 15.0f;
 
 	// 최대  속도 추적 각도(degree)

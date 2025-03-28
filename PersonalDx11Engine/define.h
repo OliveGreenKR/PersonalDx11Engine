@@ -5,6 +5,5 @@
 #define TEXTURE03 L".\\Resources\\TTile\\4K_albedo.tif"
 #define TEXTURE04 L".\\Resources\\TVolcanicRockCrack\\4K_albedo.tif"
 
-#define MYSHADER L"ShaderMy00.hlsl"
 #define MYPSSHADER L"ShaderMyPS00.hlsl"
 #define MYVSSHADER L"ShaderMyVS00.hlsl"
