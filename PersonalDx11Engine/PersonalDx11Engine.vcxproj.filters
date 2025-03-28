@@ -414,6 +414,12 @@
     <ClInclude Include="D3DContextDebugger.h">
       <Filter>D3D\Debug</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceHandle.h">
+      <Filter>Engine\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceDefines.h">
+      <Filter>Engine\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

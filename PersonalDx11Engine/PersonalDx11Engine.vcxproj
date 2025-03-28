@@ -207,6 +207,8 @@
     <ClInclude Include="RenderJobs.h" />
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
+    <ClInclude Include="ResourceDefines.h" />
+    <ClInclude Include="ResourceHandle.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="RigidBodyComponent.h" />
