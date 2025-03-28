@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Delegate.h"
 #include <windows.h>
 
@@ -29,15 +29,17 @@ class UInputAction
 public:
     UInputAction() = default;
     UInputAction(const std::string& InName) : Name(InName)
-    {}
+    {
+    }
     // 복사 생성자
     UInputAction(const UInputAction& InAction) : Name(InAction.Name), KeyCodes(InAction.KeyCodes)
-    {}
+    {
+    }
 
     const std::string& GetName() const { return Name; }
-    vector<WPARAM> KeyCodes;
+    std::vector<WPARAM> KeyCodes;
 
-     // 대입 연산자 수정
+    // 대입 연산자 수정
     UInputAction& operator= (const UInputAction& InAction)
     {
         if (this != &InAction) // 자기 할당 방지
@@ -49,5 +51,5 @@ public:
     }
 
 private:
-    std::string Name; 
+    std::string Name;
 };

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "InputDefines.h"
 
 class UInputContext : public std::enable_shared_from_this<UInputContext>
@@ -49,8 +49,9 @@ private:
 
 public:
     UInputContext(const std::string& Name, int InPriority = 0)
-        : ContextName(Name), Priority(InPriority) 
-    {}
+        : ContextName(Name), Priority(InPriority)
+    {
+    }
 
 public:
     ~UInputContext()
@@ -65,7 +66,7 @@ public:
         return std::make_shared<UInputContext>(Name, Priority);
     }
 
-   
+
     // 액션 바인딩 (객체를 사용하는 버전) - Action 객체 직접 사용
     template<typename T>
     void BindAction(const UInputAction& Action,

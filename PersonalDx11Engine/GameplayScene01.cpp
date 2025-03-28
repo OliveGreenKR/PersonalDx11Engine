@@ -40,8 +40,8 @@ void UGameplayScene01::Initialize()
 void UGameplayScene01::Load()
 {
     // 텍스처 로드
-    TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
-    TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
+    //TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
+    //TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
 
     //Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 }

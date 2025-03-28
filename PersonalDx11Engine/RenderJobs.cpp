@@ -1,5 +1,4 @@
-﻿#include "RenderJobs.h"
-#include "ShaderInterface.h"
+#include "RenderJobs.h"
 #include "RenderContext.h"
 #include "Debug.h"
 

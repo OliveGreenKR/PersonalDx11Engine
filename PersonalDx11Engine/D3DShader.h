@@ -47,6 +47,9 @@ public:
     UShaderBase() = default;
     virtual ~UShaderBase();
 
+    const std::vector<FInternalConstantBufferInfo>& GetAllConstantBufferInfo() { return ConstantBuffers; }
+    const std::vector<FInternalResourceBindInfo>& GetAllResourceBindInfo() { return ResourceBindingMeta; }
+
     ID3D11InputLayout* GetInputLayout() const { return InputLayout; }
     ID3D11Buffer* GetConstantBuffer(uint32_t Slot) const;
     uint32_t GetConstantBufferSize(uint32_t Slot) const;

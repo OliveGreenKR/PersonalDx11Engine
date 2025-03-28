@@ -4,16 +4,6 @@
 #include "Debug.h"
 #include "TypeCast.h"
 
-// 리소스 접근 시간 업데이트
-void UResourceManager::UpdateResourceAccessTime(const FResourceKey& Key, std::unordered_map<FResourceKey, FResourceData>& Cache)
-{
-    auto it = Cache.find(Key);
-    if (it != Cache.end())
-    {
-        it->second.LastAccessTick = CurrentTick;
-    }
-}
-
 void UResourceManager::Initialize(IRenderHardware* InHardware)
 {
     assert(InHardware && "RenderHardware cannot be null");
@@ -39,7 +29,6 @@ void UResourceManager::Tick(const float DeltaTime)
         UnloadUnusedResources(MAX_UNUSED_TIME);
     }
 }
-
 
 // 미사용 리소스 언로드
 void UResourceManager::UnloadUnusedResources(float TimeSinceLastUseSeconds)

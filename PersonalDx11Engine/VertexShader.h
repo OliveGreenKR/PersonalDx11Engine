@@ -17,7 +17,7 @@ public:
     EResourceType GetType() const override { return EResourceType::Shader; }
 
     // 쉐이더 특화 기능
-    ID3D11VertexShader* GetVertexShader() const { return VertexShader; }
+    ID3D11VertexShader* GetShader() const { return VertexShader; }
 private:
     void CalculateMemoryUsage() override;
 private:

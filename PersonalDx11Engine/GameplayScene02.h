@@ -55,9 +55,9 @@ private:
     float Character2Mass = 15.0f;
 
     // 텍스처 
-    std::shared_ptr<class UTexture2D> TextureTile;
-    std::shared_ptr<class UTexture2D> TexturePole;
-    std::shared_ptr<class UShaderBase> Shader;
+    class UTexture2D* TextureTile;
+    class UTexture2D* TexturePole;
+    class UVertexShader* Shader;
 
     //tmp
     void* MatrixBufferData = nullptr;

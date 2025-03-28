@@ -423,17 +423,14 @@
     <ClInclude Include="D3DContextDebugger.h">
       <Filter>D3D\Debug</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceHandle.h">
-      <Filter>Engine\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceDefines.h">
-      <Filter>Engine\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="PixelShader.h">
       <Filter>Engine\Resources\Shader\Pixel</Filter>
     </ClInclude>
     <ClInclude Include="VertexShader.h">
       <Filter>Engine\Resources\Shader\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceKey.h">
+      <Filter>Engine\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

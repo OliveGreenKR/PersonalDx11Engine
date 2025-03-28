@@ -10,7 +10,7 @@
 #include "Color.h"
 #include "Debug.h"
 #include "ResourceManager.h"
-#include "D3DShader.h"
+#include "VertexShader.h"
 #include "Texture.h"
 #include "UIManager.h"
 #include "RenderJobs.h"
@@ -97,13 +97,17 @@ void UGameplayScene02::Initialize()
 void UGameplayScene02::Load()
 {
     // 텍스처 로드
-    TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
-    TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
+    auto TTileHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
+    auto TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
+    auto VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYSHADER, false);
+    
+    TextureTile = UResourceManager::Get()->GetResource<UTexture2D>(TTileHandle);
+    TexturePole = UResourceManager::Get()->GetResource<UTexture2D>(TPoleHandle);
 
     //쉐이더 로드'
-    Shader = UResourceManager::Get()->LoadShaders(MYSHADER, MYSHADER);
+    Shader = UResourceManager::Get()->GetResource<UVertexShader>(VShaderHandle);
 
-    auto VSBufferInfo = Shader->GetVSConstantBufferInfo();
+    auto VSBufferInfo = Shader->GetAllConstantBufferInfo();
     for (auto info : VSBufferInfo)
     {
         if (info.Name == "MATRIX_BUFFER")
@@ -200,7 +204,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     Vector4 color(1, 1, 1, 1);
     std::memcpy(ColorBufferData, &color, sizeof(Vector4));
 
-    auto cbVS = Shader->GetVSConstantBufferInfo();
+    auto cbVS = Shader->GetAllConstantBufferInfo();
     auto MatrixBuffer = cbVS[0].Buffer;
     auto ColorBuffer = cbVS[1].Buffer;
     

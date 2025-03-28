@@ -5,14 +5,15 @@
 struct FResourceKey
 {
 private:
-	uint32_t HashValue = 0;
+    uint32_t HashValue = 0;
 
     explicit FResourceKey(uint32_t value)
-        : HashValue(value) 
-    {}
+        : HashValue(value)
+    {
+    }
 
 public:
-    void InValidate() { HashValue = 0; }
+    void Invalidate() { HashValue = 0; }
 
     bool IsValid() const { return HashValue != 0; }
     uint32_t GetHash() const { return HashValue; }
@@ -55,7 +56,7 @@ public:
     // 연산자
     bool operator==(const FResourceKey& Other) const { return HashValue == Other.HashValue; }
     bool operator!=(const FResourceKey& Other) const { return HashValue != Other.HashValue; }
-	bool operator<(const FResourceKey& Other) const { return HashValue < Other.HashValue;}
+    bool operator<(const FResourceKey& Other) const { return HashValue < Other.HashValue; }
 
     //for unordered_map
     struct Hasher
