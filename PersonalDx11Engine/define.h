@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #define TEXTURE01 L".\\Resources\\TAbstract1.tif"
 #define TEXTURE02 L".\\Resources\\TEnergyPole1.tif"
@@ -6,3 +6,5 @@
 #define TEXTURE04 L".\\Resources\\TVolcanicRockCrack\\4K_albedo.tif"
 
 #define MYSHADER L"ShaderMy00.hlsl"
+#define MYPSSHADER L"ShaderMyPS00.hlsl"
+#define MYVSSHADER L"ShaderMyVS00.hlsl"

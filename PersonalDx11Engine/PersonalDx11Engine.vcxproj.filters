@@ -440,6 +440,12 @@
     <FxCompile Include="ShaderDebug.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="ShaderMyPS00.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="ShaderMyVS00.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />

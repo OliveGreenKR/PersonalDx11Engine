@@ -99,7 +99,7 @@ void UGameplayScene02::Load()
     // 텍스처 로드
     auto TTileHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
     auto TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
-    auto VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYSHADER, false);
+    auto VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
     
     TextureTile = UResourceManager::Get()->GetResource<UTexture2D>(TTileHandle);
     TexturePole = UResourceManager::Get()->GetResource<UTexture2D>(TPoleHandle);

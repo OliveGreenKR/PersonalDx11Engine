@@ -1,5 +1,3 @@
-Texture2D shaderTexture : register(t0);
-SamplerState SampleType : register(s0);
 cbuffer MATRIX_BUFFER : register(b0)
 {
     matrix worldMatrix;
@@ -12,7 +10,7 @@ cbuffer COLOR_BUFFER : register(b1)
 };
 struct VS_INPUT
 {
-    float4 position : POSITION;
+    float3 position : POSITION;
     float2 tex : TEXCOORD0;
 };
 struct PS_INPUT
@@ -24,15 +22,14 @@ struct PS_INPUT
 PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
-    input.position.w = 1.0f;
-    output.position = mul(input.position, worldMatrix);
+    
+    float4 Inposition = input.position.xyzx;
+    Inposition.w = 1.0f;
+    
+    output.position = mul(Inposition, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
-
+    output.tex = input.tex;
     output.color = InColor;
     return output;
-}
-float4 mainPS(PS_INPUT input) : SV_TARGET
-{
-    return input.color;
 }
