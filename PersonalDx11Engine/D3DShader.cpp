@@ -1,132 +1,124 @@
-﻿#include "D3DShader.h"
+#include "D3DShader.h"
 #include "d3d11shader.h"
 #include "Debug.h"
 #include <map>
 
-
-bool UShader::Load(ID3D11Device* Device, const wchar_t* VSPath, const wchar_t* PSPath)
-{
-	// 1. 쉐이더 컴파일
-	ID3DBlob* VSBlob = nullptr;
-	ID3DBlob* PSBlob = nullptr;
-
-	if (FAILED(CompileShader(VSPath, "mainVS", "vs_5_0", &VSBlob)) ||
-		FAILED(CompileShader(PSPath, "mainPS", "ps_5_0", &PSBlob)) ||
-		!PSBlob || !VSBlob)
-	{
-		return false;
-	}
-
-	//ID3DBlob* disasmBlob = nullptr;
-	//D3DDisassemble(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), 0, nullptr, &disasmBlob);
-	//if (disasmBlob)
-	//{
-	//	LOG("Disassembled PS:\n%s\n", (char*)disasmBlob->GetBufferPointer());
-	//	disasmBlob->Release();
-	//}
-
-	// 2. 리플렉션 객체 생성
-	ID3D11ShaderReflection* VSReflection = nullptr;
-	if (FAILED(D3DReflect(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(),
-						  IID_ID3D11ShaderReflection, (void**)&VSReflection)))
-	{
-		VSBlob->Release();
-		PSBlob->Release();
-		return false;
-	}
-
-	// 3. 입력 레이아웃 자동 생성
-	std::vector<D3D11_INPUT_ELEMENT_DESC> InputLayoutDesc;
-	if (!CreateInputLayoutFromReflection(VSReflection, InputLayoutDesc))
-	{
-		VSReflection->Release();
-		VSBlob->Release();
-		PSBlob->Release();
-		return false;
-	}
-
-	// 4. 쉐이더 객체 생성
-	if (FAILED(Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(),
-										  nullptr, &VertexShader)) ||
-		FAILED(Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(),
-										 nullptr, &PixelShader)) ||
-		FAILED(Device->CreateInputLayout(InputLayoutDesc.data(), InputLayoutDesc.size(),
-										 VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), &InputLayout)))
-	{
-		VSReflection->Release();
-		VSBlob->Release();
-		PSBlob->Release();
-		return false;
-	}
-
-	// 5. 상수 버퍼 정보 추출 및 생성
-	ExtractAndCreateConstantBuffers(Device, VSReflection, VSConstantBuffers);
-
-	// 픽셀 쉐이더 리플렉션도 동일하게 처리
-	ID3D11ShaderReflection* PSReflection = nullptr;
-	if (SUCCEEDED(D3DReflect(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(),
-							 IID_ID3D11ShaderReflection, (void**)&PSReflection)))
-	{
-		ExtractAndCreateConstantBuffers(Device, PSReflection, PSConstantBuffers);
-	}
-
-	// 6. 쉐이더 리소스 및 샘플러 정보 추출
-	ExtractResourceBindings(VSReflection, VSResourceBindingMeta);
-	if (PSReflection)
-	{
-		ExtractResourceBindings(PSReflection, PSResourceBindingMeta);
-	}
-		
-	// 리소스 정리
-	VSReflection->Release();
-	PSReflection->Release();
-	VSByteCode = VSBlob; // 나중에 쓸 수 있으므로 보관
-	PSBlob->Release();
-
-	bIsLoaded = true;
-	return true;
-}
-
-UShader::~UShader()
+UShaderBase::~UShaderBase()
 {
 	Release();
 }
 
-void UShader::Release()
+bool UShaderBase::FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob)
 {
-
-	if (VSByteCode)
+	if (!ShaderBlob)
 	{
-		VSByteCode->Release();
-		VSByteCode = nullptr;
+		return false;
 	}
 
+	// 2. 리플렉션 객체 생성
+	ID3D11ShaderReflection* SReflection = nullptr;
+	if (FAILED(D3DReflect(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize(),
+						  IID_ID3D11ShaderReflection, (void**)&SReflection)))
+	{
+		ShaderBlob->Release();
+		return false;
+	}
+
+	//  입력 레이아웃 자동 생성
+	std::vector<D3D11_INPUT_ELEMENT_DESC> InputLayoutDesc;
+	if (!CreateInputLayoutFromReflection(SReflection, InputLayoutDesc))
+	{
+		SReflection->Release();
+		ShaderBlob->Release();
+		return false;
+	}
+
+	if (FAILED(Device->CreateInputLayout(InputLayoutDesc.data(), InputLayoutDesc.size(),
+										 ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize(), &InputLayout)))
+	{
+		SReflection->Release();
+		ShaderBlob->Release();
+	}
+
+	// 상수 버퍼 정보 추출 및 생성
+	ExtractAndCreateConstantBuffers(Device, SReflection, ConstantBuffers);
+
+	// 쉐이더 리소스 정보 추출
+	ExtractResourceBindings(SReflection, ResourceBindingMeta);
+
+
+	SReflection->Release();
+	return true;
+}
+
+void UShaderBase::Release()
+{
+	// 상수 버퍼 해제
+	for (auto& cbInfo : ConstantBuffers)
+	{
+		if (cbInfo.Buffer)
+		{
+			cbInfo.Buffer->Release();
+			cbInfo.Buffer = nullptr;
+		}
+	}
+	ConstantBuffers.clear();
+
+	// 입력 레이아웃 해제
 	if (InputLayout)
 	{
 		InputLayout->Release();
 		InputLayout = nullptr;
 	}
 
-	if (PixelShader)
-	{
-		PixelShader->Release();
-		PixelShader = nullptr;
-	}
-
-	if (VertexShader)
-	{
-		VertexShader->Release();
-		VertexShader = nullptr;
-	}
-
-	/// 메모리 사용량 초기화
-	MemorySize = 0;
-
-	// 로드 상태 업데이트
-	bIsLoaded = false;
+	ResourceBindingMeta.clear();
 }
 
-bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection, std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout)
+void UShaderBase::CalculateMemoryUsage()
+{
+	MemorySize = 0;
+
+	// 입력 레이아웃 메모리 (추정치)
+	if (InputLayout) MemorySize += 64;
+
+	// 상수 버퍼 메모리
+	for (const auto& cbInfo : ConstantBuffers)
+	{
+		if (cbInfo.Buffer)
+		{
+			MemorySize += cbInfo.Size;  // 버퍼 자체의 크기
+			MemorySize += 64;           // D3D 리소스 오버헤드 (추정치)
+		}
+	}
+
+	// 메타데이터 메모리 (추정치)
+	MemorySize += ResourceBindingMeta.size() * 32;
+}
+
+ID3D11Buffer* UShaderBase::GetConstantBuffer(uint32_t Slot) const
+{
+	if (Slot < ConstantBuffers.size())
+		return ConstantBuffers[Slot].Buffer;
+	return nullptr;
+}
+
+uint32_t UShaderBase::GetConstantBufferSize(uint32_t Slot) const
+{
+	if (Slot < ConstantBuffers.size())
+		return ConstantBuffers[Slot].Size;
+	return 0;
+}
+
+const std::string& UShaderBase::GetConstantBufferName(uint32_t Slot) const
+{
+	static const std::string EmptyString;
+	if (Slot < ConstantBuffers.size())
+		return ConstantBuffers[Slot].Name;
+	return EmptyString;
+}
+
+
+bool UShaderBase::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection, std::vector<D3D11_INPUT_ELEMENT_DESC>& OutLayout)
 {
 	D3D11_SHADER_DESC ShaderDesc;
 	Reflection->GetDesc(&ShaderDesc);
@@ -207,7 +199,7 @@ bool UShader::CreateInputLayoutFromReflection(ID3D11ShaderReflection* Reflection
 }
 
 // 상수 버퍼 정보 추출 및 생성
-void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FInternalConstantBufferInfo>& OutBuffers)
+void UShaderBase::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11ShaderReflection* Reflection, std::vector<FInternalConstantBufferInfo>& OutBuffers)
 {
 	D3D11_SHADER_DESC ShaderDesc; 
 	Reflection->GetDesc(&ShaderDesc);
@@ -263,7 +255,7 @@ void UShader::ExtractAndCreateConstantBuffers(ID3D11Device* Device, ID3D11Shader
 	}
 }
 
-HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob)
+HRESULT UShaderBase::CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob)
 {
 	ID3DBlob* pBlob = nullptr;
 	ID3DBlob* pErrorBlob = nullptr;
@@ -295,7 +287,7 @@ HRESULT UShader::CompileShader(const wchar_t* filename, const char* entryPoint, 
 }
 
  // 쉐이더 리소스 바인딩 정보 추출
-void UShader::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FInternalResourceBindInfo>& OutBindings)
+void UShaderBase::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, std::vector<FInternalResourceBindInfo>& OutBindings)
 {
 	D3D11_SHADER_DESC ShaderDesc;
 	Reflection->GetDesc(&ShaderDesc);

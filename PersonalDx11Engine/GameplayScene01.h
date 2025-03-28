@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <vector>
 #include "GameObject.h"
@@ -48,7 +48,7 @@ private:
     bool bGravity = false;
 
     //쉐이더
-    std::shared_ptr<class UShader> Shader;
+    std::shared_ptr<class UShaderBase> Shader;
     
     // 텍스처 
     std::shared_ptr<class UTexture2D> TextureTile;

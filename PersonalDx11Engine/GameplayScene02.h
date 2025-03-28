@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <vector>
 #include "GameObject.h"
@@ -57,7 +57,7 @@ private:
     // 텍스처 
     std::shared_ptr<class UTexture2D> TextureTile;
     std::shared_ptr<class UTexture2D> TexturePole;
-    std::shared_ptr<class UShader> Shader;
+    std::shared_ptr<class UShaderBase> Shader;
 
     //tmp
     void* MatrixBufferData = nullptr;

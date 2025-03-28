@@ -107,6 +107,12 @@
     <ClCompile Include="D3DContextDebugger.cpp">
       <Filter>D3D\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="PixelShader.cpp">
+      <Filter>Engine\Resources\Shader\Pixel</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexShader.cpp">
+      <Filter>Engine\Resources\Shader\Vertex</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -225,6 +231,12 @@
     </Filter>
     <Filter Include="D3D\Debug">
       <UniqueIdentifier>{27ac65cd-f332-4dc5-844a-d1052006c884}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources\Shader\Pixel">
+      <UniqueIdentifier>{a09163ea-3257-4377-b593-68b0e7ef44d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources\Shader\Vertex">
+      <UniqueIdentifier>{3fbdeccb-0d68-4a62-a070-e2eb4414dcc3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -402,9 +414,6 @@
     <ClInclude Include="RenderStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderInterface.h">
-      <Filter>Engine\Interface</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectPool.h">
       <Filter>Engine\DataStructure\MemoryPool</Filter>
     </ClInclude>
@@ -419,6 +428,12 @@
     </ClInclude>
     <ClInclude Include="ResourceDefines.h">
       <Filter>Engine\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="PixelShader.h">
+      <Filter>Engine\Resources\Shader\Pixel</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexShader.h">
+      <Filter>Engine\Resources\Shader\Vertex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

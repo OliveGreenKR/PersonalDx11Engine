@@ -2,10 +2,10 @@
 #include "D3DShader.h"
 #include "Texture.h"
 #include "Debug.h"
-
+#include "TypeCast.h"
 
 // 리소스 접근 시간 업데이트
-void UResourceManager::UpdateResourceAccessTime(const std::wstring& Key, std::unordered_map<std::wstring, FResourceData>& Cache)
+void UResourceManager::UpdateResourceAccessTime(const FResourceKey& Key, std::unordered_map<FResourceKey, FResourceData>& Cache)
 {
     auto it = Cache.find(Key);
     if (it != Cache.end())
@@ -24,8 +24,7 @@ void UResourceManager::Initialize(IRenderHardware* InHardware)
 void UResourceManager::Shutdown()
 {
     // 리소스 해제
-    TextureCache.clear();
-    ShaderCache.clear();
+    ResourceCache.clear();
 
     bInitialized = false;
 }
@@ -41,127 +40,54 @@ void UResourceManager::Tick(const float DeltaTime)
     }
 }
 
-std::shared_ptr<UTexture2D> UResourceManager::LoadTexture(
-    const std::wstring& FilePath,
-    bool bAsync)
-{
-    assert(bInitialized && "ResourceManager not initialized");
-
-    // 이미 로드된 텍스처인지 확인
-    auto it = TextureCache.find(FilePath);
-    if (it != TextureCache.end())
-    {
-        // 접근 시간 업데이트
-        it->second.LastAccessTick = CurrentTick;
-
-        // 캐시된 텍스처 반환
-        return std::static_pointer_cast<UTexture2D>(it->second.Resource);
-    }
-
-    // 새 텍스처 객체 생성
-    auto texture = std::make_shared<UTexture2D>();
-
-    // 텍스처 로드
-    bool success = false;
-    if (bAsync)
-    {
-        // 비동기 로드 시작
-        success = texture->LoadAsync(RenderHardware, FilePath);
-    }
-    else
-    {
-        // 동기 로드
-        success = texture->Load(RenderHardware, FilePath);
-    }
-
-    if (success)
-    {
-        // 캐시에 추가
-        FResourceData ResourceData;
-        ResourceData.Resource = texture;
-        ResourceData.LastAccessTick = CurrentTick;
-        TextureCache[FilePath] = ResourceData;
-
-        return texture;
-    }
-
-    return nullptr; // 로드 실패
-}
-
-std::shared_ptr<class UShader> UResourceManager::LoadShader(const std::wstring& VSPath, const std::wstring& PSPath)
-{
-    assert(bInitialized && "ResourceManager not initialized");
-
-    // 셰이더 캐시 키 생성 (VS와 PS 경로 조합)
-    std::wstring ShaderKey = VSPath + L"|" + PSPath;
-
-    // 이미 로드된 셰이더인지 확인
-    auto it = ShaderCache.find(ShaderKey);
-    if (it != ShaderCache.end())
-    {
-        // 접근 시간 업데이트
-        it->second.LastAccessTick = CurrentTick;
-        return std::static_pointer_cast<UShader>(it->second.Resource);
-    }
-
-    // 새 셰이더 로드
-    auto Shader = std::make_shared<UShader>();
-    Shader->Load(RenderHardware->GetDevice(), VSPath.c_str(), PSPath.c_str());
-    if (!Shader->IsLoaded())
-    {
-        LOG("Shader Load Failed");
-        return nullptr; // 로드 실패
-    }
-
-    // 캐시에 추가
-    FResourceData ResourceData;
-    ResourceData.Resource = Shader;
-    ResourceData.LastAccessTick = CurrentTick;
-    ShaderCache[ShaderKey] = ResourceData;
-
-    return Shader;
-}
 
 // 미사용 리소스 언로드
 void UResourceManager::UnloadUnusedResources(float TimeSinceLastUseSeconds)
 {
     const float TimeThreshold = TimeSinceLastUseSeconds;
 
-    // 텍스처 캐시 정리
-    auto texIt = TextureCache.begin();
-    while (texIt != TextureCache.end())
+    //  캐시 정리
+    auto rscIt = ResourceCache.begin();
+    while (rscIt != ResourceCache.end())
     {
-        if (CurrentTick - texIt->second.LastAccessTick > TimeThreshold)
+        if (CurrentTick - rscIt->second.LastAccessTick > TimeThreshold)
         {
-            texIt = TextureCache.erase(texIt);
-            LOG("Texture deleted in ResourceManager");
+            rscIt = ResourceCache.erase(rscIt);
+            LOG("Rsc deleted in ResourceManager");
         }
         else
         {
-            ++texIt;
+            ++rscIt;
         }
     }
 
-    // 셰이더 캐시 정리
-    auto shaderIt = ShaderCache.begin();
-    while (shaderIt != ShaderCache.end())
-    {
-        if (CurrentTick - shaderIt->second.LastAccessTick > TimeThreshold)
-        {
-            shaderIt = ShaderCache.erase(shaderIt);
-            LOG("Shader deleted in ResourceManager");
-        }
-        else
-        {
-            ++shaderIt;
-        }
-    }
 }
 
 // 디버깅용 리소스 통계
 void UResourceManager::PrintResourceStats()
 {
-    printf("Resource Statistics:\n");
-    printf("- Textures: %zu\n", TextureCache.size());
-    printf("- Shaders: %zu\n", ShaderCache.size());
+
+    std::uint32_t Textures = 0;
+    std::uint32_t Shaders = 0;
+    for (const auto& rsc : ResourceCache)
+    {
+        auto type = rsc.second.Resource->GetType();
+
+        switch (type)
+        {
+            case EResourceType::Texture :
+            {
+                Textures++;
+                break;
+            }
+            case EResourceType::Shader :
+            {
+                Shaders++;
+                break;
+            }
+        }
+    }
+    LOG("- Total : %zu\n", ResourceCache.size());
+    LOG("- Shaders : %zu\n", Shaders);
+    LOG("- Textures : %zu\n", Textures);
 }

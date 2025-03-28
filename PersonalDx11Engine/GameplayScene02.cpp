@@ -97,11 +97,11 @@ void UGameplayScene02::Initialize()
 void UGameplayScene02::Load()
 {
     // 텍스처 로드
-    TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
-    TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
+    TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
+    TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
 
     //쉐이더 로드'
-    Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+    Shader = UResourceManager::Get()->LoadShaders(MYSHADER, MYSHADER);
 
     auto VSBufferInfo = Shader->GetVSConstantBufferInfo();
     for (auto info : VSBufferInfo)

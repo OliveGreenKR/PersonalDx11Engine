@@ -1,13 +1,16 @@
 #pragma once
 #include "ResourceInterface.h"
 #include "RenderHardwareInterface.h"
+#include "ResourceHandle.h"
+#include "ResourceDefines.h"
+#include <type_traits>
 #include <unordered_map>
 #include <string>
 #include <memory>
 
 struct FResourceData
 {
-    std::shared_ptr<IResource> Resource;
+    std::unique_ptr<IResource> Resource;
     float LastAccessTick = 0; // 마지막 접근 시간
 };
 
@@ -22,9 +25,10 @@ private:
 
     IRenderHardware* RenderHardware = nullptr;
 
-    // 경로 기반 리소스 캐시
-    std::unordered_map<std::wstring, FResourceData> TextureCache;
-    std::unordered_map<std::wstring, FResourceData> ShaderCache;
+    //리소스 캐시
+    std::unordered_map<std::uint32_t, FResourceData> ResourceCache;
+    //std::unordered_map<FResourceKey, FResourceData> TextureCache;
+    //std::unordered_map<FResourceKey, FResourceData> ShaderCache;
 
     // 싱글톤 패턴
     UResourceManager() = default;
@@ -37,7 +41,7 @@ private:
     UResourceManager& operator=(UResourceManager&&) = delete;
 
     // 리소스 접근 시간 업데이트
-    void UpdateResourceAccessTime(const std::wstring& Key, std::unordered_map<std::wstring, FResourceData>& Cache);
+    void UpdateResourceAccessTime(const FResourceKey& Key, std::unordered_map<FResourceKey, FResourceData>& Cache);
 
 public:
     static UResourceManager* Get()
@@ -53,11 +57,20 @@ public:
     // 시스템 틱 업데이트
     void Tick(const float DeltaTime);
 
-    // 텍스처 로드
-    std::shared_ptr<class UTexture2D> LoadTexture(const std::wstring& FilePath, bool bAsync = false);
+    IResource* GetResource(FResourceKey InKey)
+    {
+        auto it = ResourceCache.find(InKey.GetHash());
+        if (it != ResourceCache.end())
+        {
+            return it->second.Resource.get();
+        }
+        return nullptr;
+    }
 
-    // 셰이더 로드
-    std::shared_ptr<class UShader> LoadShader(const std::wstring& VSPath, const std::wstring& PSPath);
+    // 리소스 로드
+    template <typename T>
+    TResourceHandle<T> LoadResource(const std::wstring& FilePath, bool bAsync = false);
+
 
     // 미사용 리소스 언로드
     void UnloadUnusedResources(float TimeSinceLastUseSec = 60.0f);
@@ -65,3 +78,53 @@ public:
     // 디버깅용 리소스 통계
     void PrintResourceStats();
 };
+
+template<typename T>
+inline TResourceHandle<T> UResourceManager::LoadResource(const std::wstring& FilePath, bool bAsync)
+{
+    assert(bInitialized && "ResourceManager not initialized");
+    static_assert(std::is_base_of_v<IResource, T> || std::is_same_v<IResource, T>);
+
+    FResourceKey RscKey(FilePath.c_str());
+    TResourceHandle<T> Handle(RscKey);
+
+    // 이미 로드된 텍스처인지 확인
+    auto it = ResourceCache.find(RscKey.GetHash());
+    if (it != ResourceCache.end())
+    {
+        // 접근 시간 업데이트
+        it->second.LastAccessTick = CurrentTick;
+
+        return Handle;
+    }
+
+    //// 새 리소스 객체 생성
+    //auto rscUniquePtr = std::make_unique<T>();
+
+    //// 텍스처 로드
+    //bool success = false;
+    //if (bAsync)
+    //{
+    //    // 비동기 로드 시작
+    //    success = resouceUniquePtr->LoadAsync(RenderHardware, FilePath);
+    //}
+    //else
+    //{
+    //    // 동기 로드
+    //    success = resouceUniquePtr->Load(RenderHardware, FilePath);
+    //}
+
+    //if (success)
+    //{
+    //    // 캐시에 추가
+    //    FResourceData ResourceData;
+    //    ResourceData.Resource = std::move(resouceUniquePtr);
+    //    ResourceData.LastAccessTick = CurrentTick;
+    //    ResourceCache.emplace(RscKey.GetHash(), ResourceData);
+
+    //    return Handle;
+    //}
+
+    Handle.Invalidate();
+    return Handle;
+}

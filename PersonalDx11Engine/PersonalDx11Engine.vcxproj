@@ -156,6 +156,7 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelBufferManager.cpp" />
+    <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -166,6 +167,7 @@
     <ClCompile Include="SceneComponent.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="VertexShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorComponent.h" />
@@ -200,6 +202,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ModelBufferManager.h" />
     <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
@@ -225,7 +228,6 @@
     <ClInclude Include="SceneInterface.h" />
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="ShaderInterface.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
     <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />
@@ -234,6 +236,7 @@
     <ClInclude Include="UIManager.h" />
     <ClInclude Include="VertexDataContainer.h" />
     <ClInclude Include="VertexFormat.h" />
+    <ClInclude Include="VertexShader.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderDebug.hlsl">

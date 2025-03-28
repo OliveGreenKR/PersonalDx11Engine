@@ -7,7 +7,13 @@ struct FResourceKey
 private:
 	uint32_t HashValue = 0;
 
+    explicit FResourceKey(uint32_t value)
+        : HashValue(value) 
+    {}
+
 public:
+    void InValidate() { HashValue = 0; }
+
     bool IsValid() const { return HashValue != 0; }
     uint32_t GetHash() const { return HashValue; }
 

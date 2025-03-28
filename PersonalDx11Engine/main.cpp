@@ -205,7 +205,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceCounter(&lastTime);
 
 	//Default Shader for renderng
-	auto Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+	auto Shader = UResourceManager::Get()->LoadShaders(MYSHADER, MYSHADER);
 	if (Shader)
 	{
 		Renderer->GetRenderContext()->BindShader(Shader->GetVertexShader(), Shader->GetPixelShader(), Shader->GetInputLayout());

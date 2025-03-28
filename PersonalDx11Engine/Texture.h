@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "ResourceInterface.h"
 #include "RenderHardwareInterface.h"
 #include <string>
@@ -73,6 +73,9 @@ public:
     // 비동기 로딩 상태 확인
     bool IsLoadingComplete() const { return !bIsLoading || bIsLoaded; }
     bool IsLoading() const { return bIsLoading; }
+
+    //리소스타입
+    EResourceType GetType() const override { return EResourceType::Texture; }
 
 private:
     // DXGI 포맷 변환 헬퍼

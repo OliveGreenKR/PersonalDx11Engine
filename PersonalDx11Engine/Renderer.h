@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "RenderHardwareInterface.h"
 
 #include "Math.h"
@@ -13,7 +13,7 @@
 #include "TypeCast.h"
 
 class UModel;
-class UShader;
+class UShaderBase;
 class UGameObject;
 class UCamera;
 class UPrimitiveComponent;

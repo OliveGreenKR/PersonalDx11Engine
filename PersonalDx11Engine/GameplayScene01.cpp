@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GameplayScene01.h"
 #include "Renderer.h"
 #include "RigidBodyComponent.h"
@@ -40,8 +40,8 @@ void UGameplayScene01::Initialize()
 void UGameplayScene01::Load()
 {
     // 텍스처 로드
-    TextureTile = UResourceManager::Get()->LoadTexture(TEXTURE03);
-	TexturePole = UResourceManager::Get()->LoadTexture(TEXTURE02);
+    TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
+    TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
 
     //Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
 }
