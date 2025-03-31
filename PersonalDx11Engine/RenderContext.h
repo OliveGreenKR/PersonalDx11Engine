@@ -1,11 +1,9 @@
-﻿#pragma once
+#pragma once
 #include <d3d11.h>
 #include "Math.h"
-#include <stack>
 #include <memory>
-#include "RenderStateInterface.h"
 #include "RenderHardwareInterface.h"
-
+#include "RenderDataInterface.h"
 
 class FD3DContextDebugger;
 
@@ -18,10 +16,6 @@ public:
     bool Initialize(std::shared_ptr<IRenderHardware> InHardware);
     void Release();
 
-    // 렌더 상태 관리
-    void PushState(IRenderState* State);
-    void PopState();
-
     //프레임 컨텍스트 관리
     void BeginFrame();
     void EndFrame();
@@ -29,15 +23,10 @@ public:
     // 쉐이더 
     void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout);
 
-    // 렌더링 리소스  
-    void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
-    void BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT);
-    void BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader);
-    void BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV);
-    void BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler);
-    void Draw(UINT VertexCount, UINT StartVertexLocation = 0);
-    void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
+    //렌더링 리소스 바인딩
+    void DrawRenderData(const IRenderData* InData);
 
+    //기본 샘플링 상태
     ID3D11SamplerState* GetDefaultSamplerState() { return DefaultSamplerState; }
     
     //접근자
@@ -52,7 +41,19 @@ public:
     bool bDebugBreakOnError = false;
  
 private:
+    //기본 샘플링 상태 생성
     bool CreateDefaultSamplerState();
+
+    // 렌더링 리소스 바인딩
+    void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
+    void BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT);
+    void BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader);
+    void BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV);
+    void BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler);
+
+    //렌더링 명령
+    void Draw(UINT VertexCount, UINT StartVertexLocation = 0);
+    void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
 
 private:
     // 현재 바인딩된 리소스 캐시
@@ -68,8 +69,6 @@ private:
     ID3D11SamplerState* DefaultSamplerState = nullptr;
 
     std::shared_ptr<IRenderHardware> RenderHardware;
-    std::stack<IRenderState*> StateStack;
-
 
 #ifdef _DEBUG
     class FD3DContextDebugger* ContextDebugger;

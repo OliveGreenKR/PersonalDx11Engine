@@ -1,4 +1,5 @@
-﻿#pragma once
+#pragma once
+#include "RenderDefines.h"
 #include "RenderStateInterface.h"
 
 class FWireframeState : public IRenderState
@@ -6,7 +7,6 @@ class FWireframeState : public IRenderState
 private:
     ID3D11RasterizerState* WireframeRasterizerState;
     ID3D11RasterizerState* PreviousRasterizerState;
-
 public:
     ~FWireframeState()
     {
@@ -43,6 +43,7 @@ public:
             WireframeRasterizerState->AddRef();
         }
     }
+
 };
 
 class FSolidState : public IRenderState
@@ -87,4 +88,5 @@ public:
             SolidRasterizerState->AddRef();
         }
     }
+
 };

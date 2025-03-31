@@ -179,7 +179,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     auto BufferRsc = Primitive->GetModel()->GetBufferResource();
 
     //TODO : Submit RenderJob
-    auto RenderJob = Renderer->AcquireJob<FTextureRenderJob>();
+    auto RenderJob = Renderer->AcquireJob<FTextureRenderData>();
 
 
     RenderJob->IndexBuffer = BufferRsc->GetIndexBuffer();

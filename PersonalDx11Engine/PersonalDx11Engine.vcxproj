@@ -160,7 +160,7 @@
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="RenderJobs.cpp" />
+    <ClCompile Include="RenderDataTexture.cpp" />
     <ClCompile Include="RenderStates.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
@@ -206,9 +206,10 @@
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
+    <ClInclude Include="RenderDataInterface.h" />
     <ClInclude Include="RenderDefines.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
-    <ClInclude Include="RenderJobs.h" />
+    <ClInclude Include="RenderDataTexture.h" />
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ResourceKey.h" />

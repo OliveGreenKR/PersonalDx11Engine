@@ -42,37 +42,6 @@ void FRenderContext::Release()
     }
 }
 
-void FRenderContext::PushState(IRenderState* State)
-{
-    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!State || !DeviceContext) return;
-
-    // 상태 스택에 푸시
-    State->Apply(DeviceContext);
-    StateStack.push(State);
-}
-
-void FRenderContext::PopState()
-{
-    ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (StateStack.empty() || !DeviceContext) return;
-     
-    IRenderState* CurrentState = StateStack.top();
-    StateStack.pop();
-
-    // 현재 상태 복원
-    if (CurrentState)
-    {
-        CurrentState->Restore(DeviceContext);
-    }
-
-    // 이전 상태가 있다면 다시 적용
-    if (!StateStack.empty())
-    {
-        StateStack.top()->Apply(DeviceContext);
-    }
-}
-
 void FRenderContext::BeginFrame()
 {
 	RenderHardware->BeginFrame();
@@ -129,6 +98,74 @@ void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, I
     {
         RenderHardware->GetDeviceContext()->IASetInputLayout(Layout);
         CurrentLayout = Layout;
+    }
+}
+
+void FRenderContext::DrawRenderData(const IRenderData* InData)
+{
+    // 1. 버퍼 바인딩
+    auto VertexBuffer = InData->GetVertexBuffer();
+    auto Stride = InData->GetStride();
+    auto Offset = InData->GetOffset();
+    if (VertexBuffer)
+    {
+        this->BindVertexBuffer(VertexBuffer, Stride, Offset);
+    }
+
+    // 2. 상수 버퍼 바인딩 (Vertex Shader)
+    size_t VSConstantBufferCount = InData->GetVSConstantBufferCount();
+    for (size_t i = 0; i < VSConstantBufferCount; ++i)
+    {
+        uint32_t Slot;
+        ID3D11Buffer* Buffer;
+        void* Data;
+        size_t DataSize;
+        InData->GetVSConstantBufferData(i, Slot, Buffer, Data, DataSize);
+        this->BindConstantBuffer(Slot, Buffer, Data, DataSize, true);
+    }
+
+    // 3. 상수 버퍼 바인딩 (Pixel Shader)
+    size_t PSConstantBufferCount = InData->GetPSConstantBufferCount();
+    for (size_t i = 0; i < PSConstantBufferCount; ++i)
+    {
+        uint32_t Slot;
+        ID3D11Buffer* Buffer;
+        void* Data;
+        size_t DataSize;
+        InData->GetPSConstantBufferData(i, Slot, Buffer, Data, DataSize);
+        this->BindConstantBuffer(Slot, Buffer, Data, DataSize, false);
+    }
+
+    // 4. 텍스처 및 쉐이더 리소스
+    size_t TextureCount = InData->GetTextureCount();
+    for (size_t i = 0; i < TextureCount; ++i)
+    {
+        uint32_t Slot;
+        ID3D11ShaderResourceView* SRV;
+        InData->GetTextureData(i, Slot, SRV);
+        this->BindShaderResource(Slot, SRV);
+    }
+
+    // 5. 샘플러 (인터페이스에 정의되지 않았으므로 유지 불가 - 주석 처리)
+    /*
+    for (const auto& Samp : Samplers)
+    {
+        this->BindSamplerState(Samp.Slot, Samp.Sampler);
+    }
+    */
+
+    // 6. 드로우 콜 실행
+    uint32_t IndexCount = InData->GetIndexCount();
+    uint32_t VertexCount = InData->GetVertexCount();
+    uint32_t StartIndex = InData->GetStartIndex();
+    uint32_t BaseVertex = InData->GetBaseVertexLocatioan();
+    if (IndexCount > 0)
+    {
+        this->DrawIndexed(IndexCount, StartIndex, BaseVertex);
+    }
+    else if (VertexCount > 0)
+    {
+        this->Draw(VertexCount, BaseVertex);
     }
 }
 
@@ -243,3 +280,4 @@ void FRenderContext::ValidateDeviceContextBindings()
     }
 #endif
 }
+

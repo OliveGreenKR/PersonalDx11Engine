@@ -98,12 +98,6 @@
     <ClCompile Include="RenderContext.cpp">
       <Filter>Engine\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="RenderStates.cpp">
-      <Filter>Engine\Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderJobs.cpp">
-      <Filter>Engine\Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="D3DContextDebugger.cpp">
       <Filter>D3D\Debug</Filter>
     </ClCompile>
@@ -112,6 +106,12 @@
     </ClCompile>
     <ClCompile Include="VertexShader.cpp">
       <Filter>Engine\Resources\Shader\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDataTexture.cpp">
+      <Filter>Engine\Renderer\RenderData\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderStates.cpp">
+      <Filter>Engine\Renderer\RenderStates</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -237,6 +237,15 @@
     </Filter>
     <Filter Include="Engine\Components\ActorComponent\Scene\testScene">
       <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData">
+      <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData\Texture">
+      <UniqueIdentifier>{db5477cf-c077-4f53-af93-e27cd6104fd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderStates">
+      <UniqueIdentifier>{9be6a8cf-40fc-4eea-8f79-39230118debd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -402,13 +411,7 @@
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="RenderStates.h">
-      <Filter>Engine\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="RenderContext.h">
-      <Filter>Engine\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderJobs.h">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="RenderStateInterface.h">
@@ -434,6 +437,15 @@
     </ClInclude>
     <ClInclude Include="RenderDefines.h">
       <Filter>Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataTexture.h">
+      <Filter>Engine\Renderer\RenderData\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderStates.h">
+      <Filter>Engine\Renderer\RenderStates</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataInterface.h">
+      <Filter>Engine\Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

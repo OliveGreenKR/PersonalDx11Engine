@@ -5,12 +5,13 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <stack>
 #include <unordered_map>
 #include <queue>
 #include "RenderContext.h"
-#include "RenderJobs.h"
-#include "FrameMemoryPool.h"
 #include "TypeCast.h"
+#include "RenderDefines.h"
+#include "RenderStateInterface.h"
 
 class UModel;
 class UShaderBase;
@@ -18,22 +19,33 @@ class UGameObject;
 class UCamera;
 class UPrimitiveComponent;
 
-
 class URenderer 
 {
 private:
-	//상태별 렌더링 큐
-	std::map<ERenderStateType, std::vector<FRenderJobBase*>> RenderQueue;
+
+	//상태별 렌더링 작업 컨테이너
+	std::unordered_map<ERenderStateType, 
+		std::vector<std::weak_ptr<IRenderData>>> RenderJobs;
+
 	// 단일 렌더링 컨텍스트
 	std::unique_ptr<FRenderContext> Context;
+
 	// 상태 객체들
 	std::unordered_map<ERenderStateType, std::unique_ptr<IRenderState>> States;
 
-	std::unique_ptr<FFrameMemoryPool> JobPool;
+	// 상태 스택
+	std::stack<IRenderState*> StateStack;
 
 private:
-	//기본 상태 객체 생성 및 초기화
+	// 기본 상태 객체 생성 및 초기화
 	void CreateStates();
+
+	//상태별 요청 처리
+	void ProcessJobsPerState(const ERenderStateType InState);
+
+	//상태 스택 관리
+	void PushState(IRenderState* State);
+	void PopState();
 
 public:
 	URenderer() = default;
@@ -44,19 +56,10 @@ public:
 	void Release();
 
 	void BeginFrame();
-	void ProcessJobs();
+	void ProcessRender();
 	void EndFrame();
 
-	template<typename T>
-	T* AcquireJob()
-	{
-		static_assert(std::is_base_of_v<FRenderJobBase, T>);
-		return JobPool->Allocate<T>();
-	}
-	/// <summary>
-	/// Do not use Job with direct allocation, Use 'AcquireJob' Instead
-	/// </summary>
-	void SubmitJob(FRenderJobBase* InJob);
+	void SubmitJob(const FRenderJob& InJob);
 
 	ID3D11SamplerState* GetDefaultSamplerState() { return Context->GetDefaultSamplerState(); }
 	FRenderContext* GetRenderContext() { return Context.get(); }
