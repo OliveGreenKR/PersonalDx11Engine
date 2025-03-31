@@ -18,6 +18,9 @@ public:
     bool IsValid() const { return HashValue != 0; }
     uint32_t GetHash() const { return HashValue; }
 
+    // 기본 생성자 -  invalid Key
+    explicit FResourceKey() : HashValue(0) {}
+
     // 와이드 문자열 생성자
     explicit FResourceKey(const wchar_t* Str)
     {

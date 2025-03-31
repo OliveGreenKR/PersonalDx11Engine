@@ -101,24 +101,30 @@ void UGameplayScene02::Load()
     auto TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
     auto VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
     
-    TextureTile = UResourceManager::Get()->GetResource<UTexture2D>(TTileHandle);
-    TexturePole = UResourceManager::Get()->GetResource<UTexture2D>(TPoleHandle);
+    TextureTile = TTileHandle.Get<UTexture2D>();
+    TexturePole = TPoleHandle.Get<UTexture2D>();
 
     //쉐이더 로드'
-    Shader = UResourceManager::Get()->GetResource<UVertexShader>(VShaderHandle);
+    Shader = VShaderHandle.Get<UVertexShader>();
 
-    auto VSBufferInfo = Shader->GetAllConstantBufferInfo();
-    for (auto info : VSBufferInfo)
+    assert(Shader);
+    if (Shader)
     {
-        if (info.Name == "MATRIX_BUFFER")
+        auto VSBufferInfo = Shader->GetAllConstantBufferInfo();
+        for (auto info : VSBufferInfo)
         {
-            MatrixBufferData = new unsigned char[info.Size];
-        }
-        else if (info.Name == "COLOR_BUFFER")
-        {
-            ColorBufferData = new unsigned char[info.Size];
+            if (info.Name == "MATRIX_BUFFER")
+            {
+                MatrixBufferData = new unsigned char[info.Size];
+            }
+            else if (info.Name == "COLOR_BUFFER")
+            {
+                ColorBufferData = new unsigned char[info.Size];
+            }
         }
     }
+
+
 }
 
 void UGameplayScene02::Unload()

@@ -5,7 +5,6 @@
 #include "Camera.h"
 #include "SceneInterface.h"
 #include "ElasticBody.h"
-#include "D3DShader.h"
 #include "Model.h"
 #include "InputContext.h"
 

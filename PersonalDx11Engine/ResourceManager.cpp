@@ -4,6 +4,16 @@
 #include "Debug.h"
 #include "TypeCast.h"
 
+IResource* UResourceManager::GetRawResource(const FResourceKey& InKey) const
+{
+    auto it = ResourceCache.find(InKey.GetHash());
+    if (it != ResourceCache.end()) {
+        it->second.LastAccessTick = CurrentTick;
+        return it->second.Resource.get();
+    }
+    return nullptr;
+}
+
 void UResourceManager::Initialize(IRenderHardware* InHardware)
 {
     assert(InHardware && "RenderHardware cannot be null");

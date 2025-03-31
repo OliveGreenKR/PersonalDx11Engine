@@ -1,18 +1,18 @@
 #pragma once
 #include "ResourceInterface.h"
 #include "RenderHardwareInterface.h"
-#include "ResourceKey.h"
 #include <unordered_map>
 #include <string>
 #include <memory>
 #include "TypeCast.h"
+#include "ResourceKey.h"
 
-// 전방 선언
+//외부 제공 리소스 핸들
 class FResourceHandle;
 
 struct FResourceData {
     std::unique_ptr<IResource> Resource;
-    float LastAccessTick = 0; // 마지막 접근 시간
+    mutable float LastAccessTick = 0; // 마지막 접근 시간
 };
 
 // UResourceManager.h - 리소스 관리자
@@ -38,32 +38,25 @@ private:
     UResourceManager(UResourceManager&&) = delete;
     UResourceManager& operator=(UResourceManager&&) = delete;
 
+    // 리소스 얻기
+    IResource* GetRawResource(const FResourceKey& InKey) const;
+
+    // FResourceHandle을 friend로 지정(리소스 get을 위해)
+    friend class FResourceHandle;
+
 public:
     static UResourceManager* Get() {
         static UResourceManager Instance;
         return &Instance;
     }
+
     void Initialize(IRenderHardware* InHardware);
     void Shutdown();
     void Tick(const float DeltaTime);
 
-    // 리소스 얻기
-    template<typename T>
-    T* GetResource(const FResourceKey& InKey)
-    {
-        auto it = ResourceCache.find(InKey.GetHash());
-        if (it != ResourceCache.end())
-        {
-            // 접근 시간 업데이트
-            it->second.LastAccessTick = CurrentTick;
-
-            return Engine::Cast<T>(it->second.Resource.get());
-        }
-    }
-
     // 리소스 로드
     template <typename T>
-    FResourceKey LoadResource(const std::wstring& FilePath, bool bAsync = false);
+    FResourceHandle LoadResource(const std::wstring& FilePath, bool bAsync = false);
 
     // 미사용 리소스 언로드
     void UnloadUnusedResources(float TimeSinceLastUseSec = 60.0f);
@@ -73,7 +66,7 @@ public:
 };
 
 template<typename T>
-inline FResourceKey UResourceManager::LoadResource(const std::wstring& FilePath, bool bAsync)
+inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePath, bool bAsync)
 {
     assert(bInitialized && "ResourceManager not initialized");
 
@@ -88,7 +81,7 @@ inline FResourceKey UResourceManager::LoadResource(const std::wstring& FilePath,
         // 접근 시간 업데이트
         it->second.LastAccessTick = CurrentTick;
 
-        return RscKey;
+        return FResourceHandle(RscKey);
     }
 
     // 새 리소스 객체 생성
@@ -96,6 +89,7 @@ inline FResourceKey UResourceManager::LoadResource(const std::wstring& FilePath,
 
     // 텍스처 로드
     bool success = false;
+
     if (bAsync)
     {
         // 비동기 로드 시작
@@ -114,10 +108,36 @@ inline FResourceKey UResourceManager::LoadResource(const std::wstring& FilePath,
         ResourceData.Resource = std::move(rscUniquePtr);
         ResourceData.LastAccessTick = CurrentTick;
         ResourceCache[RscKey.GetHash()] = std::move(ResourceData);
-        return RscKey;
+        return FResourceHandle(RscKey);
     }
 
     RscKey.Invalidate();
-    return RscKey;
+    return FResourceHandle(RscKey);
 }
 
+class FResourceHandle
+{
+private:
+    FResourceKey Key;
+
+    // 내부적으로 타입을 지운 포인터를 얻는 메서드 (UResourceManager에서만 접근 가능)
+    IResource* GetRawResource() const {
+        return UResourceManager::Get()->GetRawResource(Key);
+    }
+
+public:
+    explicit FResourceHandle(const FResourceKey & InKey = FResourceKey()) : Key(InKey) {}
+
+    bool IsValid() const { return Key.IsValid(); }
+    void Invalidate() { Key.Invalidate(); }
+
+    // 타입을 명시적으로 지정해 리소스를 얻음
+    template<typename T>
+    T* Get() const {
+        IResource* Raw = GetRawResource();
+        return Raw ? Engine::Cast<T>(Raw) : nullptr;
+    }
+
+    bool operator==(const FResourceHandle & Other) const { return Key == Other.Key; }
+    bool operator!=(const FResourceHandle & Other) const { return Key != Other.Key; }
+};
