@@ -90,7 +90,7 @@
       <Filter>Contents\Scenes\Scene2</Filter>
     </ClCompile>
     <ClCompile Include="PrimitiveComponent.cpp">
-      <Filter>Engine\Components\ActorComponent\Primitive</Filter>
+      <Filter>Engine\Components\ActorComponent\Scene\Primitive</Filter>
     </ClCompile>
     <ClCompile Include="SceneComponent.cpp">
       <Filter>Engine\Components\ActorComponent\Scene</Filter>
@@ -214,14 +214,8 @@
     <Filter Include="Contents\Scenes\Scene2">
       <UniqueIdentifier>{e9b29a5b-ecca-4913-93ab-6f047d3670ed}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Components\ActorComponent\Primitive">
-      <UniqueIdentifier>{ebbd8135-22e8-4dfb-b9a8-242f3b6fc427}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Components\ActorComponent\Scene">
       <UniqueIdentifier>{b340809a-6ee0-476d-921b-78c17dd988d5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Components\ActorComponent\Scene\test">
-      <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Core">
       <UniqueIdentifier>{9706677a-0640-455f-b237-cc37c18e125a}</UniqueIdentifier>
@@ -237,6 +231,12 @@
     </Filter>
     <Filter Include="Engine\Resources\Shader\Vertex">
       <UniqueIdentifier>{3fbdeccb-0d68-4a62-a070-e2eb4414dcc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\ActorComponent\Scene\Primitive">
+      <UniqueIdentifier>{ebbd8135-22e8-4dfb-b9a8-242f3b6fc427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Components\ActorComponent\Scene\testScene">
+      <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -391,13 +391,13 @@
       <Filter>Contents\Scenes\Scene2</Filter>
     </ClInclude>
     <ClInclude Include="PrimitiveComponent.h">
-      <Filter>Engine\Components\ActorComponent\Primitive</Filter>
+      <Filter>Engine\Components\ActorComponent\Scene\Primitive</Filter>
     </ClInclude>
     <ClInclude Include="SceneComponent.h">
       <Filter>Engine\Components\ActorComponent\Scene</Filter>
     </ClInclude>
     <ClInclude Include="testSceneComponent.h">
-      <Filter>Engine\Components\ActorComponent\Scene\test</Filter>
+      <Filter>Engine\Components\ActorComponent\Scene\testScene</Filter>
     </ClInclude>
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
@@ -431,6 +431,9 @@
     </ClInclude>
     <ClInclude Include="ResourceKey.h">
       <Filter>Engine\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDefines.h">
+      <Filter>Engine\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -206,6 +206,7 @@
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
+    <ClInclude Include="RenderDefines.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
     <ClInclude Include="RenderJobs.h" />
     <ClInclude Include="RenderStateInterface.h" />

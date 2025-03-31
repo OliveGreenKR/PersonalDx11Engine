@@ -1,6 +1,6 @@
 #pragma once
 #include "SceneComponent.h"
-#include "Model.h"
+
 
 //렌더링 가능
 class UPrimitiveComponent : public USceneComponent
@@ -18,6 +18,7 @@ public:
 	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
 
 protected:
-	std::shared_ptr<UModel> Model;
+	std::shared_ptr<class FResourceHandle> Texture;
+	std::shared_ptr<class UModel> Model;
 	Vector4 Color = Vector4(1, 1, 1, 1); //White
 };
