@@ -432,9 +432,6 @@
     <ClInclude Include="VertexShader.h">
       <Filter>Engine\Resources\Shader\Vertex</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceKey.h">
-      <Filter>Engine\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="RenderDefines.h">
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
@@ -446,6 +443,9 @@
     </ClInclude>
     <ClInclude Include="RenderDataInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="StringHash.h">
+      <Filter>Engine\DataStructure</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

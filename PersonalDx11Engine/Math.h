@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <directxmath.h>
 #include <cmath>
 #include <algorithm>
@@ -176,6 +176,14 @@ struct Vector4 : public DirectX::XMFLOAT4
 
 	explicit Vector4(const Vector3& Vec);//w=1.0f
 	explicit Vector4(const Vector2& Vec);// z = 0.0f, w = 1.0f
+
+	bool operator==(const Vector4& Other)
+	{
+		return x == Other.x &&
+			y == Other.y &&
+			z == Other.z &&
+			w == Other.w;
+	}
 
 	Vector4& operator+=(const Vector4& Other)
 	{

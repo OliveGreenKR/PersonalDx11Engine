@@ -212,7 +212,7 @@
     <ClInclude Include="RenderDataTexture.h" />
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
-    <ClInclude Include="ResourceKey.h" />
+    <ClInclude Include="StringHash.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="RigidBodyComponent.h" />

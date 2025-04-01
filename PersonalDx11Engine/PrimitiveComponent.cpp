@@ -4,9 +4,11 @@
 #include "ResourceManager.h"
 #include "Model.h"
 #include "Texture.h"
+#include "VertexShader.h"
 #include "Camera.h"
+#include "Debug.h"
 
-inline void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel)
+void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel)
 {
     //TODO
     // 모델데이터도 리소스로 변경후 키값으로 변화 감지.
@@ -14,15 +16,29 @@ inline void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel
     bRenderDataDirty = true;
 }
 
-inline void UPrimitiveComponent::SetColor(const Vector4& InColor) 
+void UPrimitiveComponent::SetColor(const Vector4& InColor) 
 {
+    if (Color == InColor)
+    {
+        return;
+    }
     Color = InColor;
     bRenderDataDirty = true;
 }
 
-std::weak_ptr<IRenderData> UPrimitiveComponent::GetRenderData()
+void UPrimitiveComponent::SetTexture(const FResourceHandle& InHandle)
 {
-    if (!Model || !TextureHandle)
+    if (!InHandle.IsValid() || TextureHandle == InHandle )
+    {
+        return; 
+    }
+    TextureHandle = InHandle;
+    bRenderDataDirty = true;
+}
+
+std::weak_ptr<IRenderData> UPrimitiveComponent::GetRenderData(const FResourceHandle& VertexShaderHandle)
+{
+    if (!Model || !VertexShaderHandle.IsValid())
         return std::weak_ptr<IRenderData>();
 
     if (!bRenderDataDirty  && RenderDataCache)
@@ -41,40 +57,44 @@ std::weak_ptr<IRenderData> UPrimitiveComponent::GetRenderData()
     RenderData->Offset = BufferRsc->GetOffset();
     RenderData->Stride = BufferRsc->GetStride();
 
-    auto Texture = TextureHandle->Get<UTexture2D>();
- 
-    if (TextureHandle)
+    auto Texture = TextureHandle.Get<UTexture2D>();
+    if (Texture)
     {
         RenderData->AddTexture(0, Texture->GetShaderResourceView());
     }
 
-    //shader resource - texture, sampler
-    //RenderData->AddSampler(0, Renderer->GetDefaultSamplerState());
-    
-
-    XMMATRIX world = GetWorldTransform().GetModelingMatrix();
-    XMMATRIX view = Camera->GetViewMatrix();
-    XMMATRIX proj = Camera->GetProjectionMatrix();
-
-    world = XMMatrixTranspose(world);
-    view = XMMatrixTranspose(view);
-    proj = XMMatrixTranspose(proj);
-
-    std::memcpy(MatrixBufferData, &world, sizeof(XMMATRIX));
-    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX), &view, sizeof(XMMATRIX));
-    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX) * 2, &proj, sizeof(XMMATRIX));
-
-    Vector4 color(1, 1, 1, 1);
-    std::memcpy(ColorBufferData, &color, sizeof(Vector4));
-
+    //Shader Constant Buffer
+    auto Shader = VertexShaderHandle.Get<UVertexShader>();
+    if (!Shader)
+    {
+        LOG("InValid Shader In PrimitiveComponent::GetRenderData");
+        return;
+    }
+        
     auto cbVS = Shader->GetAllConstantBufferInfo();
-    auto MatrixBuffer = cbVS[0].Buffer;
-    auto ColorBuffer = cbVS[1].Buffer;
 
-    RenderData->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, cbVS[0].Size);
-    RenderData->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, cbVS[1].Size);
+    for (int i = 0; i < cbVS.size() ; ++i)
+    {
+        const auto info = cbVS[i];
+        if (info.Name == "MATRIX_WORLD")
+        {
+            CachedWorldMatrixTrans = GetWorldTransform().GetModelingMatrix();
+            CachedWorldMatrixTrans = XMMatrixTranspose(CachedWorldMatrixTrans);
+            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
+            UINT Size = cbVS[i].Size;
+            assert(Size == sizeof(CachedWorldMatrixTrans));
+            RenderData->AddVSConstantBuffer(i, Buffer, &CachedWorldMatrixTrans, Size);
+        }
+        else if (info.Name == "COLOR_BUFFER")
+        {
+            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
+            UINT Size = cbVS[i].Size;
+            assert(Size == sizeof(Color));
+            RenderData->AddVSConstantBuffer(i, Buffer, &Color, Size);
+        }
+    }
 
-
-
-    return std::weak_ptr<IRenderData>();
+    bRenderDataDirty = false;
+    RenderDataCache = std::move(RenderData);
+    return RenderDataCache;
 }

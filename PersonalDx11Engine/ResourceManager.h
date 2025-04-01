@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 #include "TypeCast.h"
-#include "ResourceKey.h"
+#include "StringHash.h"
 
 //외부 제공 리소스 핸들
 class FResourceHandle;
@@ -39,7 +39,10 @@ private:
     UResourceManager& operator=(UResourceManager&&) = delete;
 
     // 리소스 얻기
-    IResource* GetRawResource(const FResourceKey& InKey) const;
+    IResource* GetRawResource(const FStringHash& InKey) const;
+
+    //키 등록여부 확인
+    bool IsValidKey(const uint32_t InKey) const;
 
     // FResourceHandle을 friend로 지정(리소스 get을 위해)
     friend class FResourceHandle;
@@ -72,7 +75,7 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
     static_assert(std::is_base_of_v<IResource, T> || std::is_same_v<IResource, T>);
 
-    FResourceKey RscKey(FilePath.c_str());
+    FStringHash RscKey(FilePath.c_str());
 
     // 이미 로드된 텍스처인지 확인
     auto it = ResourceCache.find(RscKey.GetHash());
@@ -117,8 +120,9 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
 class FResourceHandle
 {
+    friend class UResourceManager;
 private:
-    FResourceKey Key;
+    FStringHash Key;
 
     // 내부적으로 타입을 지운 포인터를 얻는 메서드 (UResourceManager에서만 접근 가능)
     IResource* GetRawResource() const {
@@ -126,9 +130,12 @@ private:
     }
 
 public:
-    explicit FResourceHandle(const FResourceKey & InKey = FResourceKey()) : Key(InKey) {}
+    explicit FResourceHandle(const FStringHash & InKey = FStringHash()) : Key(InKey) {}
 
-    bool IsValid() const { return Key.IsValid(); }
+    bool IsValid() const 
+    { 
+        return Key.IsValid() && UResourceManager::Get()->IsValidKey(Key.GetHash()); 
+    }
     void Invalidate() { Key.Invalidate(); }
 
     // 타입을 명시적으로 지정해 리소스를 얻음

@@ -2,27 +2,30 @@
 #include <cstdint>
 #include <cstddef>
 
-struct FResourceKey
+struct FStringHash
 {
 private:
     uint32_t HashValue = 0;
 
-    explicit FResourceKey(uint32_t value)
+    explicit FStringHash(uint32_t value)
         : HashValue(value)
     {
     }
 
 public:
+
+
+
     void Invalidate() { HashValue = 0; }
 
     bool IsValid() const { return HashValue != 0; }
     uint32_t GetHash() const { return HashValue; }
 
     // 기본 생성자 -  invalid Key
-    explicit FResourceKey() : HashValue(0) {}
+    explicit FStringHash() : HashValue(0) {}
 
     // 와이드 문자열 생성자
-    explicit FResourceKey(const wchar_t* Str)
+    explicit FStringHash(const wchar_t* Str)
     {
         if (!Str) return;
 
@@ -39,7 +42,7 @@ public:
     }
 
     // 문자열 생성자
-    explicit FResourceKey(const char* Str)
+    explicit FStringHash(const char* Str)
     {
         if (!Str) return;
 
@@ -57,14 +60,14 @@ public:
     }
 
     // 연산자
-    bool operator==(const FResourceKey& Other) const { return HashValue == Other.HashValue; }
-    bool operator!=(const FResourceKey& Other) const { return HashValue != Other.HashValue; }
-    bool operator<(const FResourceKey& Other) const { return HashValue < Other.HashValue; }
+    bool operator==(const FStringHash& Other) const { return HashValue == Other.HashValue; }
+    bool operator!=(const FStringHash& Other) const { return HashValue != Other.HashValue; }
+    bool operator<(const FStringHash& Other) const { return HashValue < Other.HashValue; }
 
     //for unordered_map
     struct Hasher
     {
-        std::size_t operator()(const FResourceKey& Key) const
+        std::size_t operator()(const FStringHash& Key) const
         {
             return static_cast<std::size_t>(Key.HashValue);
         }

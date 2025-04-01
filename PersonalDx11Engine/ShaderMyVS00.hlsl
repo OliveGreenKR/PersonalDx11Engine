@@ -1,10 +1,13 @@
-cbuffer MATRIX_BUFFER : register(b0)
+cbuffer MATRIX_WORLD : register(b0)
 {
     matrix worldMatrix;
+};
+cbuffer MATRIX_CAMERA : register(b1)
+{
     matrix viewMatrix;
     matrix projectionMatrix;
 };
-cbuffer COLOR_BUFFER : register(b1)
+cbuffer COLOR_BUFFER : register(b2)
 {
     float4 InColor;
 };
