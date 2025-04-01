@@ -13,7 +13,7 @@
 #include "VertexShader.h"
 #include "Texture.h"
 #include "UIManager.h"
-#include "RenderJobs.h"
+#include"RenderDataTexture.h"
 #include "PrimitiveComponent.h"
 
 UGameplayScene02::UGameplayScene02()
@@ -97,39 +97,25 @@ void UGameplayScene02::Initialize()
 void UGameplayScene02::Load()
 {
     // 텍스처 로드
-    auto TTileHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
-    auto TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
-    auto VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
+    TTileHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
+    TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
+
+    // 쉐이더 로드
+    VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
     
-    TextureTile = TTileHandle.Get<UTexture2D>();
-    TexturePole = TPoleHandle.Get<UTexture2D>();
 
-    //쉐이더 로드'
-    Shader = VShaderHandle.Get<UVertexShader>();
-
-    assert(Shader);
-    if (Shader)
-    {
-        auto VSBufferInfo = Shader->GetAllConstantBufferInfo();
-        for (auto info : VSBufferInfo)
-        {
-            if (info.Name == "MATRIX_BUFFER")
-            {
-                MatrixBufferData = new unsigned char[info.Size];
-            }
-            else if (info.Name == "COLOR_BUFFER")
-            {
-                ColorBufferData = new unsigned char[info.Size];
-            }
-        }
-    }
-
+    WorldMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
+    ViewMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
+    ProjMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
+    ColorBufferData = new unsigned char[sizeof(Vector4)];
 
 }
 
 void UGameplayScene02::Unload()
 {
-    delete MatrixBufferData;
+    delete WorldMatrixBufferData;
+    delete ViewMatrixBufferData;
+    delete ProjMatrixBufferData;
     delete ColorBufferData;
 
     // 입력 컨텍스트 삭제
@@ -141,16 +127,6 @@ void UGameplayScene02::Unload()
     Character = nullptr;
     Character2 = nullptr;
     Camera = nullptr;
-
-    // 텍스처 해제
-    TextureTile->Release();
-    TextureTile = nullptr;
-    TexturePole->Release();
-    TexturePole = nullptr;
-
-    //쉐이더
-    Shader->Release();
-    Shader = nullptr;
 }
 
 void UGameplayScene02::Tick(float DeltaTime)
@@ -175,48 +151,102 @@ void UGameplayScene02::Tick(float DeltaTime)
 
 void UGameplayScene02::SubmitRender(URenderer* Renderer)
 {
+    if (!Camera)
+        return;
+
+    FRenderJob RenderJob;
+
     auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
+    //auto RenderData = Engine::Cast<FRenderDataTexture>(Primitive->GetRenderData(VShaderHandle));
     auto BufferRsc = Primitive->GetModel()->GetBufferResource();
+    auto RenderData = std::make_shared<FRenderDataTexture>();
 
-    //TODO : Submit RenderJob
-    auto RenderJob = Renderer->AcquireJob<FTextureRenderData>();
+    RenderData->IndexBuffer = BufferRsc->GetIndexBuffer();
+    RenderData->IndexCount = BufferRsc->GetIndexCount();
+    RenderData->VertexBuffer = BufferRsc->GetVertexBuffer();
+
+    RenderData->VertexCount = BufferRsc->GetVertexCount();
+    RenderData->Offset = BufferRsc->GetOffset();
+    RenderData->Stride = BufferRsc->GetStride();
 
 
-    RenderJob->IndexBuffer = BufferRsc->GetIndexBuffer();
-    RenderJob->IndexCount = BufferRsc->GetIndexCount();
-    RenderJob->VertexBuffer = BufferRsc->GetVertexBuffer();
-    
-    RenderJob->VertexCount = BufferRsc->GetVertexCount();
-    RenderJob->Offset = BufferRsc->GetOffset();
-    RenderJob->Stride = BufferRsc->GetStride();
-    RenderJob->StateType = ERenderStateType::Solid;
-
-    //shader resource - texture, sampler
-    RenderJob->AddSampler(0, Renderer->GetDefaultSamplerState());
-    RenderJob->AddTexture(0, TextureTile->GetShaderResourceView());
-
-    XMMATRIX world = Character->GetTransform().GetModelingMatrix();
-    XMMATRIX view = Camera->GetViewMatrix();
-    XMMATRIX proj = Camera->GetProjectionMatrix();
-
-    world = XMMatrixTranspose(world);
-    view = XMMatrixTranspose(view);
-    proj = XMMatrixTranspose(proj);
-
-    std::memcpy(MatrixBufferData, &world, sizeof(XMMATRIX));
-    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX), &view, sizeof(XMMATRIX));
-    std::memcpy(static_cast<char*>(MatrixBufferData) + sizeof(XMMATRIX) * 2, &proj, sizeof(XMMATRIX));
-
-    Vector4 color(1, 1, 1, 1);
-    std::memcpy(ColorBufferData, &color, sizeof(Vector4));
+    //Shader Constant Buffer
+    auto Shader = VShaderHandle.Get<UVertexShader>();
+    if (!Shader)
+    {
+        LOG_FUNC_CALL("InValid Shader");
+        return;
+    }
 
     auto cbVS = Shader->GetAllConstantBufferInfo();
-    auto MatrixBuffer = cbVS[0].Buffer;
-    auto ColorBuffer = cbVS[1].Buffer;
-    
-    RenderJob->AddVSConstantBuffer(0, MatrixBuffer, MatrixBufferData, cbVS[0].Size);
-    RenderJob->AddVSConstantBuffer(1, ColorBuffer, ColorBufferData, cbVS[1].Size);
+    for (int i = 0; i < cbVS.size(); ++i)
+    {
+        const auto info = cbVS[i];
+        if (info.Name == "MATRIX_WORLD")
+        {
+            auto WorldMatrix = Primitive->GetWorldTransform().GetModelingMatrix();
+            WorldMatrix = XMMatrixTranspose(WorldMatrix);
 
+            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
+            UINT Size = cbVS[i].Size;
+
+            assert(Size == sizeof(WorldMatrix));
+            std::memcpy(WorldMatrixBufferData, &WorldMatrix, Size);
+  
+            RenderData->AddVSConstantBuffer(i, Buffer, WorldMatrixBufferData, Size);
+        }
+        else if (info.Name == "COLOR_BUFFER")
+        {
+            auto Color = Primitive->GetColor();
+            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
+            UINT Size = cbVS[i].Size;
+            
+            assert(Size == sizeof(Color));
+            std::memcpy(ColorBufferData, &Color, Size);
+
+            RenderData->AddVSConstantBuffer(i, Buffer, ColorBufferData, Size);
+        }
+    }
+
+    auto Texture = TTileHandle.Get<UTexture2D>();
+    if (Texture)
+    {
+        RenderData->AddTexture(0, Texture->GetShaderResourceView());
+    }
+
+    auto VShader = VShaderHandle.Get<UVertexShader>();
+    auto BufferInfo = VShader->GetAllConstantBufferInfo();
+    for (int i = 0 ; i < BufferInfo.size() ; ++i)
+    {
+        const auto& Info = BufferInfo[i];
+
+        if (Info.Name == "MATRIX_VIEW")
+        {
+            ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
+            UINT Size = Info.Size;
+
+            auto ViewMatrix = Camera->GetViewMatrix();
+            assert(Size == sizeof(ViewMatrix));
+            std::memcpy(ViewMatrixBufferData, &ViewMatrix, Size);
+           
+            RenderData->AddVSConstantBuffer(i, Buffer, ViewMatrixBufferData, Size);
+        }
+        else if (Info.Name == "MATRIX_PROJ")
+        {
+            ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
+            UINT Size = Info.Size;
+
+            auto ProjectionMatrix = Camera->GetProjectionMatrix();
+            assert(Size == sizeof(ProjectionMatrix));
+            std::memcpy(ViewMatrixBufferData, &ProjectionMatrix, Size);
+
+            RenderData->AddVSConstantBuffer(i, Buffer, ViewMatrixBufferData, Size);
+        }
+    }
+    tmpRenderData = RenderData;
+    RenderJob.RenderState = ERenderStateType::Solid;
+    RenderJob.RenderData = tmpRenderData;
+    
     Renderer->SubmitJob(RenderJob);
 }
 
@@ -310,6 +340,11 @@ void UGameplayScene02::HandleInput(const FKeyEventData& EventData)
 {
     // 이 함수는 사용되지 않을 수 있음 - InputContext가 대부분의 입력 처리를 담당
     // 필요한 경우 직접적인 입력 처리를 여기에 추가
+}
+
+inline UCamera* UGameplayScene02::GetMainCamera() const 
+{
+    return Camera.get();
 }
 
 void UGameplayScene02::SetupInput()

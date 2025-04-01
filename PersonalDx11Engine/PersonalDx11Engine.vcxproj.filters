@@ -113,6 +113,9 @@
     <ClCompile Include="RenderStates.cpp">
       <Filter>Engine\Renderer\RenderStates</Filter>
     </ClCompile>
+    <ClCompile Include="ResourceHandle.cpp">
+      <Filter>Engine\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -446,6 +449,9 @@
     </ClInclude>
     <ClInclude Include="StringHash.h">
       <Filter>Engine\DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceHandle.h">
+      <Filter>Engine\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

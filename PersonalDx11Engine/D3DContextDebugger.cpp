@@ -200,19 +200,19 @@ void FD3DContextDebugger::CaptureBindings(ID3D11DeviceContext* DeviceContext)
         blendState->Release();
 
     // 5. 래스터라이저 스테이지
-    // 뷰포트 설정 캡처
-    D3D11_VIEWPORT viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
-    UINT numViewports = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
-    DeviceContext->RSGetViewports(&numViewports, viewports);
+    //// 뷰포트 설정 캡처
+    //D3D11_VIEWPORT viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
+    //UINT numViewports = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    //DeviceContext->RSGetViewports(&numViewports, viewports);
 
-    LOG("--- Viewport Settings ---");
-    for (UINT i = 0; i < numViewports; i++)
-    {
-        LOG("Viewport %u: Width=%.2f, Height=%.2f, TopLeft=(%.2f, %.2f), MinDepth=%.2f, MaxDepth=%.2f",
-            i, viewports[i].Width, viewports[i].Height,
-            viewports[i].TopLeftX, viewports[i].TopLeftY,
-            viewports[i].MinDepth, viewports[i].MaxDepth);
-    }
+    //LOG("--- Viewport Settings ---");
+    //for (UINT i = 0; i < numViewports; i++)
+    //{
+    //    LOG("Viewport %u: Width=%.2f, Height=%.2f, TopLeft=(%.2f, %.2f), MinDepth=%.2f, MaxDepth=%.2f",
+    //        i, viewports[i].Width, viewports[i].Height,
+    //        viewports[i].TopLeftX, viewports[i].TopLeftY,
+    //        viewports[i].MinDepth, viewports[i].MaxDepth);
+    //}
     //래스터라이저
     ID3D11RasterizerState* rasterizerState = nullptr;
     DeviceContext->RSGetState(&rasterizerState);

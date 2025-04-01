@@ -295,6 +295,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::SameLine();
 			ImGui::Text("FPS : %.0f", std::max(0.0f,1.0f / DeltaTime));
 
+			if (ImGui::Button("RenderContext")) {
+				Renderer->GetRenderContext()->PrintCurrentBindins();
+			}
 			
 			ImGui::Checkbox("ContextDebug", &(Renderer->GetRenderContext()->bDebugValidationEnabled));
 			ImGui::SameLine();

@@ -7,6 +7,8 @@
 #include "ElasticBody.h"
 #include "Model.h"
 #include "InputContext.h"
+#include "ResourceHandle.h"
+
 
 class UGameplayScene02 : public ISceneInterface
 {
@@ -19,7 +21,7 @@ public:
     void SubmitRender(URenderer* Renderer) override;
     void SubmitRenderUI() override;
     void HandleInput(const FKeyEventData& EventData) override;
-    class UCamera* GetMainCamera() const override { return Camera.get(); }
+    class UCamera* GetMainCamera() const override;
 
     std::string& GetName() override { return SceneName; }
 
@@ -53,14 +55,18 @@ private:
     float CharacterMass = 5.0f;
     float Character2Mass = 15.0f;
 
-    // 텍스처 
-    class UTexture2D* TextureTile;
-    class UTexture2D* TexturePole;
-    class UVertexShader* Shader;
+    // 리소스
+	FResourceHandle TTileHandle;
+	FResourceHandle TPoleHandle;
+	FResourceHandle VShaderHandle;
 
     //tmp
-    void* MatrixBufferData = nullptr;
+    void* WorldMatrixBufferData = nullptr;
+    void* ViewMatrixBufferData = nullptr;
+    void* ProjMatrixBufferData = nullptr;
     void* ColorBufferData = nullptr;
+
+    std::shared_ptr<class IRenderData> tmpRenderData;
 
     // 경계 값
     const float XBorder = 3.0f;

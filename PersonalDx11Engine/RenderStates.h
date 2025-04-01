@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderDefines.h"
 #include "RenderStateInterface.h"
+#include <memory>
 
 class FWireframeState : public IRenderState
 {
@@ -35,7 +36,7 @@ public:
         return ERenderStateType::Wireframe;
     }
 
-    void SetWireFrameRSState(ID3D11RasterizerState* state)
+    void SetWireframeRasterizerState(ID3D11RasterizerState* state)
     {
         WireframeRasterizerState = state;
         if (WireframeRasterizerState)
@@ -43,6 +44,8 @@ public:
             WireframeRasterizerState->AddRef();
         }
     }
+
+    static std::unique_ptr<FWireframeState> Create(ID3D11Device* Device);
 
 };
 
@@ -52,27 +55,24 @@ private:
     ID3D11RasterizerState* SolidRasterizerState;
     ID3D11RasterizerState* PreviousRasterizerState;
 
+    ID3D11SamplerState* SolidSamplerState;
+    ID3D11SamplerState* PreviousSamplerState;
+
 public:
-    ~FSolidState()
-    {
-        if (SolidRasterizerState)
-        {
-            SolidRasterizerState->Release();
-        }
-        if (PreviousRasterizerState)
-        {
-            PreviousRasterizerState->Release();
-        }
-    }
+    ~FSolidState();
 
     void Apply(ID3D11DeviceContext* Context) override
     {
         Context->RSGetState(&PreviousRasterizerState);
         Context->RSSetState(SolidRasterizerState);
+
+        Context->PSGetSamplers(0, 1, &PreviousSamplerState);
+        Context->PSSetSamplers(0,1,&SolidSamplerState);
     }
     void Restore(ID3D11DeviceContext* Context) override
     {
         Context->RSSetState(PreviousRasterizerState);
+        Context->PSSetSamplers(0, 1, &PreviousSamplerState);
     }
 
     ERenderStateType GetType() const override
@@ -80,7 +80,7 @@ public:
         return ERenderStateType::Solid;
     }
 
-    void SetSolidRSS(ID3D11RasterizerState* state)
+    void SetSolidRasterState(ID3D11RasterizerState* state)
     {
         SolidRasterizerState = state;
         if (SolidRasterizerState)
@@ -88,5 +88,14 @@ public:
             SolidRasterizerState->AddRef();
         }
     }
+    void SetSolidSamplerState(ID3D11SamplerState* state)
+    {
+        SolidSamplerState = state;
+        if (SolidSamplerState)
+        {
+            SolidSamplerState->AddRef();
+        }
+    }
 
+    static std::unique_ptr<FSolidState> Create(ID3D11Device* Device);
 };

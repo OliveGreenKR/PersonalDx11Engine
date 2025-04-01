@@ -2,15 +2,19 @@ cbuffer MATRIX_WORLD : register(b0)
 {
     matrix worldMatrix;
 };
-cbuffer MATRIX_CAMERA : register(b1)
+cbuffer MATRIX_VIEW : register(b1)
 {
     matrix viewMatrix;
+};
+cbuffer MATRIX_PROJ : register(b2)
+{
     matrix projectionMatrix;
 };
-cbuffer COLOR_BUFFER : register(b2)
+cbuffer COLOR_BUFFER : register(b3)
 {
     float4 InColor;
 };
+
 struct VS_INPUT
 {
     float3 position : POSITION;

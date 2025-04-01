@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "RenderStates.h"
+#include "Camera.h"
 
 bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware)
 {
@@ -37,7 +38,7 @@ void URenderer::SubmitJob(const FRenderJob& InJob)
 	if (InJob.RenderState == ERenderStateType::None ||
 		InJob.RenderData.expired())
 		return;
-
+	
 	RenderJobs[InJob.RenderState].push_back(InJob.RenderData);
 }
 
@@ -84,49 +85,9 @@ void URenderer::PopState()
 void URenderer::CreateStates()
 {
 	auto Device = Context->GetDevice();
-	if (!Device) return;
-
-	// 1. 기본 상태 생성
-	D3D11_RASTERIZER_DESC solidDesc = {};
-	solidDesc.FillMode = D3D11_FILL_SOLID; 
-	solidDesc.CullMode = D3D11_CULL_BACK; 
-
-	ID3D11RasterizerState* solidRasterizerState = nullptr;
-	HRESULT hr = Device->CreateRasterizerState(&solidDesc, &solidRasterizerState);
-
-	if (SUCCEEDED(hr))
-	{
-		// 상태 객체 생성 및 저장
-		auto solidState = std::make_unique<FSolidState>();
-		solidState->SetSolidRSS(solidRasterizerState);
-		States[ERenderStateType::Solid] = std::move(solidState);
-
-		// 참조 카운트 관리
-		solidRasterizerState->Release();
-		solidRasterizerState = nullptr;
-	}
-
-
-	// 2. 와이어프레임 상태 생성
-	D3D11_RASTERIZER_DESC wireframeDesc = {};
-	wireframeDesc.FillMode = D3D11_FILL_WIREFRAME;
-	wireframeDesc.CullMode = D3D11_CULL_NONE;
-	wireframeDesc.DepthClipEnable = TRUE;
-
-	ID3D11RasterizerState* wireframeRasterizerState = nullptr;
-	hr = Device->CreateRasterizerState(&wireframeDesc, &wireframeRasterizerState);
-
-	if (SUCCEEDED(hr))
-	{
-		// 상태 객체 생성 및 저장
-		auto wireframeState = std::make_unique<FWireframeState>();
-		wireframeState->SetWireFrameRSState(wireframeRasterizerState);
-		States[ERenderStateType::Wireframe] = std::move(wireframeState);
-
-		// 참조 카운트 관리를 위해 Release
-		wireframeRasterizerState->Release();
-		wireframeRasterizerState = nullptr;
-	}
+	
+	States[ERenderStateType::Solid] = FSolidState::Create(Device);
+	States[ERenderStateType::Wireframe] = FWireframeState::Create(Device);
 }
 
 void URenderer::ProcessJobsPerState(const ERenderStateType InState)
@@ -140,6 +101,7 @@ void URenderer::ProcessJobsPerState(const ERenderStateType InState)
 	{
 		if (RenderDataPtr.expired())
 			continue;
+
 		//드로우 콜
 		Context->DrawRenderData(RenderDataPtr.lock().get());
 	}

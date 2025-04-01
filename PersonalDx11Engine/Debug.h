@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include  <iostream>
 #include "Transform.h"
 
@@ -10,6 +10,13 @@
 #define IS_DEBUG_MODE 1
 #else
 #define IS_DEBUG_MODE 0
+#endif
+
+
+#if (defined(_DEBUG) || defined(DEBUG))
+#define LOG_FUNC_CALL(format, ...) printf("[%s:%d] %s: " format, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); printf("\n")
+#else
+#define LOG_FUNC_CALL(format, ...) ((void)0)
 #endif
 
 #if (defined(_DEBUG) || defined(DEBUG))

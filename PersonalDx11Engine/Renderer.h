@@ -61,6 +61,5 @@ public:
 
 	void SubmitJob(const FRenderJob& InJob);
 
-	ID3D11SamplerState* GetDefaultSamplerState() { return Context->GetDefaultSamplerState(); }
 	FRenderContext* GetRenderContext() { return Context.get(); }
 };

@@ -4,19 +4,11 @@
 #include <vector>
 #include "RenderDataInterface.h"
 
-class FTextureRenderData : public IRenderData
+class FRenderDataTexture : public IRenderData
 {
 public:
-    struct FMatrixBufferDataFormat
-    {
-        XMMATRIX World;
-        XMMATRIX View;
-        XMMATRIX Proj;
-    };
-
-public:
-    FTextureRenderData() = default;
-    virtual ~FTextureRenderData() = default;
+    FRenderDataTexture() = default;
+    virtual ~FRenderDataTexture() = default;
 
     //데이터 추가 메소드들
     void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
@@ -65,18 +57,20 @@ public:
     std::vector<TextureBindData> Textures = std::vector<TextureBindData>();
     std::vector<SamplerBindData> Samplers = std::vector<SamplerBindData>();
 
-    // Inherited via IRenderData
+    //------------Inherited via IRenderData-----------------------------------
+
     bool IsVisible() const override;
 
     // 선택적 리소스 접근자 (기본 구현은 nullptr 반환)
-    class ID3D11Buffer* GetVertexBuffer() { return VertexBuffer; }
-    class ID3D11Buffer* GetIndexBuffer() { return IndexBuffer; }
-    uint32_t GetVertexCount() const { return VertexCount; }
-    uint32_t GetIndexCount() const { return IndexCount; }
-    uint32_t GetStride() const { return Stride; }
-    uint32_t GetOffset() const { return Offset; }
+    class ID3D11Buffer* GetVertexBuffer() const override { return VertexBuffer; }
+    class ID3D11Buffer* GetIndexBuffer() const override { return IndexBuffer; }
+    uint32_t GetVertexCount() const override { return VertexCount; }
+    uint32_t GetIndexCount() const override { return IndexCount; }
+    uint32_t GetStride() const override { return Stride; }
+    uint32_t GetOffset() const override { return Offset; }
 
-    // 선택적 텍스처/샘플러 데이터
+
+    // 선택적 텍스처 데이터
     size_t GetTextureCount() const { return Textures.size(); }
     void GetTextureData(size_t Index, uint32_t& OutSlot, class ID3D11ShaderResourceView*& OutSRV) const;
 

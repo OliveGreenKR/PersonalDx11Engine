@@ -162,6 +162,7 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderDataTexture.cpp" />
     <ClCompile Include="RenderStates.cpp" />
+    <ClCompile Include="ResourceHandle.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="SceneComponent.cpp" />
@@ -212,6 +213,7 @@
     <ClInclude Include="RenderDataTexture.h" />
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
+    <ClInclude Include="ResourceHandle.h" />
     <ClInclude Include="StringHash.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />

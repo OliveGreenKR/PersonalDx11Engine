@@ -1,7 +1,7 @@
 #include "RenderDataTexture.h"
 #include "Debug.h"
 
-void FTextureRenderData::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
+void FRenderDataTexture::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
 {
     if (!Buffer || !Data)
     {
@@ -11,7 +11,7 @@ void FTextureRenderData::AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer
 	VSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
 }
 
-void FTextureRenderData::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
+void FRenderDataTexture::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize)
 {
     if (!Buffer || !Data)
     {
@@ -21,7 +21,7 @@ void FTextureRenderData::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer
     PSConstantBuffers.push_back({ Slot, Buffer, Data, DataSize });
 }
 
-void FTextureRenderData::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
+void FRenderDataTexture::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV)
 {
     if (!SRV)
     {
@@ -31,7 +31,7 @@ void FTextureRenderData::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV
     Textures.push_back({ Slot, SRV });
 }
 
-void FTextureRenderData::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
+void FRenderDataTexture::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
 {
     if (!Sampler)
     {
@@ -41,12 +41,12 @@ void FTextureRenderData::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
     Samplers.push_back({ Slot, Sampler });
 }
 
-bool FTextureRenderData::IsVisible() const
+bool FRenderDataTexture::IsVisible() const
 {
     return bIsVisible;
 }
 
-void FTextureRenderData::GetTextureData(size_t Index, uint32_t& OutSlot, ID3D11ShaderResourceView*& OutSRV) const
+void FRenderDataTexture::GetTextureData(size_t Index, uint32_t& OutSlot, ID3D11ShaderResourceView*& OutSRV) const
 {
     //Out 초기화
     OutSlot = -1; 
@@ -61,7 +61,7 @@ void FTextureRenderData::GetTextureData(size_t Index, uint32_t& OutSlot, ID3D11S
     return;
 }
 
-void FTextureRenderData::GetVSConstantBufferData(size_t Index, uint32_t& OutSlot, ID3D11Buffer*& OutBuffer, void*& OutData, size_t& OutDataSize) const
+void FRenderDataTexture::GetVSConstantBufferData(size_t Index, uint32_t& OutSlot, ID3D11Buffer*& OutBuffer, void*& OutData, size_t& OutDataSize) const
 {
     //Out 초기화
     OutSlot = -1;
@@ -80,7 +80,7 @@ void FTextureRenderData::GetVSConstantBufferData(size_t Index, uint32_t& OutSlot
     return;
 }
 
-void FTextureRenderData::GetPSConstantBufferData(size_t Index, uint32_t& OutSlot, ID3D11Buffer*& OutBuffer, void*& OutData, size_t& OutDataSize) const
+void FRenderDataTexture::GetPSConstantBufferData(size_t Index, uint32_t& OutSlot, ID3D11Buffer*& OutBuffer, void*& OutData, size_t& OutDataSize) const
 {
     //Out 초기화
     OutSlot = -1;

@@ -25,9 +25,6 @@ public:
 
     //렌더링 리소스 바인딩
     void DrawRenderData(const IRenderData* InData);
-
-    //기본 샘플링 상태
-    ID3D11SamplerState* GetDefaultSamplerState() { return DefaultSamplerState; }
     
     //접근자
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }
@@ -35,14 +32,13 @@ public:
 
     // 디버그 메소드
     void ValidateDeviceContextBindings();
+    void PrintCurrentBindins();
 public:
     //디버그 설정
     bool bDebugValidationEnabled = false;
     bool bDebugBreakOnError = false;
  
 private:
-    //기본 샘플링 상태 생성
-    bool CreateDefaultSamplerState();
 
     // 렌더링 리소스 바인딩
     void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
@@ -64,9 +60,6 @@ private:
     ID3D11VertexShader* CurrentVS = nullptr;
     ID3D11PixelShader* CurrentPS = nullptr;
     ID3D11InputLayout* CurrentLayout = nullptr;
-    
-    //기본 렌더링 상태
-    ID3D11SamplerState* DefaultSamplerState = nullptr;
 
     std::shared_ptr<IRenderHardware> RenderHardware;
 

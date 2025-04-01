@@ -20,8 +20,8 @@ public:
 	virtual void PostInitialized() override;
 
 public:
-	const Matrix GetViewMatrix();
-	const Matrix GetProjectionMatrix() const;
+	const Matrix& GetViewMatrix() const;
+	const Matrix& GetProjectionMatrix() const;
 
 	void SetFov(const float InFov) { Fov = InFov; UpdateProjectionMatrix();}
 	void SetAspectRatio(float InRatio) { AspectRatio = InRatio; UpdateProjectionMatrix(); }
@@ -39,18 +39,17 @@ public:
 	void LookAt(const Vector3& TargetPosition);
 	void LookTo();
 
-
 public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
 
 private:
 	void OnTransformChanged(const FTransform& Changed);
-	void UpdateProjectionMatrix();
 
 	//logical const
-	void UpdatDirtyView();
-	void UpdateViewMatrix();
+	void UpdatDirtyView() const; 
+	void UpdateProjectionMatrix() const;
+	void UpdateViewMatrix() const;
 	void UpdateFrustum() const;
 	void CalculateFrustum(Matrix& InViewProj) const;
 
@@ -63,9 +62,10 @@ private :
 	float NearZ = 0.1f;
 	float FarZ = 1000.0f;
 
-	Matrix ProjectionMatrix;
 
 	mutable bool bIsViewDirty = true; //첫 일회 갱신필요
+	//ViewMatrix, ProjMatirx Cache
+	mutable Matrix ProjectionMatrix;
 	mutable Matrix ViewMatrix;
 	mutable FFrustum ViewFrustum;
 

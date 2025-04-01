@@ -1,4 +1,4 @@
-﻿#include "Camera.h"
+#include "Camera.h"
 #include "Debug.h"
 
 UCamera::UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ)
@@ -20,7 +20,7 @@ void UCamera::PostInitialized()
 	GetRootComp()->OnWorldTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
 }
 
-const Matrix UCamera::GetViewMatrix()
+const Matrix& UCamera::GetViewMatrix() const
 {
 	//TODO cache dirty check 
 	if (bIsViewDirty)
@@ -31,7 +31,7 @@ const Matrix UCamera::GetViewMatrix()
 	return ViewMatrix;
 }
 
-const Matrix UCamera::GetProjectionMatrix() const
+const Matrix& UCamera::GetProjectionMatrix() const
 {
 	return ProjectionMatrix;
 }
@@ -135,7 +135,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	}
 }
 
-void UCamera::UpdatDirtyView() 
+void UCamera::UpdatDirtyView() const
 {
 	UpdateViewMatrix();
 	UpdateFrustum();
@@ -146,7 +146,7 @@ void UCamera::OnTransformChanged(const FTransform& Changed)
 	bIsViewDirty = true;
 }
 
-void UCamera::UpdateProjectionMatrix()
+void UCamera::UpdateProjectionMatrix() const
 {
 	const float AspectRatio = GetAspectRatio();
 	if (bIs2D)
@@ -161,7 +161,7 @@ void UCamera::UpdateProjectionMatrix()
 	}
 }
 
-void UCamera::UpdateViewMatrix()
+void UCamera::UpdateViewMatrix() const
 {
 	//베이스 상태
 	XMVECTOR vLookAt = XMVector::XMForward();

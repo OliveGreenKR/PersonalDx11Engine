@@ -7,9 +7,8 @@ bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
     if (!InHardware || !InHardware->IsDeviceReady())
         return false;
     RenderHardware = InHardware;
-    bool result = CreateDefaultSamplerState();
 
-    return result; 
+    return true; 
 }
 
 void FRenderContext::Release()
@@ -20,21 +19,12 @@ void FRenderContext::Release()
         delete ContextDebugger;
     }
 
-    //기본 샘플러 
-    DefaultSamplerState->Release();
-    DefaultSamplerState = nullptr;
-
 	//캐시 해제
 	CurrentVB = nullptr;
 	CurrentIB = nullptr;
 	CurrentVS = nullptr;
 	CurrentPS = nullptr;
 	CurrentLayout = nullptr;
-   
-    while (!StateStack.empty())
-    {
-        StateStack.pop();
-    }
 
     if (RenderHardware)
     {
@@ -49,6 +39,7 @@ void FRenderContext::BeginFrame()
 
 void FRenderContext::EndFrame()
 {
+    ValidateDeviceContextBindings();
 	RenderHardware->EndFrame();
 }
 
@@ -103,13 +94,19 @@ void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, I
 
 void FRenderContext::DrawRenderData(const IRenderData* InData)
 {
-    // 1. 버퍼 바인딩
+    // 1.  버텍스 버퍼 바인딩
     auto VertexBuffer = InData->GetVertexBuffer();
     auto Stride = InData->GetStride();
     auto Offset = InData->GetOffset();
     if (VertexBuffer)
     {
         this->BindVertexBuffer(VertexBuffer, Stride, Offset);
+    }
+
+    auto IndexBuffer = InData->GetIndexBuffer();
+    if (IndexBuffer)
+    {
+        this->BindIndexBuffer(IndexBuffer);
     }
 
     // 2. 상수 버퍼 바인딩 (Vertex Shader)
@@ -225,25 +222,6 @@ void FRenderContext::DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT B
     RenderHardware->GetDeviceContext()->DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
 }
 
-bool FRenderContext::CreateDefaultSamplerState()
-{
-    D3D11_SAMPLER_DESC samplerDesc = {};
-	//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;  // 바이리니어 필터링, 부드러운 텍스처 표시
-    samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;          // 비등방성 필터링 사용
-    samplerDesc.MaxAnisotropy = 16;                       //비등방성 필터링 수준
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // 비교 샘플링 사용 안함
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;     // U좌표 반복
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;     // V좌표 반복  
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;     // W좌표 반복
-	samplerDesc.MinLOD = 0;                                // 최소 LOD 레벨
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;               // 최대 LOD 제한 없음
-	samplerDesc.MipLODBias = 0;                           // LOD 레벨 조정 없음
- 
-
-	HRESULT result = GetDevice()->CreateSamplerState(&samplerDesc, &DefaultSamplerState);
-	return SUCCEEDED(result);
-}
-
 void FRenderContext::ValidateDeviceContextBindings()
 {
     auto DeviceContext = GetDeviceContext();
@@ -278,6 +256,25 @@ void FRenderContext::ValidateDeviceContextBindings()
             __debugbreak();
         }
     }
+#endif
+}
+
+void FRenderContext::PrintCurrentBindins()
+{
+    auto DeviceContext = GetDeviceContext();
+    if (!DeviceContext)
+        return;
+#ifdef _DEBUG
+    // 최초 호출 시 디버거 생성
+    if (!ContextDebugger)
+    {
+        ContextDebugger = new FD3DContextDebugger();
+    }
+
+    // 현재 바인딩된 리소스 상태 캡처
+    ContextDebugger->CaptureBindings(DeviceContext);
+    // 오류 발견 시 상세 정보 출력
+    ContextDebugger->PrintBindings();
 #endif
 }
 
