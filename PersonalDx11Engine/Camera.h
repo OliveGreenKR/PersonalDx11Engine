@@ -20,8 +20,8 @@ public:
 	virtual void PostInitialized() override;
 
 public:
-	const Matrix& GetViewMatrix() const;
-	const Matrix& GetProjectionMatrix() const;
+	const Matrix GetViewMatrix() const;
+	const Matrix GetProjectionMatrix() const;
 
 	void SetFov(const float InFov) { Fov = InFov; UpdateProjectionMatrix();}
 	void SetAspectRatio(float InRatio) { AspectRatio = InRatio; UpdateProjectionMatrix(); }

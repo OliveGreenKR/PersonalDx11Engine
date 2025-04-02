@@ -20,7 +20,7 @@ void UCamera::PostInitialized()
 	GetRootComp()->OnWorldTransformChangedDelegate.Bind(shared_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
 }
 
-const Matrix& UCamera::GetViewMatrix() const
+const Matrix UCamera::GetViewMatrix() const
 {
 	//TODO cache dirty check 
 	if (bIsViewDirty)
@@ -31,7 +31,7 @@ const Matrix& UCamera::GetViewMatrix() const
 	return ViewMatrix;
 }
 
-const Matrix& UCamera::GetProjectionMatrix() const
+const Matrix UCamera::GetProjectionMatrix() const
 {
 	return ProjectionMatrix;
 }

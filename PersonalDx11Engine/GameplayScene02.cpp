@@ -184,7 +184,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         const auto info = cbVS[i];
         if (info.Name == "MATRIX_WORLD")
         {
-            auto WorldMatrix = Primitive->GetWorldTransform().GetModelingMatrix();
+            auto WorldMatrix = Character->GetTransform().GetModelingMatrix();
             WorldMatrix = XMMatrixTranspose(WorldMatrix);
 
             ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
@@ -197,7 +197,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         }
         else if (info.Name == "COLOR_BUFFER")
         {
-            auto Color = Primitive->GetColor();
+            auto Color = Vector4(1, 1, 1, 1);
             ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
             
@@ -209,6 +209,10 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     }
 
     auto Texture = TTileHandle.Get<UTexture2D>();
+    if (!Texture)
+    {
+        LOG("NoTextureData in Scene2");
+    }
     if (Texture)
     {
         RenderData->AddTexture(0, Texture->GetShaderResourceView());
@@ -226,6 +230,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             UINT Size = Info.Size;
 
             auto ViewMatrix = Camera->GetViewMatrix();
+            ViewMatrix = XMMatrixTranspose(ViewMatrix);
             assert(Size == sizeof(ViewMatrix));
             std::memcpy(ViewMatrixBufferData, &ViewMatrix, Size);
            
@@ -237,10 +242,11 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             UINT Size = Info.Size;
 
             auto ProjectionMatrix = Camera->GetProjectionMatrix();
+            ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
             assert(Size == sizeof(ProjectionMatrix));
-            std::memcpy(ViewMatrixBufferData, &ProjectionMatrix, Size);
+            std::memcpy(ProjMatrixBufferData, &ProjectionMatrix, Size);
 
-            RenderData->AddVSConstantBuffer(i, Buffer, ViewMatrixBufferData, Size);
+            RenderData->AddVSConstantBuffer(i, Buffer, ProjMatrixBufferData, Size);
         }
     }
     tmpRenderData = RenderData;

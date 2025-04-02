@@ -30,8 +30,7 @@ PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
     
-    float4 Inposition = input.position.xyzx;
-    Inposition.w = 1.0f;
+    float4 Inposition = float4(input.position, 1.0);
     
     output.position = mul(Inposition, worldMatrix);
     output.position = mul(output.position, viewMatrix);
