@@ -198,7 +198,6 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             assert(Size == sizeof(Color));
 
             RenderData->AddVSConstantBuffer(i, Buffer, Color, Size);
-
         }
     }
 
