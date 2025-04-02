@@ -172,7 +172,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorComponent.h" />
-    <ClInclude Include="BufferResource.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetector.h" />

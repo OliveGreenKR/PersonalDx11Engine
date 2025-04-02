@@ -23,7 +23,6 @@ class UPrimitiveComponent;
 class URenderer 
 {
 private:
-
 	//상태별 렌더링 작업 큐
 	std::unordered_map<ERenderStateType, 
 		std::vector<IRenderData*>> RenderJobs;

@@ -4,6 +4,8 @@
 UCamera::UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, float nearZ, float farZ)
 	: Fov(fov), ViewportWidth(viewportWidth), ViewportHeight(viewportHeight), NearZ(nearZ), FarZ(farZ)
 {
+	MaxTrackAngle = 15.0f;
+
 	UpdateProjectionMatrix();
 }
 
@@ -105,9 +107,9 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	DotProduct = Math::Clamp(DotProduct, -1.0f, 1.0f);
 	float AngleDiff = Math::RadToDegree(std::acos(DotProduct)); // [0:180]
 
-	// 3. 최소 각도 이하면 회전하지 않음
-	if (AngleDiff < MinTrackAngle)
-		return;
+	//// 3. 최소 각도 이하면 회전하지 않음
+	//if (AngleDiff < MinTrackAngle)
+	//	return;
 
 	// 4. 회전 방향 결정
 	Vector3 RotAxis = Vector3::Cross(CurrentForward, DesiredDirection);
@@ -125,9 +127,10 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	float SpeedFactor = Math::Clamp(AngleDiff / MaxTrackAngleSpeed, 0.1f, 1.0f); // 회전 속도 계수
 	float FinalRotationAngle = RotationAngle * SpeedFactor * DeltaTime * MaxRotationSpeed;
 
-	// 6. 회전 적용
-	if (FinalRotationAngle > KINDA_SMALL)
+	// 6. 일정 크기 이상의 회전 적용
+	if (FinalRotationAngle > 0.01f)
 	{
+		//LOG("Rotation to Object : %.05f", FinalRotationAngle);
 		Quaternion DeltaRotation;
 		XMVECTOR RotationQuat = XMQuaternionRotationAxis(XMLoadFloat3(&RotAxis), Math::DegreeToRad(FinalRotationAngle));
 		XMStoreFloat4(&DeltaRotation, RotationQuat);
