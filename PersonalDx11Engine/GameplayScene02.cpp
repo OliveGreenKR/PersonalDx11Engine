@@ -209,7 +209,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     }
     if (Texture)
     {
-        RenderData->AddTexture(0, Texture->GetShaderResourceView());
+        //RenderData->AddTexture(0, Texture->GetShaderResourceView());
     }
     RenderJob.RenderState = ERenderStateType::Solid;
     RenderJob.RenderData = RenderData;
