@@ -69,7 +69,6 @@ public:
     uint32_t GetStride() const override { return Stride; }
     uint32_t GetOffset() const override { return Offset; }
 
-
     // 선택적 텍스처 데이터
     size_t GetTextureCount() const { return Textures.size(); }
     void GetTextureData(size_t Index, uint32_t& OutSlot, class ID3D11ShaderResourceView*& OutSRV) const;

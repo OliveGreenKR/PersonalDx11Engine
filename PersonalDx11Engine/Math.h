@@ -952,11 +952,41 @@ struct Plane : public Vector4
 };
 #pragma endregion
 
+#pragma region Aligned Vectors
 // MatrIx types
 using Matrix = DirectX::XMMATRIX;
-// not SIMD Matrix types
-using Matrix36 = DirectX::XMFLOAT3X3;
-// not SIMD Matrix types
-using Matrix64 = DirectX::XMFLOAT4X4;
+
+//Aligned Data Struct for Vector
+union alignas(16) AVector
+{
+	XMFLOAT4 Vector;			// 16바이트 (float4)
+	float floats[4];			// 16바이트 (4개의 float)
+	char byte[16];				// 16바이트 (바이트 단위 접근)
+};
+
+union alignas(16) AMatrix
+{
+	XMMATRIX Matrix;
+	AVector Vectors[4];
+};
+
+struct alignas(16) AMatrix128
+{
+	AMatrix Matrices[2];
+};
+
+struct alignas(16) AMatrix192
+{
+	AMatrix Matrices[3];
+};
+
+struct alignas(16) AMatrix256
+{
+	AMatrix Matrices[4];
+};
+#pragma endregion
+
+
+
 
 

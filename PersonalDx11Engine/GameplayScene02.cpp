@@ -102,22 +102,10 @@ void UGameplayScene02::Load()
 
     // 쉐이더 로드
     VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
-    
-
-    WorldMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
-    ViewMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
-    ProjMatrixBufferData = new unsigned char[sizeof(XMMATRIX)];
-    ColorBufferData = new unsigned char[sizeof(Vector4)];
-
 }
 
 void UGameplayScene02::Unload()
 {
-    delete WorldMatrixBufferData;
-    delete ViewMatrixBufferData;
-    delete ProjMatrixBufferData;
-    delete ColorBufferData;
-
     // 입력 컨텍스트 삭제
     UInputManager::Get()->UnregisterInputContext(SceneName);
 
@@ -178,22 +166,30 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         return;
     }
 
+
     auto cbVS = Shader->GetAllConstantBufferInfo();
     for (int i = 0; i < cbVS.size(); ++i)
     {
         const auto info = cbVS[i];
-        if (info.Name == "MATRIX_WORLD")
+        if (info.Name == "MATRIX_BUFFER")
         {
             auto WorldMatrix = Character->GetTransform().GetModelingMatrix();
             WorldMatrix = XMMatrixTranspose(WorldMatrix);
 
+            auto ViewMatrix = Camera->GetViewMatrix();
+            ViewMatrix = XMMatrixTranspose(ViewMatrix);
+
+            auto ProjectionMatrix = Camera->GetProjectionMatrix();
+            ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
+
+            //to do amatrix fill
+            VMatrixConstant = { WorldMatrix , ViewMatrix, ProjectionMatrix };
+
             ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
-
-            assert(Size == sizeof(WorldMatrix));
-            std::memcpy(WorldMatrixBufferData, &WorldMatrix, Size);
+            assert(Size == sizeof(VMatrixConstant));
   
-            RenderData->AddVSConstantBuffer(i, Buffer, WorldMatrixBufferData, Size);
+            RenderData->AddVSConstantBuffer(i, Buffer, (void*)&VMatrixConstant, Size);
         }
         else if (info.Name == "COLOR_BUFFER")
         {
@@ -205,6 +201,7 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             std::memcpy(ColorBufferData, &Color, Size);
 
             RenderData->AddVSConstantBuffer(i, Buffer, ColorBufferData, Size);
+
         }
     }
 
@@ -218,37 +215,6 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         RenderData->AddTexture(0, Texture->GetShaderResourceView());
     }
 
-    auto VShader = VShaderHandle.Get<UVertexShader>();
-    auto BufferInfo = VShader->GetAllConstantBufferInfo();
-    for (int i = 0 ; i < BufferInfo.size() ; ++i)
-    {
-        const auto& Info = BufferInfo[i];
-
-        if (Info.Name == "MATRIX_VIEW")
-        {
-            ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
-            UINT Size = Info.Size;
-
-            auto ViewMatrix = Camera->GetViewMatrix();
-            ViewMatrix = XMMatrixTranspose(ViewMatrix);
-            assert(Size == sizeof(ViewMatrix));
-            std::memcpy(ViewMatrixBufferData, &ViewMatrix, Size);
-           
-            RenderData->AddVSConstantBuffer(i, Buffer, ViewMatrixBufferData, Size);
-        }
-        else if (Info.Name == "MATRIX_PROJ")
-        {
-            ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
-            UINT Size = Info.Size;
-
-            auto ProjectionMatrix = Camera->GetProjectionMatrix();
-            ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
-            assert(Size == sizeof(ProjectionMatrix));
-            std::memcpy(ProjMatrixBufferData, &ProjectionMatrix, Size);
-
-            RenderData->AddVSConstantBuffer(i, Buffer, ProjMatrixBufferData, Size);
-        }
-    }
     tmpRenderData = RenderData;
     RenderJob.RenderState = ERenderStateType::Solid;
     RenderJob.RenderData = tmpRenderData;

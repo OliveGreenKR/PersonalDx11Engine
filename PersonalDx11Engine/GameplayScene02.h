@@ -61,10 +61,7 @@ private:
 	FResourceHandle VShaderHandle;
 
     //tmp
-    void* WorldMatrixBufferData = nullptr;
-    void* ViewMatrixBufferData = nullptr;
-    void* ProjMatrixBufferData = nullptr;
-    void* ColorBufferData = nullptr;
+    AMatrix192 VMatrixConstant;
 
     std::shared_ptr<class IRenderData> tmpRenderData;
 

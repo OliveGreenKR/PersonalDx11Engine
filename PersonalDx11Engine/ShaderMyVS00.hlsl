@@ -1,13 +1,7 @@
-cbuffer MATRIX_WORLD : register(b0)
+cbuffer MATRIX_BUFFER : register(b0)
 {
     matrix worldMatrix;
-};
-cbuffer MATRIX_VIEW : register(b1)
-{
     matrix viewMatrix;
-};
-cbuffer MATRIX_PROJ : register(b2)
-{
     matrix projectionMatrix;
 };
 cbuffer COLOR_BUFFER : register(b3)
