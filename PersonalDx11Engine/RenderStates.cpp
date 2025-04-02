@@ -1,4 +1,5 @@
 #include "RenderStates.h"
+#include "Debug.h"
 
 
 FSolidState::~FSolidState()
@@ -62,6 +63,7 @@ std::unique_ptr<FSolidState> FSolidState::Create(ID3D11Device* Device)
 
 	if (FAILED(hr))
 	{
+		LOG_FUNC_CALL("Failed CreateSamelerStates for SolidStates");
 		return nullptr;
 	}
 

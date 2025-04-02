@@ -164,6 +164,8 @@ void FRenderContext::DrawRenderData(const IRenderData* InData)
     {
         this->Draw(VertexCount, BaseVertex);
     }
+
+    PrintCurrentBindins();
 }
 
 void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader)

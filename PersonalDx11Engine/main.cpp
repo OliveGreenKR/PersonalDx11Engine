@@ -293,7 +293,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				UCollisionManager::Get()->PrintTreeStructure();
 			}
 			ImGui::SameLine();
-			ImGui::Text("FPS : %.0f", std::max(0.0f,1.0f / DeltaTime));
+			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));
 
 			if (ImGui::Button("RenderContext")) {
 				Renderer->GetRenderContext()->PrintCurrentBindins();

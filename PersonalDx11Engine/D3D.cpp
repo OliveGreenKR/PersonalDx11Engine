@@ -1,4 +1,4 @@
-﻿#include "D3D.h"
+#include "D3D.h"
 
 FD3D::~FD3D()
 {
@@ -105,6 +105,8 @@ void FD3D::InitRenderContext()
 	//OutputMerge
 	DeviceContext->OMSetBlendState(BlendState, nullptr, 0xffffffff);
 	DeviceContext->OMSetDepthStencilState(DepthStencilState, 1);
+
+
 }
 
 bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)

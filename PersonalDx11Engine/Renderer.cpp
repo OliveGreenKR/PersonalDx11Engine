@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "RenderStates.h"
 #include "Camera.h"
+#include "Debug.h"
 
 bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware)
 {
@@ -96,6 +97,12 @@ void URenderer::ProcessJobsPerState(const ERenderStateType InState)
 	auto* state = States[InState].get();
 	PushState(state);
 
+	ID3D11SamplerState* currentSampler = nullptr;
+	Context->GetDeviceContext()->PSGetSamplers(0, 1, &currentSampler);
+	if (!currentSampler && InState == ERenderStateType::Solid)
+	{
+		LOG("Sampler not Bound in Rendering Sessions");
+	}
 
 	for (auto& RenderDataPtr : RenderJobs[InState])
 	{
