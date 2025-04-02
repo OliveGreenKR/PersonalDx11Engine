@@ -6,14 +6,14 @@
 bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware)
 {
 	assert(InRenderHardware);
-
 	bool result = true;
 
+	//렌더 컨텍스트
 	Context = std::make_unique<FRenderContext>();
-
 	result = result && InRenderHardware->IsDeviceReady();
 	result = result && Context->Initialize(InRenderHardware);
 
+	//기본 렌더링 상태 
 	CreateStates();
 
 	return result;
@@ -32,15 +32,21 @@ void URenderer::BeginFrame()
 void URenderer::EndFrame()
 {
 	Context->EndFrame();
+	RenderDataPool.Reset(); //reset memory pool
 }
 
 void URenderer::SubmitJob(const FRenderJob& InJob)
 {
 	if (InJob.RenderState == ERenderStateType::None ||
-		InJob.RenderData.expired())
+		!InJob.RenderData)
 		return;
 	
-	RenderJobs[InJob.RenderState].push_back(InJob.RenderData);
+	auto& vec = RenderJobs[InJob.RenderState];
+	if (vec.capacity() == 0)
+	{
+		vec.reserve(128);
+	}
+	vec.push_back(InJob.RenderData);
 }
 
 void URenderer::ProcessRender()
@@ -106,11 +112,11 @@ void URenderer::ProcessJobsPerState(const ERenderStateType InState)
 
 	for (auto& RenderDataPtr : RenderJobs[InState])
 	{
-		if (RenderDataPtr.expired())
+		if (!RenderDataPtr)
 			continue;
 
 		//드로우 콜
-		Context->DrawRenderData(RenderDataPtr.lock().get());
+		Context->DrawRenderData(RenderDataPtr);
 	}
 
 	RenderJobs[InState].clear();

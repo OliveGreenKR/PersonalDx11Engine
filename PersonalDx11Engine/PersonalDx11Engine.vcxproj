@@ -192,6 +192,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="FrameMemoryPool.h" />
+    <ClInclude Include="FramePoolManager.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="GameplayScene01.h" />

@@ -3,12 +3,25 @@
 #include <d3d11.h>
 #include <vector>
 #include "RenderDataInterface.h"
+#include "FramePoolManager.h"
+
 
 class FRenderDataTexture : public IRenderData
 {
 public:
     FRenderDataTexture() = default;
     virtual ~FRenderDataTexture() = default;
+
+    template<typename T>
+    void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, const T& Data, size_t DataSize)
+    {
+        static_assert(sizeof(T) % 16 == 0);
+
+        void* dataPtr = UFramePoolManager::Get()->AllocateVoid(DataSize);
+        std::memcpy(dataPtr, &Data, DataSize);
+
+        AddVSConstantBuffer(Slot, Buffer, dataPtr, DataSize);
+    }
 
     //데이터 추가 메소드들
     void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);

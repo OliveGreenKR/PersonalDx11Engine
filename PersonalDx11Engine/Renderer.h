@@ -12,6 +12,7 @@
 #include "TypeCast.h"
 #include "RenderDefines.h"
 #include "RenderStateInterface.h"
+#include "FrameMemoryPool.h"
 
 class UModel;
 class UShaderBase;
@@ -23,9 +24,9 @@ class URenderer
 {
 private:
 
-	//상태별 렌더링 작업 컨테이너
+	//상태별 렌더링 작업 큐
 	std::unordered_map<ERenderStateType, 
-		std::vector<std::weak_ptr<IRenderData>>> RenderJobs;
+		std::vector<IRenderData*>> RenderJobs;
 
 	// 단일 렌더링 컨텍스트
 	std::unique_ptr<FRenderContext> Context;
@@ -36,6 +37,8 @@ private:
 	// 상태 스택
 	std::stack<IRenderState*> StateStack;
 
+	//렌더 데이터 풀
+	FFrameMemoryPool RenderDataPool = FFrameMemoryPool(8 * 1024 * 1024);
 private:
 	// 기본 상태 객체 생성 및 초기화
 	void CreateStates();
@@ -60,6 +63,14 @@ public:
 	void EndFrame();
 
 	void SubmitJob(const FRenderJob& InJob);
+
+	template< typename T , typename =  
+		std::enable_if_t<std::is_base_of_v<IRenderData,T> ||
+				std::is_same_v<IRenderData,T>>>
+	T* AllocateRenderData()
+	{
+		return RenderDataPool.Allocate<T>();
+	}
 
 	FRenderContext* GetRenderContext() { return Context.get(); }
 };

@@ -1,13 +1,13 @@
-﻿#include <vector>
-#include <cstddef>      // size_t 용
+#pragma once
+#include <vector>
+#include <cstddef>      
 #include <stdexcept>
-#include <cstring>      // std::memset 등 메모리 작업용
+#include <cstring>      
 #include <new>          // placement new 용
-#include <type_traits> // std::is_copy_constructible 용
+#include <type_traits>  
 
 using byte = unsigned char;
 
-//Arena allocation방식의 메모리 풀
 class FFrameMemoryPool {
 private:
     std::vector<byte*> buffers;
@@ -15,7 +15,7 @@ private:
     size_t bufferSize;
     size_t usedBytes;
     size_t totalAllocated;
-     
+
     byte* AllocateNewBuffer() {
         byte* newBuffer = new byte[bufferSize];
         buffers.push_back(newBuffer);
@@ -29,11 +29,14 @@ public:
         currentBuffer = AllocateNewBuffer();
     }
 
+    // 소멸자에서만 완전 해제
     ~FFrameMemoryPool() {
-        Clear();
+        for (byte* buffer : buffers) {
+            delete[] buffer;
+        }
     }
 
-    template<typename T = void>
+    template<typename T = byte>
     void* AllocateVoid(size_t size = sizeof(T)) {
         size_t alignedSize = (size + alignof(T) - 1) & ~(alignof(T) - 1);
         if (usedBytes + alignedSize > bufferSize) {
@@ -42,8 +45,7 @@ public:
         }
         byte* ptr = currentBuffer + usedBytes;
         usedBytes += alignedSize;
-
-        return (ptr);
+        return ptr;
     }
 
     template<typename T>
@@ -54,52 +56,43 @@ public:
 
     template<typename T = void, typename... Args>
     T* Allocate(Args&&... args) {
-
         static_assert(std::is_constructible<T, Args...>::value,
                       "T must be constructible with the provided arguments");
-
         void* ptr = AllocateVoid<T>();
-        // placement new에 가변 인자를 전달
         return new(ptr) T(std::forward<Args>(args)...);
     }
 
-    // 복사 생성 가능한 경우에만 동작하도록 제한
     template<typename T>
     T* AllocateWithData(const T& data) {
         static_assert(std::is_copy_constructible<T>::value,
                       "T must be copy constructible for AllocateWithData");
-
         T* ptr = Allocate<T>();
         try {
-            new (ptr) T(data); // 복사 생성 시도
+            new(ptr) T(data);
             return ptr;
         }
         catch (...) {
-         // 예외 발생 시 nullptr 반환
             return nullptr;
         }
     }
 
+    // 프레임 단위 초기화: 동적 해제 없이 재사용
     void Reset() {
         usedBytes = 0;
         if (!buffers.empty()) {
-            currentBuffer = buffers[0];
+            currentBuffer = buffers[0]; // 첫 번째 버퍼로 되돌림
         }
     }
 
-    void Clear() {
+    // 명시적 전체 해제 (필요 시 호출)
+    void ReleaseAll() {
         for (byte* buffer : buffers) {
             delete[] buffer;
         }
         buffers.clear();
         totalAllocated = 0;
         usedBytes = 0;
-        if (buffers.empty()) {
-            currentBuffer = AllocateNewBuffer();
-        }
-        else {
-            currentBuffer = buffers[0];
-        }
+        currentBuffer = AllocateNewBuffer(); // 새 시작점 제공
     }
 
     size_t GetTotalAllocated() const { return totalAllocated; }

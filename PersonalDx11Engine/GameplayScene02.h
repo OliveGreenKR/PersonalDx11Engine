@@ -60,11 +60,6 @@ private:
 	FResourceHandle TPoleHandle;
 	FResourceHandle VShaderHandle;
 
-    //tmp
-    AMatrix192 VMatrixConstant;
-
-    std::shared_ptr<class IRenderData> tmpRenderData;
-
     // 경계 값
     const float XBorder = 3.0f;
     const float YBorder = 2.0f;

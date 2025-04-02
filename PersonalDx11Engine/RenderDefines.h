@@ -20,9 +20,8 @@ enum class ERenderStateType
     // 필요한 상태 추가
 };
 
-
 struct FRenderJob
 {
-    std::weak_ptr<IRenderData> RenderData;
+    class IRenderData* RenderData;
     ERenderStateType RenderState = ERenderStateType::None;
 };

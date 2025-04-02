@@ -145,14 +145,12 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     FRenderJob RenderJob;
 
     auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
-    //auto RenderData = Engine::Cast<FRenderDataTexture>(Primitive->GetRenderData(VShaderHandle));
     auto BufferRsc = Primitive->GetModel()->GetBufferResource();
-    auto RenderData = std::make_shared<FRenderDataTexture>();
+    auto RenderData = Renderer->AllocateRenderData<FRenderDataTexture>();
 
     RenderData->IndexBuffer = BufferRsc->GetIndexBuffer();
     RenderData->IndexCount = BufferRsc->GetIndexCount();
     RenderData->VertexBuffer = BufferRsc->GetVertexBuffer();
-
     RenderData->VertexCount = BufferRsc->GetVertexCount();
     RenderData->Offset = BufferRsc->GetOffset();
     RenderData->Stride = BufferRsc->GetStride();
@@ -183,24 +181,23 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
 
             //to do amatrix fill
-            VMatrixConstant = { WorldMatrix , ViewMatrix, ProjectionMatrix };
+            AMatrix192 MatrixData = { WorldMatrix , ViewMatrix, ProjectionMatrix };
 
             ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
-            assert(Size == sizeof(VMatrixConstant));
-  
-            RenderData->AddVSConstantBuffer(i, Buffer, (void*)&VMatrixConstant, Size);
+            assert(Size == sizeof(MatrixData));
+
+            RenderData->AddVSConstantBuffer(i, Buffer, MatrixData, Size);
         }
         else if (info.Name == "COLOR_BUFFER")
         {
-            auto Color = Vector4(1, 1, 1, 1);
+            auto Color = Primitive->GetColor();
             ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
             
             assert(Size == sizeof(Color));
-            std::memcpy(ColorBufferData, &Color, Size);
 
-            RenderData->AddVSConstantBuffer(i, Buffer, ColorBufferData, Size);
+            RenderData->AddVSConstantBuffer(i, Buffer, Color, Size);
 
         }
     }
@@ -214,10 +211,8 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     {
         RenderData->AddTexture(0, Texture->GetShaderResourceView());
     }
-
-    tmpRenderData = RenderData;
     RenderJob.RenderState = ERenderStateType::Solid;
-    RenderJob.RenderData = tmpRenderData;
+    RenderJob.RenderData = RenderData;
     
     Renderer->SubmitJob(RenderJob);
 }

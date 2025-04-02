@@ -30,6 +30,8 @@
 #include "ResourceManager.h"
 #include "UIManager.h"
 
+#include "FramePoolManager.h"
+
 //test
 #include "testDynamicAABBTree.h"
 #include "testSceneComponent.h"
@@ -312,6 +314,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//end render
 		Renderer->EndFrame();
+
+
+		//[LAST] reset Global FrameMemoryPool
+		UFramePoolManager::Get()->EndFrame();
 #pragma endregion
 
 	}//end main Loop

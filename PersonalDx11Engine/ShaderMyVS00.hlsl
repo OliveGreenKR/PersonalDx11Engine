@@ -4,7 +4,7 @@ cbuffer MATRIX_BUFFER : register(b0)
     matrix viewMatrix;
     matrix projectionMatrix;
 };
-cbuffer COLOR_BUFFER : register(b3)
+cbuffer COLOR_BUFFER : register(b1)
 {
     float4 InColor;
 };
