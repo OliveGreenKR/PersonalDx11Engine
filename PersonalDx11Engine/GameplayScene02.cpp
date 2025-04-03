@@ -155,13 +155,23 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     if (!Camera)
         return;
 
-    FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
+    FRenderJob RenderJob1 = Renderer->AllocateRenderJob<FRenderDataTexture>();
     auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
     if (Primitive)
     {
-        if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
+        if (Primitive->FillRenderData(GetMainCamera(), RenderJob1.RenderData))
         {
-            Renderer->SubmitJob(RenderJob);
+            Renderer->SubmitJob(RenderJob1);
+        }
+    }
+
+    FRenderJob RenderJob2 = Renderer->AllocateRenderJob<FRenderDataTexture>();
+    auto Primitive2 = Character2->GetComponentByType<UPrimitiveComponent>();
+    if (Primitive2)
+    {
+        if (Primitive2->FillRenderData(GetMainCamera(), RenderJob2.RenderData))
+        {
+            Renderer->SubmitJob(RenderJob2);
         }
     }
 }

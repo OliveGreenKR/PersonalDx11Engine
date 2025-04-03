@@ -39,9 +39,6 @@ private:
 	//렌더 데이터 풀
 	FFrameMemoryPool RenderDataPool = FFrameMemoryPool(8 * 1024 * 1024);
 
-	//기본 렌더러 스테이트
-	ERenderStateType DefaultState = ERenderStateType::Solid;
-
 private:
 	// 기본 상태 객체 생성 및 초기화
 	void CreateStates();
@@ -79,4 +76,7 @@ public:
 	}
 
 	FRenderContext* GetRenderContext() { return Context.get(); }
+
+	//기본 렌더러 스테이트
+	ERenderStateType DefaultState = ERenderStateType::Solid;
 };

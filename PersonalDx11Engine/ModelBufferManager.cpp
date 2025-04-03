@@ -142,7 +142,7 @@ void UModelBufferManager::CreateDefaultPrimitives()
     DefaultModelFlags[CubeModelHash] = true;
 
     // 구 정점 데이터 생성 및 등록
-    FVertexDataContainer sphereData = CreateSphereVertexData();
+    FVertexDataContainer sphereData = CreateSphereVertexData(16);
     SphereModelHash = RegisterVertexData(sphereData);
     DefaultModelFlags[SphereModelHash] = true;
 

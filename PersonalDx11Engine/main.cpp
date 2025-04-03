@@ -296,11 +296,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			ImGui::SameLine();
 			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));
+			
 
 			if (ImGui::Button("RenderContext")) {
 				Renderer->GetRenderContext()->PrintCurrentBindins();
 			}
-			
+			ImGui::SameLine();
+			if (ImGui::Button("Solid")) {
+				Renderer->DefaultState = ERenderStateType::Solid;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("WireFrame")) {
+				Renderer->DefaultState = ERenderStateType::Wireframe;
+			}
 			//ImGui::Checkbox("ContextDebug", &(Renderer->GetRenderContext()->bDebugValidationEnabled));
 			//ImGui::SameLine();
 			//ImGui::Checkbox("ContextDebugBreak", &(Renderer->GetRenderContext()->bDebugBreakOnError));
