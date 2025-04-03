@@ -76,6 +76,7 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
     auto Handle = FResourceHandle(FilePath.c_str());
     auto RscKey = Handle.Key;
+
     // 이미 로드된 텍스처인지 확인
     auto it = ResourceCache.find(RscKey.GetHash());
     if (it != ResourceCache.end())

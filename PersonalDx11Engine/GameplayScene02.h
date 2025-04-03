@@ -55,10 +55,10 @@ private:
     float CharacterMass = 5.0f;
     float Character2Mass = 15.0f;
 
-    // 리소스
-	FResourceHandle TTileHandle;
-	FResourceHandle TPoleHandle;
-	FResourceHandle VShaderHandle;
+    //매터리얼
+    FResourceHandle TileMaterialHandle;
+    FResourceHandle PoleMaterialHandle;
+    FResourceHandle DefaultMaterialHandle;
 
     // 경계 값
     const float XBorder = 3.0f;

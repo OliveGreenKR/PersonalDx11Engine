@@ -112,6 +112,15 @@ bool UMaterial::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
  
     //2. Load UnLoaded Required Resources with ResourceManagers.
 
+    if (Path == MAT_TILE)
+    {
+        TextureHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03);
+    }
+    else if (Path == MAT_POLE)
+    {
+        TextureHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE02);
+    }
+
     result = true;
 
     bIsLoaded = result;

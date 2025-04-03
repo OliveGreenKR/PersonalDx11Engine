@@ -106,6 +106,11 @@ void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel)
     Model = InModel;
 }
 
+void UPrimitiveComponent::SetMaterial(const FResourceHandle& InMaterialHandle)
+{
+    MaterialHandle = InMaterialHandle;
+}
+
 UPrimitiveComponent::UPrimitiveComponent()
 {
     //기본 매터리얼

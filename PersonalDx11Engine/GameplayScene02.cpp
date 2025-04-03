@@ -68,6 +68,19 @@ void UGameplayScene02::Initialize()
 
     Character2Mass = Character2->GetTransform().Scale.Length() * 20.0f;
     Character->SetMass(Character2Mass);
+
+    //매터리얼 설정
+    auto Primitive1 = Character->GetComponentByType<UPrimitiveComponent>();
+    if (Primitive1)
+    {
+        Primitive1->SetMaterial(TileMaterialHandle);
+    }
+    auto Primitive2 = Character2->GetComponentByType<UPrimitiveComponent>();
+    if (Primitive2)
+    {
+        Primitive2->SetMaterial(PoleMaterialHandle);
+    }
+
     // 경계 충돌 감지 설정
     SetupBorderTriggers();
 
@@ -98,12 +111,10 @@ void UGameplayScene02::Initialize()
 
 void UGameplayScene02::Load()
 {
-    // 텍스처 로드
-    TTileHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
-    TPoleHandle = UResourceManager::Get()->LoadResource<UTexture2D>(TEXTURE03, false);
-
-    // 쉐이더 로드
-    VShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER, false);
+    //매터리얼 로드
+    TileMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_TILE);
+    PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
+    DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
 }
 
 void UGameplayScene02::Unload()

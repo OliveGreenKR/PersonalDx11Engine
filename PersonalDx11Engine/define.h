@@ -12,3 +12,5 @@
 #define VS_DEFAULT L"ShaderMyVS00.hlsl"
 
 #define MAT_DEFAULT L"TODO_Material.file"
+#define MAT_TILE L"TODO_Material_Tile.file"
+#define MAT_POLE L"TODO_Material_Pole.file"

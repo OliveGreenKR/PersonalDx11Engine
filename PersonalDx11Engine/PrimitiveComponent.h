@@ -18,6 +18,7 @@ public:
 	virtual bool FillRenderData(const UCamera* Camera, IRenderData* OutRenderData) const;
 
 	void SetModel(const std::shared_ptr<UModel>& InModel);
+	void SetMaterial(const FResourceHandle& InMaterialHandle);
 
 	class UModel* GetModel() const { return Model.get(); }
 	FResourceHandle GetMaterial() const { return MaterialHandle; }

@@ -202,7 +202,7 @@ void UActorComponent::PrintComponentTreeInternal(std::ostream& os, std::string p
     os << prefix;
 
     // 마지막 자식인지 여부에 따라 다른 접두사 사용
-    os << (isLast ? "└── " : "├── ");
+    os << (isLast ? "+-- " : "|-- ");
 
     // 컴포넌트 이름 출력
     os << GetComponentClassName() << std::endl;
