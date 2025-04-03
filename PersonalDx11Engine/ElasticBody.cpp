@@ -247,14 +247,9 @@ void UElasticBody::SetShapeBox()
 
 void UElasticBody::SetColor(const Vector4& InColor)
 {
-	if (Primitive.get())
+	if (Primitive)
 	{
-		auto Material = Primitive->GetMaterial().Get<UMaterial>();
-		if (!Material)
-		{
-			return;
-		}
-		Material->SetColor(InColor);
+		Primitive->SetColor(InColor);
 	}
 }
 

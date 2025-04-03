@@ -63,6 +63,7 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         const auto info = cbVS[i];
         if (info.Name == "MATRIX_BUFFER")
         {
+            //매트릭스 버퍼
             auto WorldMatrix = GetWorldTransform().GetModelingMatrix();
             WorldMatrix = XMMatrixTranspose(WorldMatrix);
 
@@ -81,7 +82,7 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         }
         else if (info.Name == "COLOR_BUFFER")
         {
-            auto Color = Material->GetColor();
+            //색상 버퍼
             ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
             assert(Size == sizeof(Color));
@@ -109,6 +110,11 @@ void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel)
 void UPrimitiveComponent::SetMaterial(const FResourceHandle& InMaterialHandle)
 {
     MaterialHandle = InMaterialHandle;
+}
+
+void UPrimitiveComponent::SetColor(const Vector4 InColor)
+{
+    Color = InColor;
 }
 
 UPrimitiveComponent::UPrimitiveComponent()

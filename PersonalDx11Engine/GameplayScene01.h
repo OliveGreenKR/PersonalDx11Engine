@@ -47,13 +47,6 @@ private:
     bool bSpawnBody = true;
     bool bGravity = false;
 
-    //쉐이더
-    std::shared_ptr<class UShaderBase> Shader;
-    
-    // 텍스처 
-    std::shared_ptr<class UTexture2D> TextureTile;
-    std::shared_ptr<class UTexture2D> TexturePole;
-
     // 경계 값
     const float XBorder = 3.0f;
     const float YBorder = 2.0f;

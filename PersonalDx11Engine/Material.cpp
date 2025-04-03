@@ -33,11 +33,6 @@ UMaterial::~UMaterial()
     Release();
 }
 
-Vector4 UMaterial::GetColor() const
-{
-    return Color;
-}
-
 UTexture2D* UMaterial::GetTexture() const
 {
     if (!TextureHandle.IsLoaded())
@@ -68,11 +63,6 @@ UPixelShader* UMaterial::GetPixelShader() const
     }
     auto RscPtr = PixelShaderHandle.Get<UPixelShader>();
     return RscPtr;
-}
-
-void UMaterial::SetColor(const Vector4& InColor)
-{
-    Color = InColor;
 }
 
 void UMaterial::SetTexture(const FResourceHandle& InTexture)

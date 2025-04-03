@@ -1,4 +1,4 @@
-﻿#include "DynamicAABBTree.h"
+#include "DynamicAABBTree.h"
 #include <iostream>
 #include <queue>
 #include "Debug.h"

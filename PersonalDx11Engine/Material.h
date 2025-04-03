@@ -20,12 +20,10 @@ public:
 
 	virtual ~UMaterial();
 
-	Vector4 GetColor() const;
 	UTexture2D* GetTexture() const;
 	UVertexShader* GetVertexShader() const;
 	UPixelShader* GetPixelShader() const;
 
-	void SetColor(const Vector4& InColor);
 	void SetTexture(const FResourceHandle& InTexture);
 	void SetVertexShader(const FResourceHandle& InShader);
 	void SetPixelShader(const FResourceHandle& InShader);
@@ -43,7 +41,6 @@ protected:
 	FResourceHandle TextureHandle = FResourceHandle();
 	FResourceHandle VertexShaderHandle;
 	FResourceHandle PixelShaderHandle;
-	Vector4 Color = Vector4(1, 1, 1, 1);
 
 private:
 	bool bIsLoaded = true; //TODO :  Matrial to File

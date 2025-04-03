@@ -1,4 +1,4 @@
-﻿#include "CollisionManager.h"
+#include "CollisionManager.h"
 #include "RigidBodyComponent.h"
 #include "Transform.h"
 #include <algorithm>

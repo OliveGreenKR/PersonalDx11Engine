@@ -25,8 +25,7 @@ void FRenderDataTexture::AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV
 {
     if (!SRV)
     {
-        LOG("Wrong Texture");
-        return;
+        LOG_FUNC_CALL("[Warning] empty Texture");
     } 
     Textures.push_back({ Slot, SRV });
 }
@@ -35,8 +34,7 @@ void FRenderDataTexture::AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler)
 {
     if (!Sampler)
     {
-        LOG("Wrong Sampler");
-        return;
+        LOG_FUNC_CALL("[Warning] empty Texture");
     }
     Samplers.push_back({ Slot, Sampler });
 }

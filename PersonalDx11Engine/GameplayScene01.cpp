@@ -5,6 +5,7 @@
 #include "CollisionComponent.h"
 #include "PrimitiveComponent.h"
 
+#include "Material.h"
 #include "CollisionManager.h"
 #include "InputManager.h"
 #include "Random.h"
@@ -14,6 +15,8 @@
 #include "ResourceManager.h"
 #include "Texture.h"
 #include "UIManager.h"
+
+#include "RenderDataTexture.h"
 
 UGameplayScene01::UGameplayScene01()
 {
@@ -38,11 +41,10 @@ void UGameplayScene01::Initialize()
 
 void UGameplayScene01::Load()
 {
-    // 텍스처 로드
-    //TextureTile = UResourceManager::Get()->LoadResource(TEXTURE03, false);
-    //TexturePole = UResourceManager::Get()->LoadResource(TEXTURE02, false);
-
-    //Shader = UResourceManager::Get()->LoadShader(MYSHADER, MYSHADER);
+    //매터리얼 로드
+    //TileMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_TILE);
+    //PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
+    //DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
 }
 
 void UGameplayScene01::Unload()
@@ -59,10 +61,6 @@ void UGameplayScene01::Unload()
 
     // 주요 객체 해제
     Camera = nullptr;
-
-    // 텍스처 해제
-    TextureTile = nullptr;
-    TexturePole = nullptr;
 }
 
 void UGameplayScene01::Tick(float DeltaTime)
@@ -93,7 +91,18 @@ void UGameplayScene01::Tick(float DeltaTime)
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
- 
+    for (auto body : ElasticBodies)
+    {
+        FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
+        auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
+        if (Primitive)
+        {
+            if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
+            {
+                Renderer->SubmitJob(RenderJob);
+            }
+        }
+    }
 }
 
 void UGameplayScene01::SubmitRenderUI()

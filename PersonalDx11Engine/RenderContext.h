@@ -9,9 +9,11 @@ class FD3DContextDebugger;
 
 class FRenderContext
 {
+    static constexpr UINT MAX_SHADER_RESOURCE_SLOTS = 16; // D3D11 일반적으로 지원하는 수
+
 public:
     FRenderContext() = default;
-    ~FRenderContext() = default;
+    ~FRenderContext();
 
     bool Initialize(std::shared_ptr<IRenderHardware> InHardware);
     void Release();
@@ -44,7 +46,7 @@ private:
     void BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset);
     void BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT);
     void BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader);
-    void BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV);
+    void BindPixelShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV);
     void BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler);
 
     //렌더링 명령
@@ -60,6 +62,9 @@ private:
     ID3D11VertexShader* CurrentVS = nullptr;
     ID3D11PixelShader* CurrentPS = nullptr;
     ID3D11InputLayout* CurrentLayout = nullptr;
+
+    // 더 일반적인 상수 정의 방식
+    ID3D11ShaderResourceView* CurrentSRVs[MAX_SHADER_RESOURCE_SLOTS] = {};
 
     std::shared_ptr<IRenderHardware> RenderHardware;
 

@@ -2,8 +2,15 @@
 #include "RenderContext.h"
 #include "D3DContextDebugger.h"
 
+FRenderContext::~FRenderContext()
+{
+    Release();
+}
+
 bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
 {
+   
+
     if (!InHardware || !InHardware->IsDeviceReady())
         return false;
     RenderHardware = InHardware;
@@ -25,6 +32,7 @@ void FRenderContext::Release()
 	CurrentVS = nullptr;
 	CurrentPS = nullptr;
 	CurrentLayout = nullptr;
+    std::memset(CurrentSRVs, 0, sizeof(CurrentSRVs));
 
     if (RenderHardware)
     {
@@ -140,7 +148,7 @@ void FRenderContext::DrawRenderData(const IRenderData* InData)
         uint32_t Slot;
         ID3D11ShaderResourceView* SRV;
         InData->GetTextureData(i, Slot, SRV);
-        this->BindShaderResource(Slot, SRV);
+        this->BindPixelShaderResource(Slot, SRV);
     }
 
     // 5. 샘플러 (인터페이스에 정의되지 않았으므로 유지 불가 - 주석 처리)
@@ -190,12 +198,20 @@ void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const v
     }
 }
 
-void FRenderContext::BindShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV)
+void FRenderContext::BindPixelShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!SRV || !DeviceContext) return;
+    if (!SRV || !DeviceContext || Slot >= MAX_SHADER_RESOURCE_SLOTS)
+        return;
 
+
+    if (SRV == CurrentSRVs[Slot])
+    {
+        // 현재 바인딩된 리소스와 동일하면 바인딩 생략
+        return;
+    }
     RenderHardware->GetDeviceContext()->PSSetShaderResources(Slot, 1, &SRV);
+    CurrentSRVs[Slot] = SRV;
 }
 
 void FRenderContext::BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler)
