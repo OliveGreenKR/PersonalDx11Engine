@@ -27,7 +27,7 @@ void UPrimitiveComponent::SetColor(const Vector4& InColor)
 
 void UPrimitiveComponent::SetTexture(const FResourceHandle& InHandle)
 {
-    if (!InHandle.IsValid() || TextureHandle == InHandle )
+    if (!InHandle.IsLoaded() || TextureHandle == InHandle )
     {
         return; 
     }

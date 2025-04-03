@@ -41,7 +41,7 @@ private:
     IResource* GetRawResource(const FStringHash& InKey) const;
 
     //키 등록여부 확인
-    bool IsValidKey(const uint32_t InKey) const;
+    bool IsLoadedKey(const uint32_t InKey) const;
 
     // FResourceHandle을 friend로 지정(리소스 get을 위해)
     friend class FResourceHandle;
@@ -74,8 +74,8 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
     static_assert(std::is_base_of_v<IResource, T> || std::is_same_v<IResource, T>);
 
-    FStringHash RscKey(FilePath.c_str());
-
+    auto Handle = FResourceHandle(FilePath.c_str());
+    auto RscKey = Handle.Key;
     // 이미 로드된 텍스처인지 확인
     auto it = ResourceCache.find(RscKey.GetHash());
     if (it != ResourceCache.end())
@@ -83,7 +83,7 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
         // 접근 시간 업데이트
         it->second.LastAccessTick = CurrentTick;
 
-        return FResourceHandle(RscKey);
+        return Handle;
     }
 
     // 새 리소스 객체 생성
@@ -110,9 +110,9 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
         ResourceData.Resource = std::move(rscUniquePtr);
         ResourceData.LastAccessTick = CurrentTick;
         ResourceCache[RscKey.GetHash()] = std::move(ResourceData);
-        return FResourceHandle(RscKey);
+        return Handle;
     }
 
-    RscKey.Invalidate();
-    return FResourceHandle(RscKey);
+    Handle.Invalidate();
+    return Handle;
 }

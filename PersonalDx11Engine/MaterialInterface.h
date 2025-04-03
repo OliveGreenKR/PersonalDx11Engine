@@ -15,8 +15,11 @@ public:
     // 텍스처를 반환 (없을 경우 nullptr 가능)
     virtual class UTexture2D* GetTexture() const = 0;
 
-    // 쉐이더를 반환 (없을 경우 nullptr 가능)
-    virtual class UVertexShader* GetShader() const = 0;
+    // 정점 쉐이더를 반환 (없을 경우 nullptr 가능)
+    virtual class UVertexShader* GetVertexShader() const = 0;
+
+    // 정점 쉐이더를 반환 (없을 경우 nullptr 가능)
+    virtual class UPixelShader* GetPixelShader() const = 0;
 
     // 렌더링 상태를 반환
     virtual enum class ERenderStateType GetRenderState() const = 0;

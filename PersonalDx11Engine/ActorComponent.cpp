@@ -1,14 +1,27 @@
-﻿#include "ActorComponent.h"
+#include "ActorComponent.h"
 #include <cassert>
 #include <string>
 #include <iostream>
 
-void UActorComponent::BraodcastPostTreeInitialized()
+void UActorComponent::BroadcastPostInitialized()
 {
-    //초기화는 활성화여부와 관계업싱 동작하도록 변경
-    //if (!bIsActive)
-    //    return;
+    //초기화는 활성화여부와 관계없이 동작
+    // 자신의 PostInitialized 호출
+    PostInitialized();
 
+    // 모든 자식 컴포넌트에 대해 PostInitialized 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child)
+        {
+            Child->BroadcastPostInitialized();
+        }
+    }
+}
+
+void UActorComponent::BroadcastPostTreeInitialized()
+{
+    //초기화는 활성화여부와 관계없이 동작
     // 자신의 PostInitialized 호출
     PostTreeInitialized();
 
@@ -17,7 +30,7 @@ void UActorComponent::BraodcastPostTreeInitialized()
     {
         if (Child)
         {
-            Child->BraodcastPostTreeInitialized();
+            Child->BroadcastPostTreeInitialized();
         }
     }
 }
@@ -49,6 +62,10 @@ void UActorComponent::Activate()
 void UActorComponent::DeActivate()
 {
     bIsActive = false;
+}
+
+void UActorComponent::PostInitialized()
+{
 }
 
 void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)

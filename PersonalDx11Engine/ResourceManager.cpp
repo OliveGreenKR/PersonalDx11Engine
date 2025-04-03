@@ -14,7 +14,7 @@ IResource* UResourceManager::GetRawResource(const FStringHash& InKey) const
     return nullptr;
 }
 
-bool UResourceManager::IsValidKey(const uint32_t InKey) const
+bool UResourceManager::IsLoadedKey(const uint32_t InKey) const
 {
     return ResourceCache.find(InKey) != ResourceCache.end();
 }

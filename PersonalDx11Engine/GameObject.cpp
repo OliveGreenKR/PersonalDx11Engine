@@ -1,4 +1,4 @@
-﻿#include "GameObject.h"
+#include "GameObject.h"
 #include "Model.h"
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
@@ -13,6 +13,13 @@ UGameObject::UGameObject()
 
 void UGameObject::PostInitialized()
 { 
+	auto CompPtr = RootComponent.get();
+
+	//Comp Post Tree Initialize
+	if (CompPtr)
+	{
+		CompPtr->BroadcastPostInitialized();
+	}
 }
 
 void UGameObject::PostInitializedComponents()
@@ -22,7 +29,7 @@ void UGameObject::PostInitializedComponents()
 	//Comp Post Tree Initialize
 	if (CompPtr)
 	{
-		CompPtr->BraodcastPostTreeInitialized();
+		CompPtr->BroadcastPostTreeInitialized();
 	}
 
 	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponent>().lock())

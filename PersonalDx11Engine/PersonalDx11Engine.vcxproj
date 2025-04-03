@@ -152,6 +152,7 @@
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="InputContext.h" />
     <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="MaterialInterface.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />

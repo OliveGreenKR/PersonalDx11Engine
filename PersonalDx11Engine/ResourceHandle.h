@@ -14,9 +14,15 @@ private:
     IResource* GetRawResource() const;
 
 public:
-    explicit FResourceHandle(const FStringHash& InKey = FStringHash()) : Key(InKey) {}
+    explicit FResourceHandle() : Key() {}
+    explicit FResourceHandle(const wchar_t* InPath);
+    explicit FResourceHandle(const char* InPath);
 
+    //키 유효여부  + 로딩 여부 확인
+    bool IsLoaded() const;
+    //키 유효여부, 로드여부는 모름
     bool IsValid() const;
+    //무효화
     void Invalidate();
 
     // 타입을 명시적으로 지정해 리소스를 얻음

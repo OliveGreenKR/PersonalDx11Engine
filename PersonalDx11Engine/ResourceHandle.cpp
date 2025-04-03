@@ -6,9 +6,22 @@ IResource* FResourceHandle::GetRawResource() const {
     return UResourceManager::Get()->GetRawResource(Key);
 }
 
+FResourceHandle::FResourceHandle(const wchar_t* InPath) : Key(InPath)
+{
+}
+
+FResourceHandle::FResourceHandle(const char* InPath) : Key(InPath)
+{
+}
+
+bool FResourceHandle::IsLoaded() const
+{
+    return Key.IsValid() && UResourceManager::Get()->IsLoadedKey(Key.GetHash());
+}
+
 bool FResourceHandle::IsValid() const
 {
-    return Key.IsValid() && UResourceManager::Get()->IsValidKey(Key.GetHash());
+    return Key.IsValid();
 }
 
 void FResourceHandle::Invalidate() { Key.Invalidate(); }

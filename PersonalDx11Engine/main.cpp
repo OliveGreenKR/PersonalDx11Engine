@@ -210,8 +210,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	QueryPerformanceCounter(&lastTime);
 
 	//Default Shader for renderng
-	auto VSShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(MYVSSHADER);
-	auto PSShaderHandle = UResourceManager::Get()->LoadResource<UPixelShader>(MYPSSHADER);
+	auto VSShaderHandle = UResourceManager::Get()->LoadResource<UVertexShader>(VS_DEFAULT);
+	auto PSShaderHandle = UResourceManager::Get()->LoadResource<UPixelShader>(PS_DEFAULT);
 	auto VShader = VSShaderHandle.Get<UVertexShader>();
 	auto PShader = PSShaderHandle.Get<UPixelShader>();
 	if (VShader && PShader)

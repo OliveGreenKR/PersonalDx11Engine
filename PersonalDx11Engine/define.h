@@ -7,3 +7,6 @@
 
 #define MYPSSHADER L"ShaderMyPS00.hlsl"
 #define MYVSSHADER L"ShaderMyVS00.hlsl"
+
+#define PS_DEFAULT L"ShaderMyPS00.hlsl"
+#define VS_DEFAULT L"ShaderMyVS00.hlsl"

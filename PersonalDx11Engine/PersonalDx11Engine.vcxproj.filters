@@ -116,6 +116,9 @@
     <ClCompile Include="ResourceHandle.cpp">
       <Filter>Engine\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Engine\Material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -250,6 +253,9 @@
     <Filter Include="Engine\Renderer\RenderStates">
       <UniqueIdentifier>{9be6a8cf-40fc-4eea-8f79-39230118debd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Material">
+      <UniqueIdentifier>{ad3600cb-09e7-41a1-8ab8-c8132e656580}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -344,9 +350,6 @@
     </ClInclude>
     <ClInclude Include="VertexDataContainer.h">
       <Filter>Engine\Model\Vertex</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferResource.h">
-      <Filter>D3D\Buffer</Filter>
     </ClInclude>
     <ClInclude Include="ModelBufferManager.h">
       <Filter>Engine\Managers</Filter>
@@ -452,6 +455,15 @@
     </ClInclude>
     <ClInclude Include="ResourceHandle.h">
       <Filter>Engine\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Engine\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="FramePoolManager.h">
+      <Filter>Engine\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 #include "SceneComponent.h"
 #include "RenderDefines.h"
 #include "ResourceHandle.h"
+#include "MaterialInterface.h"
 
 class FResourceHandle;
 class UModel;
@@ -10,17 +11,13 @@ class UModel;
 class UPrimitiveComponent : public USceneComponent
 {
 public:
-	class UModel* GetModel() const { return Model.get(); }
-	const Vector4& GetColor() const { return Color; }
-	const FResourceHandle& GetTexture() { return TextureHandle; }
+	virtual void PostInitialized() override;
 
-	void SetModel(const std::shared_ptr<UModel>& InModel);
-	void SetColor(const Vector4& InColor);
-	void SetTexture(const FResourceHandle& InHandle);
+	class UModel* GetModel() const { return Model.get(); }
+	IMaterial* GetMaterial() { return Material.get();}
 
 	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
 private:
-	class FResourceHandle TextureHandle;
 	std::shared_ptr<class UModel> Model;
-	Vector4 Color = Vector4(1, 1, 1, 1); //White
+	std::shared_ptr<IMaterial> Material;
 };

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -46,7 +46,10 @@ private:
     UActorComponent& operator=(UActorComponent&&) = delete;
 
 public:
-    void BraodcastPostTreeInitialized();
+	//Called When GameObject::PostInitialzed
+	void BroadcastPostInitialized();
+	//Called When GameObject::PostInitialzedComponents
+    void BroadcastPostTreeInitialized();
 
     // Tick 전파
     void BroadcastTick(float DeltaTime);
@@ -60,6 +63,7 @@ protected:
     virtual void DeActivate();
 
 protected:
+	virtual void PostInitialized();
     virtual void PostTreeInitialized()
     {
         SetActive(bIsActive);
