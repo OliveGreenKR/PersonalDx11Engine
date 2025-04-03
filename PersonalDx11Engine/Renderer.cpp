@@ -35,17 +35,23 @@ void URenderer::EndFrame()
 	RenderDataPool.Reset(); //reset memory pool
 }
 
-void URenderer::SubmitJob(const FRenderJob& InJob)
+void URenderer::SubmitJob(FRenderJob & InJob)
 {
-	if (InJob.RenderState == ERenderStateType::None ||
-		!InJob.RenderData)
+	if (!InJob.RenderData)
 		return;
-	
+
+	if (InJob.RenderState == ERenderStateType::Default)
+	{
+		InJob.RenderState = DefaultState;
+	}
+
 	auto& vec = RenderJobs[InJob.RenderState];
 	if (vec.capacity() == 0)
 	{
 		vec.reserve(128);
 	}
+
+
 	vec.push_back(InJob.RenderData);
 }
 

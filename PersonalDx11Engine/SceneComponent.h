@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "ActorComponent.h"
 #include "Transform.h"
 #include "Delegate.h"
@@ -17,6 +17,8 @@ private:
     mutable FTransform WorldTransform;              // 캐싱된 월드 트랜스폼
 
 public:
+    virtual ~USceneComponent() = default;
+
     // 부모 접근자
     std::shared_ptr<USceneComponent> GetSceneParent() const {
         return Engine::Cast<USceneComponent>(GetParent());

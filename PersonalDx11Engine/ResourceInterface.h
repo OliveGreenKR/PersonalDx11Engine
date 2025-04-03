@@ -5,6 +5,7 @@ enum class EResourceType
 {
     Shader,
     Texture,
+    Material,
     Max,
 };
 class IResource

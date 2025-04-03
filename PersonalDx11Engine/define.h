@@ -10,3 +10,5 @@
 
 #define PS_DEFAULT L"ShaderMyPS00.hlsl"
 #define VS_DEFAULT L"ShaderMyVS00.hlsl"
+
+#define MAT_DEFAULT L"TODO_Material.file"

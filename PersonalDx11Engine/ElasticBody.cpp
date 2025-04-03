@@ -1,4 +1,4 @@
-﻿#include "ElasticBody.h"
+#include "ElasticBody.h"
 #include "ActorComponent.h"
 #include "RigidBodyComponent.h"
 #include "CollisionComponent.h"
@@ -8,6 +8,7 @@
 #include "ModelBufferManager.h"
 #include "random.h"
 #include "TypeCast.h"
+#include "Material.h"
 
 UElasticBody::UElasticBody() : bIsActive(true)
 {
@@ -248,7 +249,12 @@ void UElasticBody::SetColor(const Vector4& InColor)
 {
 	if (Primitive.get())
 	{
-		Primitive.get()->SetColor(InColor);
+		auto Material = Primitive->GetMaterial().Get<UMaterial>();
+		if (!Material)
+		{
+			return;
+		}
+		Material->SetColor(InColor);
 	}
 }
 

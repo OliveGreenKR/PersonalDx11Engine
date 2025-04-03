@@ -1,7 +1,13 @@
 #pragma once
-#include "MaterialInterface.h"
+#include "ResourceInterface.h"
 #include "ResourceHandle.h"
-class UMaterial : public IMaterial
+#include "Math.h"
+
+class UTexture2D;
+class UVertexShader;
+class UPixelShader;
+
+class UMaterial : public IResource
 {
 public:
 	explicit UMaterial();
@@ -10,29 +16,38 @@ public:
 					   const FResourceHandle& VertexShader);
 	explicit UMaterial(const FResourceHandle& Texture, 
 					   const FResourceHandle& VertexShader,
-					   const FResourceHandle& PixelShader,
-					   const ERenderStateType InType = ERenderStateType::Solid);
+					   const FResourceHandle& PixelShader);
 
-	virtual ~UMaterial() = default;
+	virtual ~UMaterial();
 
-	// Inherited via IMaterial
-	Vector4 GetColor() const override;
-	UTexture2D* GetTexture() const override;
-	UVertexShader* GetVertexShader() const override;
-	UPixelShader* GetPixelShader() const override;
-	ERenderStateType GetRenderState() const override;
+	Vector4 GetColor() const;
+	UTexture2D* GetTexture() const;
+	UVertexShader* GetVertexShader() const;
+	UPixelShader* GetPixelShader() const;
 
 	void SetColor(const Vector4& InColor);
 	void SetTexture(const FResourceHandle& InTexture);
 	void SetVertexShader(const FResourceHandle& InShader);
 	void SetPixelShader(const FResourceHandle& InShader);
-	void SetRenderState(const ERenderStateType InRenderStateType);
+
+	// Inherited via IResource
+	bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+	bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+	bool IsLoaded() const override { return bIsLoaded; }
+	void Release() override;
+
+	size_t GetMemorySize() const override;
+	EResourceType GetType() const override { return EResourceType::Material; }
 
 protected:
 	FResourceHandle TextureHandle = FResourceHandle();
 	FResourceHandle VertexShaderHandle;
 	FResourceHandle PixelShaderHandle;
 	Vector4 Color = Vector4(1, 1, 1, 1);
-	ERenderStateType RenderState = ERenderStateType::Solid;
+
+private:
+	bool bIsLoaded = true; //TODO :  Matrial to File
+
+
 };
 

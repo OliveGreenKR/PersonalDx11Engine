@@ -15,6 +15,8 @@
 #include "UIManager.h"
 #include"RenderDataTexture.h"
 #include "PrimitiveComponent.h"
+#include "Material.h"
+
 
 UGameplayScene02::UGameplayScene02()
 {
@@ -142,78 +144,15 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     if (!Camera)
         return;
 
-    FRenderJob RenderJob;
-
+    FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
     auto Primitive = Character->GetComponentByType<UPrimitiveComponent>();
-    auto BufferRsc = Primitive->GetModel()->GetBufferResource();
-    auto RenderData = Renderer->AllocateRenderData<FRenderDataTexture>();
-
-    RenderData->IndexBuffer = BufferRsc->GetIndexBuffer();
-    RenderData->IndexCount = BufferRsc->GetIndexCount();
-    RenderData->VertexBuffer = BufferRsc->GetVertexBuffer();
-    RenderData->VertexCount = BufferRsc->GetVertexCount();
-    RenderData->Offset = BufferRsc->GetOffset();
-    RenderData->Stride = BufferRsc->GetStride();
-
-
-    //Shader Constant Buffer
-    auto Shader = VShaderHandle.Get<UVertexShader>();
-    if (!Shader)
+    if (Primitive)
     {
-        LOG_FUNC_CALL("InValid Shader");
-        return;
-    }
-
-
-    auto cbVS = Shader->GetAllConstantBufferInfo();
-    for (int i = 0; i < cbVS.size(); ++i)
-    {
-        const auto info = cbVS[i];
-        if (info.Name == "MATRIX_BUFFER")
+        if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
         {
-            auto WorldMatrix = Character->GetTransform().GetModelingMatrix();
-            WorldMatrix = XMMatrixTranspose(WorldMatrix);
-
-            auto ViewMatrix = Camera->GetViewMatrix();
-            ViewMatrix = XMMatrixTranspose(ViewMatrix);
-
-            auto ProjectionMatrix = Camera->GetProjectionMatrix();
-            ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
-
-            //to do amatrix fill
-            AMatrix192 MatrixData = { WorldMatrix , ViewMatrix, ProjectionMatrix };
-
-            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
-            UINT Size = cbVS[i].Size;
-            assert(Size == sizeof(MatrixData));
-
-            RenderData->AddVSConstantBuffer(i, Buffer, MatrixData, Size);
-        }
-        else if (info.Name == "COLOR_BUFFER")
-        {
-            auto Color = Primitive->GetColor();
-            ID3D11Buffer* Buffer = Shader->GetConstantBuffer(i);
-            UINT Size = cbVS[i].Size;
-            
-            assert(Size == sizeof(Color));
-
-            RenderData->AddVSConstantBuffer(i, Buffer, Color, Size);
+            Renderer->SubmitJob(RenderJob);
         }
     }
-
-    auto Texture = TTileHandle.Get<UTexture2D>();
-    if (!Texture)
-    {
-        LOG("NoTextureData in Scene2");
-    }
-    if (Texture)
-    {
-        //RenderData->AddTexture(0, Texture->GetShaderResourceView());
-    }
-    RenderJob.RenderState = ERenderStateType::Solid;
-    RenderJob.RenderData = RenderData;
-    
-    Renderer->SubmitJob(RenderJob);
 }
 
 void UGameplayScene02::SubmitRenderUI()

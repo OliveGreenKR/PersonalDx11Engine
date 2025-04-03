@@ -201,7 +201,6 @@
     <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="MaterialInterface.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="ModelBufferManager.h" />

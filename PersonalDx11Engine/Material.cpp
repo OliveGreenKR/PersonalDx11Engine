@@ -4,7 +4,7 @@
 #include "VertexShader.h"
 #include "PixelShader.h"
 #include "Texture.h"
-
+#include "Debug.h"
 
 
 UMaterial::UMaterial()
@@ -22,9 +22,15 @@ UMaterial::UMaterial(const FResourceHandle& Texture, const FResourceHandle& Vert
 {
 }
 
-UMaterial::UMaterial(const FResourceHandle& Texture, const FResourceHandle& VertexShader, const FResourceHandle& PixelShader, const ERenderStateType InRenderStateType)
-    : TextureHandle(Texture), VertexShaderHandle(VertexShader), PixelShaderHandle(PixelShader), RenderState(InRenderStateType)
+UMaterial::UMaterial(const FResourceHandle& Texture, const FResourceHandle& VertexShader, 
+                     const FResourceHandle& PixelShader)
+    : TextureHandle(Texture), VertexShaderHandle(VertexShader), PixelShaderHandle(PixelShader)
 {
+}
+
+UMaterial::~UMaterial()
+{
+    Release();
 }
 
 Vector4 UMaterial::GetColor() const
@@ -64,11 +70,6 @@ UPixelShader* UMaterial::GetPixelShader() const
     return RscPtr;
 }
 
-ERenderStateType UMaterial::GetRenderState() const
-{
-    return RenderState;
-}
-
 void UMaterial::SetColor(const Vector4& InColor)
 {
     Color = InColor;
@@ -101,11 +102,34 @@ void UMaterial::SetPixelShader(const FResourceHandle& InShader)
     PixelShaderHandle = InShader;
 }
 
-void UMaterial::SetRenderState(const ERenderStateType InRenderStateType)
+bool UMaterial::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
-    if (InRenderStateType == ERenderStateType::None)
-    {
-        return;
-    }
-    RenderState = InRenderStateType;
+    bool result = false;
+
+    //TODO Materai Info to File...
+
+    //1. Check Required Resources are Loaded
+ 
+    //2. Load UnLoaded Required Resources with ResourceManagers.
+
+    result = true;
+
+    bIsLoaded = result;
+    return result;
+}
+
+bool UMaterial::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+    //TOTO Load Async
+    return Load(RenderHardware, Path);
+}
+
+void UMaterial::Release()
+{
+}
+
+size_t UMaterial::GetMemorySize() const
+{
+    //Not Yet
+    return 0;
 }

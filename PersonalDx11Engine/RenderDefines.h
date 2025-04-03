@@ -14,7 +14,7 @@
 // 렌더링 상태 타입
 enum class ERenderStateType
 {
-    None,
+    Default,            //렌더러 설정에 따라 렌더링
     Solid,
     Wireframe,
     // 필요한 상태 추가
@@ -23,5 +23,5 @@ enum class ERenderStateType
 struct FRenderJob
 {
     class IRenderData* RenderData;
-    ERenderStateType RenderState = ERenderStateType::None;
+    ERenderStateType RenderState = ERenderStateType::Default;
 };

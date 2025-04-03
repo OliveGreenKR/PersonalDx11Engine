@@ -26,6 +26,7 @@ public:
         Context->RSGetState(&PreviousRasterizerState);
         Context->RSSetState(WireframeRasterizerState);
     }
+
     void Restore(ID3D11DeviceContext* Context) override
     {
         Context->RSSetState(PreviousRasterizerState);
@@ -69,6 +70,7 @@ public:
         Context->PSGetSamplers(0, 1, &PreviousSamplerState);
         Context->PSSetSamplers(0,1,&SolidSamplerState);
     }
+
     void Restore(ID3D11DeviceContext* Context) override
     {
         Context->RSSetState(PreviousRasterizerState);
@@ -88,6 +90,7 @@ public:
             SolidRasterizerState->AddRef();
         }
     }
+
     void SetSolidSamplerState(ID3D11SamplerState* state)
     {
         SolidSamplerState = state;

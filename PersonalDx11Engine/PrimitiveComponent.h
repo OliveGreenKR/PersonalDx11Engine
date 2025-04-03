@@ -1,23 +1,29 @@
 #pragma once
 #include "SceneComponent.h"
-#include "RenderDefines.h"
 #include "ResourceHandle.h"
-#include "MaterialInterface.h"
+#include "RenderDataInterface.h"
 
 class FResourceHandle;
 class UModel;
+class UMaterial;
+class UCamera;
 
 // 텍스처 렌더링 가능
 class UPrimitiveComponent : public USceneComponent
 {
 public:
-	virtual void PostInitialized() override;
+	UPrimitiveComponent();
+	virtual ~UPrimitiveComponent() = default;
+
+	virtual bool FillRenderData(const UCamera* Camera, IRenderData* OutRenderData) const;
+
+	void SetModel(const std::shared_ptr<UModel>& InModel);
 
 	class UModel* GetModel() const { return Model.get(); }
-	IMaterial* GetMaterial() { return Material.get();}
+	FResourceHandle GetMaterial() const { return MaterialHandle; }
 
 	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
 private:
 	std::shared_ptr<class UModel> Model;
-	std::shared_ptr<IMaterial> Material;
+	FResourceHandle MaterialHandle;
 };

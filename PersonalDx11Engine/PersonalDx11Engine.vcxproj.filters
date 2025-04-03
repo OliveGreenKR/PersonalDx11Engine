@@ -117,7 +117,7 @@
       <Filter>Engine\Resources</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>Engine\Material</Filter>
+      <Filter>Engine\Resources\Material</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -253,7 +253,7 @@
     <Filter Include="Engine\Renderer\RenderStates">
       <UniqueIdentifier>{9be6a8cf-40fc-4eea-8f79-39230118debd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Material">
+    <Filter Include="Engine\Resources\Material">
       <UniqueIdentifier>{ad3600cb-09e7-41a1-8ab8-c8132e656580}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -457,10 +457,7 @@
       <Filter>Engine\Resources</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
-      <Filter>Engine\Material</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialInterface.h">
-      <Filter>Engine\Interface</Filter>
+      <Filter>Engine\Resources\Material</Filter>
     </ClInclude>
     <ClInclude Include="FramePoolManager.h">
       <Filter>Engine\Managers</Filter>

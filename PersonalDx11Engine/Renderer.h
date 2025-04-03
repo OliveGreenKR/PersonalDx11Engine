@@ -38,6 +38,10 @@ private:
 
 	//렌더 데이터 풀
 	FFrameMemoryPool RenderDataPool = FFrameMemoryPool(8 * 1024 * 1024);
+
+	//기본 렌더러 스테이트
+	ERenderStateType DefaultState = ERenderStateType::Solid;
+
 private:
 	// 기본 상태 객체 생성 및 초기화
 	void CreateStates();
@@ -61,14 +65,17 @@ public:
 	void ProcessRender();
 	void EndFrame();
 
-	void SubmitJob(const FRenderJob& InJob);
+	void SubmitJob(FRenderJob & InJob);
 
-	template< typename T , typename =  
-		std::enable_if_t<std::is_base_of_v<IRenderData,T> ||
-				std::is_same_v<IRenderData,T>>>
-	T* AllocateRenderData()
+	template< typename T, typename =
+		std::enable_if_t<std::is_base_of_v<IRenderData, T> ||
+		std::is_same_v<IRenderData, T>>>
+	FRenderJob AllocateRenderJob()
 	{
-		return RenderDataPool.Allocate<T>();
+		FRenderJob RenderJob;
+		RenderJob.RenderData = RenderDataPool.Allocate<T>();
+
+		return RenderJob;
 	}
 
 	FRenderContext* GetRenderContext() { return Context.get(); }
