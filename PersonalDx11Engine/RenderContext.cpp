@@ -54,7 +54,10 @@ void FRenderContext::EndFrame()
 void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Offset)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!Buffer || !DeviceContext) return;
+
+    //버퍼해제 - nullptr 전달 가능
+    if (!DeviceContext) 
+        return;
 
     // 현재 바인딩된 버퍼와 같은지 확인하여 중복 바인딩 방지
     if (CurrentVB != Buffer)
@@ -67,7 +70,9 @@ void FRenderContext::BindVertexBuffer(ID3D11Buffer* Buffer, UINT Stride, UINT Of
 void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!Buffer || !DeviceContext) return;
+    //버퍼해제 - nullptr 전달 가능
+    if (!DeviceContext)
+        return;
 
     if (CurrentIB != Buffer)
     {
@@ -79,21 +84,22 @@ void FRenderContext::BindIndexBuffer(ID3D11Buffer* Buffer, DXGI_FORMAT Format)
 void FRenderContext::BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!DeviceContext) return;
-
-    if (VS && CurrentVS != VS)
+    if (!DeviceContext) 
+        return;
+    //Null도 전달 가능
+    if (CurrentVS != VS)
     {
         RenderHardware->GetDeviceContext()->VSSetShader(VS, nullptr, 0);
         CurrentVS = VS;
     }
 
-    if (PS && CurrentPS != PS)
+    if (CurrentPS != PS)
     {
         RenderHardware->GetDeviceContext()->PSSetShader(PS, nullptr, 0);
         CurrentPS = PS;
     }
 
-    if (Layout && CurrentLayout != Layout)
+    if (CurrentLayout != Layout)
     {
         RenderHardware->GetDeviceContext()->IASetInputLayout(Layout);
         CurrentLayout = Layout;
@@ -177,7 +183,8 @@ void FRenderContext::DrawRenderData(const IRenderData* InData)
 void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const void* Data, size_t Size, bool IsVertexShader)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!Buffer || !DeviceContext || !Data || Size == 0) return;
+    //null데이터도 바인딩 가능
+    if (!Buffer || !DeviceContext || Size == 0) return;
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     HRESULT Result = RenderHardware->GetDeviceContext()->Map(Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
@@ -201,9 +208,9 @@ void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const v
 void FRenderContext::BindPixelShaderResource(UINT Slot, ID3D11ShaderResourceView* SRV)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!SRV || !DeviceContext || Slot >= MAX_SHADER_RESOURCE_SLOTS)
+    //쉐이더 리소스의 경우 nullptr도 전달 (등록 해제 용도 )
+    if (!DeviceContext || Slot >= MAX_SHADER_RESOURCE_SLOTS)
         return;
-
 
     if (SRV == CurrentSRVs[Slot])
     {
@@ -217,7 +224,8 @@ void FRenderContext::BindPixelShaderResource(UINT Slot, ID3D11ShaderResourceView
 void FRenderContext::BindSamplerState(UINT Slot, ID3D11SamplerState* Sampler)
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
-    if (!Sampler || !DeviceContext) return;
+    if (!DeviceContext) 
+        return;
 
     RenderHardware->GetDeviceContext()->PSSetSamplers(Slot, 1, &Sampler);
 }

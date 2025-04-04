@@ -35,12 +35,14 @@ void UGameplayScene01::Initialize()
     // 입력 설정
     SetupInput();
 
-    // 입력 컨텍스트 등록
-    UInputManager::Get()->RegisterInputContext(InputContext);
+
 }
 
 void UGameplayScene01::Load()
 {
+    // 입력 컨텍스트 등록
+    UInputManager::Get()->RegisterInputContext(InputContext);
+
     //매터리얼 로드
     //TileMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_TILE);
     //PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);

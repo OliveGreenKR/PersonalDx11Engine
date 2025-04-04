@@ -96,6 +96,13 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
     {
         RenderData->AddTexture(0, Texture->GetShaderResourceView());
     }
+    else
+    {
+        //빈 텍스처라는 의미의 nullptr도 전달
+        RenderData->AddTexture(0, nullptr);
+    }
+    
+   
 
     return true;
 }
