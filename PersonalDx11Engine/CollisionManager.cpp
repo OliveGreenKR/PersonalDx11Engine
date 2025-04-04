@@ -29,7 +29,7 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent)
 {
-	if (!CollisionTree || !NewComponent || NewComponent->bDestroyed)
+	if (!CollisionTree || !NewComponent )
 		return;
 
 	// AABB 트리에 등록
@@ -194,7 +194,7 @@ void UCollisionManager::CleanupDestroyedComponents()
 	for (auto& pair : RegisteredComponents)
 	{
 		auto comp = pair.second;
-		if (!comp || comp->bDestroyed)
+		if (!comp)
 		{
 			componentsToRemove.push_back(pair.first);
 		}

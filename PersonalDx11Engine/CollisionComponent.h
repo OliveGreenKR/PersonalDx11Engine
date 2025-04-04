@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include <memory>
 #include "Delegate.h"
@@ -53,9 +53,6 @@ private:
 	virtual void DeActivate() override;
 	void ActivateColiision();
 	void DeActivateCollision();
-
-public:
-	bool bDestroyed : 1;
 public:
 	// 충돌 이벤트 델리게이트
 	FDelegate<const FCollisionEventData&> OnCollisionEnter;

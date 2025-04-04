@@ -1,13 +1,14 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <memory>
 #include <stdexcept>
 
 /// <summary>
 /// 고정크기의 재사용 객체 최적화 메모리 풀 템플릿
+/// 최대 크기 고정
 /// </summary>
 template<typename T>
-class TObjectPool {
+class TFixedObjectPool {
 private:
     std::vector<std::unique_ptr<T>> Pool;      // 사용 가능한 오브젝트들
     std::vector<T*> ActiveObjects;             // 현재 사용 중인 오브젝트들
@@ -20,11 +21,11 @@ private:
     }
 
 public:
-    explicit TObjectPool(size_t size = 100) : MaxSize(size) {
-        Pool.reserve(size);  // 초기 용량 예약
+    explicit TFixedObjectPool(size_t maxSize = 100) : MaxSize(maxSize) {
+        Pool.reserve(maxSize);  // 초기 용량 예약
     }
 
-    ~TObjectPool() {
+    ~TFixedObjectPool() {
         Clear();
     }
 
@@ -47,7 +48,7 @@ public:
 
         if (!Pool.empty()) {
             // 사용 가능한 오브젝트가 있으면 재사용
-            obj = Pool.back().release();
+            obj = Pool.back();
             Pool.pop_back();
         }
         else if (ActiveObjects.size() < MaxSize) {

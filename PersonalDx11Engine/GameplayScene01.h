@@ -9,7 +9,7 @@
 #include "Model.h"
 #include "InputContext.h"
 #include "ResourceHandle.h"
-#include "ObjectPool.h"
+#include "FixedObjectPool.h"
 
 class UGameplayScene01 : public ISceneInterface
 {
@@ -59,4 +59,9 @@ private:
 
     // 입력 컨텍스트
     std::shared_ptr<UInputContext> InputContext;
+
+    //탄성체 풀
+    TFixedObjectPool<UElasticBody> ElasticBodyPool;
+
+
 };

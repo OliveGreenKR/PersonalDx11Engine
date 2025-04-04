@@ -1,17 +1,17 @@
-﻿#include "CollisionComponent.h"
+#include "CollisionComponent.h"
 #include <memory>
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
 #include "CollisionManager.h"
 #include "TypeCast.h"
 
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) : bDestroyed(false)
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
 {
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
 
-UCollisionComponent::UCollisionComponent() :  bDestroyed(false)
+UCollisionComponent::UCollisionComponent() 
 {
 }
 

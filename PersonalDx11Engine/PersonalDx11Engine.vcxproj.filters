@@ -417,7 +417,7 @@
     <ClInclude Include="RenderStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectPool.h">
+    <ClInclude Include="FixedObjectPool.h">
       <Filter>Engine\DataStructure\MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="FrameMemoryPool.h">

@@ -202,7 +202,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="FixedObjectPool.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />
