@@ -643,7 +643,7 @@ void FDynamicAABBTree::PrintBinaryTree(size_t root, std::ostream& os, std::strin
         return;
 
     os << prefix;
-    os << (isLeft ? "├── " : "└── ");
+    os << (isLeft ? "+-- " : "|-- ");
 
     auto RootNode = NodePool[root];
     // 노드 데이터 출력 및 부모 정보 추가
@@ -656,7 +656,7 @@ void FDynamicAABBTree::PrintBinaryTree(size_t root, std::ostream& os, std::strin
     os << std::endl;
 
     // 자식 노드에 대한 새 접두사 계산
-    std::string newPrefix = prefix + (isLeft ? "│   " : "    ");
+    std::string newPrefix = prefix + (isLeft ? "|   " : "    ");
 
     // 왼쪽, 오른쪽 자식 출력 (왼쪽 먼저)
     PrintBinaryTree(RootNode.Left, os, newPrefix, true);

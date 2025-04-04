@@ -9,6 +9,7 @@
 #include "Model.h"
 #include "InputContext.h"
 #include "ResourceHandle.h"
+#include "ObjectPool.h"
 
 class UGameplayScene01 : public ISceneInterface
 {

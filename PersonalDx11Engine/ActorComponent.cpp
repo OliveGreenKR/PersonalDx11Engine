@@ -208,7 +208,7 @@ void UActorComponent::PrintComponentTreeInternal(std::ostream& os, std::string p
     os << GetComponentClassName() << std::endl;
 
     // 다음 자식들을 위한 새 접두사 계산
-    std::string newPrefix = prefix + (isLast ? "    " : "│   ");
+    std::string newPrefix = prefix + (isLast ? "    " : "|   ");
 
     // 자식들이 있는 경우 출력
     if (!ChildComponents.empty())
