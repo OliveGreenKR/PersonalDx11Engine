@@ -25,10 +25,6 @@ UGameplayScene02::UGameplayScene02()
 
 void UGameplayScene02::Initialize()
 {
-    // 모델 가져오기
-    auto CubeModel = UModelBufferManager::Get()->GetCubeModel();
-    auto SphereModel = UModelBufferManager::Get()->GetSphereModel();
-
     const int VIEW_WIDTH = 800;
     const int VIEW_HEIGHT = 800;
 

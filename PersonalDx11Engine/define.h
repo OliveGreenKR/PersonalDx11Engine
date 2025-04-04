@@ -14,3 +14,7 @@
 #define MAT_DEFAULT L"TODO_Material.file"
 #define MAT_TILE L"TODO_Material_Tile.file"
 #define MAT_POLE L"TODO_Material_Pole.file"
+
+#define MDL_CUBE  L"TODO_Model_Cube.file"
+#define MDL_SPHERE  L"TODO_Model_Sphere.file"
+#define MDL_PLANE  L"TODO_Model_Plane.file"

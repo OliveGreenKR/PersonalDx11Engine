@@ -1,35 +1,47 @@
 #pragma once
-#include "ModelBufferManager.h"
+#include "VertexDataContainer.h"
+#include "ResourceInterface.h"
+#include <cstdint>
+class ID3D11Device;
+class ID3D11Buffer;
 
-class UModel
+//Î™®Îç∏ Î¶¨ÏÜåÏä§(Ï†ïÏ†ê, Ïù∏Îç±Ïä§ Îç∞Ïù¥ÌÑ∞)
+class UModel :  public IResource
 {
 public:
     UModel() = default;
-    ~UModel() = default;
+    ~UModel();
 
-    // ±‚∫ª «¡∏ÆπÃ∆º∫Í ∏µ® √ ±‚»≠ ∏ﬁº≠µÂ
-    bool InitializeAsCube();
-    bool InitializeAsSphere();
-    bool InitializeAsPlane();
+    // Î≤ÑÌçº ÏÉùÏÑ±
+    bool CreateBuffers(class ID3D11Device* InDevice, const FVertexDataContainer& InVertexData);
+    void Release();
 
-    // ƒøΩ∫≈“ ¡§¡° µ•¿Ã≈Õ∑Œ √ ±‚»≠«œ¥¬ ∏ﬁº≠µÂ
-    bool InitializeFromVertexData(const FVertexDataContainer& InVertexData)
-    {
-        if (InVertexData.Vertices.empty())
-            return false;
+    // Í≤åÌÑ∞ Î©îÏÑúÎìú
+    ID3D11Buffer* GetVertexBuffer() const { return VertexBuffer; }
+    ID3D11Buffer* GetIndexBuffer() const { return IndexBuffer; }
+    uint32_t GetVertexCount() const { return VertexCount; }
+    uint32_t GetIndexCount() const { return IndexCount; }
+    uint32_t GetStride() const { return Stride; }
+    uint32_t GetOffset() const { return Offset; }
 
-        DataHash = UModelBufferManager::Get()->RegisterVertexData(InVertexData);
-        bIsInitialized = (DataHash != 0);
-        return bIsInitialized;
-    }
-
-    // πˆ∆€ ∏Æº“Ω∫ ¡¢±Ÿ¿⁄
-    FBufferResource* GetBufferResource();
-
-    // √ ±‚»≠ ø©∫Œ »Æ¿Œ
-    bool IsInitialized() const { return bIsInitialized; }
-
+    // Inherited via IResource
+    bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+    bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+    bool IsLoaded() const override         { return bIsLoaded; }
+    size_t GetMemorySize() const override;
+    EResourceType GetType() const override { return EResourceType::Model; }
 private:
-    size_t DataHash = 0;           // ¡§¡° µ•¿Ã≈Õ¿« «ÿΩ√ (∏µ® Ωƒ∫∞¿⁄)
-    bool bIsInitialized = false;   // √ ±‚»≠ ø©∫Œ «√∑°±◊
+    static FVertexDataContainer CreateCubeVertexData();
+    static FVertexDataContainer CreateSphereVertexData(int InSegments = 32);
+    static FVertexDataContainer CreatePlaneVertexData();
+private:
+    ID3D11Buffer* VertexBuffer = nullptr;
+    ID3D11Buffer* IndexBuffer = nullptr;
+    uint32_t VertexCount = 0;
+    uint32_t IndexCount = 0;
+    uint32_t Stride = 0;
+    uint32_t Offset = 0;
+
+    bool bIsLoaded = false;
 };
+

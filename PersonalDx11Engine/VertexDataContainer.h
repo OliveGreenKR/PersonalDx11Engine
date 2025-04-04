@@ -1,10 +1,11 @@
 #pragma once
 #include "VertexFormat.h"
 #include <vector>
+#include <cstdint>
 
-// Á¤Á¡ µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ±â À§ÇÑ ÄÁÅ×ÀÌ³Ê ±¸Á¶Ã¼
+// ì •ì  ë°ì´í„°ë¥¼ ì €ì¥í•˜ê¸° ìœ„í•œ ì»¨í…Œì´ë„ˆ êµ¬ì¡°ì²´
 struct FVertexDataContainer
 {
-    std::vector<FVertexFormat> Vertices;  // Á¤Á¡ ¹è¿­
-    std::vector<UINT> Indices;            // ÀÎµ¦½º ¹è¿­
+    std::vector<FVertexFormat> Vertices;  // ì •ì  ë°°ì—´
+    std::vector<uint32_t> Indices;            // ì¸ë±ìŠ¤ ë°°ì—´
 };

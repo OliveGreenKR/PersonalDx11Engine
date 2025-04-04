@@ -2,6 +2,11 @@
 #include "D3DContextDebugger.h"
 #include "Debug.h" // 로깅을 위한 자체 헤더 가정
 
+FD3DContextDebugger::~FD3DContextDebugger()
+{
+    Release();
+}
+
 void FD3DContextDebugger::CaptureBindings(ID3D11DeviceContext* DeviceContext)
 {
     if (!DeviceContext)
@@ -508,6 +513,26 @@ bool FD3DContextDebugger::InspectVertexBuffer(ID3D11Device* device, ID3D11Device
 bool FD3DContextDebugger::ValidateResource(const FResourceBinding& Resource) const
 {
     return Resource.bIsValid && Resource.Resource != nullptr;
+}
+
+void FD3DContextDebugger::Release()
+{
+    VertexBuffers.clear();
+    IndexBuffers.clear();
+    ConstantBuffersVS.clear();
+    ConstantBuffersPS.clear();
+    ShaderResources.clear();
+    Samplers.clear();
+
+    std::memcpy(RenderTargets, 0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT);
+
+    RasterizerState.Resource = nullptr;
+    BlendState.Resource = nullptr;
+    DepthStencilState.Resource = nullptr;
+    DepthStencilView.Resource = nullptr;
+    VertexShader.Resource = nullptr;
+    PixelShader.Resource = nullptr;
+    InputLayout.Resource = nullptr;
 }
 
 bool FD3DContextDebugger::InspectBufferContent(ID3D11Buffer* buffer, ID3D11Device* device, ID3D11DeviceContext* context, UINT maxDisplayBytes)

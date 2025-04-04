@@ -54,7 +54,7 @@ private:
     // 물리 관련 변수
     float CharacterMass = 5.0f;
     float Character2Mass = 15.0f;
-
+     
     //매터리얼
     FResourceHandle TileMaterialHandle;
     FResourceHandle PoleMaterialHandle;

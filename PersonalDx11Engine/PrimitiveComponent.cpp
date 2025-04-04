@@ -11,6 +11,7 @@
 #include "PixelShader.h"
 #include "Texture.h"
 #include "Camera.h"
+#include "Model.h"
 
 bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* OutRenderData) const 
 {
@@ -27,25 +28,24 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
     }
     
     //정점 데이터(모델) -  필수 데이터
-    auto BufferRsc = GetModel()->GetBufferResource();
-    if (!BufferRsc)
+    auto Model = ModelHandle.Get<UModel>();
+    if (!Model)
     {
-        LOG_FUNC_CALL("InValid Model");
+        LOG_FUNC_CALL("UPrimtiive has Invalid Model");
         return false;
     }
-        
-    RenderData->IndexBuffer = BufferRsc->GetIndexBuffer();
-    RenderData->IndexCount = BufferRsc->GetIndexCount();
-    RenderData->VertexBuffer = BufferRsc->GetVertexBuffer();
-    RenderData->VertexCount = BufferRsc->GetVertexCount();
-    RenderData->Offset = BufferRsc->GetOffset();
-    RenderData->Stride = BufferRsc->GetStride();
+    RenderData->IndexBuffer = Model->GetIndexBuffer();
+    RenderData->IndexCount = Model->GetIndexCount();
+    RenderData->VertexBuffer = Model->GetVertexBuffer();
+    RenderData->VertexCount = Model->GetVertexCount();
+    RenderData->Offset = Model->GetOffset();
+    RenderData->Stride = Model->GetStride();
 
     //매터리얼 - 필수 데이터
     auto Material = MaterialHandle.Get<UMaterial>();
     if (!Material)
     {
-        LOG_FUNC_CALL("UPrimtiive has Invalid MaterialHandle");
+        LOG_FUNC_CALL("UPrimtiive has Invalid Material");
 		return false;
     }
     
@@ -107,15 +107,19 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
     return true;
 }
 
-void UPrimitiveComponent::SetModel(const std::shared_ptr<UModel>& InModel)
+void UPrimitiveComponent::SetModel(const FResourceHandle& InModelHandle)
 {
-    //TODO
-    // 모델데이터도 리소스로 변경후 키값으로 변화 감지.
-    Model = InModel;
+    if (!InModelHandle.IsValid())
+        return;
+
+    ModelHandle = InModelHandle;
 }
 
 void UPrimitiveComponent::SetMaterial(const FResourceHandle& InMaterialHandle)
 {
+    if (!InMaterialHandle.IsValid())
+        return;
+
     MaterialHandle = InMaterialHandle;
 }
 

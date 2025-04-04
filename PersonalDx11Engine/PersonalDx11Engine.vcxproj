@@ -156,7 +156,6 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="ModelBufferManager.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
@@ -203,7 +202,6 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ModelBufferManager.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />

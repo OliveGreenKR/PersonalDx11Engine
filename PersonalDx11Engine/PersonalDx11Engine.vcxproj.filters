@@ -71,9 +71,6 @@
     <ClCompile Include="Model.cpp">
       <Filter>Engine\Model</Filter>
     </ClCompile>
-    <ClCompile Include="ModelBufferManager.cpp">
-      <Filter>Engine\Managers</Filter>
-    </ClCompile>
     <ClCompile Include="DynamicAABBTree.cpp">
       <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
     </ClCompile>
@@ -350,9 +347,6 @@
     </ClInclude>
     <ClInclude Include="VertexDataContainer.h">
       <Filter>Engine\Model\Vertex</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelBufferManager.h">
-      <Filter>Engine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="Random.h">
       <Filter>Engine\Math</Filter>

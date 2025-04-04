@@ -17,7 +17,7 @@ public:
     };
 
     FD3DContextDebugger() = default;
-    ~FD3DContextDebugger() = default;
+    ~FD3DContextDebugger();
 
     // 컨텍스트의 모든 바인딩 리소스 캡처
     void CaptureBindings(ID3D11DeviceContext* DeviceContext);
@@ -97,6 +97,9 @@ public:
     }
 
 private:
+
+    //참조한 포인터 null처리
+    void Release();
     // 버퍼 내용 검사
     bool InspectBufferContent(ID3D11Buffer* buffer, ID3D11Device* device, ID3D11DeviceContext* context , UINT maxDisplayBytes = 64);
 

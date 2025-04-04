@@ -4,11 +4,12 @@
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
 #include "PrimitiveComponent.h"
+#include "ResourceManager.h"
 #include "Model.h"
-#include "ModelBufferManager.h"
 #include "random.h"
 #include "TypeCast.h"
 #include "Material.h"
+#include "define.h"
 
 UElasticBody::UElasticBody() : bIsActive(true)
 {
@@ -222,12 +223,12 @@ void UElasticBody::SetShape(EShape InShape)
 	{
 		case EShape::Box:
 		{
-			Primitive->SetModel(UModelBufferManager::Get()->GetCubeModel());
+			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_CUBE));
 			break;
 		}
 		case EShape::Sphere:
 		{
-			Primitive->SetModel(UModelBufferManager::Get()->GetSphereModel());
+			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE));
 			break;
 		}
 	}

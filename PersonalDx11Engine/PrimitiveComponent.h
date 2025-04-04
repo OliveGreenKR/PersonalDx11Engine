@@ -18,17 +18,17 @@ public:
 
 	virtual bool FillRenderData(const UCamera* Camera, IRenderData* OutRenderData) const;
 
-	void SetModel(const std::shared_ptr<UModel>& InModel);
+	void SetModel(const FResourceHandle& InModelHandle);
 	void SetMaterial(const FResourceHandle& InMaterialHandle);
 	void SetColor(const Vector4 InColor);
 
-	class UModel* GetModel() const { return Model.get(); }
+	FResourceHandle GetModel() const { return ModelHandle; }
 	FResourceHandle GetMaterial() const { return MaterialHandle; }
 	Vector4 GetColor() const { return Color; }
 
 	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
 private:
-	std::shared_ptr<class UModel> Model;
+	FResourceHandle ModelHandle;
 	FResourceHandle MaterialHandle;
 	Vector4 Color = Vector4(1, 1, 1, 1);
 };

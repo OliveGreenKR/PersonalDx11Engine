@@ -189,10 +189,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto Renderer = make_unique<URenderer>();
 	Renderer->Initialize(hWnd, rhPtr);
 
-	//ModelBufferManager Init
-	UModelBufferManager::Get()->SetDevice(Renderer->GetRenderContext()->GetDevice());
-	assert(UModelBufferManager::Get()->Initialize());
-
 	//ResourceManager
 	UResourceManager::Get()->Initialize(RenderHardware.get());
 	
