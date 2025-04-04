@@ -45,7 +45,7 @@ void UGameplayScene01::Load()
 
     //매터리얼 로드
     //TileMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_TILE);
-    //PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
+    PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
     //DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
 }
 
@@ -290,6 +290,8 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
 
+    auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
+    Primitive->SetMaterial(PoleMaterialHandle);
     SetupBorderTriggers(body);
 
     ElasticBodies.push_back(body);

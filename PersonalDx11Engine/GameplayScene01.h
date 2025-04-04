@@ -8,6 +8,7 @@
 #include "D3DShader.h"
 #include "Model.h"
 #include "InputContext.h"
+#include "ResourceHandle.h"
 
 class UGameplayScene01 : public ISceneInterface
 {
@@ -51,6 +52,9 @@ private:
     const float XBorder = 3.0f;
     const float YBorder = 2.0f;
     const float ZBorder = 5.0f;
+
+    //리소스
+    FResourceHandle PoleMaterialHandle;
 
     // 입력 컨텍스트
     std::shared_ptr<UInputContext> InputContext;
