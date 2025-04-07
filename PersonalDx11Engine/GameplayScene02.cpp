@@ -16,6 +16,7 @@
 #include"RenderDataTexture.h"
 #include "PrimitiveComponent.h"
 #include "Material.h"
+#include "DebugDrawerManager.h"
 
 
 UGameplayScene02::UGameplayScene02()
@@ -170,6 +171,18 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             Renderer->SubmitJob(RenderJob2);
         }
     }
+
+    //UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
+    //                                   Character2->GetTransform().Position,
+    //                                   Vector4(1,1,0,1),
+    //                                   1.0f,
+    //                                   0.1f);
+    UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
+                                       Character->GetTransform().Scale * 1.2f,
+                                      Character->GetTransform().Rotation,
+                                       Vector4(1, 1, 0, 1),
+                                       0.1f,false);
+
 }
 
 void UGameplayScene02::SubmitRenderUI()

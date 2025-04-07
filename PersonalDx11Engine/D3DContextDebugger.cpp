@@ -524,7 +524,8 @@ void FD3DContextDebugger::Release()
     ShaderResources.clear();
     Samplers.clear();
 
-    std::memcpy(RenderTargets, 0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT);
+    if(RenderTargets)
+        std::memcpy(RenderTargets, 0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT);
 
     RasterizerState.Resource = nullptr;
     BlendState.Resource = nullptr;

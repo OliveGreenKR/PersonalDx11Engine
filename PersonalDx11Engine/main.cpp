@@ -31,6 +31,7 @@
 #include "UIManager.h"
 
 #include "FramePoolManager.h"
+#include "DebugDrawerManager.h"
 
 //test
 #include "testDynamicAABBTree.h"
@@ -255,6 +256,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		UResourceManager::Get()->Tick(DeltaTime);
 		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
+		UDebugDrawManager::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
 #pragma region Rendering
@@ -263,6 +265,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//SceneRender Submit
 		USceneManager::Get()->Render(Renderer.get());
+		UDebugDrawManager::Get()->Render(Renderer.get());
 
 		//Actual Render 
 		Renderer->ProcessRender();

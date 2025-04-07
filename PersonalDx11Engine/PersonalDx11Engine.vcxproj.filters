@@ -50,9 +50,6 @@
     <ClCompile Include="CollisionComponent.cpp">
       <Filter>Engine\Components\Collision</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
-      <Filter>Engine\Managers</Filter>
-    </ClCompile>
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Components\ActorComponent</Filter>
     </ClCompile>
@@ -79,9 +76,6 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Engine\Resources\Texture</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>Engine\Managers</Filter>
     </ClCompile>
     <ClCompile Include="GameplayScene02.cpp">
       <Filter>Contents\Scenes\Scene2</Filter>
@@ -118,6 +112,15 @@
     </ClCompile>
     <ClCompile Include="RenderDataSimpleColor.cpp">
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Engine\Managers\CollisionManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Engine\Managers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugDrawerManager.cpp">
+      <Filter>Engine\Managers\DebugDrawer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -262,6 +265,27 @@
     <Filter Include="Engine\Renderer\RenderData\SimpleColor">
       <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Managers\CollisionManager">
+      <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\DebugDrawer">
+      <UniqueIdentifier>{072e9c25-816f-4781-88c9-0e23fe021dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\MemoryPool">
+      <UniqueIdentifier>{abb122ca-1376-4071-a96d-a7aa10da79e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\Input">
+      <UniqueIdentifier>{75c35733-3f29-45a5-81ea-411117eccb54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\Resource">
+      <UniqueIdentifier>{95c3d204-372c-42f6-a547-91b8ba77e2a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\Scene">
+      <UniqueIdentifier>{43ea765c-4013-4b3f-b1f8-5890b287e900}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\UI">
+      <UniqueIdentifier>{dea3f746-c568-43e5-8658-08e2a4ddf215}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -324,9 +348,6 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
@@ -369,17 +390,11 @@
     <ClInclude Include="testDynamicAABBTree.h">
       <Filter>Engine\DataStructure\DynamicAABBTree\test</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="InputContext.h">
       <Filter>Engine\Input</Filter>
     </ClInclude>
     <ClInclude Include="InputDefines.h">
       <Filter>Engine\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Engine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="SceneInterface.h">
       <Filter>Engine\Interface</Filter>
@@ -393,14 +408,8 @@
     <ClInclude Include="ResourceInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Engine\Resources\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="UIManager.h">
-      <Filter>Engine\Managers</Filter>
     </ClInclude>
     <ClInclude Include="GameplayScene02.h">
       <Filter>Contents\Scenes\Scene2</Filter>
@@ -459,17 +468,32 @@
     <ClInclude Include="Material.h">
       <Filter>Engine\Resources\Material</Filter>
     </ClInclude>
-    <ClInclude Include="FramePoolManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Debug.h">
       <Filter>Engine\Debug</Filter>
     </ClInclude>
-    <ClInclude Include="DebugDrawerManager.h">
-      <Filter>Engine\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="RenderDataSimpleColor.h">
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Engine\Managers\CollisionManager</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugDrawerManager.h">
+      <Filter>Engine\Managers\DebugDrawer</Filter>
+    </ClInclude>
+    <ClInclude Include="FramePoolManager.h">
+      <Filter>Engine\Managers\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Engine\Managers\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Engine\Managers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Engine\Managers\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="UIManager.h">
+      <Filter>Engine\Managers\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

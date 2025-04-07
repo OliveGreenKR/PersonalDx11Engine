@@ -28,7 +28,7 @@ public:
 
 	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
 private:
-	FResourceHandle ModelHandle;
-	FResourceHandle MaterialHandle;
+	FResourceHandle ModelHandle = FResourceHandle();
+	FResourceHandle MaterialHandle = FResourceHandle();
 	Vector4 Color = Vector4(1, 1, 1, 1);
 };
