@@ -69,13 +69,13 @@ public:
 
     // 디버그 프리미티브 API
     void DrawLine(const Vector3& Start, const Vector3& End, const Vector4& Color,
-                  float Thickness = 1.0f, float Duration = 0.0f, bool bPersist = false);
+                  float Thickness = 0.001f, float Duration = 0.1f, bool bPersist = false);
 
-    void DrawSphere(const Vector3& Center, float Radius, const Vector4& Color,
-                    float Duration = 0.0f, uint8_t Precision = 0, bool bPersist = false);
+    void DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, 
+                    const Vector4& Color, float Duration = 0.1f, bool bPersist = false);
 
     void DrawBox(const Vector3& Center, const Vector3& Extents, const Quaternion& Rotation,
-                 const Vector4& Color, float Duration = 0.0f, bool bPersist = false);
+                 const Vector4& Color, float Duration = 0.1f, bool bPersist = false);
 
     //void DrawText3D(const Vector3& Location, const std::string& Text,
     //                const Vector4& Color, float Scale = 1.0f, float Duration = 0.0f);

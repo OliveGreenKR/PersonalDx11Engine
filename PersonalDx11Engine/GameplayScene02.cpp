@@ -172,16 +172,21 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         }
     }
 
-    //UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
-    //                                   Character2->GetTransform().Position,
-    //                                   Vector4(1,1,0,1),
-    //                                   1.0f,
-    //                                   0.1f);
+    UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
+                                       Character2->GetTransform().Position,
+                                       Vector4(1,1,0,1),
+                                       0.001f,
+                                       0.1f);
     UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
                                        Character->GetTransform().Scale * 1.2f,
                                       Character->GetTransform().Rotation,
                                        Vector4(1, 1, 0, 1),
                                        0.1f,false);
+    UDebugDrawManager::Get()->DrawSphere(Character2->GetTransform().Position,
+                                         Character2->GetTransform().Scale.x * 0.5f * 1.2f,
+                                         Character2->GetTransform().Rotation,
+                                         Vector4(0, 1, 1, 1),
+                                         0.1f, false);
 
 }
 
@@ -243,6 +248,8 @@ void UGameplayScene02::SubmitRenderUI()
 
         if (Character2)
         {
+            Vector3 CurrentPos = Character2->GetTransform().Position;
+            Quaternion CurrentRot = Character2->GetTransform().Rotation;
             Vector3 CurrentVelo = Character2->GetCurrentVelocity();
             bool bGravity2 = Character2->IsGravity();
             bool bPhysics2 = Character2->IsPhysicsSimulated();
@@ -256,6 +263,13 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
                         CurrentVelo.y,
                         CurrentVelo.z);
+            ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
+                        CurrentPos.y,
+                        CurrentPos.z);
+            ImGui::Text("Rot : %.2f  %.2f  %.2f  %.2f", CurrentRot.x,
+                        CurrentRot.y,
+                        CurrentRot.z, 
+                        CurrentRot.w);
             ImGui::End();
         }
 
