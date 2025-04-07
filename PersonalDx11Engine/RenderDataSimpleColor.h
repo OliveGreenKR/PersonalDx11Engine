@@ -25,7 +25,6 @@ public:
     //데이터 추가 메소드들
     void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
 
-protected:
     // 데이터 구조
     struct ConstantBufferBindData {
         uint32_t Slot;
@@ -33,9 +32,6 @@ protected:
         void* Data;
         size_t DataSize;
     };
-
-    //visible
-    bool bIsVisible = true;
 
     // 정점 버퍼 관련
     ID3D11Buffer* VertexBuffer = nullptr;
@@ -47,6 +43,10 @@ protected:
     uint32_t StartVertex = 0; // 드로우 시작 위치
     int32_t BaseVertex = 0;   // 인덱스 드로우의 베이스 버텍스
     uint32_t StartIndex = 0;  // 인덱스 시작 위치
+
+protected:
+    //visible
+    bool bIsVisible = true;
 
     // 리소스
     std::vector<ConstantBufferBindData> VSConstantBuffers = std::vector<ConstantBufferBindData>();

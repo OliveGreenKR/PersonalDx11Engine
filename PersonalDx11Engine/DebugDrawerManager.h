@@ -54,5 +54,5 @@ private:
 	FResourceHandle Sphere_Low_Handle;
 	FResourceHandle BoxHandle;
 
-	std::vector<DebubElement> DrawElements;
+	//std::vector<DebubElement> DrawElements;
 };
