@@ -459,21 +459,24 @@
     <ClInclude Include="Debug.h">
       <Filter>Engine\Debug</Filter>
     </ClInclude>
-    <ClInclude Include="DebugDrawer.h">
-      <Filter>Engine\Debug</Filter>
+    <ClInclude Include="DebugDrawerManager.h">
+      <Filter>Engine\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="ShaderDebug.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="ShaderMyPS00.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="ShaderMyVS00.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="ShaderDebugPS.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="ShaderDebugVS.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

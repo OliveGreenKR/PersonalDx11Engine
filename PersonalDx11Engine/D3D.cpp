@@ -106,6 +106,9 @@ void FD3D::InitRenderContext()
 	DeviceContext->OMSetBlendState(BlendState, nullptr, 0xffffffff);
 	DeviceContext->OMSetDepthStencilState(DepthStencilState, 1);
 
+	//DeviceContext->OMSetRenderTargets(1, &FrameBufferRTV, DepthStencilView);
+
+
 
 }
 
