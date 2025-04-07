@@ -4,7 +4,6 @@
 #include "Debug.h"
 #include "Renderer.h"
 #include "RenderDataSimpleColor.h"
-#include "RenderDataTexture.h"
 #include "SceneManager.h"
 #include "Model.h"
 #include "Material.h"
@@ -100,7 +99,7 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 	const auto& ActiveDraws = Pool.GetActiveObjects();
 	for (const auto& drawObject : ActiveDraws)
 	{
-		FRenderJob RenderJob = InRenderer->AllocateRenderJob<FRenderDataTexture>();
+		FRenderJob RenderJob = InRenderer->AllocateRenderJob<FRenderDataSimpleColor>();
 		RenderJob.RenderState = ERenderStateType::Wireframe;
 		auto Primitive = drawObject->Primitive.get();
 		auto Camera = USceneManager::Get()->GetActiveCamera();

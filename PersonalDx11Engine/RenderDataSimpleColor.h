@@ -11,19 +11,8 @@ public:
     FRenderDataSimpleColor() = default;
     virtual ~FRenderDataSimpleColor() = default;
 
-    template<typename T>
-    void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, const T& Data, size_t DataSize)
-    {
-        static_assert(sizeof(T) % 16 == 0);
-
-        void* dataPtr = UFramePoolManager::Get()->AllocateVoid(DataSize);
-        std::memcpy(dataPtr, &Data, DataSize);
-
-        AddVSConstantBuffer(Slot, Buffer, dataPtr, DataSize);
-    }
-
     //데이터 추가 메소드들
-    void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
+    void AddVSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize) override;
 
     // 데이터 구조
     struct ConstantBufferBindData {
@@ -32,6 +21,19 @@ public:
         void* Data;
         size_t DataSize;
     };
+
+    void SetVertexBuffer(class ID3D11Buffer* buffer) override { VertexBuffer = buffer; }
+    void SetIndexBuffer(class ID3D11Buffer* buffer) override { IndexBuffer = buffer; }
+    void SetVertexCount(uint32_t count) override { VertexCount = count; }
+    void SetIndexCount(uint32_t count) override { IndexCount = count; }
+    void SetStartIndex(uint32_t index) override { StartIndex = index; }
+    void SetBaseVertexLocation(uint32_t location) override { BaseVertex = location; }
+    void SetStride(uint32_t stride) override { Stride = stride; }
+    void SetOffset(uint32_t offset) override { Offset = offset; }
+
+    virtual void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize) override {}
+    virtual void AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV) override {}
+    virtual void AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler) override {}
 
     // 정점 버퍼 관련
     ID3D11Buffer* VertexBuffer = nullptr;
@@ -67,4 +69,5 @@ public:
     // 선택적 상수 버퍼 데이터
     size_t GetVSConstantBufferCount() const { return VSConstantBuffers.size(); }
     void GetVSConstantBufferData(size_t Index, uint32_t& OutSlot, ID3D11Buffer*& OutBuffer, void*& OutData, size_t& OutDataSize) const;
+
 };

@@ -11,7 +11,7 @@
 #include "PixelShader.h"
 #include "Texture.h"
 #include "Camera.h"
-#include "Model.h"
+#include "FramePoolManager.h"
 
 bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* OutRenderData) const 
 {
@@ -21,7 +21,7 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         return false;
     }
 
-    auto RenderData = Engine::Cast<FRenderDataTexture>(OutRenderData);
+    auto RenderData = OutRenderData;
     if (!RenderData)
     {
         return false;
@@ -34,12 +34,13 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         LOG_FUNC_CALL("UPrimtiive has Invalid Model");
         return false;
     }
-    RenderData->IndexBuffer = Model->GetIndexBuffer();
-    RenderData->IndexCount = Model->GetIndexCount();
-    RenderData->VertexBuffer = Model->GetVertexBuffer();
-    RenderData->VertexCount = Model->GetVertexCount();
-    RenderData->Offset = Model->GetOffset();
-    RenderData->Stride = Model->GetStride();
+
+    RenderData->SetIndexBuffer(Model->GetIndexBuffer());
+    RenderData->SetIndexCount( Model->GetIndexCount());
+    RenderData->SetVertexBuffer( Model->GetVertexBuffer());
+    RenderData->SetVertexCount( Model->GetVertexCount());
+    RenderData->SetOffset( Model->GetOffset());
+    RenderData->SetStride( Model->GetStride());
 
     //매터리얼 - 필수 데이터
     auto Material = MaterialHandle.Get<UMaterial>();
@@ -78,7 +79,11 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
             ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
             assert(Size == sizeof(MatrixData));
-            RenderData->AddVSConstantBuffer(i, Buffer, MatrixData, Size);
+
+            auto data = UFramePoolManager::Get()->AllocateVoid(Size);
+            std::memcpy(data, &MatrixData, Size);
+
+            RenderData->AddVSConstantBuffer(i, Buffer, data, Size);
         }
         else if (info.Name == "COLOR_BUFFER")
         {
@@ -86,7 +91,12 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
             ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;
             assert(Size == sizeof(Color));
-            RenderData->AddVSConstantBuffer(i, Buffer, Color, Size);
+
+
+            auto data = UFramePoolManager::Get()->AllocateVoid(Size);
+            std::memcpy(data, &Color, Size);
+
+            RenderData->AddVSConstantBuffer(i, Buffer, data, Size);
         }
     }
 
@@ -102,8 +112,6 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         RenderData->AddTexture(0, nullptr);
     }
     
-   
-
     return true;
 }
 

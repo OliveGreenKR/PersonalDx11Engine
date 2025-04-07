@@ -8,11 +8,9 @@ public:
     FRenderDataTexture() = default;
     virtual ~FRenderDataTexture() = default;
 
-    void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize);
-
-    void AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV);
-
-    void AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler);
+    void AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer, void* Data, size_t DataSize) override;
+    void AddTexture(uint32_t Slot, ID3D11ShaderResourceView* SRV) override;
+    void AddSampler(uint32_t Slot, ID3D11SamplerState* Sampler) override;
 
 protected:
     struct TextureBindData {

@@ -169,7 +169,7 @@ void FRenderContext::DrawRenderData(const IRenderData* InData)
     uint32_t IndexCount = InData->GetIndexCount();
     uint32_t VertexCount = InData->GetVertexCount();
     uint32_t StartIndex = InData->GetStartIndex();
-    uint32_t BaseVertex = InData->GetBaseVertexLocatioan();
+    uint32_t BaseVertex = InData->GetBaseVertexLocation();
     if (IndexCount > 0)
     {
         this->DrawIndexed(IndexCount, StartIndex, BaseVertex);
