@@ -228,7 +228,7 @@ void UElasticBody::SetShape(EShape InShape)
 		}
 		case EShape::Sphere:
 		{
-			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE));
+			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE_Mid));
 			break;
 		}
 	}

@@ -183,6 +183,7 @@
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="DebugDrawer.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="DynamicAABBTree.h" />

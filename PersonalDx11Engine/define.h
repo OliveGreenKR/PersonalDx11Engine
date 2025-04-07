@@ -16,5 +16,7 @@
 #define MAT_POLE L"TODO_Material_Pole.file"
 
 #define MDL_CUBE  L"TODO_Model_Cube.file"
-#define MDL_SPHERE  L"TODO_Model_Sphere.file"
+#define MDL_SPHERE_High  L"TODO_Model_Sphere_High.file"
+#define MDL_SPHERE_Mid  L"TODO_Model_Sphere_Middle.file"
+#define MDL_SPHERE_Low  L"TODO_Model_Sphere_Low.file"
 #define MDL_PLANE  L"TODO_Model_Plane.file"

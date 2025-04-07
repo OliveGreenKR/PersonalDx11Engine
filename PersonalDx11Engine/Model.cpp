@@ -104,13 +104,27 @@ bool UModel::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
         FVertexDataContainer cubeData = UModel::CreateCubeVertexData();
          return CreateBuffers(RenderHardware->GetDevice(), cubeData);
     }
-    else if (Path == MDL_SPHERE)
+    else if (Path == MDL_SPHERE_Mid)
     {
         // 구 정점 데이터 생성 및 등록
         FVertexDataContainer sphereData = UModel::CreateSphereVertexData(16);
         return CreateBuffers(RenderHardware->GetDevice(), sphereData);
         
     }
+	else if (Path == MDL_SPHERE_Low)
+	{
+		// 구 정점 데이터 생성 및 등록
+		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(8);
+		return CreateBuffers(RenderHardware->GetDevice(), sphereData);
+
+	}
+	else if (Path == MDL_SPHERE_High)
+	{
+		// 구 정점 데이터 생성 및 등록
+		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(32);
+		return CreateBuffers(RenderHardware->GetDevice(), sphereData);
+
+	}
     else if (Path == MDL_PLANE)
     {
         // 평면 정점 데이터 생성 및 등록
