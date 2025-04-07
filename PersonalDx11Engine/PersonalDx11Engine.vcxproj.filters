@@ -116,6 +116,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>Engine\Resources\Material</Filter>
     </ClCompile>
+    <ClCompile Include="RenderDataSimpleColor.cpp">
+      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -255,6 +258,9 @@
     </Filter>
     <Filter Include="Engine\Debug">
       <UniqueIdentifier>{3bae8376-c080-4939-b0a5-d0153ccf1157}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData\SimpleColor">
+      <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -461,6 +467,9 @@
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
       <Filter>Engine\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataSimpleColor.h">
+      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

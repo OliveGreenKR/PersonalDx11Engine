@@ -159,6 +159,7 @@
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
+    <ClCompile Include="RenderDataSimpleColor.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderDataTexture.cpp" />
     <ClCompile Include="RenderStates.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="RenderContext.h" />
     <ClInclude Include="RenderDataInterface.h" />
+    <ClInclude Include="RenderDataSimpleColor.h" />
     <ClInclude Include="RenderDefines.h" />
     <ClInclude Include="RenderHardwareInterface.h" />
     <ClInclude Include="RenderDataTexture.h" />
