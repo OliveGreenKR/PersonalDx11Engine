@@ -1,11 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include <memory>
 #include <vector>
 #include <unordered_set>
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
-
 
 class FDynamicAABBTree;
 class URigidBodyComponent;
@@ -165,6 +164,9 @@ private:
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult);
+
+    //Config Load from ini
+    void LoadConfigFromIni();
 public:
     void PrintTreeStructure();
 

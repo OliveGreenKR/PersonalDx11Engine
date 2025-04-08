@@ -286,6 +286,9 @@
     <Filter Include="Engine\Managers\UI">
       <UniqueIdentifier>{dea3f746-c568-43e5-8658-08e2a4ddf215}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\UserConfig">
+      <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -494,6 +497,9 @@
     </ClInclude>
     <ClInclude Include="UIManager.h">
       <Filter>Engine\Managers\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadConfigFile.h">
+      <Filter>Engine\UserConfig</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventDispatcher.h"
 #include "Debug.h"
+#include "LoadConfigFile.h"
 
 UCollisionManager::~UCollisionManager()
 {
@@ -149,6 +150,8 @@ void UCollisionManager::Initialize()
 {
 	try
 	{
+		LoadConfigFromIni();
+
 		Detector = nullptr;
 		ResponseCalculator = nullptr;
 		EventDispatcher = nullptr;
@@ -563,6 +566,40 @@ void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, c
 	EventDispatcher->DispatchCollisionEvents(CompA, EventData, NowState);
 	EventData.OtherComponent = CompA;
 	EventDispatcher->DispatchCollisionEvents(CompB, EventData, NowState);
+}
+
+void UCollisionManager::LoadConfigFromIni()
+{
+	try
+	{
+		std::unordered_map<std::string, std::string> keyValues = INI::ReadIniSection(".//Config.ini", "CollisionSystem");
+
+		if (auto it = keyValues.find("bPhysicsSimulated"); it != keyValues.end())
+			Config.bPhysicsSimulated = (it->second == "true" || std::stoi(it->second) != 0);
+		if (auto it = keyValues.find("MinimumTimeStep"); it != keyValues.end())
+			Config.MinimumTimeStep = std::stof(it->second);
+		if (auto it = keyValues.find("MaximumTimeStep"); it != keyValues.end())
+			Config.MaximumTimeStep = std::stof(it->second);
+		if (auto it = keyValues.find("CCDVelocityThreshold"); it != keyValues.end())
+			Config.CCDVelocityThreshold = std::stof(it->second);
+		if (auto it = keyValues.find("ConstraintInterations"); it != keyValues.end())
+			Config.ConstraintInterations = std::stoi(it->second);
+		if (auto it = keyValues.find("bUseFixedTimestep"); it != keyValues.end())
+			Config.bUseFixedTimestep = (it->second == "true" || std::stoi(it->second) != 0);
+		if (auto it = keyValues.find("FixedTimeStep"); it != keyValues.end())
+			Config.FixedTimeStep = std::stof(it->second);
+		if (auto it = keyValues.find("MaxSubSteps"); it != keyValues.end())
+			Config.MaxSubSteps = std::stoi(it->second);
+		if (auto it = keyValues.find("InitialCapacity"); it != keyValues.end())
+			Config.InitialCapacity = static_cast<size_t>(std::stoul(it->second));
+		if (auto it = keyValues.find("AABBMargin"); it != keyValues.end())
+			Config.AABBMargin = std::stof(it->second);
+	}
+	catch (const std::exception& e)
+	{
+		// 변환 실패 시 기본값 유지 (필요 시 로깅 추가 가능)
+		LOG("Error parsing value: %s\n", e.what());
+	}
 }
 
 void UCollisionManager::PrintTreeStructure()
