@@ -17,6 +17,7 @@
 #include "PrimitiveComponent.h"
 #include "Material.h"
 #include "DebugDrawerManager.h"
+#include "SceneManager.h"
 
 
 UGameplayScene02::UGameplayScene02()
@@ -172,21 +173,22 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
         }
     }
 
-    UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
-                                       Character2->GetTransform().Position,
-                                       Vector4(1,1,0,1),
-                                       0.001f,
-                                       0.1f);
+    float LastDeltaTime = USceneManager::Get()->GetLastTickTime();
+    //UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
+    //                                   Character2->GetTransform().Position,
+    //                                   Vector4(1,1,0,1),
+    //                                   0.001f,
+    //                                   0.1f);
     UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
                                        Character->GetTransform().Scale * 1.2f,
                                       Character->GetTransform().Rotation,
                                        Vector4(1, 1, 0, 1),
-                                       0.1f,false);
+                                      LastDeltaTime,false);
     UDebugDrawManager::Get()->DrawSphere(Character2->GetTransform().Position,
                                          Character2->GetTransform().Scale.x * 0.5f * 1.2f,
                                          Character2->GetTransform().Rotation,
                                          Vector4(0, 1, 1, 1),
-                                         0.1f, false);
+                                         LastDeltaTime, false);
 
 }
 

@@ -23,7 +23,7 @@ namespace INI
 {
 
     // INI 파일에서 섹션 데이터를 읽는 범용 함수
-    std::unordered_map<std::string, std::string> ReadIniSection(const std::string& filePath, const std::string& sectionName)
+    static std::unordered_map<std::string, std::string> ReadIniSection(const std::string& filePath, const std::string& sectionName)
     {
         std::unordered_map<std::string, std::string> keyValuePairs;
 

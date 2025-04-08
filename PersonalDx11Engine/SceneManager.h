@@ -12,6 +12,8 @@ private:
     std::shared_ptr<ISceneInterface> PendingScene;
     bool bIsTransitioning = false;
 
+    float LastTickTime = 0.0f;
+
     USceneManager() = default;
 
 public:
@@ -49,6 +51,8 @@ public:
     // 씬 업데이트
     void Tick(float DeltaTime)
     {
+        LastTickTime = DeltaTime;
+
         // 씬 전환 처리
         if (bIsTransitioning && PendingScene)
         {
@@ -101,4 +105,6 @@ public:
     {
         return ActiveScene;
     }
+
+    float GetLastTickTime() { return LastTickTime; }
 };

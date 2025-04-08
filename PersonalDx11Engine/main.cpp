@@ -7,6 +7,7 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
+#include "LoadConfigFile.h"
 #include "Debug.h"
 #include <memory>
 #include "Renderer.h"
@@ -37,11 +38,12 @@
 #include "testDynamicAABBTree.h"
 #include "testSceneComponent.h"
 
-constexpr int SCREEN_WIDTH = 800;
-constexpr int SCREEN_HEIGHT = 800;
-
-constexpr int CONSOLE_WIDTH = 500;
-constexpr int CONSOLE_HEIGHT = 300;
+//System Configs
+int SCREEN_WIDTH = 800;
+int SCREEN_HEIGHT = 800;
+int CONSOLE_WIDTH = 500;
+int CONSOLE_HEIGHT = 300;
+bool VSYNC = false;
 
 using namespace std;
 
@@ -106,38 +108,29 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
-void LimitFrameRate(float targetFPS)
+void LoadSystemConfig()
 {
-	static LARGE_INTEGER frequency;
-	static LARGE_INTEGER lastTime;
-	LARGE_INTEGER currentTime;
-
-	// 첫 호출 시 초기화
-	if (frequency.QuadPart == 0)
+	auto KeyValues = INI::ReadIniSection("./Config.ini", "Application");
+	if ( auto it = KeyValues.find("ScreenWidth"); it != KeyValues.end())
 	{
-		QueryPerformanceFrequency(&frequency);
-		QueryPerformanceCounter(&lastTime);
+		SCREEN_WIDTH = std::stoi(it->second);
 	}
-
-	// 프레임당 필요한 시간 계산
-	float frameTime = 1.0f / targetFPS;
-
-	// 현재 시간 측정
-	QueryPerformanceCounter(&currentTime);
-
-	// 경과 시간 계산
-	float elapsedTime =
-		static_cast<float>(currentTime.QuadPart - lastTime.QuadPart) / frequency.QuadPart;
-
-	// 남은 시간만큼 대기
-	if (elapsedTime < frameTime)
+	if (auto it = KeyValues.find("ScreenHeight"); it != KeyValues.end())
 	{
-		DWORD sleepTime = static_cast<DWORD>((frameTime - elapsedTime) * 1000.0f);
-		Sleep(sleepTime);
+		SCREEN_HEIGHT = std::stoi(it->second);
 	}
-
-	// 마지막 시간 업데이트
-	lastTime = currentTime;
+	if (auto it = KeyValues.find("ConsoleWidth"); it != KeyValues.end())
+	{
+		CONSOLE_WIDTH = std::stoi(it->second);
+	}
+	if (auto it = KeyValues.find("ConsoleHeight"); it != KeyValues.end())
+	{
+		CONSOLE_HEIGHT = std::stoi(it->second);
+	}
+	if (auto it = KeyValues.find("ConsoleHeight"); it != KeyValues.end())
+	{
+		VSYNC = (std::stoi(it->second) != 0);
+	}
 }
 
 //Main
@@ -148,6 +141,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (FAILED(hr))
 		return false;
 #pragma endregion
+
+	//Load System Configs
+	LoadSystemConfig();
 
 #pragma region window init
 
