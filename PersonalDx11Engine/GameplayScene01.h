@@ -32,9 +32,9 @@ public:
 
 private:
     void SetupInput();
-    void SetupBorderTriggers(weak_ptr<UElasticBody>& InBody);
+    void SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody);
     void SpawnElasticBody();
-    void DeSpawnElasticBody(shared_ptr<UElasticBody>& InBody);
+    void DeSpawnElasticBody(std::weak_ptr<UElasticBody>& InBody);
 
 private:
     // 객체 및 카메라

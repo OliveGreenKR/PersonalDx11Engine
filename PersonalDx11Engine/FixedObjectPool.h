@@ -1,89 +1,91 @@
-#pragma once
-#include <vector>
 #include <memory>
-#include <stdexcept>
-#include <new>
+#include <vector>
 
 /// <summary>
 /// 고정크기의 재사용 객체 최적화 메모리 풀 템플릿
-/// 최대 크기 고정
+/// 단일 배열 + 비활성 인덱스 벡터로 캐시 효율성 개선
 /// </summary>
 template<typename T>
 class TFixedObjectPool {
 private:
-    std::vector<std::unique_ptr<T>> Pool;
-    std::vector<std::unique_ptr<T>> ActiveObjects;
+    struct ObjectEntry {
+        std::shared_ptr<T> object;
+        bool isActive;
+        ObjectEntry(std::shared_ptr<T> obj) : object(std::move(obj)), isActive(false) {}
+    };
+
+    std::vector<ObjectEntry> objects;     // 모든 객체와 상태 저장
+    std::vector<size_t> inactiveIndices;  // 비활성 객체 인덱스 스택
     size_t MaxSize;
 
-    // call new Object construct  
     template<typename... Args>
-    T* CreateObject(Args&&... args) {
-        return new T(std::forward<Args>(args)...);
+    std::shared_ptr<T> CreateObject(Args&&... args) {
+        return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
 public:
     explicit TFixedObjectPool(size_t maxSize = 100) : MaxSize(maxSize) {
-        Pool.reserve(maxSize);  // 초기 용량 예약
+        objects.reserve(maxSize);
+        inactiveIndices.reserve(maxSize); // 캐시 효율성을 위해 예약
     }
 
-    ~TFixedObjectPool() { 
-        Clear();
-    }
-     
-    // 사용 가능한 오브젝트 획득 및 생성
+    ~TFixedObjectPool() = default;
+
     template<typename... Args>
-    T* Acquire(Args&&... args) {
-        T* obj = nullptr;
-
-        if (!Pool.empty()) {
-            // 풀에서 꺼내서 활성 목록으로 이동
-            ActiveObjects.push_back(std::move(Pool.back()));
-            Pool.pop_back();
-            obj = ActiveObjects.back().get();
-            *obj = T(std::forward<Args>(args)...); // 객체 재초기화
+    std::weak_ptr<T> Acquire(Args&&... args) {
+        if (!inactiveIndices.empty()) {
+            size_t index = inactiveIndices.back();
+            inactiveIndices.pop_back();
+            auto& entry = objects[index];
+            entry.isActive = true;
+            entry.object->~T();
+            new (entry.object.get()) T(std::forward<Args>(args)...);
+            return std::weak_ptr<T>(entry.object);
         }
-        else if (ActiveObjects.size() < MaxSize) {
-            // 새로 생성해서 활성 목록에 추가
-            ActiveObjects.push_back(std::make_unique<T>(std::forward<Args>(args)...));
-            obj = ActiveObjects.back().get();
+        else if (objects.size() < MaxSize) {
+            auto obj = CreateObject(std::forward<Args>(args)...);
+            objects.emplace_back(obj);
+            objects.back().isActive = true;
+            return std::weak_ptr<T>(obj);
         }
-
-        return obj;
+        return std::weak_ptr<T>();
     }
 
-    // 오브젝트 반납
-    void ReturnToPool(T* obj) {
+    void ReturnToPool(std::weak_ptr<T> weakObj) {
+        auto obj = weakObj.lock();
         if (!obj) return;
 
-        // 활성 목록에서 해당 객체 찾기
-        auto it = std::find_if(ActiveObjects.begin(), ActiveObjects.end(),
-                               [obj](const std::unique_ptr<T>& ptr) { return ptr.get() == obj; });
-
-        if (it != ActiveObjects.end()) {
-            // 풀로 이동
-            Pool.push_back(std::move(*it));
-            // 활성 목록에서 제거 (소유권은 이미 이전됨)
-            ActiveObjects.erase(it);
+        for (size_t i = 0; i < objects.size(); ++i) {
+            if (objects[i].object == obj && objects[i].isActive) {
+                objects[i].isActive = false;
+                inactiveIndices.push_back(i);
+                break;
+            }
         }
     }
 
-    //활성화 객체만 정리
-    void ClearActives()
-    {
-        ActiveObjects.clear();
+    void ClearActives() {
+        for (size_t i = 0; i < objects.size(); ++i) {
+            if (objects[i].isActive) {
+                objects[i].isActive = false;
+                inactiveIndices.push_back(i);
+            }
+        }
     }
 
-    // 모든 오브젝트 정리
-    void Clear() {
-        Pool.clear();
-        ActiveObjects.clear();
+    std::vector<std::weak_ptr<T>> GetActiveObjects() const {
+        std::vector<std::weak_ptr<T>> weakObjects;
+        weakObjects.reserve(objects.size());
+        for (const auto& entry : objects) {
+            if (entry.isActive) {
+                weakObjects.emplace_back(entry.object);
+            }
+        }
+        return weakObjects;
     }
 
-
-    // 현재 풀 상태 조회
-    const std::vector<std::unique_ptr<T>>& GetActiveObjects() const { return ActiveObjects; }
-    size_t GetActiveCount() const { return ActiveObjects.size(); }
-    size_t GetPoolCount() const { return Pool.size(); }
+    size_t GetActiveCount() const { return objects.size() - inactiveIndices.size(); }
+    size_t GetPoolCount() const { return inactiveIndices.size(); }
     size_t GetMaxSize() const { return MaxSize; }
-    bool IsFull() const { return (Pool.size() + ActiveObjects.size()) >= MaxSize; }
+    bool IsFull() const { return objects.size() >= MaxSize; }
 };

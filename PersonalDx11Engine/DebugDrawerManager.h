@@ -81,6 +81,7 @@ public:
     //                const Vector4& Color, float Scale = 1.0f, float Duration = 0.0f);
 
 private:
+
     void Initialize();
     // 내부 유틸리티
     void SetupPrimitive(UPrimitiveComponent* TargetPrimitive,

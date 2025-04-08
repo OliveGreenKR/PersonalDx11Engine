@@ -24,12 +24,13 @@ void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const
 void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
 	auto DrawDebug = Pool.Acquire();
-	if (!DrawDebug)
+	auto DrawDebugPtr = DrawDebug.lock();
+	if (!DrawDebugPtr)
 	{
 		LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
-	auto Primitive = DrawDebug->Primitive.get();
+	auto Primitive = DrawDebugPtr->Primitive.get();
 	if (!Primitive)
 	{
 		return;
@@ -38,20 +39,21 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 	SetupPrimitive(Primitive, SphereModelHandle_Low,
 				   Center, Rotation, 2.0f * Radius * Vector3::One,
 				   Color);
-	DrawDebug->bPersistent = bPersist;
-	DrawDebug->RemainingTime = Duration;
+	DrawDebugPtr->bPersistent = bPersist;
+	DrawDebugPtr->RemainingTime = Duration;
 
 	return;
 }
 void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
 	auto DrawDebug = Pool.Acquire();
-	if (!DrawDebug)
+	auto DrawDebugPtr = DrawDebug.lock();
+	if (!DrawDebugPtr)
 	{
 		LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
-	auto Primitive = DrawDebug->Primitive.get();
+	auto Primitive = DrawDebugPtr->Primitive.get();
 	if (!Primitive)
 	{
 		return;
@@ -60,8 +62,8 @@ void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, c
 	SetupPrimitive(Primitive, BoxModelHandle,
 				   Center, Rotation, Extents,
 				   Color);
-	DrawDebug->bPersistent = bPersist;
-	DrawDebug->RemainingTime = Duration;
+	DrawDebugPtr->bPersistent = bPersist;
+	DrawDebugPtr->RemainingTime = Duration;
 
 	return;
 }
@@ -97,8 +99,16 @@ void UDebugDrawManager::Initialize()
 void UDebugDrawManager::Render(URenderer* InRenderer)
 {
 	const auto& ActiveDraws = Pool.GetActiveObjects();
-	for (const auto& drawObject : ActiveDraws)
+	for (const auto& drawObjectWeak : ActiveDraws)
 	{
+		auto drawObject = drawObjectWeak.lock();
+
+		if (!drawObject)
+		{
+			LOG_FUNC_CALL("[Warning] Wrong DebugRender Elements! DebugDrawer no works clearly");
+			continue;
+		}
+
 		FRenderJob RenderJob = InRenderer->AllocateRenderJob<FRenderDataSimpleColor>();
 		RenderJob.RenderState = ERenderStateType::Wireframe;
 		auto Primitive = drawObject->Primitive.get();
@@ -116,25 +126,26 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 void UDebugDrawManager::Tick(const float DeltaTime)
 {
 	const auto& ActiveDraws = Pool.GetActiveObjects();
-	std::vector<FDebugShape*> ReturnDraws;
+	std::vector<std::weak_ptr<FDebugShape>> ReturnDraws;
 	ReturnDraws.reserve(ActiveDraws.size());
 
 	for (const auto& Draw : ActiveDraws)
 	{
-		if (!Draw)
+		auto DrawPtr = Draw.lock();
+		if (!DrawPtr)
 		{
 			LOG_FUNC_CALL("[Warning] Pool works inproperly!");
 			continue;
 		}
 
-		if (Draw->bPersistent)
+		if (DrawPtr->bPersistent)
 			continue;
 
-		Draw->RemainingTime -= DeltaTime;
-		if (Draw->RemainingTime < 0.0f)
+		DrawPtr->RemainingTime -= DeltaTime;
+		if (DrawPtr->RemainingTime < 0.0f)
 		{
-			Draw->Reset();
-			ReturnDraws.push_back(Draw.get());
+			DrawPtr->Reset();
+			ReturnDraws.push_back(Draw);
 		}
 	}
 
