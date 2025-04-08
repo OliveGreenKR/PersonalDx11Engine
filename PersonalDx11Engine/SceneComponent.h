@@ -29,7 +29,7 @@ public:
     void SetLocalPosition(const Vector3& InPosition);
     void SetLocalRotation(const Quaternion& InRotation);
     void SetLocalRotationEuler(const Vector3& InEuler);
-    void SetLocalScale(const Vector3& InScale);
+    void SetLocalScale(const Vector3& InScale);   
 
     // 로컬 트랜스폼 추가자
     void AddLocalPosition(const Vector3& InDeltaPosition);

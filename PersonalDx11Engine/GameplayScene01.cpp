@@ -14,7 +14,7 @@
 #include "Debug.h"
 #include "ResourceManager.h"
 #include "Texture.h"
-#include "UIManager.h"
+#include "UIManager.h" 
 
 #include "RenderDataTexture.h"
 
@@ -23,7 +23,7 @@ UGameplayScene01::UGameplayScene01()
     InputContext = UInputContext::Create(SceneName);
 }
 
-void UGameplayScene01::Initialize()
+void UGameplayScene01::Initialize()  
 { 
     const int VIEW_WIDTH = 800;
     const int VIEW_HEIGHT = 800;
@@ -34,7 +34,6 @@ void UGameplayScene01::Initialize()
    
     // 입력 설정
     SetupInput();
-
 
 }
 

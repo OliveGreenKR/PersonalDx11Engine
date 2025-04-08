@@ -20,7 +20,7 @@
 #include "InputManager.h"
 #include "TypeCast.h"
 
-#include "Color.h"
+#include "Color.h" 
 #include "define.h"
 #include "CollisionManager.h"
 

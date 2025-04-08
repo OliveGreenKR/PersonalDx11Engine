@@ -23,7 +23,7 @@ public:
     void SubmitRenderUI() override;
     void HandleInput(const FKeyEventData& EventData) override;
     class UCamera* GetMainCamera() const override { return Camera.get(); }
-
+     
     std::string& GetName() override { return SceneName; }
 
 public:
@@ -34,6 +34,7 @@ private:
     void SetupInput();
     void SetupBorderTriggers(shared_ptr<UElasticBody>& InBody);
     void SpawnElasticBody();
+    void DeSpawnElasticBody(shared_ptr<UElasticBody>& InBody);
 
 private:
     // 객체 및 카메라

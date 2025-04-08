@@ -18,7 +18,7 @@ private:
         bool bPersistent = false;
 
 
-        // 재사용을 위한 초기화 메서드
+        // 재사용을 위한 초기화 메서드 
         void Reset() {
             RemainingTime = 0.0f;
             bPersistent = false;

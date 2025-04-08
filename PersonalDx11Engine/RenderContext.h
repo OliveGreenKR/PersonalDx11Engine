@@ -25,8 +25,8 @@ public:
     // 쉐이더 
     void BindShader(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11InputLayout* Layout);
 
-    //렌더링 리소스 바인딩
-    void DrawRenderData(const IRenderData* InData);
+    //렌더링 리소스 바인딩 
+    void DrawRenderData(const IRenderData* InData);  
     
     //접근자
     ID3D11DeviceContext* GetDeviceContext() const { return RenderHardware ? RenderHardware->GetDeviceContext() : nullptr; }

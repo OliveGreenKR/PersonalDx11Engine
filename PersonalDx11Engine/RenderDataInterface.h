@@ -26,11 +26,11 @@ public:
     virtual void SetOffset(uint32_t offset) = 0;
 
     // 선택적 리소스 접근자 (기본 구현은 nullptr 반환)
-    virtual class ID3D11Buffer* GetVertexBuffer() const { return nullptr; }
+    virtual class ID3D11Buffer* GetVertexBuffer() const { return nullptr; }  
     virtual class ID3D11Buffer* GetIndexBuffer() const { return nullptr; }
     virtual uint32_t GetVertexCount() const { return 0; }
     virtual uint32_t GetIndexCount() const { return 0; }
-    virtual uint32_t GetStartIndex() const { return 0; }
+    virtual uint32_t GetStartIndex() const { return 0; } 
     virtual uint32_t GetBaseVertexLocation() const { return 0; }
     virtual uint32_t GetStride() const { return 0; }
     virtual uint32_t GetOffset() const { return 0; }

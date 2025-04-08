@@ -22,11 +22,11 @@ public:
 	void SetMaterial(const FResourceHandle& InMaterialHandle);
 	void SetColor(const Vector4 InColor);
 
-	FResourceHandle GetModel() const { return ModelHandle; }
+	FResourceHandle GetModel() const { return ModelHandle; } 
 	FResourceHandle GetMaterial() const { return MaterialHandle; }
 	Vector4 GetColor() const { return Color; }
 
-	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }
+	virtual const char* GetComponentClassName() const override { return "UPrimitive"; }  
 private:
 	FResourceHandle ModelHandle = FResourceHandle();
 	FResourceHandle MaterialHandle = FResourceHandle();

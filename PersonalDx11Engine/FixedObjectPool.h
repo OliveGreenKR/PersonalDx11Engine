@@ -26,10 +26,10 @@ public:
         Pool.reserve(maxSize);  // 초기 용량 예약
     }
 
-    ~TFixedObjectPool() {
+    ~TFixedObjectPool() { 
         Clear();
     }
-
+     
     // 사용 가능한 오브젝트 획득 및 생성
     template<typename... Args>
     T* Acquire(Args&&... args) {
@@ -40,6 +40,7 @@ public:
             ActiveObjects.push_back(std::move(Pool.back()));
             Pool.pop_back();
             obj = ActiveObjects.back().get();
+            *obj = T(std::forward<Args>(args)...); // 객체 재초기화
         }
         else if (ActiveObjects.size() < MaxSize) {
             // 새로 생성해서 활성 목록에 추가

@@ -24,7 +24,7 @@ struct FKeyEventData
 using FOnKeyEvent = FDelegate<const FKeyEventData&>;
 
 //행동에 따른 키 바인딩
-class UInputAction
+class UInputAction 
 {
 public:
     UInputAction() = default;
@@ -52,4 +52,4 @@ public:
 
 private:
     std::string Name;
-};
+}; 

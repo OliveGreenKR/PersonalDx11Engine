@@ -25,7 +25,7 @@ protected:
         UINT Size;
         UINT BindPoint;
         ID3D11Buffer* Buffer = nullptr;
-        std::vector<FInternalConstantBufferVariable> Variables;
+        std::vector<FInternalConstantBufferVariable> Variables; 
     };
     // 리소스 바인딩 정보
     struct FInternalResourceBindInfo

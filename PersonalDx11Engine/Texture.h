@@ -28,7 +28,7 @@ struct FTextureDesc
     bool bDynamic = false;           // CPU 쓰기 가능 여부
     bool bRenderTarget = false;      // 렌더 타겟으로 사용할지 여부
     bool bShaderResource = true;     // 셰이더 리소스로 사용할지 여부
-    bool bUnorderedAccess = false;   // UAV로 사용할지 여부
+    bool bUnorderedAccess = false;   // UAV로 사용할지 여부   
 
     FTextureDesc() = default;
     FTextureDesc(uint32_t InWidth, uint32_t InHeight, ETextureFormat InFormat = ETextureFormat::RGBA8)

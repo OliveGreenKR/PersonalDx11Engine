@@ -27,7 +27,7 @@ struct FCollisionPair
 
     mutable FAccumulatedConstraint PrevConstraints;
     mutable bool bPrevCollided : 1;
-
+      
     bool operator==(const FCollisionPair& Other) const
     {
         return TreeIdA == Other.TreeIdA && TreeIdB == Other.TreeIdB;

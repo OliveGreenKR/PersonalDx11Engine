@@ -121,7 +121,7 @@ struct Vector3I
 	// Float vector conversion
 	static Vector3 Create(const Vector3I& IntVec);
 };
-
+   
 struct Vector4I
 {
 	int32_t x;
@@ -166,7 +166,7 @@ struct Vector4I
 	// Float vector conversion
 	static Vector4 Create(const Vector4I& IntVec);
 };
-
+ 
 // Float vector declarations
 struct Vector4 : public DirectX::XMFLOAT4
 {

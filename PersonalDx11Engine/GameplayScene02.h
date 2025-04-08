@@ -23,7 +23,7 @@ public:
     void HandleInput(const FKeyEventData& EventData) override;
     class UCamera* GetMainCamera() const override;
 
-    std::string& GetName() override { return SceneName; }
+    std::string& GetName() override { return SceneName; } 
 
     void SetMaxSpeeds(const float InMaxSpeed);
     void SetPowerMagnitude(const float InMagnitude);

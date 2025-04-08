@@ -27,8 +27,8 @@ public:
     explicit FFrameMemoryPool(size_t singleBufferSize = 1024 * 1024)
         : bufferSize(singleBufferSize), usedBytes(0), totalAllocated(0) {
         currentBuffer = AllocateNewBuffer();
-    }
-
+    } 
+      
     // 소멸자에서만 완전 해제
     ~FFrameMemoryPool() {
         for (byte* buffer : buffers) {

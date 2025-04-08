@@ -27,7 +27,7 @@ private:
     // 리소스 캐시 (해시값 -> 리소스 데이터)
     std::unordered_map<std::uint32_t, FResourceData> ResourceCache;
 
-    // 싱글톤 패턴
+    // 싱글톤 패턴   
     UResourceManager() = default;
     ~UResourceManager() = default;
 

@@ -22,12 +22,12 @@ public:
     uint32_t GetHash() const { return HashValue; }
 
     // 기본 생성자 -  invalid Key
-    explicit FStringHash() : HashValue(0) {}
-
+    explicit FStringHash() : HashValue(0) {} 
+     
     // 와이드 문자열 생성자
     explicit FStringHash(const wchar_t* Str)
-    {
-        if (!Str) return;
+    { 
+        if (!Str) return; 
 
         constexpr std::uint64_t FNV_PRIME = 1099511628211ULL;
         constexpr std::uint64_t FNV_OFFSET_BASIS = 14695981039346656037ULL;

@@ -27,7 +27,7 @@ public:
 	void SetAspectRatio(float InRatio) { AspectRatio = InRatio; UpdateProjectionMatrix(); }
 	void SetNearZ(float InZ) { NearZ = InZ; UpdateProjectionMatrix();  }
 	void SetFarZ(float InZ) { FarZ = InZ; UpdateProjectionMatrix(); }
-	void SetViewportSize(uint32_t Width, uint32_t Height);
+	void SetViewportSize(uint32_t Width, uint32_t Height); 
 
 	uint32_t GetViewportWidth() const { return ViewportWidth; }
 	uint32_t GetViewportHeight() const { return ViewportHeight; }

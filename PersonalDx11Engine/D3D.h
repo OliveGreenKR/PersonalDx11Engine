@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "RenderHardwareInterface.h"
 
 using namespace DirectX;
@@ -59,7 +59,7 @@ private:
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RasterizerState* RasterizerState = nullptr;
 
-    D3D11_VIEWPORT ViewportInfo;
+    D3D11_VIEWPORT ViewportInfo = D3D11_VIEWPORT();
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 
 };

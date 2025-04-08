@@ -8,4 +8,4 @@ struct FVertexDataContainer
 {
     std::vector<FVertexFormat> Vertices;  // 정점 배열
     std::vector<uint32_t> Indices;            // 인덱스 배열
-};
+};    

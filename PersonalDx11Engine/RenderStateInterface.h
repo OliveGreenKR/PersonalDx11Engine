@@ -16,3 +16,4 @@ public:
     virtual enum class  ERenderStateType GetType() const = 0;
 };
 
+   

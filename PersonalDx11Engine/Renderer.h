@@ -23,13 +23,13 @@ class UPrimitiveComponent;
 class URenderer 
 {
 private:
-	//상태별 렌더링 작업 큐
+	//상태별 렌더링 작업 큐 
 	std::unordered_map<ERenderStateType, 
 		std::vector<IRenderData*>> RenderJobs;
 
 	// 단일 렌더링 컨텍스트
 	std::unique_ptr<FRenderContext> Context;
-
+	 
 	// 상태 객체들
 	std::unordered_map<ERenderStateType, std::unique_ptr<IRenderState>> States;
 

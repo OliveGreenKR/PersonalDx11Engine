@@ -25,7 +25,7 @@ public:
 	bool IsStatic() const override;
 	const FTransform& GetWorldTransform() const override;
 
-protected:
+protected:  
 	virtual void PostTreeInitialized() override;
 	virtual void Tick(const float DeltaTime) override;
 

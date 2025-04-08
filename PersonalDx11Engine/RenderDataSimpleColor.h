@@ -18,7 +18,7 @@ public:
     struct ConstantBufferBindData {
         uint32_t Slot;
         ID3D11Buffer* Buffer;
-        void* Data;
+        void* Data;   
         size_t DataSize;
     };
 

@@ -22,6 +22,6 @@ enum class ERenderStateType
 
 struct FRenderJob
 {
-    class IRenderData* RenderData;
-    ERenderStateType RenderState = ERenderStateType::Default;
+    class IRenderData* RenderData = nullptr;
+    ERenderStateType RenderState = ERenderStateType::Default;   
 };

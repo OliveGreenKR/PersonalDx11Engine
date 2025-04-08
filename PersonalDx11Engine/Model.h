@@ -22,12 +22,12 @@ public:
     uint32_t GetVertexCount() const { return VertexCount; }
     uint32_t GetIndexCount() const { return IndexCount; }
     uint32_t GetStride() const { return Stride; }
-    uint32_t GetOffset() const { return Offset; }
-
+    uint32_t GetOffset() const { return Offset; } 
+      
     // Inherited via IResource
     bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;
     bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path) override;
-    bool IsLoaded() const override         { return bIsLoaded; }
+    bool IsLoaded() const override         { return bIsLoaded; } 
     size_t GetMemorySize() const override;
     EResourceType GetType() const override { return EResourceType::Model; }
 private:

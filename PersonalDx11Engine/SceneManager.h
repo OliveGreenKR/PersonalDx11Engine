@@ -40,7 +40,7 @@ public:
     // 씬 전환
     void ChangeScene(const std::string& SceneName)
     {
-        auto it = Scenes.find(SceneName);
+        auto it = Scenes.find(SceneName); 
         if (it != Scenes.end())
         {
             PendingScene = it->second;

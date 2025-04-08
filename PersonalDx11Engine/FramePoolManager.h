@@ -20,10 +20,10 @@ private:
 
 public:
     static UFramePoolManager* Get()
-    {
+    {      
         static UFramePoolManager* Instance =[]() 
             {
-                UFramePoolManager* manager = new UFramePoolManager();
+                UFramePoolManager* manager = new UFramePoolManager(); 
                 return manager;
             }();
 

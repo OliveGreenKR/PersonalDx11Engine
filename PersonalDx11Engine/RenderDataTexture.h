@@ -26,7 +26,7 @@ protected:
   
     std::vector<ConstantBufferBindData> PSConstantBuffers = std::vector<ConstantBufferBindData>();
     std::vector<TextureBindData> Textures = std::vector<TextureBindData>();
-    std::vector<SamplerBindData> Samplers = std::vector<SamplerBindData>();
+    std::vector<SamplerBindData> Samplers = std::vector<SamplerBindData>();  
 
 public:
     // 선택적 텍스처 데이터
