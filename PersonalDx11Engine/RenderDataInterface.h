@@ -10,14 +10,14 @@ public:
     virtual bool IsVisible() const = 0;
 
     //리소스 지정자
-    virtual void AddPSConstantBuffer(uint32_t Slot, class ID3D11Buffer* Buffer, void* Data, size_t DataSize) = 0;
-    virtual void AddVSConstantBuffer(uint32_t Slot, class ID3D11Buffer* Buffer, void* Data, size_t DataSize) = 0;
+    virtual void AddPSConstantBuffer(uint32_t Slot, struct ID3D11Buffer* Buffer, void* Data, size_t DataSize) = 0;
+    virtual void AddVSConstantBuffer(uint32_t Slot, struct ID3D11Buffer* Buffer, void* Data, size_t DataSize) = 0;
     virtual void AddTexture(uint32_t Slot, class ID3D11ShaderResourceView* SRV) = 0;
     virtual void AddSampler(uint32_t Slot, class ID3D11SamplerState* Sampler) = 0;
 
     //리소스 지정자
-    virtual void SetVertexBuffer(class ID3D11Buffer* buffer) = 0;
-    virtual void SetIndexBuffer(class ID3D11Buffer* buffer) = 0;
+    virtual void SetVertexBuffer(struct ID3D11Buffer* buffer) = 0;
+    virtual void SetIndexBuffer(struct ID3D11Buffer* buffer) = 0;
     virtual void SetVertexCount(uint32_t count) = 0;
     virtual void SetIndexCount(uint32_t count) = 0;
     virtual void SetStartIndex(uint32_t index) = 0;
@@ -26,8 +26,8 @@ public:
     virtual void SetOffset(uint32_t offset) = 0;
 
     // 선택적 리소스 접근자 (기본 구현은 nullptr 반환)
-    virtual class ID3D11Buffer* GetVertexBuffer() const { return nullptr; }  
-    virtual class ID3D11Buffer* GetIndexBuffer() const { return nullptr; }
+    virtual struct ID3D11Buffer* GetVertexBuffer() const { return nullptr; }  
+    virtual struct ID3D11Buffer* GetIndexBuffer() const { return nullptr; }
     virtual uint32_t GetVertexCount() const { return 0; }
     virtual uint32_t GetIndexCount() const { return 0; }
     virtual uint32_t GetStartIndex() const { return 0; } 

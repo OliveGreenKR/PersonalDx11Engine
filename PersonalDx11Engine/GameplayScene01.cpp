@@ -165,10 +165,11 @@ void UGameplayScene01::SetupInput()
     UInputAction Debug1("Debug1");
     Debug1.KeyCodes = { VK_F1 };
 
+    auto WeakCamera = std::weak_ptr(Camera);
       // 카메라 입력 바인딩 (시스템 컨텍스트 사용)
     UInputManager::Get()->SystemContext->BindAction(CameraUp,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(Vector3::Forward);
                                                     },
@@ -176,7 +177,7 @@ void UGameplayScene01::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraDown,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(-Vector3::Forward);
                                                     },
@@ -184,7 +185,7 @@ void UGameplayScene01::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraRight,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(Vector3::Right);
                                                     },
@@ -192,7 +193,7 @@ void UGameplayScene01::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraLeft,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(-Vector3::Right);
                                                     },
@@ -200,7 +201,7 @@ void UGameplayScene01::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->bLookAtObject = !Camera->bLookAtObject;
                                                     },
@@ -208,32 +209,31 @@ void UGameplayScene01::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraLookTo,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->LookTo();
                                                     },
                                                     "CameraMove");
 }
 
-void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
+void UGameplayScene01::SetupBorderTriggers(weak_ptr<UElasticBody>& InBody)
 {
     auto IsInBorder = [this](const Vector3& Position) {
         return std::abs(Position.x) < XBorder &&
             std::abs(Position.y) < YBorder &&
             std::abs(Position.z) < ZBorder;
         };
-
-    if (!InBody.get())
+    
+    if (!InBody.lock())
+    {
         return;
+    }
 
-    // 약한 참조를 사용하여 순환 참조 방지
-    std::weak_ptr<UElasticBody> WeakBody = InBody;
-
-    InBody->GetRootComp()->OnWorldTransformChangedDelegate.Bind(
+    InBody.lock()->GetRootComp()->OnWorldTransformChangedDelegate.Bind(
         InBody, // 여기서는 객체를 전달해야 함
-        [IsInBorder, this, WeakBody](const FTransform& InTransform) {
+        [IsInBorder, this, InBody](const FTransform& InTransform) {
             // 약한 참조에서 유효한 공유 포인터를 획득
-            if (auto Body = WeakBody.lock()) {
+            if (auto Body = InBody.lock()) {
                 if (!IsInBorder(InTransform.Position))
                 {
                     const Vector3 Position = InTransform.Position;
@@ -276,23 +276,23 @@ void UGameplayScene01::SetupBorderTriggers(shared_ptr<UElasticBody>& InBody)
 
 void UGameplayScene01::SpawnElasticBody()
 {
-    auto body = UGameObject::Create<UElasticBody>();
-    body->PostInitialized();
-    body->PostInitializedComponents();
+    //auto body = UGameObject::Create<UElasticBody>();
+    //body->PostInitialized();
+    //body->PostInitializedComponents();
 
-    body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
-    body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
-    body->SetShapeSphere();
+    //body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
+    //body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
+    //body->SetShapeSphere();
 
-    body->SetMass(FRandom::RandF(1.0f, 5.0f));
-    body->SetGravity(bGravity);
-    body->SetColor(Vector4(FRandom::RandColor()));
-    body->SetActive(true);
+    //body->SetMass(FRandom::RandF(1.0f, 5.0f));
+    //body->SetGravity(bGravity);
+    //body->SetColor(Vector4(FRandom::RandColor()));
+    //body->SetActive(true);
 
-    auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
-    Primitive->SetMaterial(PoleMaterialHandle);
-    SetupBorderTriggers(body);
+    //auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
+    //Primitive->SetMaterial(PoleMaterialHandle);
+    //SetupBorderTriggers(body);
 
-    ElasticBodies.push_back(body);
-    LOG("ElasticBody Count : %03d", ElasticBodies.size());
+    //ElasticBodies.push_back(body);
+    //LOG("ElasticBody Count : %03d", ElasticBodies.size());
 }

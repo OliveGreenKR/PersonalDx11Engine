@@ -5,9 +5,9 @@
 struct FStringHash
 {
 private:
-    uint32_t HashValue = 0;
+    uint64_t HashValue = 0;
 
-    explicit FStringHash(uint32_t value)
+    explicit FStringHash(uint64_t value)
         : HashValue(value)
     {
     }
@@ -19,7 +19,7 @@ public:
     void Invalidate() { HashValue = 0; }
 
     bool IsValid() const { return HashValue != 0; }
-    uint32_t GetHash() const { return HashValue; }
+    uint64_t GetHash() const { return HashValue; }
 
     // 기본 생성자 -  invalid Key
     explicit FStringHash() : HashValue(0) {} 

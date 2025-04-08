@@ -352,10 +352,11 @@ void UGameplayScene02::SetupInput()
     UInputAction Debug1("Debug1");
     Debug1.KeyCodes = { VK_F1 };
 
+    auto WeakCharacter = std::weak_ptr(Character);
     // 캐릭터 1 입력 바인딩
     InputContext->BindAction(AMoveUp_P1,
                              EKeyEvent::Pressed,
-                             Character,
+                             WeakCharacter,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude;
 
@@ -372,7 +373,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveDown_P1,
                              EKeyEvent::Pressed,
-                             Character,
+                             WeakCharacter,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude;
 
@@ -389,7 +390,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveRight_P1,
                              EKeyEvent::Pressed,
-                             Character,
+                             WeakCharacter,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude;
 
@@ -406,7 +407,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveLeft_P1,
                              EKeyEvent::Pressed,
-                             Character,
+                             WeakCharacter,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude;
 
@@ -423,16 +424,17 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveStop_P1,
                              EKeyEvent::Pressed,
-                             Character,
+                             WeakCharacter,
                              [this](const FKeyEventData& EventData) {
                                  Character->StopMove();
                              },
                              "CharacterMove");
 
+    auto WeakCharacter2 = std::weak_ptr(Character2);
       // 캐릭터 2 입력 바인딩
     InputContext->BindAction(AMoveUp_P2,
                              EKeyEvent::Pressed,
-                             Character2,
+                             WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude;
 
@@ -449,7 +451,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveDown_P2,
                              EKeyEvent::Pressed,
-                             Character2,
+                             WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude;
 
@@ -466,7 +468,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveRight_P2,
                              EKeyEvent::Pressed,
-                             Character2,
+                             WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude;
 
@@ -483,7 +485,7 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveLeft_P2,
                              EKeyEvent::Pressed,
-                             Character2,
+                             WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude;
 
@@ -500,16 +502,17 @@ void UGameplayScene02::SetupInput()
 
     InputContext->BindAction(AMoveStop_P2,
                              EKeyEvent::Pressed,
-                             Character2,
+                             WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
                                  Character2->StopMove();
                              },
                              "CharacterMove");
 
+    auto WeakCamera = std::weak_ptr(Camera);
       // 카메라 입력 바인딩 (시스템 컨텍스트 사용)
     UInputManager::Get()->SystemContext->BindAction(CameraUp,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(Vector3::Forward);
                                                     },
@@ -517,7 +520,7 @@ void UGameplayScene02::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraDown,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(-Vector3::Forward);
                                                     },
@@ -525,7 +528,7 @@ void UGameplayScene02::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraRight,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(Vector3::Right);
                                                     },
@@ -533,7 +536,7 @@ void UGameplayScene02::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraLeft,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(-Vector3::Right);
                                                     },
@@ -541,7 +544,7 @@ void UGameplayScene02::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->bLookAtObject = !Camera->bLookAtObject;
                                                     },
@@ -549,7 +552,7 @@ void UGameplayScene02::SetupInput()
 
     UInputManager::Get()->SystemContext->BindAction(CameraLookTo,
                                                     EKeyEvent::Pressed,
-                                                    Camera,
+                                                    WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->LookTo();
                                                     },
@@ -580,7 +583,8 @@ void UGameplayScene02::SetupBorderTriggers()
             std::abs(Position.z) < ZBorder;
         };
 
-    Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character,
+    auto weakChacter = std::weak_ptr(Character);
+    Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(weakChacter,
                                                                [IsInBorder, this](const FTransform& InTransform) {
                                                                    if (!IsInBorder(InTransform.Position))
                                                                    {
@@ -618,8 +622,8 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                    }
                                                                },
                                                                "BorderCheck");
-
-    Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character2,
+    auto weakChacter2 = std::weak_ptr(Character2);
+    Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(weakChacter2,
                                                                 [IsInBorder, this](const FTransform& InTransform) {
                                                                     if (!IsInBorder(InTransform.Position))
                                                                     {

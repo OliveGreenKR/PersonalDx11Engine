@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #pragma once
 
 #include <functional>
@@ -91,7 +91,7 @@ public:
 
     // 멤버 함수를 델리게이트에 바인딩
     template<typename T>
-    void Bind(const std::shared_ptr<T>& InObject,
+    void Bind(const std::weak_ptr<T>& InObject,
               const FunctionType& InFunction,
               const std::string& InFunctionName)
     {
@@ -116,7 +116,7 @@ public:
 
     // 멤버 함수 포인터를 위한 새로운 오버로드 추가
     template<typename U, typename T>
-    void Bind(const std::shared_ptr<U>& InObject,
+    void Bind(const std::weak_ptr<U>& InObject,
               void (T::* MemberFunction)(Args...),
               const std::string& InFunctionName)
     {
@@ -124,7 +124,7 @@ public:
                       "U must be base of T or same type");
 
         FunctionType BoundFunction = [InObject, MemberFunction](Args... args) {
-            (static_cast<T*>(InObject.get())->*MemberFunction)(std::forward<Args>(args)...);
+            (static_cast<T*>(InObject.lock().get())->*MemberFunction)(std::forward<Args>(args)...);
             };
 
         Bind(InObject, BoundFunction, InFunctionName);
@@ -132,7 +132,7 @@ public:
 
     // 특정 객체의 특정 함수를 언바인딩
     template<typename T>
-    void Unbind(const std::shared_ptr<T>& InObject, const std::string& InFunctionName)
+    void Unbind(const std::weak_ptr<T>& InObject, const std::string& InFunctionName)
     {
         BoundFunctions.erase(
             std::remove_if(
@@ -161,7 +161,7 @@ public:
 
     // 특정 객체의 모든 바인딩 제거
     template<typename T>
-    void UnbindAll(const std::shared_ptr<T>& InObject)
+    void UnbindAll(const std::weak_ptr<T>& InObject)
     {
         BoundFunctions.erase(
             std::remove_if(
@@ -198,13 +198,14 @@ public:
             // 객체에 바인딩된 함수의 경우 객체 생존 확인
             if (!Binding.bSystem)
             {
-                if (Binding.BoundObject.expired())
-                {
-                    isDirty = true;
-                    continue;
-                }
                 if (auto BoundObject = Binding.BoundObject.lock())
                 {
+                    if (!BoundObject)
+                    {
+                        isDirty = true;
+                        continue;
+                    }
+
                     if (Binding.Function)
                     {
                         Binding.Function(InArgs...);

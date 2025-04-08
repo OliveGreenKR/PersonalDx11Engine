@@ -32,7 +32,7 @@ public:
 
 private:
     void SetupInput();
-    void SetupBorderTriggers(shared_ptr<UElasticBody>& InBody);
+    void SetupBorderTriggers(weak_ptr<UElasticBody>& InBody);
     void SpawnElasticBody();
     void DeSpawnElasticBody(shared_ptr<UElasticBody>& InBody);
 

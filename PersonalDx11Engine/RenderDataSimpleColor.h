@@ -22,8 +22,8 @@ public:
         size_t DataSize;
     };
 
-    void SetVertexBuffer(class ID3D11Buffer* buffer) override { VertexBuffer = buffer; }
-    void SetIndexBuffer(class ID3D11Buffer* buffer) override { IndexBuffer = buffer; }
+    void SetVertexBuffer(struct ID3D11Buffer* buffer) override { VertexBuffer = buffer; }
+    void SetIndexBuffer(struct ID3D11Buffer* buffer) override { IndexBuffer = buffer; }
     void SetVertexCount(uint32_t count) override { VertexCount = count; }
     void SetIndexCount(uint32_t count) override { IndexCount = count; }
     void SetStartIndex(uint32_t index) override { StartIndex = index; }
@@ -59,8 +59,8 @@ public:
     bool IsVisible() const override { return bIsVisible; }
 
     // 선택적 리소스 접근자 (기본 구현은 nullptr 반환)
-    class ID3D11Buffer* GetVertexBuffer() const override { return VertexBuffer; }
-    class ID3D11Buffer* GetIndexBuffer() const override { return IndexBuffer; }
+    struct ID3D11Buffer* GetVertexBuffer() const override { return VertexBuffer; }
+    struct ID3D11Buffer* GetIndexBuffer() const override { return IndexBuffer; }
     uint32_t GetVertexCount() const override { return VertexCount; }
     uint32_t GetIndexCount() const override { return IndexCount; }
     uint32_t GetStride() const override { return Stride; }

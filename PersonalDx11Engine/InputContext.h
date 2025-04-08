@@ -71,7 +71,7 @@ public:
     template<typename T>
     void BindAction(const UInputAction& Action,
                     EKeyEvent EventType,
-                    const std::shared_ptr<T>& InObject,
+                    const std::weak_ptr<T>& InObject,
                     const std::function<void(const FKeyEventData&)>& InFunction,
                     const std::string& InFunctionName)
     {
@@ -112,7 +112,7 @@ public:
     template<typename T>
     void UnbindAction(const UInputAction& Action,
                       EKeyEvent EventType,
-                      const std::shared_ptr<T>& InObject,
+                      const std::weak_ptr<T>& InObject,
                       const std::string& InFunctionName)
     {
         std::string ActionName = Action.GetName();
@@ -127,7 +127,7 @@ public:
 
     // 객체의 모든 바인딩 제거
     template<typename T>
-    void UnbindAllForObject(const std::shared_ptr<T>& InObject)
+    void UnbindAllForObject(const std::weak_ptr<T>& InObject)
     {
         // 일반 키 이벤트 언바인드
         for (auto& Delegate : KeyEventDelegates) {
