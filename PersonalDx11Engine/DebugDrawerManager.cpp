@@ -23,7 +23,7 @@ void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const
 }
 void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = FixedPool.Acquire();
+	auto DrawDebug = FixedPool.AcquireForcely();
 	auto DrawDebugPtr = DrawDebug.lock();
 	if (!DrawDebugPtr)
 	{

@@ -179,11 +179,11 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
     //                                   Vector4(1,1,0,1),
     //                                   0.001f,
     //                                   0.1f);
-    //UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
-    //                                   Character->GetTransform().Scale * 1.2f,
-    //                                  Character->GetTransform().Rotation,
-    //                                   Vector4(1, 1, 0, 1),
-    //                                  2.0f,false);
+    UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
+                                       Character->GetTransform().Scale * 1.2f,
+                                      Character->GetTransform().Rotation,
+                                       Vector4(1, 1, 0, 1),
+                                      LastDeltaTime,false);
     UDebugDrawManager::Get()->DrawSphere(Character2->GetTransform().Position,
                                          Character2->GetTransform().Scale.x * 0.5f * 1.2f,
                                          Character2->GetTransform().Rotation,
