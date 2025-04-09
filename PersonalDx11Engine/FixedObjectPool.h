@@ -195,11 +195,6 @@ public:
         InActiveFlags.reset(index);
         ActiveCount++;
 
-        // 객체 초기화 (인자가 있을 경우)
-        if constexpr (sizeof...(args) > 0) {
-            *entry.Object = T(std::forward<Args>(args)...);
-        }
-
         // 활성 리스트에 추가
         AddToActiveList(&entry);
 
@@ -207,7 +202,7 @@ public:
     }
     //꽉찬 경우 가장 오래된 객체 초기화후 반환
     template <typename... Args>
-    std::weak_ptr<T> AcquireForce(Args&&... args) {
+    std::weak_ptr<T> AcquireForcely(Args&&... args) {
         if (ActiveCount < N) {
             // 풀이 꽉 차지 않았다면 Acquire와 동일하게 동작
             return Acquire(std::forward<Args>(args)...);
@@ -221,13 +216,8 @@ public:
         PoolEntry* oldest = ActiveHead;
         RemoveFromActiveList(oldest); // 리스트에서 제거
 
-        // 객체 초기화
-        if constexpr (sizeof...(args) > 0) {
-            *oldest->object = T(std::forward<Args>(args)...);
-        }
-
         AddToActiveList(oldest); // 다시 리스트 끝에 추가 (최신 객체로 갱신)
-        return std::weak_ptr<T>(oldest->object);
+        return std::weak_ptr<T>(oldest->Object);
     }
 
     // 객체를 풀에 반납

@@ -27,7 +27,7 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 	auto DrawDebugPtr = DrawDebug.lock();
 	if (!DrawDebugPtr)
 	{
-		LOG_FUNC_CALL("Allocation Faied!");
+		//LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
 	auto Primitive = DrawDebugPtr->Primitive.get();
@@ -46,11 +46,11 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 }
 void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = FixedPool.Acquire();
+	auto DrawDebug = FixedPool.AcquireForcely();
 	auto DrawDebugPtr = DrawDebug.lock();
 	if (!DrawDebugPtr)
 	{
-		LOG_FUNC_CALL("Allocation Faied!");
+		//LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
 	auto Primitive = DrawDebugPtr->Primitive.get();
@@ -99,7 +99,6 @@ void UDebugDrawManager::Initialize()
 
 void UDebugDrawManager::Render(URenderer* InRenderer)
 {
-
 	for (const auto& drawObjectWeak : FixedPool)
 	{
 		auto drawObject = drawObjectWeak.lock();
