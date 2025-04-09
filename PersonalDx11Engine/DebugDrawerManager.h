@@ -4,6 +4,8 @@
 #include "ResourceHandle.h"
 #include <vector>
 #include "FixedObjectPool.h"
+#include <array>
+
 
 // 디버그 도형 관리 클래스
 class UDebugDrawManager
@@ -38,7 +40,7 @@ private:
     ~UDebugDrawManager() = default;
 
     //PrimitiveComp 풀
-    TFixedObjectPool<FDebugShape> Pool;
+    TFixedObjectPool<FDebugShape,128> FixedPool;
 
     // 기본 재질/모델 핸들
     FResourceHandle SphereModelHandle_High;
@@ -64,7 +66,7 @@ public:
 
     void ClearActives()
     {
-        Pool.ClearActives();
+        FixedPool.ClearAllActives();
     }
 
     // 디버그 프리미티브 API

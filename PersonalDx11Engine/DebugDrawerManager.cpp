@@ -23,7 +23,7 @@ void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const
 }
 void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = Pool.Acquire();
+	auto DrawDebug = FixedPool.Acquire();
 	auto DrawDebugPtr = DrawDebug.lock();
 	if (!DrawDebugPtr)
 	{
@@ -46,7 +46,7 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 }
 void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = Pool.Acquire();
+	auto DrawDebug = FixedPool.Acquire();
 	auto DrawDebugPtr = DrawDebug.lock();
 	if (!DrawDebugPtr)
 	{
@@ -83,9 +83,10 @@ void UDebugDrawManager::SetupPrimitive(UPrimitiveComponent* TargetPrimitive,
 	TargetPrimitive->SetWorldScale(Scale);
 	TargetPrimitive->SetColor(Color);
 }
-//초기 풀 사이즈 128
-UDebugDrawManager::UDebugDrawManager()  : Pool(128)
-{}
+
+UDebugDrawManager::UDebugDrawManager() : FixedPool()
+{
+}
 
 void UDebugDrawManager::Initialize()
 {
@@ -98,8 +99,8 @@ void UDebugDrawManager::Initialize()
 
 void UDebugDrawManager::Render(URenderer* InRenderer)
 {
-	const auto& ActiveDraws = Pool.GetActiveObjects();
-	for (const auto& drawObjectWeak : ActiveDraws)
+
+	for (const auto& drawObjectWeak : FixedPool)
 	{
 		auto drawObject = drawObjectWeak.lock();
 
@@ -125,11 +126,10 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 
 void UDebugDrawManager::Tick(const float DeltaTime)
 {
-	const auto& ActiveDraws = Pool.GetActiveObjects();
 	std::vector<std::weak_ptr<FDebugShape>> ReturnDraws;
-	ReturnDraws.reserve(ActiveDraws.size());
+	ReturnDraws.reserve(FixedPool.GetActiveCount());
 
-	for (const auto& Draw : ActiveDraws)
+	for (const auto& Draw : FixedPool)
 	{
 		auto DrawPtr = Draw.lock();
 		if (!DrawPtr)
@@ -151,7 +151,7 @@ void UDebugDrawManager::Tick(const float DeltaTime)
 
 	for (auto draw : ReturnDraws)
 	{
-		Pool.ReturnToPool(draw);
+		FixedPool.ReturnToPool(draw);
 	}
 
 	//const auto& AfterActiveDraws = Pool.GetActiveObjects();

@@ -18,7 +18,7 @@
 
 #include "RenderDataTexture.h"
 
-UGameplayScene01::UGameplayScene01()
+UGameplayScene01::UGameplayScene01() : ElasticBodyPool()
 {
     InputContext = UInputContext::Create(SceneName);
 }
@@ -31,9 +31,6 @@ void UGameplayScene01::Initialize()
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
     Camera->SetPosition({ 0, 0.0f, -10.0f });
-   
-    //고정 풀 설정
-    ElasticBodyPool = TFixedObjectPool<UElasticBody>(500); //500개 한도
 
     // 입력 설정
     SetupInput();
