@@ -438,7 +438,7 @@
     <ClInclude Include="FixedObjectPool.h">
       <Filter>Engine\DataStructure\MemoryPool</Filter>
     </ClInclude>
-    <ClInclude Include="FrameMemoryPool.h">
+    <ClInclude Include="ArenaMemoryPool.h">
       <Filter>Engine\DataStructure\MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="D3DContextDebugger.h">

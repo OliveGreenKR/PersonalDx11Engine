@@ -9,7 +9,7 @@
 
 using byte = unsigned char;
 
-class FFrameMemoryPool {
+class FArenaMemoryPool {
 private:
     byte* Buffer;          // 단일 큰 버퍼
     size_t BufferSize;     // 버퍼의 총 크기
@@ -33,13 +33,13 @@ private:
     }
 
 public:
-    explicit FFrameMemoryPool(size_t size = 10 * 1024 * 1024) // 기본 10MB
+    explicit FArenaMemoryPool(size_t size = 10 * 1024 * 1024) // 기본 10MB
         : BufferSize(size), UsedBytes(0) {
         Buffer = new byte[BufferSize];
         std::memset(Buffer, 0, BufferSize); // 초기화
     }
 
-    ~FFrameMemoryPool() {
+    ~FArenaMemoryPool() {
         // 모든 객체의 소멸자 호출 (역순)
         for (auto it = AllocatedObjects.rbegin(); it != AllocatedObjects.rend(); ++it) {
             it->Destroyer(it->Ptr);
@@ -48,10 +48,10 @@ public:
     }
 
     // 복사 및 이동 생성자/할당 연산자 삭제
-    FFrameMemoryPool(const FFrameMemoryPool&) = delete;
-    FFrameMemoryPool& operator=(const FFrameMemoryPool&) = delete;
-    FFrameMemoryPool(FFrameMemoryPool&&) = delete;
-    FFrameMemoryPool& operator=(FFrameMemoryPool&&) = delete;
+    FArenaMemoryPool(const FArenaMemoryPool&) = delete;
+    FArenaMemoryPool& operator=(const FArenaMemoryPool&) = delete;
+    FArenaMemoryPool(FArenaMemoryPool&&) = delete;
+    FArenaMemoryPool& operator=(FArenaMemoryPool&&) = delete;
 
     template<typename T = byte>
     void* AllocateVoid(size_t size = sizeof(T)) {

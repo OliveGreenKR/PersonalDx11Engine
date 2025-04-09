@@ -6,9 +6,9 @@
 #include "Math.h"
 
 /**
- * ÇÁ·ÎÁ§Æ® ÀüÃ¼¿¡¼­ »ç¿ëÇÒ ¼ö ÀÖ´Â ·£´ı À¯Æ¿¸®Æ¼ Å¬·¡½º
- * Àü¿ª ½Ì±ÛÅæ ÀÎ½ºÅÏ½º¸¦ ÅëÇØ ÀÏ°üµÈ ·£´ı ½ÃÄö½º Á¦°ø
- * ¿ÜºÎ¿¡¼­´Â Á¤Àû ¸Ş¼­µå¸¦ ÅëÇØ¼­¸¸ Á¢±Ù °¡´É
+ * í”„ë¡œì íŠ¸ ì „ì²´ì—ì„œ ì‚¬ìš©í•  ìˆ˜ ìˆëŠ” ëœë¤ ìœ í‹¸ë¦¬í‹° í´ë˜ìŠ¤
+ * ì „ì—­ ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ë¥¼ í†µí•´ ì¼ê´€ëœ ëœë¤ ì‹œí€€ìŠ¤ ì œê³µ
+ * ì™¸ë¶€ì—ì„œëŠ” ì •ì  ë©”ì„œë“œë¥¼ í†µí•´ì„œë§Œ ì ‘ê·¼ ê°€ëŠ¥
  */
 class FRandom
 {
@@ -21,28 +21,28 @@ private:
 
     FRandom()
     {
-        // ÇöÀç ½Ã°£À» ±â¹İÀ¸·Î ½Ãµå »ı¼º (³ª³ëÃÊ ´ÜÀ§±îÁö »ç¿ë)
+        // í˜„ì¬ ì‹œê°„ì„ ê¸°ë°˜ìœ¼ë¡œ ì‹œë“œ ìƒì„± (ë‚˜ë…¸ì´ˆ ë‹¨ìœ„ê¹Œì§€ ì‚¬ìš©)
         uint64_t TimeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-        // Ãß°¡ ¿£Æ®·ÎÇÇ¸¦ À§ÇØ ÁÖ¼Ò°ª ÇØ½Ì °áÇÕ
+        // ì¶”ê°€ ì—”íŠ¸ë¡œí”¼ë¥¼ ìœ„í•´ ì£¼ì†Œê°’ í•´ì‹± ê²°í•©
         uintptr_t AddressSeed = reinterpret_cast<uintptr_t>(this);
 
-        // °áÇÕµÈ ½Ãµå°ª »ı¼º
+        // ê²°í•©ëœ ì‹œë“œê°’ ìƒì„±
         uint64_t CombinedSeed = TimeSeed ^ (AddressSeed << 32);
 
         Generator.seed(static_cast<uint32_t>(CombinedSeed));
     }
 
-    // º¹»ç/ÀÌµ¿ »ı¼ºÀÚ¿Í ÇÒ´ç ¿¬»êÀÚ »èÁ¦ (½Ì±ÛÅæ ÆĞÅÏ)
+    // ë³µì‚¬/ì´ë™ ìƒì„±ìì™€ í• ë‹¹ ì—°ì‚°ì ì‚­ì œ (ì‹±ê¸€í†¤ íŒ¨í„´)
     FRandom(const FRandom&) = delete;
     FRandom(FRandom&&) = delete;
     FRandom& operator=(const FRandom&) = delete;
     FRandom& operator=(FRandom&&) = delete;
 
 
-    // ÀÎ½ºÅÏ½º ·¹º§ µ¿ÀÛ ¸Ş¼­µåµé (³»ºÎ Àü¿ë)
+    // ì¸ìŠ¤í„´ìŠ¤ ë ˆë²¨ ë™ì‘ ë©”ì„œë“œë“¤ (ë‚´ë¶€ ì „ìš©)
     /**
-     * Á¤¼öÇü ¹üÀ§¿¡¼­ ±ÕÀÏÇÑ ºĞÆ÷ÀÇ ·£´ı°ª »ı¼º
+     * ì •ìˆ˜í˜• ë²”ìœ„ì—ì„œ ê· ì¼í•œ ë¶„í¬ì˜ ëœë¤ê°’ ìƒì„±
      */
     template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
     T GetInt(T Min = 0, T Max = 1)
@@ -53,7 +53,7 @@ private:
     }
 
     /**
-     * ½Ç¼öÇü ¹üÀ§¿¡¼­ ±ÕÀÏÇÑ ºĞÆ÷ÀÇ ·£´ı°ª »ı¼º
+     * ì‹¤ìˆ˜í˜• ë²”ìœ„ì—ì„œ ê· ì¼í•œ ë¶„í¬ì˜ ëœë¤ê°’ ìƒì„±
      */
     template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
     T GetFloat(T Min = 0.0f, T Max = 1.0f)
@@ -64,7 +64,7 @@ private:
     }
 
     /**
-     * Á¤±Ô ºĞÆ÷¿¡¼­ ·£´ı°ª »ı¼º
+     * ì •ê·œ ë¶„í¬ì—ì„œ ëœë¤ê°’ ìƒì„±
      */
     template <typename T = float, typename = std::enable_if_t<std::is_floating_point_v<T>>>
     T GetNomalFloat(T Mean = 0.0, T StdDev = 1.0)
@@ -74,29 +74,35 @@ private:
         return Distribution(Generator);
     }
 
-    std::mt19937 Generator; // ¸Ş¸£¼¾ Æ®À§½ºÅÍ ·£´ı »ı¼º±â
+    std::mt19937 Generator; // ë©”ë¥´ì„¼ íŠ¸ìœ„ìŠ¤í„° ëœë¤ ìƒì„±ê¸°
 
 public:
     /**
-     * ½Ì±ÛÅæ ÀÎ½ºÅÏ½ºÀÇ ½Ãµå¸¦ Àç¼³Á¤
+     * ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ì˜ ì‹œë“œë¥¼ ì¬ì„¤ì •
      *
-     * @param NewSeed - »õ·Î¿î ½Ãµå°ª
+     * @param NewSeed - ìƒˆë¡œìš´ ì‹œë“œê°’
      */
     static void SetSeed(uint32_t NewSeed)
     {
         GetInstance().SetSeed(NewSeed);
     }
-
+    /// <summary>
+    /// Returns a random number within [min,max].
+    /// </summary>
     static float RandF(float Min = 0.0f, float Max = 1.0f)
     {
         return GetInstance().GetFloat<float>(Min, Max);
     }
-
+    /// <summary>
+    /// Returns a random number within [min,max] based on a normal distribution.
+    /// </summary>
     static float RandNF(float Min = 0.0f, float Max = 1.0f)
     {
         return GetInstance().GetNomalFloat<float>(Min, Max);
     }
-
+    /// <summary>
+    /// Returns a random number within [min,max].
+    /// </summary>
     static int RandI(int Min = 0, int Max = 1)
     {
         return GetInstance().GetInt<int>(Min, Max);
@@ -104,12 +110,12 @@ public:
 
     static Quaternion RandQuat()
     {
-        // ±¸¸é ÁÂÇ¥¿¡¼­ ·£´ı Æ÷ÀÎÆ® »ı¼º
+        // êµ¬ë©´ ì¢Œí‘œì—ì„œ ëœë¤ í¬ì¸íŠ¸ ìƒì„±
         float u1 = RandF(0.0f, 1.0f);
         float u2 = RandF(0.0f, 1.0f);
         float u3 = RandF(0.0f, 1.0f);
 
-        // ±ÕÀÏ ºĞÆ÷ÀÇ ÄõÅÍ´Ï¾ğ »ı¼º
+        // ê· ì¼ ë¶„í¬ì˜ ì¿¼í„°ë‹ˆì–¸ ìƒì„±
         float sqrtOneMinusU1 = sqrt(1.0f - u1);
         float sqrtU1 = sqrt(u1);
         float twoPI_1 = 2.0f * PI * u2;
@@ -125,9 +131,9 @@ public:
 
     static Vector3 RandUnitVector()
     {
-        // ±ÕÀÏ ºĞÆ÷ÀÇ ·£´ı ¹æÇâ º¤ÅÍ
+        // ê· ì¼ ë¶„í¬ì˜ ëœë¤ ë°©í–¥ ë²¡í„°
         float theta = RandF(0.0f, PI * 2.0f);
-        float phi = acos(RandF(-1.0f, 1.0f)); // ±ÕÀÏÇÑ ±¸¸é ºĞÆ÷¸¦ À§ÇØ acos »ç¿ë
+        float phi = acos(RandF(-1.0f, 1.0f)); // ê· ì¼í•œ êµ¬ë©´ ë¶„í¬ë¥¼ ìœ„í•´ acos ì‚¬ìš©
 
         float sinPhi = sin(phi);
         float x = sinPhi * cos(theta);
@@ -136,7 +142,9 @@ public:
 
         return Vector3(x, y, z);
     }
-
+    /// <summary>
+    /// Returns a random vector within [min.xyz,max.xyz].
+    /// </summary>
     static Vector3 RandVector(const Vector3& MinVec, const Vector3& MaxVec)
     {
         return Vector3(
@@ -145,7 +153,9 @@ public:
             RandF(MinVec.z, MaxVec.z)
         );
     }
-
+    /// <summary>
+    /// Returns a random Opaque RGB Color;
+    /// </summary>
     static Vector4 RandColor()
     {
         return Vector4(

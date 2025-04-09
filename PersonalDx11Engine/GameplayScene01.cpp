@@ -53,12 +53,9 @@ void UGameplayScene01::Unload()
     // 입력 컨텍스트 삭제
     UInputManager::Get()->UnregisterInputContext(SceneName);
 
-    // 모든 활성 객체 해제
-    for (auto body : ElasticBodies)
-    {
-        body->SetActive(false);
-    }
-    ElasticBodies.clear();
+    //활성화 바디 상태 초기화
+    //객체풀 클리어
+    ElasticBodyPool.ClearAllActives();
 
     // 주요 객체 해제
     Camera = nullptr;
@@ -83,19 +80,19 @@ void UGameplayScene01::Tick(float DeltaTime)
     }
 
     // 모든 탄성체 업데이트
-    for (auto& elasticBody : ElasticBodies)
+    for (auto body : ElasticBodyPool)
     {
-        elasticBody->Tick(DeltaTime);
+        body.lock()->Tick(DeltaTime);
     }
 
 }
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
-    for (auto body : ElasticBodies)
+    for (auto body : ElasticBodyPool)
     {
         FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
-        auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
+        auto Primitive = body.lock()->GetComponentByType<UPrimitiveComponent>();
         if (Primitive)
         {
             if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
@@ -127,10 +124,19 @@ void UGameplayScene01::SubmitRenderUI()
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);
         if (ImGui::Checkbox("bGravity", &bGravity))
         {
-            for (auto ebody : ElasticBodies)
+            for (auto body : ElasticBodyPool)
             {
-                ebody->SetGravity(bGravity);
+                body.lock()->SetGravity(bGravity);
             }
+        }
+        if(ImGui::Button("Spawn"))
+        {
+            SpawnElasticBody();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("DeSpawn"))
+        {
+            DeSpawnElasticBody();
         }
         ImGui::End();
                                            });
@@ -277,23 +283,33 @@ void UGameplayScene01::SetupBorderTriggers(weak_ptr<UElasticBody>& InBody)
 void UGameplayScene01::SpawnElasticBody()
 {
     ////auto body = UGameObject::Create<UElasticBody>();
-    //auto body = ElasticBodyPool.Acquire();
-    //body->PostInitialized();
-    //body->PostInitializedComponents();
+    auto bodyWeak = ElasticBodyPool.AcquireForcely();
+    auto body = bodyWeak.lock();
+    body->PostInitialized();
+    body->PostInitializedComponents();
 
-    //body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
-    //body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
-    //body->SetShapeSphere();
+    body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
+    body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
+    body->SetShapeSphere();
 
-    //body->SetMass(FRandom::RandF(1.0f, 5.0f));
-    //body->SetGravity(bGravity);
-    //body->SetColor(Vector4(FRandom::RandColor()));
-    //body->SetActive(true);
+    body->SetMass(FRandom::RandF(1.0f, 5.0f));
+    body->SetGravity(bGravity);
+    body->SetColor(Vector4(FRandom::RandColor()));
+    body->SetActive(true);
 
-    //auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
-    //Primitive->SetMaterial(PoleMaterialHandle);
-    //SetupBorderTriggers(body);
+    auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
+    Primitive->SetMaterial(PoleMaterialHandle);
+    SetupBorderTriggers(bodyWeak);
 
-    //ElasticBodies.push_back(body);
-    //LOG("ElasticBody Count : %03d", ElasticBodies.size());
+    LOG("ElasticBody Count : %03d", ElasticBodyPool.GetActiveCount());
+}
+
+void UGameplayScene01::DeSpawnElasticBody()
+{
+    //가장 오래된 바디 비활성화    
+    auto it = ElasticBodyPool.begin();
+    if ((*it).lock())
+    {
+        ElasticBodyPool.ReturnToPool(*it);
+    }
 }

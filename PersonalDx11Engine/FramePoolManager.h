@@ -1,5 +1,5 @@
 #pragma once
-#include "FrameMemoryPool.h"
+#include "ArenaMemoryPool.h"
 
 //매프레임 초기화되는  전역 메모리풀 제공
 class UFramePoolManager
@@ -16,7 +16,7 @@ private:
     UFramePoolManager& operator=(UFramePoolManager&&) = delete;
 
 private:
-    FFrameMemoryPool FrameMemoryPool;
+    FArenaMemoryPool FrameMemoryPool;
 
 public:
     static UFramePoolManager* Get()

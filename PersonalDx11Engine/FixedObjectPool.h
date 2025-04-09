@@ -15,6 +15,7 @@ private:
         PoolEntry* Next = nullptr;           // 이중 연결 리스트 다음 노드
 
         template <typename... Args>
+        //Entry  생성시 객체 생성 및 할당 진행
         PoolEntry(Args&&... args) : Object(std::make_shared<T>(std::forward<Args>(args)...)) {}
     };
 

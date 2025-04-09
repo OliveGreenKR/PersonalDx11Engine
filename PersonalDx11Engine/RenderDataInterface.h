@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "FrameMemoryPool.h"
+#include "ArenaMemoryPool.h"
 
 // 렌더 데이터 기본 인터페이스
 class IRenderData

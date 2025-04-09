@@ -12,7 +12,7 @@
 #include "TypeCast.h"
 #include "RenderDefines.h"
 #include "RenderStateInterface.h"
-#include "FrameMemoryPool.h"
+#include "ArenaMemoryPool.h"
 
 class UModel;
 class UShaderBase;
@@ -37,7 +37,7 @@ private:
 	std::stack<IRenderState*> StateStack;
 
 	//렌더 데이터 풀
-	FFrameMemoryPool RenderDataPool = FFrameMemoryPool(8 * 1024 * 1024);
+	FArenaMemoryPool RenderDataPool = FArenaMemoryPool(8 * 1024 * 1024);
 
 private:
 	// 기본 상태 객체 생성 및 초기화

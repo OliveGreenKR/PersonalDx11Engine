@@ -34,12 +34,11 @@ private:
     void SetupInput();
     void SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody);
     void SpawnElasticBody();
-    void DeSpawnElasticBody(std::weak_ptr<UElasticBody>& InBody);
+    void DeSpawnElasticBody();
 
 private:
     // 객체 및 카메라
     std::shared_ptr<UCamera> Camera;
-    std::vector<std::shared_ptr<UElasticBody>> ElasticBodies;
 
     // 씬 이름
     std::string SceneName = "GameplayScene01";
