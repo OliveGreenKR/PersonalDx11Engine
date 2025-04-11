@@ -61,7 +61,7 @@ private:
     std::shared_ptr<UInputContext> InputContext;
 
     //탄성체 풀
-    TFixedObjectPool<UElasticBody,512> ElasticBodyPool;
+    std::unique_ptr<TFixedObjectPool<UElasticBody,512>> ElasticBodyPool;
 
 
 };

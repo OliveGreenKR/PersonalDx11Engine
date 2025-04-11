@@ -501,6 +501,9 @@
     <ClInclude Include="LoadConfigFile.h">
       <Filter>Engine\UserConfig</Filter>
     </ClInclude>
+    <ClInclude Include="DelegateBindableInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

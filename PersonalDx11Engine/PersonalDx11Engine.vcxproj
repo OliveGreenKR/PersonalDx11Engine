@@ -189,6 +189,7 @@
     <ClInclude Include="DebugDrawerManager.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="DelegateBindableInterface.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="ElasticBody.h">

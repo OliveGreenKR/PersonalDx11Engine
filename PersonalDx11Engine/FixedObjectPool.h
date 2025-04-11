@@ -3,133 +3,128 @@
 #include <bitset>
 #include <memory>
 #include <stdexcept>
+#include <climits>
 
 template <typename T, size_t N>
 class TFixedObjectPool {
 private:
-    // 풀 내 객체를 나타내는 구조체
-    struct PoolEntry {
-        bool bIsActive = false;              // 활성 상태 플래그
-        std::shared_ptr<T> Object;           // 객체 소유권
-        PoolEntry* Prev = nullptr;           // 이중 연결 리스트 이전 노드
-        PoolEntry* Next = nullptr;           // 이중 연결 리스트 다음 노드
+    static constexpr size_t INVALID_INDEX = N;
 
-        template <typename... Args>
-        //Entry  생성시 객체 생성 및 할당 진행
-        PoolEntry(Args&&... args) : Object(std::make_shared<T>(std::forward<Args>(args)...)) {}
-    };
-
-    std::array<PoolEntry, N> Pool;          // 고정 크기 객체 풀
-    std::bitset<N> InActiveFlags;          // 비활성 객체 추적 비트셋
-    PoolEntry* ActiveHead = nullptr;       // 활성 리스트의 맨 앞 (가장 오래된 객체)
-    PoolEntry* ActiveTail = nullptr;       // 활성 리스트의 맨 뒤
-    size_t ActiveCount = 0;                // 활성 객체 수
-
-private:
-    // 이중 연결 리스트에 노드 추가 (활성화 시)
-    void AddToActiveList(PoolEntry* entry) {
-        entry->Prev = ActiveTail;
-        entry->Next = nullptr;
-        if (ActiveTail) {
-            ActiveTail->Next = entry;
-        }
-        ActiveTail = entry;
-        if (!ActiveHead) {
-            ActiveHead = entry;
-        }
-    }
-
-    // 이중 연결 리스트에서 노드 제거 (비활성화 시)
-    void RemoveFromActiveList(PoolEntry* entry) {
-        if (entry->Prev) {
-            entry->Prev->Next = entry->Next;
-        }
-        else {
-            ActiveHead = entry->Next;
-        }
-        if (entry->Next) {
-            entry->Next->Prev = entry->Prev;
-        }
-        else {
-            ActiveTail = entry->Prev;
-        }
-        entry->Prev = nullptr;
-        entry->Next = nullptr;
-    }
-
-    size_t FindFirstSetBit()
-    {
-        if (!InActiveFlags.any())
-        {
-            return N; //비정상 인덱스 반환
-        }
-            
-        // 워드 크기 계산 (일반적으로 unsigned long)
-        constexpr size_t WORD_SIZE = sizeof(unsigned long) * CHAR_BIT;
-        constexpr size_t WORD_COUNT = (N + WORD_SIZE - 1) / WORD_SIZE;
-
-        for (size_t word_idx = 0; word_idx < WORD_COUNT; ++word_idx) {
-            // 현재 워드의 비트 범위 계산
-            size_t start_bit = word_idx * WORD_SIZE;
-            size_t end_bit = std::min(start_bit + WORD_SIZE, N);
-
-            // 현재 워드 추출
-            unsigned long word = 0;
-            for (size_t i = start_bit; i < end_bit; ++i) {
-                if (InActiveFlags[i]) {
-                    word |= (1UL << (i - start_bit));
-                }
-            }
-
-            // 워드가 0이 아니면 최하위 1 비트 위치 찾기
-            if (word != 0) {
-                // 컴파일러별 내장 함수 사용
-#if defined(__GNUC__) || defined(__clang__)
-    // GCC/Clang
-                return start_bit + __builtin_ctzl(word);
-#elif defined(_MSC_VER)
-    // MSVC
-                unsigned long index;
-                _BitScanForward(&index, word);
-                return start_bit + index;
-#else
-    // 일반 구현 - 최하위 1 비트 찾기
-                unsigned long temp = word;
-                size_t bit_pos = 0;
-                while (!(temp & 1)) {
-                    temp >>= 1;
-                    ++bit_pos;
-                }
-                return start_bit + bit_pos;
-#endif
-            }
-        }
-
-        throw std::runtime_error("Logic error: no bit found despite bs.any() being true");
-    }
-
-#pragma region std::Iterator
 public:
-    // 반복자 지원
-    class Iterator {
+#pragma region ScopedObject
+    // 외부 인터페이스를 위한 객체 래퍼 클래스
+    class ScopedObject {
+    private:
+        TFixedObjectPool* Pool;      // 소유자 풀
+        size_t Index;                // 객체 인덱스
+        bool Released;               // 해제 여부 플래그
+
     public:
-        // STL 반복자 트레잇 정의
-        using iterator_category = std::bidirectional_iterator_tag;
-        using value_type = T;
-        using difference_type = std::ptrdiff_t;
-        using pointer = T*;
-        using reference = T&;
-
-        Iterator(PoolEntry* ptr = nullptr) : Current(ptr) {}
-
-        // 역참조: weak_ptr 반환
-        std::weak_ptr<T> operator*() const {
-            return Current ? std::weak_ptr<T>(Current->Object) : std::weak_ptr<T>();
+        // 생성자
+        ScopedObject(TFixedObjectPool* pool, size_t index)
+            : Pool(pool), Index(index), Released(false) {
         }
 
-        // 전위 증가 (다음 요소)
+        // 무효한 객체 생성
+        ScopedObject()
+            : Pool(nullptr), Index(INVALID_INDEX), Released(true) {
+        }
+
+        // 이동 생성자
+        ScopedObject(ScopedObject&& other) noexcept
+            : Pool(other.Pool), Index(other.Index), Released(other.Released) {
+            other.Released = true;  // 소유권 이전
+        }
+
+        // 이동 대입 연산자
+        ScopedObject& operator=(ScopedObject&& other) noexcept {
+            if (this != &other) {
+                // 기존 객체 반환
+                Release();
+
+                // 새 객체 소유권 가져오기
+                Pool = other.Pool;
+                Index = other.Index;
+                Released = other.Released;
+                other.Released = true;  // 소유권 이전
+            }
+            return *this;
+        }
+
+        // 소멸자: RAII 패턴으로 자동 반환
+        ~ScopedObject() {
+            Release();
+        }
+
+        // 명시적 반환
+        void Release() {
+            if (!Released && Pool && Index != INVALID_INDEX) {
+                Pool->ReturnToPoolInternal(Index);
+                Released = true;
+            }
+        }
+
+
+        // 객체 포인터 얻기
+        T* Get() const {
+            return IsValidAccess() ? &(Pool->Objects[Index]) : nullptr;
+        }
+
+        // 유효성 확인
+        bool IsValid() const {
+            return !Released && Pool && Index != INVALID_INDEX &&
+                Pool->IsIndexActive(Index);
+        }
+
+        // 인덱스 접근 
+        size_t GetIndex() const { return Index; }
+
+    private:
+        // 객체 접근 유효성 검사
+        bool IsValidAccess() const {
+            return !(Released || !Pool || Index == INVALID_INDEX || !Pool->IsIndexActive(Index));
+        }
+
+        // 복사 방지
+        ScopedObject(const ScopedObject&) = delete;
+        ScopedObject& operator=(const ScopedObject&) = delete;
+
+        friend class TFixedObjectPool;
+    };
+#pragma endregion
+#pragma region Iterator
+    // 이터레이터 정의
+    class Iterator {
+    private:
+        TFixedObjectPool* Pool;
+        size_t CurrentIndex;
+
+    public:
+        // STL 호환 트레이트
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = ScopedObject;
+        using difference_type = std::ptrdiff_t;
+        using pointer = void;  // ScopedObject는 참조 semantic
+        using reference = ScopedObject;  // 참조 반환
+
+        // 생성자
+        Iterator(TFixedObjectPool* pool, size_t index)
+            : Pool(pool), CurrentIndex(index) {
+        }
+
+        // 역참조 연산자: ScopedObject 반환
+        ScopedObject operator*() const {
+            if (!Pool || CurrentIndex == INVALID_INDEX) {
+                return ScopedObject();  // 무효한 객체 반환
+            }
+            return Pool->CreateScopedObject(CurrentIndex);
+        }
+
+        // 전위 증가
         Iterator& operator++() {
-            if (Current) Current = Current->Next;
+            if (Pool && CurrentIndex != INVALID_INDEX) {
+                CurrentIndex = Pool->NextIndices[CurrentIndex];
+            }
             return *this;
         }
 
@@ -140,9 +135,11 @@ public:
             return tmp;
         }
 
-        // 전위 감소 (이전 요소)
+        // 전위 감소
         Iterator& operator--() {
-            if (Current) Current = Current->Prev;
+            if (Pool && CurrentIndex != INVALID_INDEX) {
+                CurrentIndex = Pool->PrevIndices[CurrentIndex];
+            }
             return *this;
         }
 
@@ -154,115 +151,195 @@ public:
         }
 
         // 비교 연산자
-        bool operator==(const Iterator& other) const { return Current == other.Current; }
-        bool operator!=(const Iterator& other) const { return Current != other.Current; }
+        bool operator==(const Iterator& other) const {
+            return Pool == other.Pool && CurrentIndex == other.CurrentIndex;
+        }
 
-    private:
-        PoolEntry* Current;
+        bool operator!=(const Iterator& other) const {
+            return !(*this == other);
+        }
     };
-
-    // begin과 end 제공
-    Iterator begin() { return Iterator(ActiveHead); }
-    Iterator end() { return Iterator(nullptr); }
-
-    // const 버전
-    Iterator begin() const { return Iterator(const_cast<PoolEntry*>(ActiveHead)); }
 #pragma endregion
-public:
-	// 생성자: 풀 초기화
-	template <typename... Args>
-	TFixedObjectPool(Args&&... args) {
-		for (size_t i = 0; i < N; ++i) {
-			Pool[i] = PoolEntry(std::forward<Args>(args)...);
-		}
-		InActiveFlags.set(); // 모든 객체를 비활성으로 초기화
-	}
+private:
+    // SoA(Structure of Arrays) 패턴 적용
+    std::array<T, N> Objects;                    // 객체 배열
+    std::bitset<N> ActiveFlags;                  // 활성 상태 플래그
+    std::array<size_t, N> PrevIndices;           // 이전 노드 인덱스
+    std::array<size_t, N> NextIndices;           // 다음 노드 인덱스
 
-    // 비활성 객체를 찾아 활성화 후 반환
-    template <typename... Args>
-    std::weak_ptr<T> Acquire(Args&&... args) {
+    size_t ActiveHead = INVALID_INDEX;           // 활성 리스트 시작 인덱스
+    size_t ActiveTail = INVALID_INDEX;           // 활성 리스트 끝 인덱스
+    size_t ActiveCount = 0;                      // 활성 객체 수
+
+private:
+    // 활성 리스트에 인덱스 추가
+    void AddToActiveList(size_t index) {
+        PrevIndices[index] = ActiveTail;
+        NextIndices[index] = INVALID_INDEX;
+
+        if (ActiveTail != INVALID_INDEX) {
+            NextIndices[ActiveTail] = index;
+        }
+
+        ActiveTail = index;
+
+        if (ActiveHead == INVALID_INDEX) {
+            ActiveHead = index;
+        }
+    }
+
+    // 활성 리스트에서 인덱스 제거
+    void RemoveFromActiveList(size_t index) {
+        size_t prev = PrevIndices[index];
+        size_t next = NextIndices[index];
+
+        if (prev != INVALID_INDEX) {
+            NextIndices[prev] = next;
+        }
+        else {
+            ActiveHead = next;
+        }
+
+        if (next != INVALID_INDEX) {
+            PrevIndices[next] = prev;
+        }
+        else {
+            ActiveTail = prev;
+        }
+
+        PrevIndices[index] = INVALID_INDEX;
+        NextIndices[index] = INVALID_INDEX;
+    }
+
+    // 비활성 객체 인덱스 찾기
+    size_t FindInactiveIndex() const {
         if (ActiveCount >= N) {
-            return std::weak_ptr<T>(); // 풀이 꽉찬 경우 빈 weak_ptr 반환
+            return INVALID_INDEX;
+        }
+
+        for (size_t i = 0; i < N; ++i) {
+            if (!ActiveFlags[i]) {
+                return i;
+            }
+        }
+
+        return INVALID_INDEX;
+    }
+
+    // 인덱스가 활성 상태인지 확인
+    bool IsIndexActive(size_t index) const {
+        return index < N && ActiveFlags[index];
+    }
+
+    // ScopedObject 생성 헬퍼 메소드
+    ScopedObject CreateScopedObject(size_t index) {
+        return ScopedObject(this, index);
+    }
+
+    // 내부 반환 메소드 - ScopedObject에서 호출
+    void ReturnToPoolInternal(size_t index) {
+        if (index >= N || !ActiveFlags[index]) {
+            return; // 이미 비활성 상태
+        }
+
+        // 상태 업데이트
+        ActiveFlags.reset(index);
+        ActiveCount--;
+        RemoveFromActiveList(index);
+    }
+
+public:
+    // 생성자: 풀 초기화
+    TFixedObjectPool() {
+        for (size_t i = 0; i < N; ++i) {
+            PrevIndices[i] = INVALID_INDEX;
+            NextIndices[i] = INVALID_INDEX;
+        }
+    }
+
+    // 비활성 객체를 찾아 활성화 후 ScopedObject 반환
+    template <typename... Args>
+    ScopedObject Acquire(Args&&... args) {
+        if (ActiveCount >= N) {
+            return ScopedObject(); // 유효하지 않은 객체
         }
 
         // 비활성 객체 찾기
-        size_t index = FindFirstSetBit();
-        if (index >= N) {
-            return std::weak_ptr<T>(); // 비정상 상황 방지
+        size_t index = FindInactiveIndex();
+        if (index == INVALID_INDEX) {
+            return ScopedObject(); // 유효하지 않은 객체
         }
 
-        PoolEntry& entry = Pool[index];
-        entry.bIsActive = true;
-        InActiveFlags.reset(index);
+        ActiveFlags.set(index);
         ActiveCount++;
 
         // 활성 리스트에 추가
-        AddToActiveList(&entry);
+        AddToActiveList(index);
 
-        return std::weak_ptr<T>(entry.Object);
+        return CreateScopedObject(index);
     }
-    //꽉찬 경우 가장 오래된 객체 초기화후 반환
+
+    // 꽉찬 경우 가장 오래된 객체 초기화 후 ScopedObject 반환
     template <typename... Args>
-    std::weak_ptr<T> AcquireForcely(Args&&... args) {
+    ScopedObject AcquireForcely(Args&&... args) {
         if (ActiveCount < N) {
-            // 풀이 꽉 차지 않았다면 Acquire와 동일하게 동작
             return Acquire(std::forward<Args>(args)...);
         }
 
-        // 풀이 꽉 찬 경우: 가장 오래된 활성 객체를 재사용
-        if (!ActiveHead) {
-            return std::weak_ptr<T>(); // 비정상 상황 방지
+        if (ActiveHead == INVALID_INDEX) {
+            return ScopedObject();
         }
 
-        PoolEntry* oldest = ActiveHead;
-        RemoveFromActiveList(oldest); // 리스트에서 제거
+        size_t oldestIndex = ActiveHead;
 
-        AddToActiveList(oldest); // 다시 리스트 끝에 추가 (최신 객체로 갱신)
-        return std::weak_ptr<T>(oldest->Object);
+        // 리스트 재정렬
+        RemoveFromActiveList(oldestIndex);
+        AddToActiveList(oldestIndex);
+
+        return CreateScopedObject(oldestIndex);
     }
 
-    // 객체를 풀에 반납
-    void ReturnToPool(std::weak_ptr<T> weakObj) {
-        if (auto sharedObj = weakObj.lock()) {
-            // 풀 내 객체인지 확인하고 비활성화
-            for (size_t i = 0; i < N; ++i) {
-                if (Pool[i].Object == sharedObj) {
-                    PoolEntry& entry = Pool[i];
-                    if (!entry.bIsActive) {
-                        return; // 이미 비활성 상태라면 무시
-                    }
-                    entry.bIsActive = false;
-                    InActiveFlags.set(i);
-                    ActiveCount--;
-                    RemoveFromActiveList(&entry);
-                    return;
-                }
-            }
-        }
+    // 이전과의 호환성을 위한 ReturnToPool 메소드
+    // ScopedObject는 자동으로 반환되므로 이 메소드는 명시적 Release 호출 용도
+    void ReturnToPool(ScopedObject& scopedObj) {
+        scopedObj.Release();
     }
 
     // 모든 활성 객체 비활성화
     void ClearAllActives() {
-        PoolEntry* current = ActiveHead;
-        while (current) {
-            PoolEntry* Next = current->Next;
-            current->bIsActive = false;
-            InActiveFlags.set(current - Pool.data()); // 인덱스 계산
-            current->Prev = nullptr;
-            current->Next = nullptr;
-            current = Next;
+        size_t current = ActiveHead;
+        while (current != INVALID_INDEX) {
+            size_t next = NextIndices[current];
+
+            // 소멸자 호출
+            Objects[current].~T();
+
+            ActiveFlags.reset(current);
+            PrevIndices[current] = INVALID_INDEX;
+            NextIndices[current] = INVALID_INDEX;
+
+            current = next;
         }
-        ActiveHead = nullptr;
-        ActiveTail = nullptr;
+
+        ActiveHead = INVALID_INDEX;
+        ActiveTail = INVALID_INDEX;
         ActiveCount = 0;
     }
+
+    // 활성 객체 반복용 반복자
+    Iterator begin() { return Iterator(this, ActiveHead); }
+    Iterator end() { return Iterator(this, INVALID_INDEX); }
+
+    // const 버전
+    Iterator begin() const { return Iterator(const_cast<TFixedObjectPool*>(this), ActiveHead); }
+    Iterator end() const { return Iterator(const_cast<TFixedObjectPool*>(this), INVALID_INDEX); }
 
     // 활성 객체 수 반환
     size_t GetActiveCount() const {
         return ActiveCount;
     }
 
-    // 풀 내 총 객체 수 반환 (활성 + 비활성)
+    // 풀 내 총 객체 수 반환
     size_t GetPoolCount() const {
         return N;
     }
@@ -277,7 +354,7 @@ public:
         return ActiveCount >= N;
     }
 
-    // 소멸자: 자원 정리 (필요 시 명시적 호출 가능)
+    // 소멸자: 자원 정리
     ~TFixedObjectPool() {
         ClearAllActives();
     }

@@ -23,8 +23,8 @@ void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const
 }
 void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = FixedPool.AcquireForcely();
-	auto DrawDebugPtr = DrawDebug.lock();
+	auto DrawDebug = FixedPool->AcquireForcely();
+	auto DrawDebugPtr = DrawDebug.Get();
 	if (!DrawDebugPtr)
 	{
 		//LOG_FUNC_CALL("Allocation Faied!");
@@ -46,8 +46,8 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 }
 void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)
 {
-	auto DrawDebug = FixedPool.AcquireForcely();
-	auto DrawDebugPtr = DrawDebug.lock();
+	auto DrawDebug = FixedPool->AcquireForcely();
+	auto DrawDebugPtr = DrawDebug.Get();
 	if (!DrawDebugPtr)
 	{
 		//LOG_FUNC_CALL("Allocation Faied!");
@@ -84,8 +84,9 @@ void UDebugDrawManager::SetupPrimitive(UPrimitiveComponent* TargetPrimitive,
 	TargetPrimitive->SetColor(Color);
 }
 
-UDebugDrawManager::UDebugDrawManager() : FixedPool()
+UDebugDrawManager::UDebugDrawManager()
 {
+	FixedPool = std::make_unique< TFixedObjectPool<FDebugShape, 128>>();
 }
 
 void UDebugDrawManager::Initialize()
@@ -99,19 +100,17 @@ void UDebugDrawManager::Initialize()
 
 void UDebugDrawManager::Render(URenderer* InRenderer)
 {
-	for (const auto& drawObjectWeak : FixedPool)
+	for (const auto& drawObject : *FixedPool)
 	{
-		auto drawObject = drawObjectWeak.lock();
-
-		if (!drawObject)
+		auto Draw = drawObject.Get();
+		if (!Draw)
 		{
-			LOG_FUNC_CALL("[Warning] Wrong DebugRender Elements! DebugDrawer no works clearly");
+			LOG_FUNC_CALL("Invalid Pool Works");
 			continue;
 		}
-
 		FRenderJob RenderJob = InRenderer->AllocateRenderJob<FRenderDataSimpleColor>();
 		RenderJob.RenderState = ERenderStateType::Wireframe;
-		auto Primitive = drawObject->Primitive.get();
+		auto Primitive = Draw->Primitive.get();
 		auto Camera = USceneManager::Get()->GetActiveCamera();
 		if (Primitive && Camera)
 		{
@@ -125,32 +124,24 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 
 void UDebugDrawManager::Tick(const float DeltaTime)
 {
-	std::vector<std::weak_ptr<FDebugShape>> ReturnDraws;
-	ReturnDraws.reserve(FixedPool.GetActiveCount());
-
-	for (const auto& Draw : FixedPool)
+	for (auto drawObject : (*FixedPool))
 	{
-		auto DrawPtr = Draw.lock();
-		if (!DrawPtr)
+		auto Draw = drawObject.Get();
+		if (!Draw)
 		{
-			LOG_FUNC_CALL("[Warning] Pool works inproperly!");
+			LOG_FUNC_CALL("Invalid Pool Works");
 			continue;
 		}
-
-		if (DrawPtr->bPersistent)
+	
+		if (Draw->bPersistent)
 			continue;
 
-		DrawPtr->RemainingTime -= DeltaTime;
-		if (DrawPtr->RemainingTime < 0.0f)
+		Draw->RemainingTime -= DeltaTime;
+		if (Draw->RemainingTime < 0.0f)
 		{
-			DrawPtr->Reset();
-			ReturnDraws.push_back(Draw);
+			Draw->Reset();
+			drawObject.Release();
 		}
-	}
-
-	for (auto draw : ReturnDraws)
-	{
-		FixedPool.ReturnToPool(draw);
 	}
 
 	//const auto& AfterActiveDraws = Pool.GetActiveObjects();

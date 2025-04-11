@@ -18,7 +18,7 @@
 
 #include "RenderDataTexture.h"
 
-UGameplayScene01::UGameplayScene01() : ElasticBodyPool()
+UGameplayScene01::UGameplayScene01()
 {
     InputContext = UInputContext::Create(SceneName);
 }
@@ -46,6 +46,8 @@ void UGameplayScene01::Load()
     //TileMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_TILE);
     PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
     //DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
+
+    ElasticBodyPool = std::make_unique< TFixedObjectPool<UElasticBody, 512>>();
 }
 
 void UGameplayScene01::Unload()
@@ -55,7 +57,7 @@ void UGameplayScene01::Unload()
 
     //활성화 바디 상태 초기화
     //객체풀 클리어
-    ElasticBodyPool.ClearAllActives();
+    ElasticBodyPool = nullptr;
 
     // 주요 객체 해제
     Camera = nullptr;
@@ -80,9 +82,9 @@ void UGameplayScene01::Tick(float DeltaTime)
     }
 
     // 모든 탄성체 업데이트
-    for (auto body : ElasticBodyPool)
+    for (auto body : *ElasticBodyPool)
     {
-        body.lock()->Tick(DeltaTime);
+        body.Get()->Tick(DeltaTime);
     }
 
 }
@@ -124,9 +126,9 @@ void UGameplayScene01::SubmitRenderUI()
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);
         if (ImGui::Checkbox("bGravity", &bGravity))
         {
-            for (auto body : ElasticBodyPool)
+            for (auto body : *ElasticBodyPool)
             {
-                body.lock()->SetGravity(bGravity);
+                body.Get()->SetGravity(bGravity);
             }
         }
         if(ImGui::Button("Spawn"))
@@ -222,7 +224,7 @@ void UGameplayScene01::SetupInput()
                                                     "CameraMove");
 }
 
-void UGameplayScene01::SetupBorderTriggers(weak_ptr<UElasticBody>& InBody)
+void UGameplayScene01::SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody)
 {
     auto IsInBorder = [this](const Vector3& Position) {
         return std::abs(Position.x) < XBorder &&
@@ -283,8 +285,8 @@ void UGameplayScene01::SetupBorderTriggers(weak_ptr<UElasticBody>& InBody)
 void UGameplayScene01::SpawnElasticBody()
 {
     ////auto body = UGameObject::Create<UElasticBody>();
-    auto bodyWeak = ElasticBodyPool.AcquireForcely();
-    auto body = bodyWeak.lock();
+    auto bodyWeak = ElasticBodyPool->AcquireForcely();
+    auto body = bodyWeak.Get();
     body->PostInitialized();
     body->PostInitializedComponents();
 
@@ -299,7 +301,8 @@ void UGameplayScene01::SpawnElasticBody()
 
     auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
     Primitive->SetMaterial(PoleMaterialHandle);
-    SetupBorderTriggers(bodyWeak);
+
+    SetupBorderTriggers();
 
     LOG("ElasticBody Count : %03d", ElasticBodyPool.GetActiveCount());
 }
