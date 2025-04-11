@@ -117,15 +117,15 @@ void UGameplayScene02::Load()
 
 void UGameplayScene02::Unload()
 {
-    // 입력 컨텍스트 삭제
-    UInputManager::Get()->UnregisterInputContext(SceneName);
-
     // 주요 객체 해제
     Character->SetActive(false);
     Character2->SetActive(false);
     Character = nullptr;
     Character2 = nullptr;
     Camera = nullptr;
+
+    // 입력 컨텍스트 삭제
+    UInputManager::Get()->UnregisterInputContext(SceneName);
 }
 
 void UGameplayScene02::Tick(float DeltaTime)
