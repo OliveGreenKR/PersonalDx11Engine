@@ -34,8 +34,8 @@ void UGameObject::PostInitializedComponents()
 
 	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponent>().lock())
 	{
-		CollisionComp->OnCollisionEnter.Bind(weak_from_this(), &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
-		CollisionComp->OnCollisionExit.Bind(weak_from_this(), &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
+		CollisionComp->OnCollisionEnter.Bind(this, &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
+		CollisionComp->OnCollisionExit.Bind(this, &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
 	}
 }
 

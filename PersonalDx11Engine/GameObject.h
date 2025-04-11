@@ -1,16 +1,17 @@
-﻿#pragma once
+#pragma once
 #include "Transform.h"
 #include <memory>
 #include "Color.h"
 #include "Delegate.h"
 #include "ActorComponent.h"
 #include "SceneComponent.h"
+#include "Object.h"
 
 using namespace std;
 
 class UModel;
 
-class UGameObject : public std::enable_shared_from_this<UGameObject>
+class UGameObject :  public UObject, public std::enable_shared_from_this<UGameObject>
 {
 private:
 	template<typename T>

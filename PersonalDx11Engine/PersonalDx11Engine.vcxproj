@@ -158,6 +158,7 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
@@ -189,7 +190,7 @@
     <ClInclude Include="DebugDrawerManager.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
-    <ClInclude Include="DelegateBindableInterface.h" />
+    <ClInclude Include="BindableInterface.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="ElasticBody.h">
@@ -209,6 +210,7 @@
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="FixedObjectPool.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />

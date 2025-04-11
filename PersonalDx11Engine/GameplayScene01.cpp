@@ -91,10 +91,10 @@ void UGameplayScene01::Tick(float DeltaTime)
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
 {
-    for (auto body : ElasticBodyPool)
+    for (auto body : *ElasticBodyPool)
     {
         FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
-        auto Primitive = body.lock()->GetComponentByType<UPrimitiveComponent>();
+        auto Primitive = body.Get()->GetComponentByType<UPrimitiveComponent>();
         if (Primitive)
         {
             if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
@@ -224,7 +224,7 @@ void UGameplayScene01::SetupInput()
                                                     "CameraMove");
 }
 
-void UGameplayScene01::SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody)
+void UGameplayScene01::SetupBorderTriggers(UElasticBody* InBody)
 {
     auto IsInBorder = [this](const Vector3& Position) {
         return std::abs(Position.x) < XBorder &&
@@ -232,16 +232,16 @@ void UGameplayScene01::SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody)
             std::abs(Position.z) < ZBorder;
         };
     
-    if (!InBody.lock())
+    if (!InBody)
     {
         return;
     }
 
-    InBody.lock()->GetRootComp()->OnWorldTransformChangedDelegate.Bind(
+    InBody->GetRootComp()->OnWorldTransformChangedDelegate.Bind(
         InBody, // 여기서는 객체를 전달해야 함
         [IsInBorder, this, InBody](const FTransform& InTransform) {
             // 약한 참조에서 유효한 공유 포인터를 획득
-            if (auto Body = InBody.lock()) {
+            if (auto Body = InBody) {
                 if (!IsInBorder(InTransform.Position))
                 {
                     const Vector3 Position = InTransform.Position;
@@ -285,8 +285,8 @@ void UGameplayScene01::SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody)
 void UGameplayScene01::SpawnElasticBody()
 {
     ////auto body = UGameObject::Create<UElasticBody>();
-    auto bodyWeak = ElasticBodyPool->AcquireForcely();
-    auto body = bodyWeak.Get();
+    auto bodyScoped = ElasticBodyPool->AcquireForcely();
+    auto body = bodyScoped.Get();
     body->PostInitialized();
     body->PostInitializedComponents();
 
@@ -302,17 +302,14 @@ void UGameplayScene01::SpawnElasticBody()
     auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
     Primitive->SetMaterial(PoleMaterialHandle);
 
-    SetupBorderTriggers();
+    SetupBorderTriggers(body);
 
-    LOG("ElasticBody Count : %03d", ElasticBodyPool.GetActiveCount());
+    LOG("ElasticBody Count : %03d", ElasticBodyPool->GetActiveCount());
 }
 
 void UGameplayScene01::DeSpawnElasticBody()
 {
     //가장 오래된 바디 비활성화    
-    auto it = ElasticBodyPool.begin();
-    if ((*it).lock())
-    {
-        ElasticBodyPool.ReturnToPool(*it);
-    }
+    auto it = ElasticBodyPool->begin();
+    (*it).Release();
 }

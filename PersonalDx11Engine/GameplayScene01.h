@@ -32,7 +32,7 @@ public:
 
 private:
     void SetupInput();
-    void SetupBorderTriggers(std::weak_ptr<UElasticBody>& InBody);
+    void SetupBorderTriggers(UElasticBody* InBody);
     void SpawnElasticBody();
     void DeSpawnElasticBody();
 

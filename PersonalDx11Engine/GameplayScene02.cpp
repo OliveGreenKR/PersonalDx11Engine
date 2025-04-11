@@ -583,8 +583,7 @@ void UGameplayScene02::SetupBorderTriggers()
             std::abs(Position.z) < ZBorder;
         };
 
-    auto weakChacter = std::weak_ptr(Character);
-    Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(weakChacter,
+    Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character.get(),
                                                                [IsInBorder, this](const FTransform& InTransform) {
                                                                    if (!IsInBorder(InTransform.Position))
                                                                    {
@@ -623,7 +622,7 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                },
                                                                "BorderCheck");
     auto weakChacter2 = std::weak_ptr(Character2);
-    Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(weakChacter2,
+    Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character.get(),
                                                                 [IsInBorder, this](const FTransform& InTransform) {
                                                                     if (!IsInBorder(InTransform.Position))
                                                                     {

@@ -81,7 +81,7 @@ public:
             MapAction(Action);
         }
 
-        ActionEventDelegates[EventType][ActionName].Bind(InObject, InFunction, InFunctionName);
+        ActionEventDelegates[EventType][ActionName].Bind(InObject.lock().get(), InFunction, InFunctionName);
     }
 
     // 액션 바인딩 (객체 없이 사용) - Action 객체 직접 사용

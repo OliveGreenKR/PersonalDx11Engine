@@ -1,12 +1,15 @@
 #pragma once
-#pragma once
 
 #include <functional>
 #include <vector>
 #include <string>
-#include <memory>
 #include <algorithm>
 #include <unordered_map>
+#include "BindableInterface.h"
+
+// 객체가 IBindable을 구현했는지 확인하는 헬퍼 함수
+template<typename T>
+constexpr bool IsBindable = std::is_base_of_v<IBindable, T>;
 
 template<typename... Args>
 class FDelegate
@@ -19,9 +22,9 @@ private:
     struct FBoundFunction
     {
         FunctionType Function;
-        std::weak_ptr<void> BoundObject;  // void 타입으로 모든 객체 타입 지원
+        IBindable* BoundObject;
         std::string FunctionName;
-        bool bSystem = false;
+        bool bSystem;
 
         bool operator==(const FBoundFunction& Other) const
         {
@@ -34,26 +37,30 @@ private:
             // 하나만 시스템 함수인 경우
             if (bSystem || Other.bSystem)
             {
-                return false;  // 시스템 함수와 객체 함수는 절대 같을 수 없음
+                return false;
             }
 
             // 둘 다 객체에 바인딩된 함수인 경우
-            bool bSameObject = !BoundObject.owner_before(Other.BoundObject) &&
-                !Other.BoundObject.owner_before(BoundObject);
-
-            return bSameObject && (FunctionName == Other.FunctionName);
+            return BoundObject == Other.BoundObject && FunctionName == Other.FunctionName;
         }
     };
 
     std::vector<FBoundFunction> BoundFunctions;
 
+    // 자신을 키로 사용하는 고유 포인터
+    void* GetKeyForThis() const { return const_cast<FDelegate*>(this); }
+
 public:
-    // 시스템 함수 바인딩 (객체 없이 함수만 바인딩)
-    void BindSystem(const std::function<void(Args...)>& InFunction,
-                    const std::string& InFunctionName)
+    ~FDelegate()
     {
-        // 시스템 함수
-        FBoundFunction NewBinding{ InFunction, std::weak_ptr<void>(), InFunctionName ,true };
+        UnbindAll();
+    }
+
+    // 시스템 함수 바인딩 (객체 없이 함수만 바인딩)
+    void BindSystem(const FunctionType& InFunction, const std::string& InFunctionName)
+    {
+        // 이미 동일한 함수가 바인딩되어 있는지 확인
+        FBoundFunction NewBinding{ InFunction, nullptr, InFunctionName, true };
 
         // 중복 바인딩 방지
         auto ExistingBinding = std::find_if(
@@ -80,23 +87,22 @@ public:
                 BoundFunctions.end(),
                 [&](const FBoundFunction& Binding)
                 {
-                    return Binding.bSystem &&
-                        Binding.FunctionName == InFunctionName;
+                    return Binding.bSystem && Binding.FunctionName == InFunctionName;
                 }
             ),
             BoundFunctions.end()
         );
     }
 
-
-    // 멤버 함수를 델리게이트에 바인딩
-    template<typename T>
-    void Bind(const std::weak_ptr<T>& InObject,
-              const FunctionType& InFunction,
-              const std::string& InFunctionName)
+    // 함수를 델리게이트에 바인딩 - IBindable 구현 객체용
+    template<typename T, typename = std::enable_if_t<IsBindable<T>>>
+    void Bind(T* InObject, const FunctionType& InFunction, const std::string& InFunctionName)
     {
+        if (!InObject)
+            return;
+
         // 이미 존재하는지 확인
-        FBoundFunction NewBinding{ InFunction, InObject, InFunctionName };
+        FBoundFunction NewBinding{ InFunction, InObject, InFunctionName, false };
 
         // 중복 바인딩 방지
         auto ExistingBinding = std::find_if(
@@ -110,21 +116,27 @@ public:
 
         if (ExistingBinding == BoundFunctions.end())
         {
+            // 객체에 삭제 콜백 등록
+            InObject->RegisterDeletionCallback(GetKeyForThis(), [this, InObject, InFunctionName]() {
+                this->Unbind(InObject, InFunctionName);
+                                               });
+
             BoundFunctions.push_back(std::move(NewBinding));
         }
     }
 
-    // 멤버 함수 포인터를 위한 새로운 오버로드 추가
-    template<typename U, typename T>
-    void Bind(const std::weak_ptr<U>& InObject,
-              void (T::* MemberFunction)(Args...),
-              const std::string& InFunctionName)
+    // 멤버 함수 포인터를 위한 오버로드 - IBindable 구현 객체용
+    template<typename U, typename T, typename = std::enable_if_t<IsBindable<U>>>
+    void Bind(U* InObject, void (T::* MemberFunction)(Args...), const std::string& InFunctionName)
     {
-        static_assert(std::is_base_of_v<U, T> || std::is_same_v<T, U>,
+        static_assert(std::is_base_of_v<T, U> || std::is_same_v<T, U>,
                       "U must be base of T or same type");
 
+        if (!InObject)
+            return;
+
         FunctionType BoundFunction = [InObject, MemberFunction](Args... args) {
-            (static_cast<T*>(InObject.lock().get())->*MemberFunction)(std::forward<Args>(args)...);
+            (static_cast<T*>(InObject)->*MemberFunction)(std::forward<Args>(args)...);
             };
 
         Bind(InObject, BoundFunction, InFunctionName);
@@ -132,27 +144,26 @@ public:
 
     // 특정 객체의 특정 함수를 언바인딩
     template<typename T>
-    void Unbind(const std::weak_ptr<T>& InObject, const std::string& InFunctionName)
+    void Unbind(T* InObject, const std::string& InFunctionName)
     {
+        if (!InObject)
+            return;
+
+        // IBindable 인터페이스 구현 확인
+        if constexpr (IsBindable<T>)
+        {
+            InObject->UnregisterDeletionCallback(GetKeyForThis());
+        }
+
         BoundFunctions.erase(
             std::remove_if(
                 BoundFunctions.begin(),
                 BoundFunctions.end(),
                 [&](const FBoundFunction& Binding)
                 {
-                    if (Binding.FunctionName != InFunctionName)
-                    {
-                        return false;
-                    }
-
-                    auto BoundObjectLocked = Binding.BoundObject.lock();
-                    if (!BoundObjectLocked)
-                    {
-                        // 객체가 이미 삭제됨
-                        return true;
-                    }
-
-                    return BoundObjectLocked == InObject;
+                    return !Binding.bSystem &&
+                        Binding.BoundObject == InObject &&
+                        Binding.FunctionName == InFunctionName;
                 }
             ),
             BoundFunctions.end()
@@ -161,22 +172,24 @@ public:
 
     // 특정 객체의 모든 바인딩 제거
     template<typename T>
-    void UnbindAll(const std::weak_ptr<T>& InObject)
+    void UnbindAll(T* InObject)
     {
+        if (!InObject)
+            return;
+
+        // IBindable 인터페이스 구현 확인
+        if constexpr (IsBindable<T>)
+        {
+            InObject->UnregisterDeletionCallback(GetKeyForThis());
+        }
+
         BoundFunctions.erase(
             std::remove_if(
                 BoundFunctions.begin(),
                 BoundFunctions.end(),
                 [&](const FBoundFunction& Binding)
                 {
-                    auto BoundObjectLocked = Binding.BoundObject.lock();
-                    if (!BoundObjectLocked)
-                    {
-                        // 객체가 이미 삭제됨
-                        return true;
-                    }
-
-                    return BoundObjectLocked == InObject;
+                    return !Binding.bSystem && Binding.BoundObject == InObject;
                 }
             ),
             BoundFunctions.end()
@@ -186,75 +199,54 @@ public:
     // 모든 바인딩 제거
     void UnbindAll()
     {
+        // 모든 객체에서 콜백 등록 해제
+        for (const auto& Binding : BoundFunctions)
+        {
+            if (!Binding.bSystem && Binding.BoundObject)
+            {
+                Binding.BoundObject->UnregisterDeletionCallback(GetKeyForThis());
+            }
+        }
+
         BoundFunctions.clear();
     }
 
-    // 델리게이트 실행 (살아있는 객체의 함수만 호출)
-    void Broadcast(Args... InArgs) 
+    // 모든 시스템 바인딩 제거
+    void UnbindAllSystem()
     {
-        bool isDirty = false;
+        BoundFunctions.erase(
+            std::remove_if(
+                BoundFunctions.begin(),
+                BoundFunctions.end(),
+                [](const FBoundFunction& Binding)
+                {
+                    return Binding.bSystem;
+                }
+            ),
+            BoundFunctions.end()
+        );
+    }
+
+    // 델리게이트 실행
+    void Broadcast(Args... InArgs) const
+    {
         for (const auto& Binding : BoundFunctions)
         {
-            // 객체에 바인딩된 함수의 경우 객체 생존 확인
-            if (!Binding.bSystem)
+            if (Binding.bSystem)
             {
-                if (auto BoundObject = Binding.BoundObject.lock())
+                if (Binding.Function)
                 {
-                    if (!BoundObject)
-                    {
-                        isDirty = true;
-                        continue;
-                    }
-
-                    if (Binding.Function)
-                    {
-                        Binding.Function(InArgs...);
-                    }
+                    Binding.Function(std::forward<Args>(InArgs)...);
                 }
             }
-            // 시스템 함수는 객체 확인 없이 직접 호출
-            else if (Binding.Function)
+            else if (Binding.BoundObject)
             {
-                Binding.Function(InArgs...);
+                if (Binding.Function)
+                {
+                    Binding.Function(std::forward<Args>(InArgs)...);
+                }
             }
         }
-
-        if (isDirty)
-        {
-            RemoveExpiredBindings();
-        }
-    }
-
-    // 정리 함수 - 삭제된 객체의 바인딩을 제거
-    void RemoveExpiredBindings()
-    {
-        BoundFunctions.erase(
-            std::remove_if(
-                BoundFunctions.begin(),
-                BoundFunctions.end(),
-                [](const FBoundFunction& Binding)
-                {
-                    return !Binding.bSystem && Binding.BoundObject.expired();
-                }
-            ),
-            BoundFunctions.end()
-        );
-    }
-
-    // 정리 함수 - null을 참조하고 있는 모든 바인딩 제거(시스템포함)
-    void RemoveSystemBindings()
-    {
-        BoundFunctions.erase(
-            std::remove_if(
-                BoundFunctions.begin(),
-                BoundFunctions.end(),
-                [](const FBoundFunction& Binding)
-                {
-                    return Binding.bSystem || Binding.BoundObject.expired();
-                }
-            ),
-            BoundFunctions.end()
-        );
     }
 
     // 바인딩된 함수의 수 반환

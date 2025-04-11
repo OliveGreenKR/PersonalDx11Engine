@@ -5,10 +5,11 @@
 #include <queue>
 #include <iostream>
 #include "TypeCast.h"
+#include "Object.h"
 
 class UGameObject;
 
-class UActorComponent : public std::enable_shared_from_this<UActorComponent>
+class UActorComponent : public std::enable_shared_from_this<UActorComponent>, public UObject
 {
 public:
 	// 토큰 클래스

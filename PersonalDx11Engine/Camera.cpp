@@ -19,7 +19,7 @@ void UCamera::Tick(float DeltaTime)
 void UCamera::PostInitialized()
 {
 	UGameObject::PostInitialized();
-	GetRootComp()->OnWorldTransformChangedDelegate.Bind(weak_from_this(), &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
+	GetRootComp()->OnWorldTransformChangedDelegate.Bind(this, &UCamera::OnTransformChanged, "OnTransformChanged_Camera");
 }
 
 const Matrix UCamera::GetViewMatrix() const

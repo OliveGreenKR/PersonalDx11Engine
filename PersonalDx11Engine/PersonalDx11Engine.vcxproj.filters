@@ -30,13 +30,13 @@
       <Filter>D3D</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Engine\GameObject\Camera</Filter>
+      <Filter>Engine\Object\GameObject\Camera</Filter>
     </ClCompile>
     <ClCompile Include="D3DShader.cpp">
       <Filter>Engine\Resources\Shader</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>Engine\GameObject</Filter>
+      <Filter>Engine\Object\GameObject</Filter>
     </ClCompile>
     <ClCompile Include="Math.cpp">
       <Filter>Engine\Math</Filter>
@@ -45,13 +45,13 @@
       <Filter>Engine\Math</Filter>
     </ClCompile>
     <ClCompile Include="RigidBodyComponent.cpp">
-      <Filter>Engine\Components\RigidBody</Filter>
+      <Filter>Engine\Object\Components\RigidBody</Filter>
     </ClCompile>
     <ClCompile Include="CollisionComponent.cpp">
-      <Filter>Engine\Components\Collision</Filter>
+      <Filter>Engine\Object\Components\Collision</Filter>
     </ClCompile>
     <ClCompile Include="ActorComponent.cpp">
-      <Filter>Engine\Components\ActorComponent</Filter>
+      <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClCompile>
     <ClCompile Include="ElasticBody.cpp">
       <Filter>Contents\ElasticBody</Filter>
@@ -81,10 +81,10 @@
       <Filter>Contents\Scenes\Scene2</Filter>
     </ClCompile>
     <ClCompile Include="PrimitiveComponent.cpp">
-      <Filter>Engine\Components\ActorComponent\Scene\Primitive</Filter>
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Primitive</Filter>
     </ClCompile>
     <ClCompile Include="SceneComponent.cpp">
-      <Filter>Engine\Components\ActorComponent\Scene</Filter>
+      <Filter>Engine\Object\Components\ActorComponent\Scene</Filter>
     </ClCompile>
     <ClCompile Include="RenderContext.cpp">
       <Filter>Engine\Renderer</Filter>
@@ -122,6 +122,9 @@
     <ClCompile Include="DebugDrawerManager.cpp">
       <Filter>Engine\Managers\DebugDrawer</Filter>
     </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Engine\Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -151,35 +154,17 @@
     <Filter Include="HLSL">
       <UniqueIdentifier>{cfce8272-d447-4f37-923b-163defeb23db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\GameObject">
-      <UniqueIdentifier>{676a394e-aa58-4da8-a083-26ce189609f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\GameObject\Camera">
-      <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Input">
       <UniqueIdentifier>{959278a9-40d6-421c-b1b0-cf28bbf270ad}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Delegate">
       <UniqueIdentifier>{bfc2cec4-294c-461a-bb81-22865ef0ab6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Components">
-      <UniqueIdentifier>{1c245548-bed2-4957-800d-fb2e516feae0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Managers">
       <UniqueIdentifier>{f545c3d7-a84c-4cf8-ad2d-1b86e7083b88}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Components\RigidBody">
-      <UniqueIdentifier>{97afcc3b-a5d4-4070-a7ff-2ae2714cdd63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Components\Collision">
-      <UniqueIdentifier>{f8174b14-3bde-47c9-8241-dff6b2941076}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\DataStructure">
       <UniqueIdentifier>{3789f00b-54d1-4c05-b63f-fa85424a14d0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Components\ActorComponent">
-      <UniqueIdentifier>{31f86bb6-e4bf-499d-8b15-d73ae7bd0585}</UniqueIdentifier>
     </Filter>
     <Filter Include="Contents">
       <UniqueIdentifier>{59fe685c-6920-4443-bf8d-3ab9ea70edbc}</UniqueIdentifier>
@@ -223,9 +208,6 @@
     <Filter Include="Contents\Scenes\Scene2">
       <UniqueIdentifier>{e9b29a5b-ecca-4913-93ab-6f047d3670ed}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Components\ActorComponent\Scene">
-      <UniqueIdentifier>{b340809a-6ee0-476d-921b-78c17dd988d5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Core">
       <UniqueIdentifier>{9706677a-0640-455f-b237-cc37c18e125a}</UniqueIdentifier>
     </Filter>
@@ -240,12 +222,6 @@
     </Filter>
     <Filter Include="Engine\Resources\Shader\Vertex">
       <UniqueIdentifier>{3fbdeccb-0d68-4a62-a070-e2eb4414dcc3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Components\ActorComponent\Scene\Primitive">
-      <UniqueIdentifier>{ebbd8135-22e8-4dfb-b9a8-242f3b6fc427}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Components\ActorComponent\Scene\testScene">
-      <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Renderer\RenderData">
       <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
@@ -289,6 +265,36 @@
     <Filter Include="Engine\UserConfig">
       <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Object">
+      <UniqueIdentifier>{bd7e67fd-9a5f-4f5c-93f1-dfa020fe1457}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\GameObject">
+      <UniqueIdentifier>{676a394e-aa58-4da8-a083-26ce189609f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\GameObject\Camera">
+      <UniqueIdentifier>{a620b8dd-3d1f-4c1c-ba0a-dc547a2111e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components">
+      <UniqueIdentifier>{1c245548-bed2-4957-800d-fb2e516feae0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\RigidBody">
+      <UniqueIdentifier>{97afcc3b-a5d4-4070-a7ff-2ae2714cdd63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\Collision">
+      <UniqueIdentifier>{f8174b14-3bde-47c9-8241-dff6b2941076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent">
+      <UniqueIdentifier>{31f86bb6-e4bf-499d-8b15-d73ae7bd0585}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene">
+      <UniqueIdentifier>{b340809a-6ee0-476d-921b-78c17dd988d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\Primitive">
+      <UniqueIdentifier>{ebbd8135-22e8-4dfb-b9a8-242f3b6fc427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\testScene">
+      <UniqueIdentifier>{13050b5e-b382-464d-9564-554b89c7f06a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -325,7 +331,7 @@
       <Filter>Engine\Model</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Engine\GameObject\Camera</Filter>
+      <Filter>Engine\Object\GameObject\Camera</Filter>
     </ClInclude>
     <ClInclude Include="D3DShader.h">
       <Filter>Engine\Resources\Shader</Filter>
@@ -337,7 +343,7 @@
       <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>Engine\GameObject</Filter>
+      <Filter>Engine\Object\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="Frustum.h">
       <Filter>Engine\Math</Filter>
@@ -346,10 +352,10 @@
       <Filter>Engine\Delegate</Filter>
     </ClInclude>
     <ClInclude Include="RigidBodyComponent.h">
-      <Filter>Engine\Components\RigidBody</Filter>
+      <Filter>Engine\Object\Components\RigidBody</Filter>
     </ClInclude>
     <ClInclude Include="CollisionComponent.h">
-      <Filter>Engine\Components\Collision</Filter>
+      <Filter>Engine\Object\Components\Collision</Filter>
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
@@ -358,7 +364,7 @@
       <Filter>Engine\Interface</Filter>
     </ClInclude>
     <ClInclude Include="ActorComponent.h">
-      <Filter>Engine\Components\ActorComponent</Filter>
+      <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClInclude>
     <ClInclude Include="ElasticBody.h">
       <Filter>Contents\ElasticBody</Filter>
@@ -418,13 +424,13 @@
       <Filter>Contents\Scenes\Scene2</Filter>
     </ClInclude>
     <ClInclude Include="PrimitiveComponent.h">
-      <Filter>Engine\Components\ActorComponent\Scene\Primitive</Filter>
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Primitive</Filter>
     </ClInclude>
     <ClInclude Include="SceneComponent.h">
-      <Filter>Engine\Components\ActorComponent\Scene</Filter>
+      <Filter>Engine\Object\Components\ActorComponent\Scene</Filter>
     </ClInclude>
     <ClInclude Include="testSceneComponent.h">
-      <Filter>Engine\Components\ActorComponent\Scene\testScene</Filter>
+      <Filter>Engine\Object\Components\ActorComponent\Scene\testScene</Filter>
     </ClInclude>
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
@@ -501,8 +507,11 @@
     <ClInclude Include="LoadConfigFile.h">
       <Filter>Engine\UserConfig</Filter>
     </ClInclude>
-    <ClInclude Include="DelegateBindableInterface.h">
+    <ClInclude Include="BindableInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Engine\Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
