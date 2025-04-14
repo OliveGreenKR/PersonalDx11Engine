@@ -5,58 +5,44 @@
 #include <stdexcept>
 #include <climits>
 
+/// <summary>
+/// 고정크기 객체의 고정 크기 Pool. 
+/// 객체의 'Pool 외부 공개 여부'외의 상태에는 관여하지 않음.
+/// </summary>
 template <typename T, size_t N>
 class TFixedObjectPool {
 private:
     static constexpr size_t INVALID_INDEX = N;
 
 public:
-#pragma region ScopedObject
-    // 외부 인터페이스를 위한 객체 래퍼 클래스
-    class ScopedObject {
+#pragma region WeakedObject
+    // 외부 인터페이스를 위한 객체 래퍼 클래스 - 약한 참조
+    class WeakedObject {
     private:
-        TFixedObjectPool* Pool;      // 소유자 풀
-        size_t Index;                // 객체 인덱스
-        bool Released;               // 해제 여부 플래그
+        TFixedObjectPool* Pool;                 // 소유자 풀
+        size_t Index;                           // 객체 인덱스
+        mutable bool Released;                  // 해제 여부 플래그
 
     public:
         // 생성자
-        ScopedObject(TFixedObjectPool* pool, size_t index)
+        WeakedObject(TFixedObjectPool* pool, size_t index)
             : Pool(pool), Index(index), Released(false) {
         }
 
         // 무효한 객체 생성
-        ScopedObject()
+        WeakedObject()
             : Pool(nullptr), Index(INVALID_INDEX), Released(true) {
         }
 
-        // 이동 생성자
-        ScopedObject(ScopedObject&& other) noexcept
-            : Pool(other.Pool), Index(other.Index), Released(other.Released) {
-            other.Released = true;  // 소유권 이전
+
+        //객체 반환 안함(약한 참조용 객체)
+        ~WeakedObject() 
+        {
+            Pool = nullptr;
+            Index = INVALID_INDEX;
         }
 
-        // 이동 대입 연산자
-        ScopedObject& operator=(ScopedObject&& other) noexcept {
-            if (this != &other) {
-                // 기존 객체 반환
-                Release();
-
-                // 새 객체 소유권 가져오기
-                Pool = other.Pool;
-                Index = other.Index;
-                Released = other.Released;
-                other.Released = true;  // 소유권 이전
-            }
-            return *this;
-        }
-
-        // 소멸자: RAII 패턴으로 자동 반환
-        ~ScopedObject() {
-            Release();
-        }
-
-        // 명시적 반환
+        // 객체를 풀에 반환(비활성화)
         void Release() {
             if (!Released && Pool && Index != INVALID_INDEX) {
                 Pool->ReturnToPoolInternal(Index);
@@ -64,30 +50,24 @@ public:
             }
         }
 
-
         // 객체 포인터 얻기
         T* Get() const {
-            return IsValidAccess() ? &(Pool->Objects[Index]) : nullptr;
+            return IsValid() ? &(Pool->Objects[Index]) : nullptr;
         }
 
         // 유효성 확인
         bool IsValid() const {
-            return !Released && Pool && Index != INVALID_INDEX &&
-                Pool->IsIndexActive(Index);
+            return !(Released || !Pool || Index == INVALID_INDEX || !Pool->IsIndexActive(Index));
         }
 
         // 인덱스 접근 
         size_t GetIndex() const { return Index; }
 
     private:
-        // 객체 접근 유효성 검사
-        bool IsValidAccess() const {
-            return !(Released || !Pool || Index == INVALID_INDEX || !Pool->IsIndexActive(Index));
-        }
 
         // 복사 방지
-        ScopedObject(const ScopedObject&) = delete;
-        ScopedObject& operator=(const ScopedObject&) = delete;
+        //WeakedObject(const WeakedObject&) = delete;
+        //WeakedObject& operator=(const WeakedObject&) = delete;
 
         friend class TFixedObjectPool;
     };
@@ -102,20 +82,20 @@ public:
     public:
         // STL 호환 트레이트
         using iterator_category = std::bidirectional_iterator_tag;
-        using value_type = ScopedObject;
+        using value_type = WeakedObject;
         using difference_type = std::ptrdiff_t;
-        using pointer = void;  // ScopedObject는 참조 semantic
-        using reference = ScopedObject;  // 참조 반환
+        using pointer = void;  // WeakedObject는 참조 semantic
+        using reference = WeakedObject;  // 참조 반환
 
         // 생성자
         Iterator(TFixedObjectPool* pool, size_t index)
             : Pool(pool), CurrentIndex(index) {
         }
 
-        // 역참조 연산자: ScopedObject 반환
-        ScopedObject operator*() const {
+        // 역참조 연산자: WeakedObject 반환
+        WeakedObject operator*() const {
             if (!Pool || CurrentIndex == INVALID_INDEX) {
-                return ScopedObject();  // 무효한 객체 반환
+                return WeakedObject();  // 무효한 객체 반환
             }
             return Pool->CreateScopedObject(CurrentIndex);
         }
@@ -231,12 +211,12 @@ private:
         return index < N && ActiveFlags[index];
     }
 
-    // ScopedObject 생성 헬퍼 메소드
-    ScopedObject CreateScopedObject(size_t index) {
-        return ScopedObject(this, index);
+    // WeakedObject 생성 헬퍼 메소드
+    WeakedObject CreateScopedObject(size_t index) {
+        return WeakedObject(this, index);
     }
 
-    // 내부 반환 메소드 - ScopedObject에서 호출
+    // 내부 반환 메소드 - WeakedObject에서 호출
     void ReturnToPoolInternal(size_t index) {
         if (index >= N || !ActiveFlags[index]) {
             return; // 이미 비활성 상태
@@ -257,17 +237,17 @@ public:
         }
     }
 
-    // 비활성 객체를 찾아 활성화 후 ScopedObject 반환
+    // 비활성 객체를 찾아 활성화 후 WeakedObject 반환
     template <typename... Args>
-    ScopedObject Acquire(Args&&... args) {
+    WeakedObject Acquire(Args&&... args) {
         if (ActiveCount >= N) {
-            return ScopedObject(); // 유효하지 않은 객체
+            return WeakedObject(); // 유효하지 않은 객체
         }
 
         // 비활성 객체 찾기
         size_t index = FindInactiveIndex();
         if (index == INVALID_INDEX) {
-            return ScopedObject(); // 유효하지 않은 객체
+            return WeakedObject(); // 유효하지 않은 객체
         }
 
         ActiveFlags.set(index);
@@ -279,15 +259,15 @@ public:
         return CreateScopedObject(index);
     }
 
-    // 꽉찬 경우 가장 오래된 객체 초기화 후 ScopedObject 반환
+    // 꽉찬 경우 가장 오래된 객체 초기화 후 WeakedObject 반환
     template <typename... Args>
-    ScopedObject AcquireForcely(Args&&... args) {
+    WeakedObject AcquireForcely(Args&&... args) {
         if (ActiveCount < N) {
             return Acquire(std::forward<Args>(args)...);
         }
 
         if (ActiveHead == INVALID_INDEX) {
-            return ScopedObject();
+            return WeakedObject();
         }
 
         size_t oldestIndex = ActiveHead;
@@ -300,8 +280,8 @@ public:
     }
 
     // 이전과의 호환성을 위한 ReturnToPool 메소드
-    // ScopedObject는 자동으로 반환되므로 이 메소드는 명시적 Release 호출 용도
-    void ReturnToPool(ScopedObject& scopedObj) {
+    // WeakedObject는 자동으로 반환되므로 이 메소드는 명시적 Release 호출 용도
+    void ReturnToPool(WeakedObject& scopedObj) {
         scopedObj.Release();
     }
 
@@ -310,9 +290,6 @@ public:
         size_t current = ActiveHead;
         while (current != INVALID_INDEX) {
             size_t next = NextIndices[current];
-
-            // 소멸자 호출
-            Objects[current].~T();
 
             ActiveFlags.reset(current);
             PrevIndices[current] = INVALID_INDEX;
@@ -355,7 +332,5 @@ public:
     }
 
     // 소멸자: 자원 정리
-    ~TFixedObjectPool() {
-        ClearAllActives();
-    }
+    ~TFixedObjectPool() = default;
 };

@@ -7,6 +7,7 @@
 #include "SceneManager.h" 
 #include "Model.h"
 #include "Material.h"
+
 void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const Vector4& Color, float Thickness, float Duration, bool bPersist)
 {
 	Vector3 Center = (Start + End) * 0.5f;
@@ -124,7 +125,12 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 
 void UDebugDrawManager::Tick(const float DeltaTime)
 {
-	for (auto drawObject : (*FixedPool))
+	using PoolHandle = TFixedObjectPool<UDebugDrawManager::FDebugShape, 128>::WeakedObject;
+	std::vector<PoolHandle> ToReleased;
+	ToReleased.reserve(FixedPool->GetActiveCount());
+
+
+	for (const auto drawObject : (*FixedPool))
 	{
 		auto Draw = drawObject.Get();
 		if (!Draw)
@@ -140,13 +146,19 @@ void UDebugDrawManager::Tick(const float DeltaTime)
 		if (Draw->RemainingTime < 0.0f)
 		{
 			Draw->Reset();
-			drawObject.Release();
+			ToReleased.push_back(drawObject);
 		}
 	}
 
-	//const auto& AfterActiveDraws = Pool.GetActiveObjects();
-	//LOG("try return %d to Pool : [%d]->[%d]", ReturnDraws.size(),
-	//	ActiveDraws.size(), AfterActiveDraws.size());
+	//const int PreActiveCount = FixedPool->GetActiveCount();
+
+	for (auto& it : ToReleased)
+	{
+		it.Release();
+	}
+
+	//const int PostActiveCount = FixedPool->GetActiveCount();
+	//LOG("return to Pool : [%d]->[%d]", PreActiveCount, PostActiveCount);
 }
 
 UDebugDrawManager::FDebugShape::FDebugShape()
