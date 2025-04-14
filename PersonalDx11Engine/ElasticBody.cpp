@@ -26,6 +26,10 @@ UElasticBody::UElasticBody() : bIsActive(true)
 	}
 }
 
+UElasticBody::~UElasticBody()
+{
+}
+
 void UElasticBody::Tick(const float DeltaTime)
 {
 	UGameObject::Tick(DeltaTime);

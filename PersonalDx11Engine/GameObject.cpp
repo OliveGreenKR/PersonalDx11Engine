@@ -108,14 +108,20 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 
 void UGameObject::Activate()
 {
-	RootComponent->SetActive(true);
-	bIsActive = true;
+	if (bIsActive != true)
+	{
+		RootComponent->SetActive(true);
+		bIsActive = true;
+	}
 }
 
 void UGameObject::DeActivate()
 {
-	RootComponent->SetActive(false);
-	bIsActive = false;
+	if (bIsActive != false)
+	{
+		RootComponent->SetActive(false);
+		bIsActive = false;
+	}
 }
 
 void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)

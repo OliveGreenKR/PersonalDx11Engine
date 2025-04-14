@@ -181,7 +181,7 @@ private:
 
     // 컴포넌트 관리
     //std::vector<FComponentData> RegisteredComponents; 
-    std::unordered_map<size_t, std::shared_ptr<UCollisionComponent>> RegisteredComponents;
+    std::unordered_map<size_t, std::weak_ptr<UCollisionComponent>> RegisteredComponents;
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 };

@@ -56,12 +56,36 @@ void UActorComponent::BroadcastTick(float DeltaTime)
 
 void UActorComponent::Activate()
 {
-    bIsActive = true;
+	if (bIsActive == true)
+		return;
+
+	bIsActive = true;
+
+    // 모든 자식 컴포넌트에 대해 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child)
+        {
+            Child->SetActive(true);
+        }
+    }
 }
 
 void UActorComponent::DeActivate()
 {
+    if (bIsActive == false)
+        return;
+
     bIsActive = false;
+
+    // 모든 자식 컴포넌트에 대해 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child)
+        {
+            Child->SetActive(false);
+        }
+    }
 }
 
 void UActorComponent::PostInitialized()
@@ -190,6 +214,7 @@ UActorComponent* UActorComponent::GetRoot() const
     return const_cast<UActorComponent*>(Current);
 }
 
+
 void UActorComponent::PrintComponentTree(std::ostream& os) const
 {
     // 루트 컴포넌트부터 트리 출력 시작
@@ -203,6 +228,9 @@ void UActorComponent::PrintComponentTreeInternal(std::ostream& os, std::string p
 
     // 마지막 자식인지 여부에 따라 다른 접두사 사용
     os << (isLast ? "+-- " : "|-- ");
+
+    //활성화 여부 표시
+    os << (bIsActive ? "*" : "");
 
     // 컴포넌트 이름 출력
     os << GetComponentClassName() << std::endl;

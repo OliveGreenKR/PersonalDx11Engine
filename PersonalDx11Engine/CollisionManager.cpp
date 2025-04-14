@@ -47,13 +47,12 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>
 	if (!InComponent || !CollisionTree)
 		return;
 
-	// shared_ptr 비교보다 raw 포인터 비교가 더 안정적임
 	UCollisionComponent* targetPtr = InComponent.get();
 
 	// 관리 중인 컴포넌트인지 확인
 	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
 								 [targetPtr](const auto& RegisteredPair) {
-									 return targetPtr == RegisteredPair.second.get();
+									 return targetPtr == RegisteredPair.second.lock().get();
 								 });
 
 	if (targetIt == RegisteredComponents.end())
@@ -196,7 +195,7 @@ void UCollisionManager::CleanupDestroyedComponents()
 	// 제거될 컴포넌트 식별 (첫 단계에서는 제거할 ID만 수집)
 	for (auto& pair : RegisteredComponents)
 	{
-		auto comp = pair.second;
+		auto comp = pair.second.lock();
 		if (!comp)
 		{
 			componentsToRemove.push_back(pair.first);
@@ -239,7 +238,7 @@ void UCollisionManager::UpdateCollisionPairs()
 	// AABBTree 기반 broad-phase 충돌 검사
 	for (const auto& compData : RegisteredComponents)
 	{
-		auto& component = compData.second;
+		auto component = compData.second.lock();
 		size_t treeNodeId = compData.first;
 
 		if (!component || !component->IsActive())
@@ -252,7 +251,8 @@ void UCollisionManager::UpdateCollisionPairs()
 			// 자기 자신과의 충돌 무시 및 중복 충돌 쌍 방지
 			if (treeNodeId >= otherNodeId ||
 				!RegisteredComponents.count(otherNodeId) ||
-				!RegisteredComponents[otherNodeId]->IsActive())
+				!RegisteredComponents[otherNodeId].lock() ||
+				!RegisteredComponents[otherNodeId].lock()->IsActive())
 				return;
 
 			// 새 충돌 쌍 생성
@@ -272,8 +272,8 @@ void UCollisionManager::UpdateCollisionPairs()
 	for (const auto& ExistingPair : ActiveCollisionPairs)
 	{
 		// 컴포넌트가 여전히 유효한지 확인
-		auto& CompA = RegisteredComponents[ExistingPair.TreeIdA];
-		auto& CompB = RegisteredComponents[ExistingPair.TreeIdB];
+		auto CompA = RegisteredComponents[ExistingPair.TreeIdA].lock();
+		auto CompB = RegisteredComponents[ExistingPair.TreeIdB].lock();
 
 		if (CompA && CompB && CompA->IsActive() && CompB->IsActive())
 		{
@@ -307,8 +307,8 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
 	for (auto& ActivePair : ActiveCollisionPairs)
 	{
-		auto& CompA = RegisteredComponents[ActivePair.TreeIdA];
-		auto& CompB = RegisteredComponents[ActivePair.TreeIdB];
+		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();
+		auto CompB = RegisteredComponents[ActivePair.TreeIdB].lock();
 
 		const float PersistentThreshold = 0.1f;
 
@@ -386,8 +386,10 @@ void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UC
 
 void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
 {
-	auto CompA = RegisteredComponents[InPair.TreeIdA];
-	auto CompB = RegisteredComponents[InPair.TreeIdB];
+	auto CompA = RegisteredComponents[InPair.TreeIdA].lock();
+	auto CompB = RegisteredComponents[InPair.TreeIdB].lock();
+
+	if (!CompA || !CompB) return;
 
 	auto RigidA = CompA->GetRigidBody();
 	auto RigidB = CompB->GetRigidBody();
@@ -489,11 +491,11 @@ void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollision
 void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
 
-	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA];
-	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB];
+	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
+	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
 
-	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
-		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
+	if (!ComponentA || !ComponentA->GetRigidBody() ||
+		!ComponentB || !ComponentB->GetRigidBody())
 		return;
 
 	FPhysicsParameters ParamsA, ParamsB;
@@ -527,8 +529,8 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 
 void UCollisionManager::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
 {
-	auto CompA = RegisteredComponents[InPair.TreeIdA];
-	auto CompB = RegisteredComponents[InPair.TreeIdB];
+	auto CompA = RegisteredComponents[InPair.TreeIdA].lock();
+	auto CompB = RegisteredComponents[InPair.TreeIdB].lock();
 
 	if (!CompA || !CompB)
 		return;

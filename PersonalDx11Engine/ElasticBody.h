@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GameObject.h"
 #include "Color.h"
 #include "Model.h"
@@ -18,7 +18,7 @@ public:
     };
 
     UElasticBody();
-    virtual ~UElasticBody() = default;
+    virtual ~UElasticBody();
 
     // 기본 수명 주기 메서드
     virtual void Tick(const float DeltaTime) override;

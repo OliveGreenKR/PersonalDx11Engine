@@ -57,8 +57,12 @@ void UGameplayScene01::Unload()
 
     //활성화 바디 상태 초기화
     //객체풀 클리어
-    ElasticBodyPool = nullptr;
-
+    if (ElasticBodyPool)
+    {
+        ElasticBodyPool.release();
+        ElasticBodyPool = nullptr;
+    }
+   
     // 주요 객체 해제
     Camera = nullptr;
 }
@@ -311,5 +315,15 @@ void UGameplayScene01::DeSpawnElasticBody()
 {
     //가장 오래된 바디 비활성화    
     auto it = ElasticBodyPool->begin();
-    (*it).Release();
+    auto weakedBody = *it;
+
+    if (weakedBody.IsValid())
+    {
+        //객체 비활성화
+        weakedBody.Get()->SetActive(false);
+
+        //풀에 반환
+        weakedBody.Release();
+    }
+    
 }

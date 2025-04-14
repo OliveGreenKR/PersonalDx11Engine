@@ -111,6 +111,7 @@ public:
     void DetachFromParent();
 
 #pragma region FindComponent
+public:
 	// 계층 구조 탐색
 	UActorComponent* GetRoot() const;
 	std::shared_ptr<UActorComponent> GetParent() const { return ParentComponent.lock(); }
