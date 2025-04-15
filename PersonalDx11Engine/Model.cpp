@@ -107,21 +107,21 @@ bool UModel::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
     else if (Path == MDL_SPHERE_Mid)
     {
         // 구 정점 데이터 생성 및 등록
-        FVertexDataContainer sphereData = UModel::CreateSphereVertexData(16);
+        FVertexDataContainer sphereData = UModel::CreateSphereVertexData(12);
         return CreateBuffers(RenderHardware->GetDevice(), sphereData);
         
     }
 	else if (Path == MDL_SPHERE_Low)
 	{
 		// 구 정점 데이터 생성 및 등록
-		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(8);
+		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(6);
 		return CreateBuffers(RenderHardware->GetDevice(), sphereData);
 
 	}
 	else if (Path == MDL_SPHERE_High)
 	{
 		// 구 정점 데이터 생성 및 등록
-		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(32);
+		FVertexDataContainer sphereData = UModel::CreateSphereVertexData(24);
 		return CreateBuffers(RenderHardware->GetDevice(), sphereData);
 
 	}

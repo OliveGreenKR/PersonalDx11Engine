@@ -9,17 +9,7 @@ private:
     ID3D11RasterizerState* WireframeRasterizerState;
     ID3D11RasterizerState* PreviousRasterizerState;
 public:
-    ~FWireframeState()
-    {
-        if (WireframeRasterizerState)
-        {
-            WireframeRasterizerState->Release();
-        }
-        if (PreviousRasterizerState)
-        {
-            PreviousRasterizerState->Release();
-        }
-    }
+    ~FWireframeState();
 
     void Apply(ID3D11DeviceContext* Context) override
     {

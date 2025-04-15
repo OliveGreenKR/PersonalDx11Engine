@@ -105,6 +105,7 @@ void UGameplayScene01::Tick(float DeltaTime)
         body.Get()->Tick(DeltaTime);
     }
 
+    BodyNum = ElasticBodyPool->GetActiveCount();
 }
 
 void UGameplayScene01::SubmitRender(URenderer* Renderer)
@@ -157,6 +158,25 @@ void UGameplayScene01::SubmitRenderUI()
         if (ImGui::Button("DeSpawn"))
         {
             DeSpawnElasticBody();
+        }
+        if (ImGui::InputInt("BodyCount", &BodyNum, 1, 10))
+        {
+            //Clamp target Num
+            BodyNum = Math::Clamp(BodyNum, 0, 512);
+            int delta = BodyNum - ElasticBodyPool->GetActiveCount();
+            int count = std::abs(delta);
+            for (int i = 0; i < count; ++i)
+            {
+                if (delta > 0)
+                {
+                    SpawnElasticBody();
+                }
+                else
+                {
+                    DeSpawnElasticBody();
+                }
+            }
+
         }
         ImGui::End();
                                            });
@@ -332,8 +352,6 @@ void UGameplayScene01::SpawnElasticBody()
     }
 
     SetupBorderTriggers(body);
-
-    LOG("ElasticBody Count : %03d", ElasticBodyPool->GetActiveCount());
 }
 
 void UGameplayScene01::DeSpawnElasticBody()

@@ -49,6 +49,8 @@ private:
     bool bSpawnBody = true;
     bool bGravity = false;
 
+    int BodyNum = 0;
+
     // 경계 값
     const float XBorder = 3.0f;
     const float YBorder = 2.0f;

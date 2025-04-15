@@ -71,6 +71,18 @@ std::unique_ptr<FSolidState> FSolidState::Create(ID3D11Device* Device)
 
 }
 
+FWireframeState::~FWireframeState()
+{
+	if (WireframeRasterizerState)
+	{
+		WireframeRasterizerState->Release();
+	}
+	if (PreviousRasterizerState)
+	{
+		PreviousRasterizerState->Release();
+	}
+}
+
 std::unique_ptr<FWireframeState> FWireframeState::Create(ID3D11Device* Device)
 {
 	if (!Device)
@@ -82,6 +94,8 @@ std::unique_ptr<FWireframeState> FWireframeState::Create(ID3D11Device* Device)
 	D3D11_RASTERIZER_DESC wireframeDesc = {};
 	wireframeDesc.FillMode = D3D11_FILL_WIREFRAME;
 	wireframeDesc.CullMode = D3D11_CULL_NONE;
+	wireframeDesc.AntialiasedLineEnable = FALSE;
+	wireframeDesc.MultisampleEnable = FALSE;
 	wireframeDesc.DepthClipEnable = TRUE;
 
 	HRESULT hr = Device->CreateRasterizerState(&wireframeDesc, &WireState->WireframeRasterizerState);
