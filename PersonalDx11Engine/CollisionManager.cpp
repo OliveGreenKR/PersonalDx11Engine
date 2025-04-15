@@ -217,7 +217,7 @@ void UCollisionManager::CleanupDestroyedComponents()
 
 	if (componentsToRemove.size() > 0)
 	{
-		LOG("Try Deletion from colliion tree : [%d]", componentsToRemove.size());
+		LOG_FUNC_CALL("[WARNING] Unregistered Destroyed CollisionComponents : [% zu] were found.", componentsToRemove.size());
 	}
 
 	// 제거 작업 수행

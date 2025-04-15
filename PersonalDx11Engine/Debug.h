@@ -1,5 +1,6 @@
 #pragma once
 #include  <iostream>
+#include <filesystem>
 #include "Transform.h"
 
 
@@ -14,7 +15,12 @@
 
 
 #if (defined(_DEBUG) || defined(DEBUG))
-#define LOG_FUNC_CALL(format, ...) printf("[%s:%d] %s: " format, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__); printf("\n")
+#define LOG_FUNC_CALL(format, ...) \
+    printf("[%s:%d] %s: " format "\n", \
+           std::filesystem::path(__FILE__).filename().string().c_str(), \
+           __LINE__, \
+           __FUNCTION__, \
+           ##__VA_ARGS__)
 #else
 #define LOG_FUNC_CALL(format, ...) ((void)0)
 #endif
