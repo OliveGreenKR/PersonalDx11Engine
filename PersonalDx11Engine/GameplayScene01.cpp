@@ -305,6 +305,7 @@ void UGameplayScene01::SpawnElasticBody()
     ////auto body = UGameObject::Create<UElasticBody>();
     auto bodyScoped = ElasticBodyPool->AcquireForcely();
     auto body = bodyScoped.Get();
+
     body->PostInitialized();
     body->PostInitializedComponents();
 
@@ -312,13 +313,23 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
     body->SetShapeSphere();
 
+    auto Rigid = body->GetComponentByType<URigidBodyComponent>();
+    if (Rigid)
+    {
+        //물리적 상태값 초기화
+        Rigid->Reset();
+    }
     body->SetMass(FRandom::RandF(1.0f, 5.0f));
     body->SetGravity(bGravity);
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
 
+
     auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
-    Primitive->SetMaterial(PoleMaterialHandle);
+    if (Primitive)
+    {
+        Primitive->SetMaterial(PoleMaterialHandle);
+    }
 
     SetupBorderTriggers(body);
 

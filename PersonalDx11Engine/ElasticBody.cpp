@@ -43,8 +43,6 @@ void UElasticBody::PostInitialized()
 
 	if (Rigid.lock())
 	{
-		Rigid.lock()->bGravity = true;
-
 		//collsion body 추가 및 초기화
 		if (Collision.get())
 		{

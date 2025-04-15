@@ -231,9 +231,6 @@ Vector3 UGameObject::GetCurrentVelocity() const
 
 float UGameObject::GetMass() const
 {
-	if (!IsPhysicsSimulated())
-		return 0.0f;
-
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
@@ -269,8 +266,6 @@ bool UGameObject::IsPhysicsSimulated() const
 
 void UGameObject::SetGravity(const bool InBool)
 {
-	if (!IsPhysicsSimulated())
-		return;
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
