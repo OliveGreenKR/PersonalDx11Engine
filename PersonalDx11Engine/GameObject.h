@@ -1,7 +1,7 @@
 #pragma once
 #include "Transform.h"
 #include <memory>
-#include "Color.h"
+
 #include "Delegate.h"
 #include "ActorComponent.h"
 #include "SceneComponent.h"

@@ -199,7 +199,6 @@
     <ClInclude Include="ArenaMemoryPool.h" />
     <ClInclude Include="FramePoolManager.h" />
     <ClInclude Include="Frustum.h" />
-    <ClInclude Include="Color.h" />
     <ClInclude Include="GameplayScene01.h" />
     <ClInclude Include="GameplayScene02.h" />
     <ClInclude Include="InputContext.h" />

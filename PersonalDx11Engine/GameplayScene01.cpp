@@ -10,7 +10,7 @@
 #include "InputManager.h"
 #include "Random.h"
 #include "define.h"
-#include "Color.h"
+
 #include "Debug.h"
 #include "ResourceManager.h"
 #include "Texture.h"

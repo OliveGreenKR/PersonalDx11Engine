@@ -357,9 +357,6 @@
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Object\Components\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="Color.h">
-      <Filter>Engine\Math</Filter>
-    </ClInclude>
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
