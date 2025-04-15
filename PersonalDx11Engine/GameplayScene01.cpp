@@ -23,6 +23,19 @@ UGameplayScene01::UGameplayScene01()
     InputContext = UInputContext::Create(SceneName);
 }
 
+UGameplayScene01::~UGameplayScene01()
+{
+    if (ElasticBodyPool)
+    {
+        ElasticBodyPool->ClearAllActives();
+        ElasticBodyPool.reset();
+    }
+    if (InputContext)
+    {
+        InputContext = nullptr;
+    }
+}
+
 void UGameplayScene01::Initialize()  
 { 
     const int VIEW_WIDTH = 800;
@@ -34,6 +47,8 @@ void UGameplayScene01::Initialize()
 
     // 입력 설정
     SetupInput();
+
+    bSpawnBody = false;
 
 }
 
@@ -59,8 +74,7 @@ void UGameplayScene01::Unload()
     //객체풀 클리어
     if (ElasticBodyPool)
     {
-        ElasticBodyPool.release();
-        ElasticBodyPool = nullptr;
+        ElasticBodyPool.reset();
     }
    
     // 주요 객체 해제

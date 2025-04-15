@@ -28,7 +28,7 @@ public:
 
 public:
     UGameplayScene01();
-    ~UGameplayScene01() = default;
+    ~UGameplayScene01();
 
 private:
     void SetupInput();

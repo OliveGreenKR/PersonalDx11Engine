@@ -11,11 +11,16 @@ UGameObject::UGameObject()
 	SetRootComponent(Scene);
 }
 
+UGameObject::~UGameObject()
+{
+	RootComponent = nullptr;
+}
+
 void UGameObject::PostInitialized()
 { 
 	auto CompPtr = RootComponent.get();
 
-	//Comp Post Tree Initialize
+	//Comp Post Initialize
 	if (CompPtr)
 	{
 		CompPtr->BroadcastPostInitialized();
@@ -108,20 +113,20 @@ void UGameObject::UpdateComponents(const float DeltaTime)
 
 void UGameObject::Activate()
 {
-	if (bIsActive != true)
-	{
-		RootComponent->SetActive(true);
-		bIsActive = true;
-	}
+	if (bIsActive)
+		return;
+
+	RootComponent->SetActive(true);
+	bIsActive = true;
 }
 
 void UGameObject::DeActivate()
 {
-	if (bIsActive != false)
-	{
-		RootComponent->SetActive(false);
-		bIsActive = false;
-	}
+	if (!bIsActive)
+		return;
+
+	RootComponent->SetActive(false);
+	bIsActive = false;
 }
 
 void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)

@@ -3,6 +3,19 @@
 #include <string>
 #include <iostream>
 
+UActorComponent::~UActorComponent()
+{
+
+    OwnerObject = nullptr;
+
+    for (auto comps : ChildComponents)
+    {
+        comps = nullptr;
+    }
+    ChildComponents.clear();
+
+}
+
 void UActorComponent::BroadcastPostInitialized()
 {
     //초기화는 활성화여부와 관계없이 동작
@@ -54,13 +67,16 @@ void UActorComponent::BroadcastTick(float DeltaTime)
     }
 }
 
+void UActorComponent::SetActive(bool bNewActive)
+{
+    if (bNewActive == bIsActive)
+        return;
+    bIsActive = bNewActive;
+    bNewActive ? Activate() : DeActivate();
+}
+
 void UActorComponent::Activate()
 {
-	if (bIsActive == true)
-		return;
-
-	bIsActive = true;
-
     // 모든 자식 컴포넌트에 대해 전파
     for (const auto& Child : ChildComponents)
     {
@@ -73,11 +89,6 @@ void UActorComponent::Activate()
 
 void UActorComponent::DeActivate()
 {
-    if (bIsActive == false)
-        return;
-
-    bIsActive = false;
-
     // 모든 자식 컴포넌트에 대해 전파
     for (const auto& Child : ChildComponents)
     {
@@ -90,6 +101,11 @@ void UActorComponent::DeActivate()
 
 void UActorComponent::PostInitialized()
 {
+}
+
+void UActorComponent::PostTreeInitialized()
+{
+   
 }
 
 void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)

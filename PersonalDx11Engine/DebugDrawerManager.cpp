@@ -90,6 +90,11 @@ UDebugDrawManager::UDebugDrawManager()
 	FixedPool = std::make_unique< TFixedObjectPool<FDebugShape, 128>>();
 }
 
+UDebugDrawManager::~UDebugDrawManager()
+{
+	FixedPool.reset();
+}
+
 void UDebugDrawManager::Initialize()
 {
 	DebugMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);

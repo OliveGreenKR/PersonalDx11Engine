@@ -72,8 +72,6 @@ void UVertexShader::Release()
         VertexShader = nullptr;
     }
 
-    UShaderBase::Release();
-
     bIsLoaded = false;
     MemorySize = 0;
 }

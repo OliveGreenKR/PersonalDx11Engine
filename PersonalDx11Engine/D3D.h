@@ -41,7 +41,7 @@ private:
 
     void ReleaseDeviceAndSwapChain();
     void ReleaseFrameBuffer();
-    void ReleaseRasterizerState();
+    //void ReleaseRasterizerState();
     void ReleaseDepthStencil();
 
 private:
@@ -57,7 +57,7 @@ private:
     ID3D11BlendState* BlendState = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
-    ID3D11RasterizerState* RasterizerState = nullptr;
+    //ID3D11RasterizerState* RasterizerState = nullptr;
 
     D3D11_VIEWPORT ViewportInfo = D3D11_VIEWPORT();
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };

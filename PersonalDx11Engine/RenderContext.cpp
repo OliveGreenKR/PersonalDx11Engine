@@ -9,8 +9,6 @@ FRenderContext::~FRenderContext()
 
 bool FRenderContext::Initialize(std::shared_ptr<IRenderHardware> InHardware)
 {
-   
-
     if (!InHardware || !InHardware->IsDeviceReady())
         return false;
     RenderHardware = InHardware;
@@ -26,14 +24,33 @@ void FRenderContext::Release()
         delete ContextDebugger;
     }
 
-	//캐시 해제
-	CurrentVB = nullptr;
-	CurrentIB = nullptr;
-	CurrentVS = nullptr;
-	CurrentPS = nullptr;
-	CurrentLayout = nullptr;
-    std::memset(CurrentSRVs, 0, sizeof(CurrentSRVs));
+    //리소스 바인딩 해제
+    for (size_t i = 0; i < D3D11_COMMONSHADER_SAMPLER_REGISTER_COUNT; ++i)
+    {
+        BindSamplerState(i, nullptr);
+    }
 
+    for (size_t i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        BindPixelShaderResource(i, nullptr);
+    }
+
+    BindIndexBuffer(nullptr);
+    BindVertexBuffer(nullptr, 0, 0);
+
+    //캐시 해제
+    CurrentVB = nullptr;
+    CurrentIB = nullptr;
+    CurrentVS = nullptr;
+    CurrentPS = nullptr;
+    CurrentLayout = nullptr;
+    if (CurrentSRVs)
+    {
+        std::memset(CurrentSRVs, 0, sizeof(CurrentSRVs));
+    }
+
+
+    //렌더 하드웨어 참조 해제
     if (RenderHardware)
     {
         RenderHardware = nullptr;
@@ -184,7 +201,8 @@ void FRenderContext::BindConstantBuffer(UINT Slot, ID3D11Buffer* Buffer, const v
 {
     ID3D11DeviceContext* DeviceContext = GetDeviceContext();
     //null데이터도 바인딩 가능
-    if (!Buffer || !DeviceContext || Size == 0) return;
+    if (!Buffer || !DeviceContext || Slot > D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT) 
+        return;
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     HRESULT Result = RenderHardware->GetDeviceContext()->Map(Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);

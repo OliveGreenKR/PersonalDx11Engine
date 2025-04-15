@@ -16,8 +16,9 @@ class UCollisionComponent : public USceneComponent, public IDynamicBoundable
 	friend class UCollisionManager;
 public:
 	UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
-	~UCollisionComponent() = default;
 	UCollisionComponent();
+
+	~UCollisionComponent();
 public:
 
 	// Inherited via IDynamicBoundable
@@ -26,6 +27,7 @@ public:
 	const FTransform& GetWorldTransform() const override;
 
 protected:  
+	virtual void PostInitialized() override;
 	virtual void PostTreeInitialized() override;
 	virtual void Tick(const float DeltaTime) override;
 

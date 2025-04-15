@@ -331,7 +331,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	Renderer->Release();
+	GameplayScene01 = nullptr;
+	GameplayScene02 = nullptr;
+	Renderer = nullptr;
+	RenderHardware = nullptr;
 
 #pragma region COM
 	CoUninitialize();

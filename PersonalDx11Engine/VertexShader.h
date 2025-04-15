@@ -6,7 +6,7 @@ class UVertexShader : public UShaderBase, public IResource
 {
 public:
     UVertexShader() = default;
-    ~UVertexShader() override;
+    virtual ~UVertexShader() ;
 
     // IResource 인터페이스 구현
     bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;

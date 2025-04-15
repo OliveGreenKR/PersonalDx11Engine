@@ -174,15 +174,28 @@ void UCollisionManager::Release()
 {
 	UnRegisterAll();
 
-	delete CollisionTree;
-	delete EventDispatcher;
-	delete ResponseCalculator;
-	delete Detector;
-
-	CollisionTree = nullptr;
-	EventDispatcher = nullptr;
-	ResponseCalculator = nullptr;
-	Detector = nullptr;
+	if (CollisionTree)
+	{
+		delete CollisionTree;
+		CollisionTree = nullptr;
+	}
+	if (EventDispatcher)
+	{
+		delete EventDispatcher;
+		EventDispatcher = nullptr;
+	}
+	if (ResponseCalculator)
+	{
+		delete ResponseCalculator;
+		ResponseCalculator = nullptr;
+	}
+	if (Detector)
+	{
+		delete Detector;
+		Detector = nullptr;
+	}
+	ActiveCollisionPairs.clear();
+	RegisteredComponents.clear();
 }
 
 void UCollisionManager::CleanupDestroyedComponents()
@@ -192,7 +205,7 @@ void UCollisionManager::CleanupDestroyedComponents()
 
 	std::vector<size_t> componentsToRemove;
 
-	// 제거될 컴포넌트 식별 (첫 단계에서는 제거할 ID만 수집)
+	// 제거될 컴포넌트 식별 
 	for (auto& pair : RegisteredComponents)
 	{
 		auto comp = pair.second.lock();
@@ -200,6 +213,11 @@ void UCollisionManager::CleanupDestroyedComponents()
 		{
 			componentsToRemove.push_back(pair.first);
 		}
+	}
+
+	if (componentsToRemove.size() > 0)
+	{
+		LOG("Try Deletion from colliion tree : [%d]", componentsToRemove.size());
 	}
 
 	// 제거 작업 수행

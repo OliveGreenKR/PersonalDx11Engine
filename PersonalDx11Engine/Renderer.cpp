@@ -3,6 +3,21 @@
 #include "Camera.h"
 #include "Debug.h"
 
+URenderer::~URenderer()
+{
+	RenderJobs.clear();
+
+	for (auto& statesPair : States)
+	{
+		statesPair.second.reset();
+	}
+	States.clear();
+
+	RenderDataPool.Reset();
+
+	Context.reset();
+}
+
 bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware)
 {
 	assert(InRenderHardware);
@@ -13,15 +28,11 @@ bool URenderer::Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRen
 	result = result && InRenderHardware->IsDeviceReady();
 	result = result && Context->Initialize(InRenderHardware);
 
+
 	//기본 렌더링 상태 
 	CreateStates();
 
 	return result;
-}
-
-void URenderer::Release()
-{
-	Context->Release();
 }
 
 void URenderer::BeginFrame()

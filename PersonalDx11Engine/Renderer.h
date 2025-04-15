@@ -52,11 +52,10 @@ private:
 
 public:
 	URenderer() = default;
-	~URenderer() = default;
+	~URenderer();
 	 
 public:
 	bool Initialize(HWND hWindow, std::shared_ptr<IRenderHardware>& InRenderHardware);
-	void Release();
 
 	void BeginFrame();
 	void ProcessRender();

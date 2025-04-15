@@ -4,6 +4,14 @@
 #include "Debug.h"
 #include "TypeCast.h"
 
+UResourceManager::~UResourceManager()
+{
+    for (auto& rscCache : ResourceCache)
+    {
+        rscCache.second.Resource.reset();
+    }
+}
+
 IResource* UResourceManager::GetRawResource(const FStringHash& InKey) const
 {
     auto it = ResourceCache.find(InKey.GetHash());

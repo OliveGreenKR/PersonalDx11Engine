@@ -1,4 +1,6 @@
 #include "D3D.h"
+#include <dxgi.h>
+#include <d3d11.h>
 
 FD3D::~FD3D()
 {
@@ -12,7 +14,7 @@ bool FD3D::Initialize(HWND Hwnd)
 
 	bool result = CreateDeviceAndSwapChain(Hwnd) &&
 		CreateFrameBuffer() &&
-		CreateRasterizerState() &&
+		//CreateRasterizerState() &&
 		CreateDpethStencilBuffer() &&
 		CreateDepthStencilState() &&
 		CreateDepthStencillView() &&
@@ -25,14 +27,32 @@ bool FD3D::Initialize(HWND Hwnd)
 
 void FD3D::Release()
 {
-	ReleaseRasterizerState();
+#ifdef _DEBUG
+	ID3D11Debug* debugDevice = nullptr;
+	HRESULT hr = Device->QueryInterface(__uuidof(ID3D11Debug), (void**)&debugDevice); 
+	if (SUCCEEDED(hr)) {
+		debugDevice->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+		debugDevice->Release();
+	}
+#endif
+
+	//ReleaseRasterizerState();
 	ReleaseFrameBuffer();
 	ReleaseDeviceAndSwapChain();
 	ReleaseDepthStencil();
 	if (DeviceContext)
 	{
 		DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+		DeviceContext->ClearState();
+		DeviceContext->Release();
+		DeviceContext = nullptr;
 	} 
+
+	if (Device)
+	{
+		Device->Release();
+		Device = nullptr;
+	}
 }
 
 void FD3D::BeginFrame()
@@ -101,7 +121,7 @@ void FD3D::InitRenderContext()
 	DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//Rasterizer
 	DeviceContext->RSSetViewports(1, &ViewportInfo);
-	DeviceContext->RSSetState(RasterizerState);
+	//DeviceContext->RSSetState(RasterizerState);
 	//OutputMerge
 	DeviceContext->OMSetBlendState(BlendState, nullptr, 0xffffffff);
 	DeviceContext->OMSetDepthStencilState(DepthStencilState, 1);
@@ -176,11 +196,12 @@ bool FD3D::CreateFrameBuffer()
 
 bool FD3D::CreateRasterizerState()
 {
-	D3D11_RASTERIZER_DESC rasterizerdesc = {};
-	rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
-	rasterizerdesc.CullMode = D3D11_CULL_BACK; // 백 페이스 컬링
+	return true;
+	//D3D11_RASTERIZER_DESC rasterizerdesc = {};
+	//rasterizerdesc.FillMode = D3D11_FILL_SOLID; // 채우기 모드
+	//rasterizerdesc.CullMode = D3D11_CULL_BACK; // 백 페이스 컬링
 
-	return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
+	//return SUCCEEDED(Device->CreateRasterizerState(&rasterizerdesc, &RasterizerState));
 }
 
 bool FD3D::CreateDpethStencilBuffer()
@@ -315,14 +336,14 @@ void FD3D::ReleaseFrameBuffer()
 	}
 }
 
-void FD3D::ReleaseRasterizerState()
-{
-	if (RasterizerState)
-	{
-		RasterizerState->Release();
-		RasterizerState = nullptr;
-	}
-}
+//void FD3D::ReleaseRasterizerState()
+//{
+//	if (RasterizerState)
+//	{
+//		RasterizerState->Release();
+//		RasterizerState = nullptr;
+//	}
+//}
 
 void FD3D::ReleaseDepthStencil()
 {

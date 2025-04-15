@@ -46,7 +46,7 @@ public:
 protected:
 	UGameObject();
 public:
-	virtual ~UGameObject() = default;
+	virtual ~UGameObject();
 
 public:
 	virtual void PostInitialized();
@@ -82,6 +82,7 @@ public:
 	void SetActive(const bool bActive) { bActive ? Activate() : DeActivate(); }
 	bool IsActive() const { return bIsActive; }
 
+protected:
 	virtual void Activate();
 	virtual void DeActivate();
 

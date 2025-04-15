@@ -57,7 +57,7 @@ public:
 
     // 메모리 관리 헬퍼
     virtual void CalculateMemoryUsage();
-    virtual void Release();
+    void Release();
 
 protected:
     bool FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob);

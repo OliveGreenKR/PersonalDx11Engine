@@ -21,7 +21,7 @@ public:
 
 public:
     UActorComponent() : bIsActive(true) {}
-    virtual ~UActorComponent() = default;
+    virtual ~UActorComponent();
 
 	// 토큰이 있어야만 호출 가능한 메서드(외부 설정을 위함)
 	void RequestSetOwner(UGameObject* InOwner, const OwnerToken&) { SetOwner(InOwner); }
@@ -56,7 +56,7 @@ public:
     void BroadcastTick(float DeltaTime);
 
     // 컴포넌트 활성화 상태
-    void SetActive(bool bNewActive) { bNewActive ? Activate() : DeActivate(); }
+	void SetActive(bool bNewActive);
     bool IsActive() const { return bIsActive; }
 
 protected:
@@ -65,10 +65,7 @@ protected:
 
 protected:
 	virtual void PostInitialized();
-    virtual void PostTreeInitialized()
-    {
-        SetActive(bIsActive);
-    }
+	virtual void PostTreeInitialized();
 
     virtual void Tick(float DeltaTime) {}
 

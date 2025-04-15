@@ -15,6 +15,10 @@ private:
     struct FDebugShape
     {
         FDebugShape();
+        ~FDebugShape()
+        {
+            Primitive.reset();
+        }
         std::unique_ptr<UPrimitiveComponent> Primitive;
         float RemainingTime = 0.0f;
         bool bPersistent = false;
@@ -37,7 +41,7 @@ private:
     // 싱글톤 구현
     UDebugDrawManager();
 
-    ~UDebugDrawManager() = default;
+    ~UDebugDrawManager();
 
     //PrimitiveComp 풀
     std::unique_ptr<TFixedObjectPool<FDebugShape,128>> FixedPool;

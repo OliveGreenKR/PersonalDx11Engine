@@ -29,7 +29,7 @@ private:
 
     // 싱글톤 패턴   
     UResourceManager() = default;
-    ~UResourceManager() = default;
+    ~UResourceManager();
 
     // 복사/이동 방지
     UResourceManager(const UResourceManager&) = delete;

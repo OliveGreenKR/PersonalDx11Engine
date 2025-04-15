@@ -6,7 +6,7 @@ class UPixelShader : public UShaderBase, public IResource
 {
 public:
     UPixelShader() = default;
-    ~UPixelShader() override;
+    virtual ~UPixelShader();
 
     // IResource 인터페이스 구현
     bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;

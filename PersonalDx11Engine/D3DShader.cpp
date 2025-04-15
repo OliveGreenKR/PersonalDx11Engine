@@ -10,7 +10,7 @@ UShaderBase::~UShaderBase()
 
 bool UShaderBase::FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob)
 {
-	if (!ShaderBlob)
+	if (!ShaderBlob || !Device)
 	{
 		return false;
 	}

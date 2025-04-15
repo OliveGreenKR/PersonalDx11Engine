@@ -25,6 +25,29 @@ UGameplayScene02::UGameplayScene02()
     InputContext = UInputContext::Create(SceneName);
 }
 
+UGameplayScene02::~UGameplayScene02()
+{
+    if (Character)
+    {
+        Character->SetActive(false);
+        Character = nullptr;
+    }
+    if (Character2)
+    {
+        Character2->SetActive(false);
+        Character2 = nullptr;
+    }
+    if (Camera)
+    {
+        Camera->SetActive(false);
+        Camera = nullptr;
+    }
+    if (InputContext)
+    {
+        InputContext = nullptr;
+    }
+}
+
 void UGameplayScene02::Initialize()
 {
     const int VIEW_WIDTH = 800;
@@ -118,11 +141,21 @@ void UGameplayScene02::Load()
 void UGameplayScene02::Unload()
 {
     // 주요 객체 해제
-    Character->SetActive(false);
-    Character2->SetActive(false);
-    Character = nullptr;
-    Character2 = nullptr;
-    Camera = nullptr;
+    if (Character)
+    {
+        Character->SetActive(false);
+        Character = nullptr;
+    }
+    if (Character2)
+    {
+        Character2->SetActive(false);
+        Character2 = nullptr;
+    }
+    if (Camera)
+    {
+        Camera->SetActive(false);
+        Camera = nullptr;
+    }
 
     // 입력 컨텍스트 삭제
     UInputManager::Get()->UnregisterInputContext(SceneName);

@@ -28,6 +28,8 @@ UElasticBody::UElasticBody() : bIsActive(true)
 
 UElasticBody::~UElasticBody()
 {
+	Collision = nullptr;
+	Primitive = nullptr;
 }
 
 void UElasticBody::Tick(const float DeltaTime)
@@ -69,13 +71,11 @@ void UElasticBody::SyncShapeExtent()
 void UElasticBody::Activate()
 {
 	UGameObject::Activate();
-	Collision->SetActive(true);
 }
 
 void UElasticBody::DeActivate()
 {
 	UGameObject::DeActivate();
-	Collision->SetActive(false);
 }
 
 void UElasticBody::Reset()

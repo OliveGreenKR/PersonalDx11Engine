@@ -5,13 +5,18 @@
 #include "CollisionManager.h"
 #include "TypeCast.h"
 
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents)
+UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) 
+	: UCollisionComponent()
 {
 	Shape.Type = InShape;
 	Shape.HalfExtent = InHalfExtents;
 }
 
 UCollisionComponent::UCollisionComponent() 
+{
+}
+
+UCollisionComponent::~UCollisionComponent()
 {
 }
 
@@ -96,7 +101,10 @@ void UCollisionComponent::ActivateColiision()
 void UCollisionComponent::DeActivateCollision()
 {
 	auto shared = Engine::Cast<UCollisionComponent>(shared_from_this());
-	UCollisionManager::Get()->UnRegisterCollision(shared);
+	if (shared) 
+	{
+		UCollisionManager::Get()->UnRegisterCollision(shared);
+	}
 }
 
 Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
@@ -130,6 +138,16 @@ Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
 const FTransform& UCollisionComponent::GetWorldTransform() const
 {
 	return USceneComponent::GetWorldTransform();
+}
+
+void UCollisionComponent::PostInitialized()
+{
+	USceneComponent::PostInitialized();
+	if (IsActive())
+	{
+
+		ActivateColiision();
+	}
 }
 
 void UCollisionComponent::PostTreeInitialized()
