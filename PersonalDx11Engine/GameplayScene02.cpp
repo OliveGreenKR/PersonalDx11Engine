@@ -58,16 +58,14 @@ void UGameplayScene02::Initialize()
     Camera->SetPosition({ 0, 0.0f, -8.0f });
 
     // 캐릭터 1 (탄성체) 설정
-    Character = UGameObject::Create<UElasticBody>();
+    Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
     Character->SetScale(0.5f * Vector3::One);
     Character->SetPosition({ -0.75f, 0, 0 });
-    Character->SetShapeBox();
 
     // 캐릭터 2 (탄성체) 설정
-    Character2 = UGameObject::Create<UElasticBody>();
+    Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
     Character2->SetScale(0.35f * Vector3::One);
     Character2->SetPosition({ 0.75f, 0, 0 });
-    Character2->SetShapeSphere();
 
     // 초기화 및 설정
     Camera->PostInitialized();
@@ -115,7 +113,7 @@ void UGameplayScene02::Initialize()
     Character->SetGravity(false);
     Character2->SetGravity(false);
 
-    auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponent>();
+    auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
     Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEventData& InEvent) {
         LOG("CollisionEnter"); }, "OnCollisionEnter_P1");
     Colli.lock()->OnCollisionStay.BindSystem([](const FCollisionEventData& InEvent) {
@@ -260,7 +258,7 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
                         CurrentPos.y,
                         CurrentPos.z);
-            auto Colli = Character->GetComponentByType<UCollisionComponent>();
+            auto Colli = Character->GetComponentByType<UCollisionComponentBase>();
             if (Colli)
             {
                 Vector3 ColliWorldPos = Colli->GetWorldPosition();

@@ -2,35 +2,35 @@
 #include <algorithm>
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
-	const FCollisionShapeData& ShapeA,
+	const ICollisionShape& ShapeA,
 	const FTransform& TransformA,
-	const FCollisionShapeData& ShapeB,
+	const ICollisionShape& ShapeB,
 	const FTransform& TransformB)
 {
 	// 형상 타입에 따른 적절한 충돌 검사 함수 호출
-	if (ShapeA.Type == ECollisionShapeType::Sphere && ShapeB.Type == ECollisionShapeType::Sphere)
+	if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return SphereSphere(
-			ShapeA.GetSphereRadius(), TransformA,
-			ShapeB.GetSphereRadius(), TransformB);
+			ShapeA.GetHalfExtent().x, TransformA,
+			ShapeB.GetHalfExtent().x, TransformB);
 	}
-	else if (ShapeA.Type == ECollisionShapeType::Box && ShapeB.Type == ECollisionShapeType::Box)
+	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		return BoxBoxSAT(
-			ShapeA.GetBoxHalfExtents(), TransformA,
-			ShapeB.GetBoxHalfExtents(), TransformB);
+			ShapeA.GetHalfExtent(), TransformA,
+			ShapeB.GetHalfExtent(), TransformB);
 	}
-	else if (ShapeA.Type == ECollisionShapeType::Box && ShapeB.Type == ECollisionShapeType::Sphere)
+	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return BoxSphereSimple(
-			ShapeA.GetBoxHalfExtents(), TransformA,
-			ShapeB.GetSphereRadius(), TransformB);
+			ShapeA.GetHalfExtent(), TransformA,
+			ShapeB.GetHalfExtent().x, TransformB);
 	}
-	else if (ShapeA.Type == ECollisionShapeType::Sphere && ShapeB.Type == ECollisionShapeType::Box)
+	else if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		auto Result = BoxSphereSimple(
-			ShapeB.GetBoxHalfExtents(), TransformB,
-			ShapeA.GetSphereRadius(), TransformA);
+			ShapeB.GetHalfExtent(), TransformB,
+			ShapeA.GetHalfExtent().x, TransformA);
 		// 노멀 방향 반전
 		Result.Normal = -Result.Normal;
 		return Result;
@@ -40,11 +40,11 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
-	const FCollisionShapeData& ShapeA,
-	const FTransform& PrevTransformA, 
-	const FTransform& CurrentTransformA, 
-	const FCollisionShapeData& ShapeB, 
-	const FTransform& PrevTransformB, 
+	const ICollisionShape& ShapeA,
+	const FTransform& PrevTransformA,
+	const FTransform& CurrentTransformA,
+	const ICollisionShape& ShapeB,
+	const FTransform& PrevTransformB,
 	const FTransform& CurrentTransformB,
 	const float DeltaTime)
 {
@@ -64,7 +64,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 			(CurrentTransformB.Position - PrevTransformB.Position);
 		if (RelativeMotion.LengthSquared() < KINDA_SMALL)
 		{
-			return EndResult;  
+			return EndResult;
 		}
 	}
 
@@ -410,61 +410,16 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 //////////////////////////////////////
 
 Vector3 FCollisionDetector::Support(
-	const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-	const FCollisionShapeData& ShapeB, const FTransform& TransformB,
+	const ICollisionShape& ShapeA, const FTransform& TransformA,
+	const ICollisionShape& ShapeB, const FTransform& TransformB,
 	const Vector3& Direction)
 {
 	// A에서 방향으로 가장 멀리 있는 점
-	Vector3 SupportA = SupportForShape(ShapeA, TransformA, Direction);
+	Vector3 SupportA = ShapeA.GetSupportPoint(Direction,TransformA);
 
 	// B에서 반대 방향으로 가장 멀리 있는 점
-	Vector3 SupportB = SupportForShape(ShapeB, TransformB, -Direction);
+	Vector3 SupportB = ShapeA.GetSupportPoint(-Direction, TransformB);
 
 	// 민코프스키 차에서의 점 (A - B)
 	return SupportA - SupportB;
-}
-
-Vector3 FCollisionDetector::SupportForShape(
-	const FCollisionShapeData& Shape,
-	const FTransform& Transform,
-	const Vector3& Direction)
-{
-	// 월드 방향을 로컬 공간으로 변환
-	Matrix InvRotation = XMMatrixInverse(nullptr, Transform.GetRotationMatrix());
-	XMVECTOR LocalDir = XMVector3Transform(XMLoadFloat3(&Direction), InvRotation);
-
-	Vector3 LocalSupport;
-
-	// 형상 타입에 따라 처리
-	if (Shape.Type == ECollisionShapeType::Box)
-	{
-		// 박스는 각 축 방향별로 확인
-		Vector3 LocalDirection;
-		XMStoreFloat3(&LocalDirection, LocalDir);
-
-		// 각 축 방향에 따라 꼭지점 결정
-		LocalSupport.x = (LocalDirection.x >= 0) ? Shape.HalfExtent.x : -Shape.HalfExtent.x;
-		LocalSupport.y = (LocalDirection.y >= 0) ? Shape.HalfExtent.y : -Shape.HalfExtent.y;
-		LocalSupport.z = (LocalDirection.z >= 0) ? Shape.HalfExtent.z : -Shape.HalfExtent.z;
-	}
-	else if (Shape.Type == ECollisionShapeType::Sphere)
-	{
-		// 구의 경우 방향 벡터를 정규화하고 반지름을 곱함
-		float Radius = Shape.GetSphereRadius();
-		Vector3 LocalDirection;
-		XMStoreFloat3(&LocalDirection, XMVector3Normalize(LocalDir));
-
-		LocalSupport = LocalDirection * Radius;
-	}
-
-	// 로컬 지원점을 월드 공간으로 변환
-	Matrix RotationMatrix = Transform.GetRotationMatrix();
-	XMVECTOR WorldSupport = XMVector3Transform(XMLoadFloat3(&LocalSupport), RotationMatrix);
-
-	// 위치 더하기
-	WorldSupport = XMVectorAdd(WorldSupport, XMLoadFloat3(&Transform.Position));
-
-	Vector3 Result;
-	XMStoreFloat3(&Result, WorldSupport);
-	return Result;
 }

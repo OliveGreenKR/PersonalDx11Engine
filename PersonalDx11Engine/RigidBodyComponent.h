@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include <memory>
 #include "ActorComponent.h"
@@ -18,7 +18,7 @@ public:
 	// 회전관성 접근제어 토근
 	class RotationalInertiaToken
 	{
-		friend class UCollisionComponent;
+		friend class UCollisionComponentBase;
 	private:
 		RotationalInertiaToken() = default;
 	};

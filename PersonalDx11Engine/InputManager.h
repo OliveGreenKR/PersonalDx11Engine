@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Delegate.h"
 #include <windows.h>
 #include <unordered_map>
@@ -34,6 +34,13 @@ private:
         SystemContext = std::make_shared<UInputContext>(SYSTEM_CONTEXT_NAME, SYSTEM_CONTEXT_PRIORITY);
         RegisterInputContext(SystemContext);
     }
+
+    // 복사 및 이동 방지
+    UInputManager(const UInputManager&) = delete;
+    UInputManager& operator=(const UInputManager&) = delete;
+    UInputManager(UInputManager&&) = delete;
+    UInputManager& operator=(UInputManager&&) = delete;
+
 public:
 
     //최하위 우선순위 시스템 컨텍스트

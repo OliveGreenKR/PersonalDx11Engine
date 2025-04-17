@@ -10,8 +10,10 @@
 #include "TypeCast.h"
 #include "Material.h"
 #include "define.h"
+#include "BoxComponent.h"
+#include "SphereComponent.h"
 
-UElasticBody::UElasticBody() : bIsActive(true)
+UElasticBody::UElasticBody(EElasticBodyShape Shape) : bIsActive(true)
 {
 	//Root to 'Rigid' 
 	auto RigidPtr = UActorComponent::Create<URigidBodyComponent>();
@@ -21,8 +23,18 @@ UElasticBody::UElasticBody() : bIsActive(true)
 		SetRootComponent(root);
 
 		Rigid = RigidPtr;
-		Collision = AddComponent<UCollisionComponent>();
 		Primitive = AddComponent<UPrimitiveComponent>();
+
+		if (Shape == EElasticBodyShape::Box)
+		{
+			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_CUBE));
+			Collision = UActorComponent::Create<UBoxComponent>();
+		}
+		else if (Shape == EElasticBodyShape::Sphere)
+		{
+			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE_Mid));
+			Collision = UActorComponent::Create<USphereComponent>();
+		}
 	}
 }
 
@@ -46,9 +58,7 @@ void UElasticBody::PostInitialized()
 		//collsion body 추가 및 초기화
 		if (Collision.get())
 		{
-			Collision->SetShapeBox(); //기본 박스 형태
 			Collision->BindRigidBody(Rigid.lock());
-			Collision->SetHalfExtent(GetTransform().Scale * 0.5f);
 		}
 	}
 }
@@ -58,13 +68,6 @@ void UElasticBody::PostInitializedComponents()
 	UGameObject::PostInitializedComponents();
 }
 
-void UElasticBody::SyncShapeExtent()
-{
-	if (Collision.get())
-	{
-		Collision->SetHalfExtent(GetTransform().Scale * 0.5f);
-	}
-}
 
 void UElasticBody::Activate()
 {
@@ -88,28 +91,6 @@ void UElasticBody::Reset()
 	// 위치 및 회전 초기화 
 	SetPosition(Vector3::Zero);
 	SetRotation(Quaternion::Identity);
-}
-
-ECollisionShapeType UElasticBody::GetCollisionShape(const EShape InShape) const
-{
-	switch (InShape)
-	{
-		case EShape::Box:
-		{
-			return ECollisionShapeType::Box;
-			break;
-		}
-		case EShape::Sphere:
-		{
-			return ECollisionShapeType::Sphere;
-			break;
-		}
-		default:
-		{
-			return ECollisionShapeType::Sphere;
-			break;
-		}
-	}
 }
 
 #pragma region Getter Setter
@@ -213,40 +194,6 @@ void UElasticBody::SetRestitution(float InRestitution) {
 	}
 }
 #pragma endregion
-
-void UElasticBody::SetShape(EShape InShape)
-{
-	if (auto CollisionPtr = Collision.get())
-	{
-		CollisionPtr->SetShape(GetCollisionShape(InShape));
-	}
-
-	switch (InShape)
-	{
-		case EShape::Box:
-		{
-			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_CUBE));
-			break;
-		}
-		case EShape::Sphere:
-		{
-			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE_Mid));
-			break;
-		}
-	}
-
-	SyncShapeExtent();
-}
-
-void UElasticBody::SetShapeSphere()
-{
-	SetShape(EShape::Sphere);
-}
-
-void UElasticBody::SetShapeBox()
-{
-	SetShape(EShape::Box);
-}
 
 void UElasticBody::SetColor(const Vector4& InColor)
 {

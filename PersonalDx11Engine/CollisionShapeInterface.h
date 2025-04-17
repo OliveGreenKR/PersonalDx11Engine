@@ -2,6 +2,14 @@
 #include "Math.h"
 #include "Transform.h"
 
+// 충돌체 형태 정의
+enum class ECollisionShapeType
+{
+    None,
+    Box,
+    Sphere
+};
+
 class ICollisionShape
 {
 public:
@@ -16,6 +24,8 @@ public:
     // AABB 계산 (Axis-Aligned Bounding Box)
     virtual void CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const = 0;
 
-    virtual const Vector3& GetHalfExtent() const = 0;
+    virtual Vector3 GetHalfExtent() const = 0;
     virtual void SetHalfExtent(const Vector3& InVector) = 0;
+
+    virtual ECollisionShapeType GetType() const = 0;
 };

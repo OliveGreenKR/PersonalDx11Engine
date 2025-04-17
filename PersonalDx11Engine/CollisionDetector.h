@@ -2,6 +2,7 @@
 #include "Math.h"
 #include "Transform.h"
 #include "CollisionDefines.h"
+#include "CollisionShapeInterface.h"
 
 
 // 충돌 검사 알고리즘 모음
@@ -31,16 +32,16 @@ class  FCollisionDetector
 public:
     // 이산 충돌 감지
     FCollisionDetectionResult DetectCollisionDiscrete(
-        const FCollisionShapeData& ShapeA,
+        const ICollisionShape& ShapeA,
         const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB,
+        const ICollisionShape& ShapeB,
         const FTransform& TransformB);
-     // 연속(Continuous) 충돌 감지
+    // 연속(Continuous) 충돌 감지
     FCollisionDetectionResult DetectCollisionCCD(
-        const FCollisionShapeData& ShapeA,
+        const ICollisionShape& ShapeA,
         const FTransform& PrevTransformA,
         const FTransform& CurrentTransformA,
-        const FCollisionShapeData& ShapeB,
+        const ICollisionShape& ShapeB,
         const FTransform& PrevTransformB,
         const FTransform& CurrentTransformB,
         const float DeltaTime);
@@ -61,33 +62,27 @@ private:
         float RadiusB, const FTransform& TransformB);
 
     // Box-Sphere 충돌 검사
-     FCollisionDetectionResult BoxSphereSimple(
+    FCollisionDetectionResult BoxSphereSimple(
         const Vector3& BoxExtent, const FTransform& BoxTransform,
         float SphereRadius, const FTransform& SphereTransform);
 
 private:
     // 서포트 함수 - 특정 방향으로 가장 멀리 있는 점 반환
     Vector3 Support(
-        const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB, const FTransform& TransformB,
-        const Vector3& Direction);
-
-    // 형상별 서포트 함수
-    Vector3 SupportForShape(
-        const FCollisionShapeData& Shape,
-        const FTransform& Transform,
+        const ICollisionShape& ShapeA, const FTransform& TransformA,
+        const ICollisionShape& ShapeB, const FTransform& TransformB,
         const Vector3& Direction);
 
     // GJK 알고리즘 - 두 볼록 형상의 충돌 여부 검사
     bool GJK(
-        const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB, const FTransform& TransformB,
+        const ICollisionShape& ShapeA, const FTransform& TransformA,
+        const ICollisionShape& ShapeB, const FTransform& TransformB,
         FSimplex& OutSimplex);
 
     // EPA 알고리즘 - 침투 깊이와 충돌 법선 계산
     FCollisionDetectionResult EPA(
-        const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB, const FTransform& TransformB,
+        const ICollisionShape& ShapeA, const FTransform& TransformA,
+        const ICollisionShape& ShapeB, const FTransform& TransformB,
         FSimplex& Simplex);
 
     // GJK 내부 함수 - 다음 방향 찾기
@@ -99,13 +94,13 @@ private:
     void ExpandPolyhedron(
         std::vector<FFace>& Faces,
         const Vector3& NewPoint,
-        const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB, const FTransform& TransformB);
+        const ICollisionShape& ShapeA, const FTransform& TransformA,
+        const ICollisionShape& ShapeB, const FTransform& TransformB);
 
     // GJK+EPA 통합 충돌 감지 함수
     FCollisionDetectionResult DetectCollisionGJKEPA(
-        const FCollisionShapeData& ShapeA, const FTransform& TransformA,
-        const FCollisionShapeData& ShapeB, const FTransform& TransformB);
+        const ICollisionShape& ShapeA, const FTransform& TransformA,
+        const ICollisionShape& ShapeB, const FTransform& TransformB);
 public:
     float TimeStep = 0.02f;
 

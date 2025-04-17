@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <climits>
+#include <utility>
 
 /// <summary>
 /// 고정크기 객체의 고정 크기 Pool. 
@@ -14,6 +15,18 @@ class TFixedObjectPool {
 private:
     static constexpr size_t INVALID_INDEX = N;
 
+public:
+    // 생성자
+    template <typename... Args>
+    TFixedObjectPool(Args&&... args) {
+        for (size_t i = 0; i < N; ++i) {
+            Objects[i] = std::move( T(std::forward<Args>(args)...)); // 직접 생성 후 전달
+        }
+        for (size_t i = 0; i < N; ++i) {
+            PrevIndices[i] = INVALID_INDEX;
+            NextIndices[i] = INVALID_INDEX;
+        }
+    }
 public:
 #pragma region WeakedObject
     // 외부 인터페이스를 위한 객체 래퍼 클래스 - 약한 참조
@@ -229,17 +242,8 @@ private:
     }
 
 public:
-    // 생성자: 풀 초기화
-    TFixedObjectPool() {
-        for (size_t i = 0; i < N; ++i) {
-            PrevIndices[i] = INVALID_INDEX;
-            NextIndices[i] = INVALID_INDEX;
-        }
-    }
-
     // 비활성 객체를 찾아 활성화 후 WeakedObject 반환
-    template <typename... Args>
-    WeakedObject Acquire(Args&&... args) {
+    WeakedObject Acquire() {
         if (ActiveCount >= N) {
             return WeakedObject(); // 유효하지 않은 객체
         }
@@ -260,10 +264,9 @@ public:
     }
 
     // 꽉찬 경우 가장 오래된 객체 초기화 후 WeakedObject 반환
-    template <typename... Args>
-    WeakedObject AcquireForcely(Args&&... args) {
+    WeakedObject AcquireForcely() {
         if (ActiveCount < N) {
-            return Acquire(std::forward<Args>(args)...);
+            return Acquire();
         }
 
         if (ActiveHead == INVALID_INDEX) {

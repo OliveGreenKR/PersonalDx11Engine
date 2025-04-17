@@ -3,31 +3,6 @@
 #include "Math.h"
 #include <memory>
 #include "Transform.h"
-#include "CollisionShapeInterface.h"
-
-// 충돌체 형태 정의
-enum class ECollisionShapeType
-{
-	Box,
-	Sphere
-};
-
-// 충돌체 기하 정보
-struct FCollisionShapeData
-{
-	inline float GetSphereRadius() const {
-		assert(Type == ECollisionShapeType::Sphere);
-		return HalfExtent.x;  // 구는 x 성분만 사용
-	}
-
-	inline const Vector3& GetBoxHalfExtents() const {
-		assert(Type == ECollisionShapeType::Box);
-		return HalfExtent;    // 박스는 전체 벡터 사용
-	}
-
-	ECollisionShapeType Type = ECollisionShapeType::Box;
-	Vector3 HalfExtent = Vector3::Zero;  //Sphere는 x값만 사용
-};
 
 // 충돌 감지 결과
 struct FCollisionDetectionResult
@@ -79,7 +54,7 @@ struct FCollisionResponseResult
 // 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 델리게이트 전파
 struct FCollisionEventData
 {
-	std::weak_ptr<class UCollisionComponent> OtherComponent;
+	std::weak_ptr<class UCollisionComponentBase> OtherComponent;
 	FCollisionDetectionResult CollisionDetectResult;
 };
 

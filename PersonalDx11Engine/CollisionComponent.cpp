@@ -5,32 +5,32 @@
 #include "CollisionManager.h"
 #include "TypeCast.h"
 
-UCollisionComponent::UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents) 
-	: UCollisionComponent()
+
+UCollisionComponentBase::UCollisionComponentBase(const Vector3& InHalfExtents) 
+	: UCollisionComponentBase()
 {
-	Shape.Type = InShape;
-	Shape.HalfExtent = InHalfExtents;
+	HalfExtent = InHalfExtents;
 }
 
-UCollisionComponent::UCollisionComponent() 
-{
-}
-
-UCollisionComponent::~UCollisionComponent()
+UCollisionComponentBase::UCollisionComponentBase() 
 {
 }
 
-Vector3 UCollisionComponent::GetHalfExtent() const
+UCollisionComponentBase::~UCollisionComponentBase()
 {
-	return Shape.HalfExtent;
 }
 
-bool UCollisionComponent::IsStatic() const
+Vector3 UCollisionComponentBase::GetHalfExtent() const
+{
+	return HalfExtent;
+}
+
+bool UCollisionComponentBase::IsStatic() const
 {
 	return RigidBody.lock()->IsStatic();
 }
 
-void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
+void UCollisionComponentBase::BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
 	if (!InRigidBody.get())
 		return;
@@ -40,107 +40,52 @@ void UCollisionComponent::BindRigidBody(const std::shared_ptr<URigidBodyComponen
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		RigidPtr->AddChild(shared_from_this());
-		Vector3 NewInerteria = CalculateRotationalInerteria(RigidPtr->GetMass());
+		Vector3 NewInerteria = CalculateInertiaTensor(RigidPtr->GetMass());
 		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
 	}
 }
 
-void UCollisionComponent::SetCollisionShapeData(const FCollisionShapeData& InShape)
+void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)
 {
-	Shape = InShape;
-
-	if (auto RigidPtr = RigidBody.lock())
-	{
-		Vector3 NewInerteria = CalculateRotationalInerteria(RigidPtr->GetMass());
-		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
-	}
-	
+	HalfExtent = InHalfExtent;
 }
 
-void UCollisionComponent::SetHalfExtent(const Vector3& InHalfExtent)
-{
-	Shape.HalfExtent = InHalfExtent;
-}
-
-void UCollisionComponent::Activate()
+void UCollisionComponentBase::Activate()
 {
 	USceneComponent::Activate();
 	ActivateColiision();
 }
 
-void UCollisionComponent::DeActivate()
+void UCollisionComponentBase::DeActivate()
 {
 	USceneComponent::DeActivate();
 	DeActivateCollision();
 }
 
-void UCollisionComponent::SetShape(const ECollisionShapeType InShape)
+void UCollisionComponentBase::ActivateColiision()
 {
-	Shape.Type = InShape;
-}
-
-void UCollisionComponent::SetShapeSphere()
-{
-	Shape.Type = ECollisionShapeType::Sphere;
-}
-
-void UCollisionComponent::SetShapeBox()
-{
-	Shape.Type = ECollisionShapeType::Box;
-}
-
-void UCollisionComponent::ActivateColiision()
-{
-	auto shared = Engine::Cast<UCollisionComponent>(shared_from_this());
+	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared)
 	{
 		UCollisionManager::Get()->RegisterCollision(shared);
 	}
 }
 
-void UCollisionComponent::DeActivateCollision()
+void UCollisionComponentBase::DeActivateCollision()
 {
-	auto shared = Engine::Cast<UCollisionComponent>(shared_from_this());
+	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared) 
 	{
 		UCollisionManager::Get()->UnRegisterCollision(shared);
 	}
 }
 
-Vector3 UCollisionComponent::CalculateRotationalInerteria(const float InMass)
-{
-
-	switch (Shape.Type)
-	{
-		case ECollisionShapeType::Box : 
-		{
-			Vector3 Result;
-			Result.x = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.y * 4 + Shape.HalfExtent.z * 4);
-			Result.y = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.x * 4 + Shape.HalfExtent.z * 4);
-			Result.z = (1.0f / 12.0f) * InMass * (Shape.HalfExtent.x * 4 + Shape.HalfExtent.y * 4);
-			return Result;
-		}
-		break;
-		case ECollisionShapeType::Sphere : 
-		{
-			float radius = Shape.GetSphereRadius();
-			return InMass * (0.4f) * radius * radius * Vector3::One;
-		}
-		break;
-		default :
-		{
-			return InMass * 5.0f * Vector3::One;
-		}
-		break;
-	}
-}
-
-const FTransform& UCollisionComponent::GetWorldTransform() const
+const FTransform& UCollisionComponentBase::GetWorldTransform() const
 {
 	return USceneComponent::GetWorldTransform();
 }
 
-void UCollisionComponent::PostInitialized()
+void UCollisionComponentBase::PostInitialized()
 {
 	USceneComponent::PostInitialized();
 	if (IsActive())
@@ -150,12 +95,12 @@ void UCollisionComponent::PostInitialized()
 	}
 }
 
-void UCollisionComponent::PostTreeInitialized()
+void UCollisionComponentBase::PostTreeInitialized()
 {
 	USceneComponent::PostTreeInitialized();
 }
 
-void UCollisionComponent::Tick(const float DeltaTime)
+void UCollisionComponentBase::Tick(const float DeltaTime)
 {
 	USceneComponent::Tick(DeltaTime);
 

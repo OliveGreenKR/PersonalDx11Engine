@@ -11,6 +11,12 @@
 class UDebugDrawManager
 {
 private:
+    // 복사 및 이동 방지
+    UDebugDrawManager(const UDebugDrawManager&) = delete;
+    UDebugDrawManager& operator=(const UDebugDrawManager&) = delete;
+    UDebugDrawManager(UDebugDrawManager&&) = delete;
+    UDebugDrawManager& operator=(UDebugDrawManager&&) = delete;
+private:
     // 디버그 데이터 저장 구조체
     struct FDebugShape
     {
@@ -23,6 +29,11 @@ private:
         float RemainingTime = 0.0f;
         bool bPersistent = false;
 
+        FDebugShape(const FDebugShape&) = delete; // 복사 금지
+        FDebugShape& operator=(const FDebugShape&) = delete;
+
+        FDebugShape(FDebugShape&&) noexcept = default;
+        FDebugShape& operator=(FDebugShape&&) noexcept = default;
 
         // 재사용을 위한 초기화 메서드 
         void Reset() {
@@ -36,6 +47,8 @@ private:
                 Primitive->SetColor(Vector4(1, 1, 1, 1));
             }
         }
+        
+        
     };
 
     // 싱글톤 구현

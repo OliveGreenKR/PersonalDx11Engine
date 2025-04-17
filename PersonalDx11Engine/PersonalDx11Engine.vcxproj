@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActorComponent.cpp" />
+    <ClCompile Include="BoxComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
@@ -170,13 +171,14 @@
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="SceneComponent.cpp" />
+    <ClCompile Include="SphereComponent.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VertexShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorComponent.h" />
-    <ClInclude Include="BoxCollisionShape.h" />
+    <ClInclude Include="BoxComponent.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetector.h" />
@@ -224,7 +226,7 @@
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ResourceHandle.h" />
-    <ClInclude Include="SphereCollisionShape.h" />
+    <ClInclude Include="SphereComponent.h" />
     <ClInclude Include="StringHash.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />

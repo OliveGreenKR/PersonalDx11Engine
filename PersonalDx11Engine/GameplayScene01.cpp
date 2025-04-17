@@ -62,7 +62,7 @@ void UGameplayScene01::Load()
     PoleMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_POLE);
     //DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
 
-    ElasticBodyPool = std::make_unique< TFixedObjectPool<UElasticBody, 512>>();
+    ElasticBodyPool = std::make_unique< TFixedObjectPool<UElasticBody, 512>>(EElasticBodyShape::Sphere);
 }
 
 void UGameplayScene01::Unload()
@@ -331,7 +331,6 @@ void UGameplayScene01::SpawnElasticBody()
 
     body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
     body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
-    body->SetShapeSphere();
 
     auto Rigid = body->GetComponentByType<URigidBodyComponent>();
     if (Rigid)

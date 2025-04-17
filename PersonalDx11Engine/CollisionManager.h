@@ -106,11 +106,11 @@ public:
     }
 
     [[deprecated("Use Another signature of RegisterCollision")]]
-    void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent,
+    void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent,
                               const std::shared_ptr<URigidBodyComponent>& InRigidBody);
 
-    void RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent);
-    void UnRegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent);
+    void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
+    void UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
 
     void Tick(const float DeltaTime);
     void UnRegisterAll();
@@ -137,12 +137,12 @@ private:
     //컴포넌트 트랜스폼 업데이트
     void UpdateCollisionTransform();
 
-    void GetPhysicsParams(const std::shared_ptr<UCollisionComponent>& InComp, FPhysicsParameters& Result) const;
+    void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
 
     //일반적인 충돌반응 (충격량기반 속도 변화)
     void ApplyCollisionResponseByImpulse(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const std::shared_ptr<UCollisionComponentBase>& ComponentA,
+        const std::shared_ptr<UCollisionComponentBase>& ComponentB,
         const FCollisionDetectionResult& DetectResult);
 
     //연속적인 충돌 반응 (속도 기반)
@@ -152,8 +152,8 @@ private:
         const float DeltaTime);
 
     void ApplyPositionCorrection(
-        const std::shared_ptr<UCollisionComponent>& ComponentA,
-        const std::shared_ptr<UCollisionComponent>& ComponentB,
+        const std::shared_ptr<UCollisionComponentBase>& ComponentA,
+        const std::shared_ptr<UCollisionComponentBase>& ComponentB,
         const FCollisionDetectionResult& DetectResult,
         const float DeltaTime);
 
@@ -181,7 +181,7 @@ private:
 
     // 컴포넌트 관리
     //std::vector<FComponentData> RegisteredComponents; 
-    std::unordered_map<size_t, std::weak_ptr<UCollisionComponent>> RegisteredComponents;
+    std::unordered_map<size_t, std::weak_ptr<UCollisionComponentBase>> RegisteredComponents;
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
 };

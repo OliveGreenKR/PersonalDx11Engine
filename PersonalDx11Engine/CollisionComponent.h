@@ -6,25 +6,35 @@
 #include "CollisionDefines.h"
 #include "DynamicBoundableInterface.h"
 #include "SceneComponent.h"
+#include "CollisionShapeInterface.h"
 
 class URigidBodyComponent;
 class UGameObject;
 
-// 충돌 응답에 필요한 속성 관리
-class UCollisionComponent : public USceneComponent, public IDynamicBoundable
+// 충돌 응답에 필요한 속성을 관리하는 최상위 충돌체 클래스, 직접 사용하지 마시오
+class UCollisionComponentBase : public USceneComponent, public IDynamicBoundable, public ICollisionShape
 {
 	friend class UCollisionManager;
 public:
-	UCollisionComponent(const ECollisionShapeType& InShape, const Vector3& InHalfExtents);
-	UCollisionComponent();
+	UCollisionComponentBase(const Vector3& InHalfExtents);
+	UCollisionComponentBase();
 
-	~UCollisionComponent();
+	~UCollisionComponentBase();
 public:
 
 	// Inherited via IDynamicBoundable
 	Vector3 GetHalfExtent() const override;
 	bool IsStatic() const override;
 	const FTransform& GetWorldTransform() const override;
+
+	// Inherited via ICollisionShape
+	void SetHalfExtent(const Vector3& InHalfExtent) override;
+
+	virtual Vector3 GetSupportPoint(const Vector3& Direction, const FTransform& WorldTransform) const  = 0;
+	virtual Vector3 CalculateInertiaTensor(float Mass) const = 0;
+	virtual void CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const = 0;
+
+	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 
 protected:  
 	virtual void PostInitialized() override;
@@ -38,18 +48,8 @@ public:
 public:
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
-	const FCollisionShapeData& GetCollisionShape() const { return Shape; }
 	const FTransform& GetPreviousTransform() const { return PrevWorldTransform; }
 
-	//Setter
-	void SetCollisionShapeData(const FCollisionShapeData& InShape);
-	void SetHalfExtent(const Vector3& InHalfExtent);
-
-	//형태 지정
-	void SetShape(const ECollisionShapeType InShape);
-	void SetShapeSphere();
-	void SetShapeBox();
-	
 private:
 	virtual void Activate() override;
 	virtual void DeActivate() override;
@@ -74,14 +74,14 @@ public:
 		OnCollisionExit.Broadcast(CollisionInfo);
 	}
 
-	virtual const char* GetComponentClassName() const override { return "UCollision"; }
-
-private:
-	Vector3 CalculateRotationalInerteria(const float InMass);
+	virtual const char* GetComponentClassName() const override { return "UCollisionionBase"; }
 
 private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
-	FCollisionShapeData Shape;
 	// CCD를 위한 이전 프레임 월드 트랜스폼
 	FTransform PrevWorldTransform = FTransform();
+
+protected:
+	//로컬 extent
+	Vector3 HalfExtent = Vector3::One;
 };

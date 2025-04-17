@@ -1,23 +1,22 @@
 #pragma once
 #include "GameObject.h"
-
 #include "Model.h"
 #include <random>
-enum class ECollisionShapeType;
+
+enum class EElasticBodyShape
+{
+    Box,
+    Sphere,
+    Count
+};
 
 class UElasticBody : public UGameObject
 {
     friend class UElasticBodyManager;
 
 public:
-    enum class EShape
-    {
-        Box,
-        Sphere,
-        Count
-    };
 
-    UElasticBody();
+    UElasticBody(EElasticBodyShape Shape = EElasticBodyShape::Sphere);
     virtual ~UElasticBody();
 
     // 기본 수명 주기 메서드
@@ -54,11 +53,7 @@ public:
     void SetFrictionStatic(float InFriction);
     void SetRestitution(float InRestitution);
 
-    //충돌체 설정
-    void SetShape(EShape InShape);
-    void SetShapeSphere();
-    void SetShapeBox();
-    void SyncShapeExtent();
+    //모델 설정
     void SetColor(const Vector4& InColor);
 
     // 활성화/비활성화
@@ -67,17 +62,13 @@ public:
 
 
 private:
-    // 내부 유틸리티 메서드
-    enum class ECollisionShapeType GetCollisionShape(const EShape Shape) const;
-
-private:
     bool bIsActive = true;
-    EShape Shape = EShape::Sphere;
+    EElasticBodyShape Shape = EElasticBodyShape::Sphere;
 
     //Rigid Root 빠른 접근
     std::weak_ptr<class URigidBodyComponent> Rigid;
     // 컴포넌트 소유
-    std::shared_ptr<class UCollisionComponent> Collision;
+    std::shared_ptr<class UCollisionComponentBase> Collision;
     std::shared_ptr<class UPrimitiveComponent> Primitive;
 
 };

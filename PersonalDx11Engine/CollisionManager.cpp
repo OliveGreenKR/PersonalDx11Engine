@@ -15,7 +15,7 @@ UCollisionManager::~UCollisionManager()
 	Release();
 }
 
-void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
+void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
 {
 	if (!InRigidBody)
 	{
@@ -28,7 +28,7 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 
 }
 
-void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& NewComponent)
+void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent)
 {
 	if (!CollisionTree || !NewComponent )
 		return;
@@ -42,12 +42,12 @@ void UCollisionManager::RegisterCollision(std::shared_ptr<UCollisionComponent>& 
 	RegisteredComponents[TreeNodeId] = NewComponent; 
 }
 
-void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponent>& InComponent)
+void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& InComponent)
 {
 	if (!InComponent || !CollisionTree)
 		return;
 
-	UCollisionComponent* targetPtr = InComponent.get();
+	UCollisionComponentBase* targetPtr = InComponent.get();
 
 	// 관리 중인 컴포넌트인지 확인
 	auto targetIt = std::find_if(RegisteredComponents.begin(), RegisteredComponents.end(),
@@ -337,14 +337,14 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
 			{
 				//ccd
-				DetectResult = Detector->DetectCollisionCCD(CompA->GetCollisionShape(), CompA->GetPreviousTransform(), CompA->GetWorldTransform(),
-															CompB->GetCollisionShape(), CompB->GetPreviousTransform(), CompB->GetWorldTransform(), DeltaTime);
+				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousTransform(), CompA->GetWorldTransform(),
+															*CompB.get(), CompB->GetPreviousTransform(), CompB->GetWorldTransform(), DeltaTime);
 			}
 			else
 			{
 				//dcd
-				DetectResult = Detector->DetectCollisionDiscrete(CompA->GetCollisionShape(), CompA->GetWorldTransform(),
-																 CompB->GetCollisionShape(), CompB->GetWorldTransform());
+				DetectResult = Detector->DetectCollisionDiscrete(*CompA.get(), CompA->GetWorldTransform(),
+																 *CompB.get(), CompB->GetWorldTransform());
 			}
 		}
 
@@ -361,7 +361,7 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 	}
 }
 
-void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionComponent>& InComp, FPhysicsParameters& ResponseResult ) const
+void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& ResponseResult ) const
 {
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
@@ -383,7 +383,7 @@ void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionCompone
 	return;
 }
 
-void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UCollisionComponent>& ComponentA, const std::shared_ptr<UCollisionComponent>& ComponentB, const FCollisionDetectionResult& DetectResult)
+void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UCollisionComponentBase>& ComponentA, const std::shared_ptr<UCollisionComponentBase>& ComponentB, const FCollisionDetectionResult& DetectResult)
 {
 	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
 		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
@@ -466,7 +466,7 @@ void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, 
 	}
 }
 
-void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponent>& CompA, const std::shared_ptr<UCollisionComponent>& CompB, 
+void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB, 
 												const FCollisionDetectionResult& DetectResult, const float DeltaTime)
 {
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)

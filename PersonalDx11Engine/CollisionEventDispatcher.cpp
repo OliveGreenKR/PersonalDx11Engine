@@ -1,7 +1,7 @@
-﻿#include "CollisionEventDispatcher.h"
+#include "CollisionEventDispatcher.h"
 #include "CollisionComponent.h"
 
-void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UCollisionComponent>& InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
+void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UCollisionComponentBase>& InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
     if (!InComponent.get())
     {
@@ -10,7 +10,7 @@ void FCollisionEventDispatcher::DispatchCollisionEvents(const std::shared_ptr<UC
     DispatchCollisionEvents(InComponent.get(), EventData, CollisionState);
 }
 
-void FCollisionEventDispatcher::DispatchCollisionEvents(const UCollisionComponent* InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
+void FCollisionEventDispatcher::DispatchCollisionEvents(const UCollisionComponentBase* InComponent, const FCollisionEventData& EventData, const ECollisionState& CollisionState)
 {
     if (!InComponent)
     {

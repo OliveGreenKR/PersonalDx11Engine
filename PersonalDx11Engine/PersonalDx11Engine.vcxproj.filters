@@ -47,9 +47,6 @@
     <ClCompile Include="RigidBodyComponent.cpp">
       <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionComponent.cpp">
-      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision</Filter>
-    </ClCompile>
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClCompile>
@@ -124,6 +121,15 @@
     </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Engine\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="BoxComponent.cpp">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Box</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereComponent.cpp">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Sphere</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionComponent.cpp">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -295,8 +301,14 @@
     <Filter Include="Engine\Object\Components\ActorComponent\Scene\RigidBody">
       <UniqueIdentifier>{97afcc3b-a5d4-4070-a7ff-2ae2714cdd63}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Physics\CollisionShape">
-      <UniqueIdentifier>{1aa2457b-8111-41bc-8c9a-42fdebf68ee1}</UniqueIdentifier>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\Collision\Box">
+      <UniqueIdentifier>{7de89283-31a2-4142-8440-45d89d6dd6f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\Collision\Sphere">
+      <UniqueIdentifier>{70b52e9e-4f89-4d85-9a8f-2dd98d8d71e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\Collision\Base">
+      <UniqueIdentifier>{46a99b17-830f-470d-bf62-17e9c6d3236a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -356,9 +368,6 @@
     </ClInclude>
     <ClInclude Include="RigidBodyComponent.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionComponent.h">
-      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision</Filter>
     </ClInclude>
     <ClInclude Include="DynamicBoundableInterface.h">
       <Filter>Engine\Interface</Filter>
@@ -516,11 +525,14 @@
     <ClInclude Include="CollisionShapeInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="BoxCollisionShape.h">
-      <Filter>Engine\Physics\CollisionShape</Filter>
+    <ClInclude Include="BoxComponent.h">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Box</Filter>
     </ClInclude>
-    <ClInclude Include="SphereCollisionShape.h">
-      <Filter>Engine\Physics\CollisionShape</Filter>
+    <ClInclude Include="SphereComponent.h">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Sphere</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionComponent.h">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

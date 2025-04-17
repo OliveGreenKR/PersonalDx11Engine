@@ -3,7 +3,7 @@
 #include <vector>
 #include "CollisionDefines.h"
 
-class UCollisionComponent;
+class UCollisionComponentBase;
 
 class FCollisionEventDispatcher
 {
@@ -15,12 +15,12 @@ public:
 
 public:
     void DispatchCollisionEvents(
-        const std::shared_ptr<UCollisionComponent>& InComponent,
+        const std::shared_ptr<UCollisionComponentBase>& InComponent,
         const FCollisionEventData& EventData,
         const ECollisionState& CollisionState);
 private:
     void DispatchCollisionEvents(
-        const UCollisionComponent* InComponent,
+        const UCollisionComponentBase* InComponent,
         const FCollisionEventData& EventData,
         const ECollisionState& CollisionState);
 
