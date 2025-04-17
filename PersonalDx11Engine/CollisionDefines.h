@@ -1,8 +1,9 @@
-﻿#pragma once
+#pragma once
 #pragma once
 #include "Math.h"
 #include <memory>
 #include "Transform.h"
+#include "CollisionShapeInterface.h"
 
 // 충돌체 형태 정의
 enum class ECollisionShapeType

@@ -7,7 +7,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	const FCollisionShapeData& ShapeB,
 	const FTransform& TransformB)
 {
-	// Çü»ó Å¸ÀÔ¿¡ µû¸¥ ÀûÀıÇÑ Ãæµ¹ °Ë»ç ÇÔ¼ö È£Ãâ
+	// í˜•ìƒ íƒ€ì…ì— ë”°ë¥¸ ì ì ˆí•œ ì¶©ëŒ ê²€ì‚¬ í•¨ìˆ˜ í˜¸ì¶œ
 	if (ShapeA.Type == ECollisionShapeType::Sphere && ShapeB.Type == ECollisionShapeType::Sphere)
 	{
 		return SphereSphere(
@@ -31,12 +31,12 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 		auto Result = BoxSphereSimple(
 			ShapeB.GetBoxHalfExtents(), TransformB,
 			ShapeA.GetSphereRadius(), TransformA);
-		// ³ë¸Ö ¹æÇâ ¹İÀü
+		// ë…¸ë©€ ë°©í–¥ ë°˜ì „
 		Result.Normal = -Result.Normal;
 		return Result;
 	}
 
-	return FCollisionDetectionResult();  // Áö¿øÇÏÁö ¾Ê´Â Á¶ÇÕ
+	return FCollisionDetectionResult();  // ì§€ì›í•˜ì§€ ì•ŠëŠ” ì¡°í•©
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
@@ -48,18 +48,18 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	const FTransform& CurrentTransformB,
 	const float DeltaTime)
 {
-	// ÃÊ±â »óÅÂ¿Í ÃÖÁ¾ »óÅÂ¿¡¼­ÀÇ Ãæµ¹ °Ë»ç
+	// ì´ˆê¸° ìƒíƒœì™€ ìµœì¢… ìƒíƒœì—ì„œì˜ ì¶©ëŒ ê²€ì‚¬
 	FCollisionDetectionResult StartResult = DetectCollisionDiscrete(ShapeA, PrevTransformA, ShapeB, PrevTransformB);
 	if (StartResult.bCollided)
 	{
-		StartResult.TimeOfImpact = 0.0f;  // ½ÃÀÛºÎÅÍ Ãæµ¹ »óÅÂ
+		StartResult.TimeOfImpact = 0.0f;  // ì‹œì‘ë¶€í„° ì¶©ëŒ ìƒíƒœ
 		return StartResult;
 	}
 
 	FCollisionDetectionResult EndResult = DetectCollisionDiscrete(ShapeA, CurrentTransformA, ShapeB, CurrentTransformB);
 	if (!EndResult.bCollided)
 	{
-		// ½ÃÀÛ°ú ³¡ ¸ğµÎ Ãæµ¹ÇÏÁö ¾ÊÀ¸¸ç, °æ·Î°¡ ¸Å¿ì ÂªÀº °æ¿ì -> Ãæµ¹ °Ë»ç °Ç³Ê¶ç±â
+		// ì‹œì‘ê³¼ ë ëª¨ë‘ ì¶©ëŒí•˜ì§€ ì•Šìœ¼ë©°, ê²½ë¡œê°€ ë§¤ìš° ì§§ì€ ê²½ìš° -> ì¶©ëŒ ê²€ì‚¬ ê±´ë„ˆë„ê¸°
 		Vector3 RelativeMotion = (CurrentTransformA.Position - PrevTransformA.Position) -
 			(CurrentTransformB.Position - PrevTransformB.Position);
 		if (RelativeMotion.LengthSquared() < KINDA_SMALL)
@@ -77,11 +77,11 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	{
 		float alpha = currentTime / DeltaTime;
 
-		// Áß°£ ½ÃÁ¡ÀÇ Transform °è»ê
+		// ì¤‘ê°„ ì‹œì ì˜ Transform ê³„ì‚°
 		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, alpha);
 		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, alpha);
 
-		//ÃÖÃÊ Ãæµ¹ ½ÃÁ¡ Ã£±â
+		//ìµœì´ˆ ì¶©ëŒ ì‹œì  ì°¾ê¸°
 		Result = DetectCollisionDiscrete(ShapeA, InterpolatedTransformA, ShapeB, InterpolatedTransformB);
 
 		if (Result.bCollided)
@@ -93,7 +93,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 		currentTime += TimeStep;
 	}
 
-	return EndResult;  // ÃÖÁ¾ »óÅÂÀÇ °á°ú ¹İÈ¯
+	return EndResult;  // ìµœì¢… ìƒíƒœì˜ ê²°ê³¼ ë°˜í™˜
 }
 
 FCollisionDetectionResult FCollisionDetector::SphereSphere(
@@ -102,42 +102,42 @@ FCollisionDetectionResult FCollisionDetector::SphereSphere(
 {
 	FCollisionDetectionResult Result;
 
-	// SIMD ¿¬»êÀ» À§ÇÑ º¤ÅÍ ·Îµå
+	// SIMD ì—°ì‚°ì„ ìœ„í•œ ë²¡í„° ë¡œë“œ
 	XMVECTOR vPosA = XMLoadFloat3(&TransformA.Position);
 	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
 
-	// Áß½ÉÁ¡ °£ÀÇ º¤ÅÍ °è»ê
+	// ì¤‘ì‹¬ì  ê°„ì˜ ë²¡í„° ê³„ì‚°
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
 	float distanceSquared = XMVectorGetX(XMVector3LengthSq(vDelta));
 
 	float radiusSum = RadiusA + RadiusB;
 	float penetrationDepth = radiusSum - sqrt(distanceSquared);
 
-	// Ãæµ¹ °Ë»ç
+	// ì¶©ëŒ ê²€ì‚¬
 	if (penetrationDepth <= 0.0f)
 	{
-		return Result;  // ±âº»°ª ¹İÈ¯ (Ãæµ¹ ¾øÀ½)
+		return Result;  // ê¸°ë³¸ê°’ ë°˜í™˜ (ì¶©ëŒ ì—†ìŒ)
 	}
 
 	Result.bCollided = true;
 
-	// Ãæµ¹ Á¤º¸ ¼³Á¤
+	// ì¶©ëŒ ì •ë³´ ì„¤ì •
 	float distance = sqrt(distanceSquared);
 	if (distance < KINDA_SMALL)
 	{
-		// ±¸Ã¼°¡ °ÅÀÇ °°Àº À§Ä¡¿¡ ÀÖ´Â °æ¿ì
-		Result.Normal = Vector3::Up;  // ±âº» ¹æÇâ ¼³Á¤
+		// êµ¬ì²´ê°€ ê±°ì˜ ê°™ì€ ìœ„ì¹˜ì— ìˆëŠ” ê²½ìš°
+		Result.Normal = Vector3::Up;  // ê¸°ë³¸ ë°©í–¥ ì„¤ì •
 		Result.PenetrationDepth = radiusSum;
 		XMStoreFloat3(&Result.Point, vPosA);
 	}
 	else
 	{
-		// Á¤±ÔÈ­µÈ Ãæµ¹ ¹ı¼± °è»ê
+		// ì •ê·œí™”ëœ ì¶©ëŒ ë²•ì„  ê³„ì‚°
 		XMVECTOR vNormal = XMVectorDivide(vDelta, XMVectorReplicate(distance));
 		XMStoreFloat3(&Result.Normal, vNormal);
 		Result.PenetrationDepth = penetrationDepth;
 
-		// Ãæµ¹ ÁöÁ¡Àº µÎ ±¸ÀÇ Áß½ÉÀ» ÀÕ´Â ¼±»ó¿¡¼­ Ã¹ ¹øÂ° ±¸ÀÇ Ç¥¸é¿¡ À§Ä¡
+		// ì¶©ëŒ ì§€ì ì€ ë‘ êµ¬ì˜ ì¤‘ì‹¬ì„ ì‡ëŠ” ì„ ìƒì—ì„œ ì²« ë²ˆì§¸ êµ¬ì˜ í‘œë©´ì— ìœ„ì¹˜
 		XMVECTOR vCollisionPoint = XMVectorAdd(vPosA,
 											   XMVectorMultiply(vNormal, XMVectorReplicate(RadiusA)));
 		XMStoreFloat3(&Result.Point, vCollisionPoint);
@@ -152,26 +152,26 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 {
 	FCollisionDetectionResult Result;
 
-	// ¿ùµå °ø°£¿¡¼­ÀÇ ¹Ú½º ÃÖ¼Ò/ÃÖ´ëÁ¡ °è»ê
+	// ì›”ë“œ ê³µê°„ì—ì„œì˜ ë°•ìŠ¤ ìµœì†Œ/ìµœëŒ€ì  ê³„ì‚°
 	Vector3 MinA = TransformA.Position - ExtentA;
 	Vector3 MaxA = TransformA.Position + ExtentA;
 	Vector3 MinB = TransformB.Position - ExtentB;
 	Vector3 MaxB = TransformB.Position + ExtentB;
 
-	// AABB Ãæµ¹ °Ë»ç
+	// AABB ì¶©ëŒ ê²€ì‚¬
 	if (MinA.x <= MaxB.x && MaxA.x >= MinB.x &&
 		MinA.y <= MaxB.y && MaxA.y >= MinB.y &&
 		MinA.z <= MaxB.z && MaxA.z >= MinB.z)
 	{
 		Result.bCollided = true;
 
-		// °¢ ÃàÀÇ °ãÄ§(Ä§Åõ) Á¤µµ °è»ê
+		// ê° ì¶•ì˜ ê²¹ì¹¨(ì¹¨íˆ¬) ì •ë„ ê³„ì‚°
 		Vector3 PenetrationVec;
 		PenetrationVec.x = std::min(MaxA.x - MinB.x, MaxB.x - MinA.x);
 		PenetrationVec.y = std::min(MaxA.y - MinB.y, MaxB.y - MinA.y);
 		PenetrationVec.z = std::min(MaxA.z - MinB.z, MaxB.z - MinA.z);
 
-		// °¡Àå ¾èÀº Ä§Åõ ¹æÇâÀ» Ãæµ¹ ¹ı¼±À¸·Î »ç¿ë
+		// ê°€ì¥ ì–•ì€ ì¹¨íˆ¬ ë°©í–¥ì„ ì¶©ëŒ ë²•ì„ ìœ¼ë¡œ ì‚¬ìš©
 		int minIndex = 0;
 		Result.PenetrationDepth = PenetrationVec.x;
 		if (PenetrationVec.y < Result.PenetrationDepth)
@@ -185,7 +185,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 			Result.PenetrationDepth = PenetrationVec.z;
 		}
 
-		// Ãæµ¹ ¹ı¼± ¼³Á¤
+		// ì¶©ëŒ ë²•ì„  ì„¤ì •
 		switch (minIndex)
 		{
 			case 0: Result.Normal.x = (TransformA.Position.x < TransformB.Position.x) ? -1.0f : 1.0f; break;
@@ -193,7 +193,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 			case 2: Result.Normal.z = (TransformA.Position.z < TransformB.Position.z) ? -1.0f : 1.0f; break;
 		}
 
-		// Ãæµ¹ ÁöÁ¡Àº µÎ ¹Ú½ºÀÇ Áß½ÉÁ¡ »çÀÌÀÇ Áß°£Á¡À¸·Î ¼³Á¤
+		// ì¶©ëŒ ì§€ì ì€ ë‘ ë°•ìŠ¤ì˜ ì¤‘ì‹¬ì  ì‚¬ì´ì˜ ì¤‘ê°„ì ìœ¼ë¡œ ì„¤ì •
 		Result.Point = (TransformA.Position + TransformB.Position) * 0.5f;
 	}
 
@@ -213,7 +213,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
 
-	// °¢ ¹Ú½ºÀÇ Ãà ¹æÇâ º¤ÅÍ ÃßÃâ
+	// ê° ë°•ìŠ¤ì˜ ì¶• ë°©í–¥ ë²¡í„° ì¶”ì¶œ
 	XMVECTOR vAxesA[3] = {
 		RotationA.r[0],
 		RotationA.r[1],
@@ -226,19 +226,19 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 		RotationB.r[2]
 	};
 
-	// SAT °Ë»ç¸¦ À§ÇÑ Ãà ¸ñ·Ï
+	// SAT ê²€ì‚¬ë¥¼ ìœ„í•œ ì¶• ëª©ë¡
 	XMVECTOR vSeparatingAxes[15];
 	int axisIndex = 0;
 
-	// ¹Ú½º AÀÇ Ãà
+	// ë°•ìŠ¤ Aì˜ ì¶•
 	for (int i = 0; i < 3; i++)
 		vSeparatingAxes[axisIndex++] = vAxesA[i];
 
-	// ¹Ú½º BÀÇ Ãà
+	// ë°•ìŠ¤ Bì˜ ì¶•
 	for (int i = 0; i < 3; i++)
 		vSeparatingAxes[axisIndex++] = vAxesB[i];
 
-	// Ãà °£ÀÇ ¿ÜÀû
+	// ì¶• ê°„ì˜ ì™¸ì 
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 3; j++)
@@ -250,7 +250,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 	float minPenetration = FLT_MAX;
 	XMVECTOR vCollisionNormal = XMVectorZero();
 
-	// °¢ Ãà¿¡ ´ëÇØ Åõ¿µ °Ë»ç
+	// ê° ì¶•ì— ëŒ€í•´ íˆ¬ì˜ ê²€ì‚¬
 	for (int i = 0; i < 15; i++)
 	{
 		XMVECTOR vLengthSq = XMVector3LengthSq(vSeparatingAxes[i]);
@@ -259,7 +259,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 
 		XMVECTOR vAxis = XMVector3Normalize(vSeparatingAxes[i]);
 
-		// °¢ ¹Ú½ºÀÇ Åõ¿µ ¹İ°æ °è»ê
+		// ê° ë°•ìŠ¤ì˜ íˆ¬ì˜ ë°˜ê²½ ê³„ì‚°
 		float radiusA =
 			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[0], ExtentA.x)))) +
 			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[1], ExtentA.y)))) +
@@ -274,7 +274,7 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 		float penetration = radiusA + radiusB - distance;
 
 		if (penetration <= 0)
-			return Result;  // ºĞ¸®Ãà ¹ß°ß
+			return Result;  // ë¶„ë¦¬ì¶• ë°œê²¬
 
 		if (penetration < minPenetration)
 		{
@@ -284,12 +284,12 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 		}
 	}
 
-	// Ãæµ¹ ¹ß»ı
+	// ì¶©ëŒ ë°œìƒ
 	Result.bCollided = true;
 	XMStoreFloat3(&Result.Normal, vCollisionNormal);
 	Result.PenetrationDepth = minPenetration;
 
-	// Ãæµ¹ ÁöÁ¡ °è»ê
+	// ì¶©ëŒ ì§€ì  ê³„ì‚°
 	XMVECTOR vCollisionPoint = XMVectorAdd(vPosA,
 										   XMVectorMultiply(vCollisionNormal, XMVectorReplicate(minPenetration * 0.5f)));
 	XMStoreFloat3(&Result.Point, vCollisionPoint);
@@ -303,53 +303,53 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 {
 	FCollisionDetectionResult Result;
 
-	// 1. ¹Ú½ºÀÇ ·ÎÄÃ °ø°£À¸·Î ±¸°ø°£ ÀÌµ¿
-	// ¹Ú½ºÀÇ È¸ÀüÀ» °í·ÁÇÏ±â À§ÇØ ¿ªÈ¸Àü Çà·Ä »ç¿ë
+	// 1. ë°•ìŠ¤ì˜ ë¡œì»¬ ê³µê°„ìœ¼ë¡œ êµ¬ê³µê°„ ì´ë™
+	// ë°•ìŠ¤ì˜ íšŒì „ì„ ê³ ë ¤í•˜ê¸° ìœ„í•´ ì—­íšŒì „ í–‰ë ¬ ì‚¬ìš©
 	XMVECTOR vSpherePos = XMLoadFloat3(&SphereTransform.Position);
 	XMVECTOR vBoxPos = XMLoadFloat3(&BoxTransform.Position);
 	Matrix BoxRotationInv = XMMatrixTranspose(BoxTransform.GetRotationMatrix());
 
-	// ±¸ÀÇ Áß½ÉÁ¡ È¸Àü
-	XMVECTOR vRelativePos = XMVectorSubtract(vSpherePos, vBoxPos);  // »ó´ë À§Ä¡
+	// êµ¬ì˜ ì¤‘ì‹¬ì  íšŒì „
+	XMVECTOR vRelativePos = XMVectorSubtract(vSpherePos, vBoxPos);  // ìƒëŒ€ ìœ„ì¹˜
 	XMVECTOR vLocalSpherePos = XMVector3Transform(vRelativePos, BoxRotationInv);
 
-	// 2. ¹Ú½ºÀÇ ·ÎÄÃ °ø°£¿¡¼­ ±¸ÀÇ Áß½ÉÁ¡¿¡ °¡Àå °¡±î¿î Á¡ Ã£±â
+	// 2. ë°•ìŠ¤ì˜ ë¡œì»¬ ê³µê°„ì—ì„œ êµ¬ì˜ ì¤‘ì‹¬ì ì— ê°€ì¥ ê°€ê¹Œìš´ ì  ì°¾ê¸°
 	Vector3 localSphere;
 	XMStoreFloat3(&localSphere, vLocalSpherePos);
 
 	Vector3 closestPoint;
-	// °¢ Ãàº°·Î ¹Ú½ºÀÇ ¹üÀ§·Î Å¬·¥ÇÎ
+	// ê° ì¶•ë³„ë¡œ ë°•ìŠ¤ì˜ ë²”ìœ„ë¡œ í´ë¨í•‘
 	closestPoint.x = Math::Clamp(localSphere.x, -BoxExtent.x, BoxExtent.x);
 	closestPoint.y = Math::Clamp(localSphere.y, -BoxExtent.y, BoxExtent.y);
 	closestPoint.z = Math::Clamp(localSphere.z, -BoxExtent.z, BoxExtent.z);
 
-	// 3. ±¸ÀÇ Áß½ÉÁ¡°ú °¡Àå °¡±î¿î Á¡ »çÀÌÀÇ °Å¸® °è»ê
+	// 3. êµ¬ì˜ ì¤‘ì‹¬ì ê³¼ ê°€ì¥ ê°€ê¹Œìš´ ì  ì‚¬ì´ì˜ ê±°ë¦¬ ê³„ì‚°
 	XMVECTOR vClosestPoint = XMLoadFloat3(&closestPoint);
 	XMVECTOR vDelta = XMVectorSubtract(vLocalSpherePos, vClosestPoint);
 	float distanceSquared = XMVectorGetX(XMVector3LengthSq(vDelta));
 
-	// Ãæµ¹ °Ë»ç: °Å¸®°¡ ±¸ÀÇ ¹İÁö¸§º¸´Ù Å©¸é Ãæµ¹ÇÏÁö ¾ÊÀ½
+	// ì¶©ëŒ ê²€ì‚¬: ê±°ë¦¬ê°€ êµ¬ì˜ ë°˜ì§€ë¦„ë³´ë‹¤ í¬ë©´ ì¶©ëŒí•˜ì§€ ì•ŠìŒ
 	if (distanceSquared > SphereRadius * SphereRadius)
-		return Result;  // Ãæµ¹ ¾øÀ½
+		return Result;  // ì¶©ëŒ ì—†ìŒ
 
-	// 4. Ãæµ¹ Á¤º¸ °è»ê
+	// 4. ì¶©ëŒ ì •ë³´ ê³„ì‚°
 	Result.bCollided = true;
 	float distance = sqrt(distanceSquared);
 
-	// ±¸ÀÇ Áß½ÉÀÌ ¹Ú½º¿Í °ÅÀÇ ÀÏÄ¡ÇÏ´Â °æ¿ì
+	// êµ¬ì˜ ì¤‘ì‹¬ì´ ë°•ìŠ¤ì™€ ê±°ì˜ ì¼ì¹˜í•˜ëŠ” ê²½ìš°
 	if (distance < KINDA_SMALL)
 	{
-		// ÃÖ¼Ò Ä§Åõ ¹æÇâ Ã£±â
+		// ìµœì†Œ ì¹¨íˆ¬ ë°©í–¥ ì°¾ê¸°
 		float penetrations[6] = {
-			BoxExtent.x + localSphere.x,  // -x ¹æÇâ
-			BoxExtent.x - localSphere.x,  // +x ¹æÇâ
-			BoxExtent.y + localSphere.y,  // -y ¹æÇâ
-			BoxExtent.y - localSphere.y,  // +y ¹æÇâ
-			BoxExtent.z + localSphere.z,  // -z ¹æÇâ
-			BoxExtent.z - localSphere.z   // +z ¹æÇâ
+			BoxExtent.x + localSphere.x,  // -x ë°©í–¥
+			BoxExtent.x - localSphere.x,  // +x ë°©í–¥
+			BoxExtent.y + localSphere.y,  // -y ë°©í–¥
+			BoxExtent.y - localSphere.y,  // +y ë°©í–¥
+			BoxExtent.z + localSphere.z,  // -z ë°©í–¥
+			BoxExtent.z - localSphere.z   // +z ë°©í–¥
 		};
 
-		// °¡Àå ¾èÀº Ä§Åõ ¹æÇâ Ã£±â
+		// ê°€ì¥ ì–•ì€ ì¹¨íˆ¬ ë°©í–¥ ì°¾ê¸°
 		int minIndex = 0;
 		float minPenetration = penetrations[0];
 		for (int i = 1; i < 6; i++)
@@ -361,48 +361,110 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 			}
 		}
 
-		// ÃÖ¼Ò Ä§Åõ ¹æÇâÀ¸·Î ¹ı¼± ¼³Á¤
+		// ìµœì†Œ ì¹¨íˆ¬ ë°©í–¥ìœ¼ë¡œ ë²•ì„  ì„¤ì •
 		Vector3 localNormal = Vector3::Zero;
 		switch (minIndex)
 		{
-			case 0: localNormal.x = -1.0f; break;  // -x ¹æÇâ
-			case 1: localNormal.x = 1.0f; break;   // +x ¹æÇâ
-			case 2: localNormal.y = -1.0f; break;  // -y ¹æÇâ
-			case 3: localNormal.y = 1.0f; break;   // +y ¹æÇâ
-			case 4: localNormal.z = -1.0f; break;  // -z ¹æÇâ
-			case 5: localNormal.z = 1.0f; break;   // +z ¹æÇâ
+			case 0: localNormal.x = -1.0f; break;  // -x ë°©í–¥
+			case 1: localNormal.x = 1.0f; break;   // +x ë°©í–¥
+			case 2: localNormal.y = -1.0f; break;  // -y ë°©í–¥
+			case 3: localNormal.y = 1.0f; break;   // +y ë°©í–¥
+			case 4: localNormal.z = -1.0f; break;  // -z ë°©í–¥
+			case 5: localNormal.z = 1.0f; break;   // +z ë°©í–¥
 		}
 
 		XMVECTOR vNormal = XMLoadFloat3(&localNormal);
 		Result.PenetrationDepth = minPenetration + SphereRadius;
 
-		// ¹ı¼±À» ¿ùµå °ø°£À¸·Î º¯È¯
+		// ë²•ì„ ì„ ì›”ë“œ ê³µê°„ìœ¼ë¡œ ë³€í™˜
 		Matrix BoxRotation = BoxTransform.GetRotationMatrix();
 		vNormal = XMVector3Transform(vNormal, BoxRotation);
 		XMStoreFloat3(&Result.Normal, vNormal);
 
-		// Ãæµ¹ ÁöÁ¡Àº ¹Ú½ºÀÇ Ç¥¸é
+		// ì¶©ëŒ ì§€ì ì€ ë°•ìŠ¤ì˜ í‘œë©´
 		XMVECTOR vWorldClosestPoint = XMVector3Transform(vClosestPoint, BoxRotation);
 		vWorldClosestPoint = XMVectorAdd(vWorldClosestPoint, vBoxPos);
 		XMStoreFloat3(&Result.Point, vWorldClosestPoint);
 	}
-	// ±¸°¡ ¹Ú½º ¿ÜºÎ¿¡ ÀÖ´Â ÀÏ¹İÀûÀÎ °æ¿ì
+	// êµ¬ê°€ ë°•ìŠ¤ ì™¸ë¶€ì— ìˆëŠ” ì¼ë°˜ì ì¸ ê²½ìš°
 	else
 	{
-		// ·ÎÄÃ °ø°£¿¡¼­ÀÇ ¹æÇâ º¤ÅÍ¸¦ ¹ı¼±À¸·Î »ç¿ë
+		// ë¡œì»¬ ê³µê°„ì—ì„œì˜ ë°©í–¥ ë²¡í„°ë¥¼ ë²•ì„ ìœ¼ë¡œ ì‚¬ìš©
 		XMVECTOR vNormal = XMVector3Normalize(vDelta);
 		Result.PenetrationDepth = SphereRadius - distance;
 
-		// ¹ı¼±À» ¿ùµå °ø°£À¸·Î º¯È¯
+		// ë²•ì„ ì„ ì›”ë“œ ê³µê°„ìœ¼ë¡œ ë³€í™˜
 		Matrix BoxRotation = BoxTransform.GetRotationMatrix();
 		vNormal = XMVector3Transform(vNormal, BoxRotation);
 		XMStoreFloat3(&Result.Normal, vNormal);
 
-		// Ãæµ¹ ÁöÁ¡Àº ±¸ÀÇ Ç¥¸é¿¡¼­ ¹ı¼± ¹æÇâÀ¸·ÎÀÇ ÁöÁ¡
+		// ì¶©ëŒ ì§€ì ì€ êµ¬ì˜ í‘œë©´ì—ì„œ ë²•ì„  ë°©í–¥ìœ¼ë¡œì˜ ì§€ì 
 		XMVECTOR vWorldClosestPoint = XMVector3Transform(vClosestPoint, BoxRotation);
 		vWorldClosestPoint = XMVectorAdd(vWorldClosestPoint, vBoxPos);
 		XMStoreFloat3(&Result.Point, vWorldClosestPoint);
 	}
 
+	return Result;
+}
+
+//////////////////////////////////////
+
+Vector3 FCollisionDetector::Support(
+	const FCollisionShapeData& ShapeA, const FTransform& TransformA,
+	const FCollisionShapeData& ShapeB, const FTransform& TransformB,
+	const Vector3& Direction)
+{
+	// Aì—ì„œ ë°©í–¥ìœ¼ë¡œ ê°€ì¥ ë©€ë¦¬ ìˆëŠ” ì 
+	Vector3 SupportA = SupportForShape(ShapeA, TransformA, Direction);
+
+	// Bì—ì„œ ë°˜ëŒ€ ë°©í–¥ìœ¼ë¡œ ê°€ì¥ ë©€ë¦¬ ìˆëŠ” ì 
+	Vector3 SupportB = SupportForShape(ShapeB, TransformB, -Direction);
+
+	// ë¯¼ì½”í”„ìŠ¤í‚¤ ì°¨ì—ì„œì˜ ì  (A - B)
+	return SupportA - SupportB;
+}
+
+Vector3 FCollisionDetector::SupportForShape(
+	const FCollisionShapeData& Shape,
+	const FTransform& Transform,
+	const Vector3& Direction)
+{
+	// ì›”ë“œ ë°©í–¥ì„ ë¡œì»¬ ê³µê°„ìœ¼ë¡œ ë³€í™˜
+	Matrix InvRotation = XMMatrixInverse(nullptr, Transform.GetRotationMatrix());
+	XMVECTOR LocalDir = XMVector3Transform(XMLoadFloat3(&Direction), InvRotation);
+
+	Vector3 LocalSupport;
+
+	// í˜•ìƒ íƒ€ì…ì— ë”°ë¼ ì²˜ë¦¬
+	if (Shape.Type == ECollisionShapeType::Box)
+	{
+		// ë°•ìŠ¤ëŠ” ê° ì¶• ë°©í–¥ë³„ë¡œ í™•ì¸
+		Vector3 LocalDirection;
+		XMStoreFloat3(&LocalDirection, LocalDir);
+
+		// ê° ì¶• ë°©í–¥ì— ë”°ë¼ ê¼­ì§€ì  ê²°ì •
+		LocalSupport.x = (LocalDirection.x >= 0) ? Shape.HalfExtent.x : -Shape.HalfExtent.x;
+		LocalSupport.y = (LocalDirection.y >= 0) ? Shape.HalfExtent.y : -Shape.HalfExtent.y;
+		LocalSupport.z = (LocalDirection.z >= 0) ? Shape.HalfExtent.z : -Shape.HalfExtent.z;
+	}
+	else if (Shape.Type == ECollisionShapeType::Sphere)
+	{
+		// êµ¬ì˜ ê²½ìš° ë°©í–¥ ë²¡í„°ë¥¼ ì •ê·œí™”í•˜ê³  ë°˜ì§€ë¦„ì„ ê³±í•¨
+		float Radius = Shape.GetSphereRadius();
+		Vector3 LocalDirection;
+		XMStoreFloat3(&LocalDirection, XMVector3Normalize(LocalDir));
+
+		LocalSupport = LocalDirection * Radius;
+	}
+
+	// ë¡œì»¬ ì§€ì›ì ì„ ì›”ë“œ ê³µê°„ìœ¼ë¡œ ë³€í™˜
+	Matrix RotationMatrix = Transform.GetRotationMatrix();
+	XMVECTOR WorldSupport = XMVector3Transform(XMLoadFloat3(&LocalSupport), RotationMatrix);
+
+	// ìœ„ì¹˜ ë”í•˜ê¸°
+	WorldSupport = XMVectorAdd(WorldSupport, XMLoadFloat3(&Transform.Position));
+
+	Vector3 Result;
+	XMStoreFloat3(&Result, WorldSupport);
 	return Result;
 }

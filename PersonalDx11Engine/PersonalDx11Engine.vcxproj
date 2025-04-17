@@ -176,6 +176,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorComponent.h" />
+    <ClInclude Include="BoxCollisionShape.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetector.h" />
@@ -183,6 +184,7 @@
     <ClInclude Include="CollisionEventDispatcher.h" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
+    <ClInclude Include="CollisionShapeInterface.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
@@ -222,6 +224,7 @@
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ResourceHandle.h" />
+    <ClInclude Include="SphereCollisionShape.h" />
     <ClInclude Include="StringHash.h" />
     <ClInclude Include="ResourceInterface.h" />
     <ClInclude Include="ResourceManager.h" />
