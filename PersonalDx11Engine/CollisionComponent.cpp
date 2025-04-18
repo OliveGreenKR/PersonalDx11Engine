@@ -25,6 +25,14 @@ Vector3 UCollisionComponentBase::GetHalfExtent() const
 	return HalfExtent;
 }
 
+Vector3 UCollisionComponentBase::GetScaledHalfExtent() const
+{
+	return Vector3(
+		HalfExtent.x * GetWorldTransform().Scale.x,
+		HalfExtent.y * GetWorldTransform().Scale.y,
+		HalfExtent.z * GetWorldTransform().Scale.z);
+}
+
 bool UCollisionComponentBase::IsStatic() const
 {
 	return RigidBody.lock()->IsStatic();
@@ -43,6 +51,7 @@ void UCollisionComponentBase::BindRigidBody(const std::shared_ptr<URigidBodyComp
 		Vector3 NewInerteria = CalculateInertiaTensor(RigidPtr->GetMass());
 		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
 	}
+
 }
 
 void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)

@@ -8,6 +8,8 @@ public:
 	Vector3 CalculateInertiaTensor(float Mass) const override;
 	void CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const override;
 
+	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::Box; }
+
 	virtual const char* GetComponentClassName() const override { return "UBox"; }
 };
 

@@ -49,7 +49,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
     // 초기 바운드 설정
     auto OwnerTrans = Object->GetWorldTransform();
     const Vector3 Position = Object->GetWorldTransform().Position;
-    const Vector3 HalfExtent = Object->GetHalfExtent();
+    const Vector3 HalfExtent = Object->GetScaledHalfExtent();
     
     // 실제 AABB 설정
     NewNode.Bounds.Min = Position - HalfExtent;
@@ -96,7 +96,7 @@ void FDynamicAABBTree::UpdateTree()
             continue;
 
         const Vector3& CurrentPos = Node.BoundableObject->GetWorldTransform().Position;
-        const Vector3& CurrentExtent = Node.BoundableObject->GetHalfExtent();
+        const Vector3& CurrentExtent = Node.BoundableObject->GetScaledHalfExtent();
 
         if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
         {
@@ -465,7 +465,7 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
         return;
 
     const Vector3& Position = UpdateNode.BoundableObject->GetWorldTransform().Position;
-    const Vector3& HalfExtent = UpdateNode.BoundableObject->GetHalfExtent();
+    const Vector3& HalfExtent = UpdateNode.BoundableObject->GetScaledHalfExtent();
 
     // 실제 AABB 업데이트
     UpdateNode.Bounds.Min = Position - HalfExtent;

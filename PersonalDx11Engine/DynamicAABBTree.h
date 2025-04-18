@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include "Transform.h"
 #include "DynamicBoundableInterface.h"

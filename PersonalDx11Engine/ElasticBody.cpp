@@ -35,6 +35,11 @@ UElasticBody::UElasticBody(EElasticBodyShape Shape) : bIsActive(true)
 			Primitive->SetModel(UResourceManager::Get()->LoadResource<UModel>(MDL_SPHERE_Mid));
 			Collision = UActorComponent::Create<USphereComponent>();
 		}
+
+		if (Collision)
+		{
+			Rigid.lock()->AddChild(Collision);
+		}
 	}
 }
 

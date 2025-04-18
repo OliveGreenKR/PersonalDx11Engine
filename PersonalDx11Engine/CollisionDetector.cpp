@@ -11,26 +11,26 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return SphereSphere(
-			ShapeA.GetHalfExtent().x, TransformA,
-			ShapeB.GetHalfExtent().x, TransformB);
+			ShapeA.GetScaledHalfExtent().x, TransformA,
+			ShapeB.GetScaledHalfExtent().x, TransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		return BoxBoxSAT(
-			ShapeA.GetHalfExtent(), TransformA,
-			ShapeB.GetHalfExtent(), TransformB);
+			ShapeA.GetScaledHalfExtent(), TransformA,
+			ShapeB.GetScaledHalfExtent(), TransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return BoxSphereSimple(
-			ShapeA.GetHalfExtent(), TransformA,
-			ShapeB.GetHalfExtent().x, TransformB);
+			ShapeA.GetScaledHalfExtent(), TransformA,
+			ShapeB.GetScaledHalfExtent().x, TransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		auto Result = BoxSphereSimple(
-			ShapeB.GetHalfExtent(), TransformB,
-			ShapeA.GetHalfExtent().x, TransformA);
+			ShapeB.GetScaledHalfExtent(), TransformB,
+			ShapeA.GetScaledHalfExtent().x, TransformA);
 		// 노멀 방향 반전
 		Result.Normal = -Result.Normal;
 		return Result;

@@ -23,11 +23,12 @@ public:
 public:
 
 	// Inherited via IDynamicBoundable
-	Vector3 GetHalfExtent() const override;
+	Vector3 GetScaledHalfExtent() const override;
 	bool IsStatic() const override;
 	const FTransform& GetWorldTransform() const override;
 
 	// Inherited via ICollisionShape
+	Vector3 GetHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 
 	virtual Vector3 GetSupportPoint(const Vector3& Direction, const FTransform& WorldTransform) const  = 0;
@@ -83,5 +84,5 @@ private:
 
 protected:
 	//로컬 extent
-	Vector3 HalfExtent = Vector3::One;
+	Vector3 HalfExtent = Vector3::One * 0.5f;
 };

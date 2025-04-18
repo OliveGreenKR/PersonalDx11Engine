@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <iostream>
 #include <random>
@@ -33,7 +33,7 @@ namespace TestDynamicAABBTree
         }
 
         // IDynamicBoundable 인터페이스 구현
-        virtual Vector3 GetHalfExtent() const override { return HalfExtent; }
+        virtual Vector3 GetScaledHalfExtent() const override { return HalfExtent; }
         virtual const FTransform& GetWorldTransform() const override { return Transform; }
         virtual bool IsStatic() const override { return bIsStatic; }
 
@@ -444,7 +444,7 @@ namespace TestDynamicAABBTree
             {
                 const auto& boundable = boundables[j];
                 Vector3 pos = boundable->GetWorldTransform().Position;
-                Vector3 ext = boundable->GetHalfExtent();
+                Vector3 ext = boundable->GetScaledHalfExtent();
 
                 FDynamicAABBTree::AABB objectBox;
                 objectBox.Min = pos - ext;
