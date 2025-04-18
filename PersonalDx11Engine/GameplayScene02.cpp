@@ -18,6 +18,7 @@
 #include "Material.h"
 #include "DebugDrawerManager.h"   
 #include "SceneManager.h"
+#include "ConfigReadManager.h"
  
 
 UGameplayScene02::UGameplayScene02()
@@ -50,8 +51,9 @@ UGameplayScene02::~UGameplayScene02()
 
 void UGameplayScene02::Initialize()
 {
-    const int VIEW_WIDTH = 800;
-    const int VIEW_HEIGHT = 800;
+    int VIEW_WIDTH, VIEW_HEIGHT;
+    UConfigReadManager::Get()->GetValue("ScreenWidth", VIEW_WIDTH);
+    UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);

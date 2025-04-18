@@ -131,6 +131,7 @@
     <ClCompile Include="CollisionComponent.cpp">
       <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
     </ClCompile>
+    <ClCompile Include="ConfigReadManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -268,9 +269,6 @@
     <Filter Include="Engine\Managers\UI">
       <UniqueIdentifier>{dea3f746-c568-43e5-8658-08e2a4ddf215}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\UserConfig">
-      <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Object">
       <UniqueIdentifier>{bd7e67fd-9a5f-4f5c-93f1-dfa020fe1457}</UniqueIdentifier>
     </Filter>
@@ -309,6 +307,12 @@
     </Filter>
     <Filter Include="Engine\Object\Components\ActorComponent\Scene\Collision\Base">
       <UniqueIdentifier>{46a99b17-830f-470d-bf62-17e9c6d3236a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Managers\ConfigReadeer">
+      <UniqueIdentifier>{857709f1-5313-49cd-b1d8-03305a3c1224}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Utils">
+      <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -513,8 +517,8 @@
     <ClInclude Include="UIManager.h">
       <Filter>Engine\Managers\UI</Filter>
     </ClInclude>
-    <ClInclude Include="LoadConfigFile.h">
-      <Filter>Engine\UserConfig</Filter>
+    <ClInclude Include="LoadTextFile.h">
+      <Filter>Engine\Utils</Filter>
     </ClInclude>
     <ClInclude Include="BindableInterface.h">
       <Filter>Engine\Interface</Filter>
@@ -533,6 +537,9 @@
     </ClInclude>
     <ClInclude Include="CollisionComponent.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigReadManager.h">
+      <Filter>Engine\Managers\ConfigReadeer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

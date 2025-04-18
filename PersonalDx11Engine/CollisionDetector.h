@@ -4,7 +4,6 @@
 #include "CollisionDefines.h"
 #include "CollisionShapeInterface.h"
 
-
 // 충돌 검사 알고리즘 모음
 class  FCollisionDetector
 {
@@ -28,6 +27,8 @@ class  FCollisionDetector
             return Distance < Other.Distance;
         }
     };
+public:
+    FCollisionDetector();
 
 public:
     // 이산 충돌 감지
@@ -102,8 +103,8 @@ private:
         const ICollisionShape& ShapeA, const FTransform& TransformA,
         const ICollisionShape& ShapeB, const FTransform& TransformB);
 public:
-    float TimeStep = 0.02f;
-
+    float CCDTimeStep = 0.02f;
+    int GJK_MAX_ITERATION = 32;
     float GJK_EPSILON = 0.0001f;
     float EPA_EPSILON = 0.0001f;
     int EPA_MAX_ITERATIONS = 32;

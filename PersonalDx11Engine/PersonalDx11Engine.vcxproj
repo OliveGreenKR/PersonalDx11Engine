@@ -137,6 +137,7 @@
     <ClCompile Include="CollisionEventDispatcher.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
+    <ClCompile Include="ConfigReadManager.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DContextDebugger.cpp" />
     <ClCompile Include="D3DShader.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />
+    <ClInclude Include="ConfigReadManager.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
@@ -208,7 +210,7 @@
     <ClInclude Include="InputContext.h" />
     <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
-    <ClInclude Include="LoadConfigFile.h" />
+    <ClInclude Include="LoadTextFile.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="GameObject.h" />

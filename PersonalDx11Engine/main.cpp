@@ -7,7 +7,7 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "imGui/imgui_impl_win32.h"
 
-#include "LoadConfigFile.h"
+#include "ConfigReadManager.h"
 #include "Debug.h"
 #include <memory>
 #include "Renderer.h"
@@ -110,28 +110,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 void LoadSystemConfig()
 {
-	auto KeyValues = INI::ReadIniSection("./Config.ini", "Application");
-	if ( auto it = KeyValues.find("ScreenWidth"); it != KeyValues.end())
-	{
-		SCREEN_WIDTH = std::stoi(it->second);
-	}
-	if (auto it = KeyValues.find("ScreenHeight"); it != KeyValues.end())
-	{
-		SCREEN_HEIGHT = std::stoi(it->second);
-	}
-	if (auto it = KeyValues.find("ConsoleWidth"); it != KeyValues.end())
-	{
-		CONSOLE_WIDTH = std::stoi(it->second);
-	}
-	if (auto it = KeyValues.find("ConsoleHeight"); it != KeyValues.end())
-	{
-		CONSOLE_HEIGHT = std::stoi(it->second);
-	}
-	if (auto it = KeyValues.find("ConsoleHeight"); it != KeyValues.end())
-	{
-		VSYNC = (std::stoi(it->second) != 0);
-	}
+	UConfigReadManager::Get()->GetValue("ScreenWidth", SCREEN_WIDTH);
+	UConfigReadManager::Get()->GetValue("ScreenHeight", SCREEN_HEIGHT);
+	UConfigReadManager::Get()->GetValue("ConsoleWidth", CONSOLE_WIDTH);
+	UConfigReadManager::Get()->GetValue("ConsoleHeight", CONSOLE_HEIGHT);
+	UConfigReadManager::Get()->GetValue("VSYNC", VSYNC);
 }
+
 
 //Main
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)

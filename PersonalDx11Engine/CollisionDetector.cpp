@@ -1,5 +1,15 @@
 #include "CollisionDetector.h"
 #include <algorithm>
+#include "ConfigReadManager.h"
+
+FCollisionDetector::FCollisionDetector()
+{
+	UConfigReadManager::Get()->GetValue("MaxGJKIteration", GJK_MAX_ITERATION);
+	UConfigReadManager::Get()->GetValue("MaxEpaIteration", EPA_MAX_ITERATIONS);
+	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
+	UConfigReadManager::Get()->GetValue("GJKEpsilon", GJK_EPSILON);
+	UConfigReadManager::Get()->GetValue("EPAEpsilon", EPA_EPSILON);
+}
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	const ICollisionShape& ShapeA,
@@ -90,7 +100,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 			break;
 		}
 
-		currentTime += TimeStep;
+		currentTime += CCDTimeStep;
 	}
 
 	return EndResult;  // 최종 상태의 결과 반환
@@ -422,4 +432,52 @@ Vector3 FCollisionDetector::Support(
 
 	// 민코프스키 차에서의 점 (A - B)
 	return SupportA - SupportB;
+}
+
+bool FCollisionDetector::GJK(
+	const ICollisionShape& ShapeA, const FTransform& TransformA,
+	const ICollisionShape& ShapeB, const FTransform& TransformB,
+	FSimplex& OutSimplex)
+{
+	// 초기 방향 (임의 설정)
+	Vector3 Direction = Vector3(1.0f, 0.0f, 0.0f);
+
+	// 첫 번째 점 얻기
+	Vector3 Support = FCollisionDetector::Support(ShapeA, TransformA, ShapeB, TransformB, Direction);
+
+	// 심플렉스 초기화
+	OutSimplex.Points[0] = Support;
+	OutSimplex.Size = 1;
+
+	// 다음 방향은 원점 방향
+	Direction = -Support;
+
+	for (int i = 0; i < GJK_MAX_ITERATION; i++)
+	{
+		// 새로운 지원점 얻기
+		Support = FCollisionDetector::Support(ShapeA, TransformA, ShapeB, TransformB, Direction);
+
+		// 새 지원점이 방향에서 원점을 넘어가지 않으면 충돌 없음
+		if (Vector3::Dot(Support, Direction) < 0)
+		{
+			return false;
+		}
+
+		// 심플렉스에 점 추가
+		OutSimplex.Points[OutSimplex.Size++] = Support;
+
+		// 심플렉스 처리 및 새 방향 계산
+		if (ProcessSimplex(OutSimplex, Direction))
+		{
+			return true; // 원점 포함, 충돌 감지
+		}
+	}
+
+	// 최대 반복 횟수 초과
+	return false;
+}
+
+bool FCollisionDetector::ProcessSimplex(FSimplex& Simplex, Vector3& Direction)
+{
+	return false;
 }

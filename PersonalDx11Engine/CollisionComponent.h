@@ -83,6 +83,6 @@ private:
 	FTransform PrevWorldTransform = FTransform();
 
 protected:
-	//로컬 extent
+	//로컬 extent -  기본값 0.5f
 	Vector3 HalfExtent = Vector3::One * 0.5f;
 };
