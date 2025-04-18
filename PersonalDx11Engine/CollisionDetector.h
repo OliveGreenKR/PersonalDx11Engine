@@ -7,7 +7,7 @@
 // 충돌 검사 알고리즘 모음
 class  FCollisionDetector
 {
-
+    //원점을 포함하는 Simplex 정보
     struct FSimplex
     {
         Vector3 Points[4];          // 최대 4개의 점(테트라헤드론)
@@ -48,6 +48,13 @@ public:
         const float DeltaTime);
 
 private:
+    FCollisionDetectionResult DetectCollisionShapeBasedDiscrete(const ICollisionShape& ShapeA,const FTransform& TransformA,
+                                                           const ICollisionShape& ShapeB,const FTransform& TransformB);
+    // GJK+EPA 통합 충돌 감지 함수
+    FCollisionDetectionResult DetectCollisionGJKEPADiscrete(const ICollisionShape& ShapeA, const FTransform& TransformA,
+                                                            const ICollisionShape& ShapeB, const FTransform& TransformB);
+
+private:
     // Box-Box 충돌 검사
     FCollisionDetectionResult BoxBoxAABB(
         const Vector3& ExtentA, const FTransform& TransformA,
@@ -80,6 +87,12 @@ private:
         const ICollisionShape& ShapeB, const FTransform& TransformB,
         FSimplex& OutSimplex);
 
+    bool ProcessLine(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
+
+    bool ProcessTriangle(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
+    bool ProcessTetrahedron(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
+    bool ProcessPoint(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
+
     // EPA 알고리즘 - 침투 깊이와 충돌 법선 계산
     FCollisionDetectionResult EPA(
         const ICollisionShape& ShapeA, const FTransform& TransformA,
@@ -89,19 +102,16 @@ private:
     // GJK 내부 함수 - 다음 방향 찾기
     bool ProcessSimplex(FSimplex& Simplex, Vector3& Direction);
 
-    // EPA 내부 헬퍼 함수들
+
     std::vector<FFace> BuildInitialPolyhedron(const FSimplex& Simplex);
     int FindClosestFace(const std::vector<FFace>& Faces);
-    void ExpandPolyhedron(
-        std::vector<FFace>& Faces,
-        const Vector3& NewPoint,
-        const ICollisionShape& ShapeA, const FTransform& TransformA,
-        const ICollisionShape& ShapeB, const FTransform& TransformB);
 
-    // GJK+EPA 통합 충돌 감지 함수
-    FCollisionDetectionResult DetectCollisionGJKEPA(
-        const ICollisionShape& ShapeA, const FTransform& TransformA,
-        const ICollisionShape& ShapeB, const FTransform& TransformB);
+    void ExpandPolyhedron(std::vector<FFace>& Faces,
+                          const Vector3& NewPoint, 
+                          FSimplex& Simplex, 
+                          const ICollisionShape& ShapeA, const FTransform& TransformA, 
+                          const ICollisionShape& ShapeB, const FTransform& TransformB);
+
 public:
     float CCDTimeStep = 0.02f;
     int GJK_MAX_ITERATION = 32;

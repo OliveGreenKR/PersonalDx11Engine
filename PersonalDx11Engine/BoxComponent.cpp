@@ -5,7 +5,8 @@ Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction, const FTransfor
     // 로컬 방향으로 변환
     XMMATRIX RotationMatrix = WorldTransform.GetRotationMatrix();
     XMMATRIX InvRotation = XMMatrixInverse(nullptr, RotationMatrix);
-    XMVECTOR LocalDir = XMVector3TransformNormal(XMLoadFloat3(&Direction), InvRotation);
+    XMVECTOR LocalDir = XMVector3Normalize(XMVector3Transform(XMLoadFloat3(&Direction), InvRotation));
+    
 
     // 부호에 따라 지원점 계산
     XMVECTOR SupportExtent = XMLoadFloat3(&HalfExtent);

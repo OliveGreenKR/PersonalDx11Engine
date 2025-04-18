@@ -52,9 +52,11 @@ public:
     }
 
 
+    void LoadConfigFromIni();
+
 private:
     void Initialize();
-    void LoadConfigFromIni();
+    
 
 private:
     std::unordered_map<std::string, std::string> ConfigKeys;
