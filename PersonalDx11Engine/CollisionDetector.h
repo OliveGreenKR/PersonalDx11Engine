@@ -67,7 +67,14 @@ private:
     bool GJK(const ICollisionShape& ShapeA, const FTransform& TransformA,
              const ICollisionShape& ShapeB, const FTransform& TransformB,
              FSimplex& InSimplex);
+    // 서포트 함수 - 특정 방향으로 가장 멀리 있는 점 반환
+    XMVECTOR Support(const ICollisionShape& ShapeA, const ICollisionShape& ShapeB,
+                     const Vector3 & Direction);
 
+    bool ProcessSimplex(FSimplex& Simplex, XMVECTOR& Direction);
+    bool ProcessLine(FSimplex& Simplex, XMVECTOR& Direction);
+    bool ProcessTriangle(FSimplex& Simplex, XMVECTOR& Direction);
+    bool ProcessTetrahedron(FSimplex& Simplex, XMVECTOR& Direction);
 
 
 public:
@@ -77,5 +84,5 @@ public:
     float EPA_EPSILON = 0.0001f;
     int EPA_MAX_ITERATIONS = 32;
 
-    bool bUseGJKEPA = true;
+    bool bUSE_GJKEPA = true;
 }; 

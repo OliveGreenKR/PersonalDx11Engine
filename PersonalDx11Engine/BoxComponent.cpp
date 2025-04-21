@@ -1,9 +1,9 @@
 #include "BoxComponent.h"
 
-Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction, const FTransform& WorldTransform) const
+Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
 {
     // 로컬 방향으로 변환
-    XMMATRIX RotationMatrix = WorldTransform.GetRotationMatrix();
+    XMMATRIX RotationMatrix = GetWorldTransform().GetRotationMatrix();
     XMMATRIX InvRotation = XMMatrixInverse(nullptr, RotationMatrix);
     XMVECTOR LocalDir = XMVector3Normalize(XMVector3Transform(XMLoadFloat3(&Direction), InvRotation));
     
@@ -14,7 +14,7 @@ Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction, const FTransfor
     XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask); // d_i >= 0 ? +h_i : -h_i
 
     // 월드 공간으로 변환
-    XMMATRIX ModelingMatrix = WorldTransform.GetModelingMatrix();
+    XMMATRIX ModelingMatrix = GetWorldTransform().GetModelingMatrix();
     XMVECTOR WorldSupport = XMVector3TransformCoord(LocalSupport, ModelingMatrix);
 
     // 결과 저장
@@ -53,11 +53,11 @@ Vector3 UBoxComponent::CalculateInertiaTensor(float Mass) const
     return Result;
 }
 
-void UBoxComponent::CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const
+void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 {
     // Load rotation matrix once
-    XMMATRIX WorldRotateMatrix = WorldTransform.GetRotationMatrix();
-    XMVECTOR Position = XMLoadFloat3(&WorldTransform.Position);
+    XMMATRIX WorldRotateMatrix = GetWorldTransform().GetRotationMatrix();
+    XMVECTOR Position = XMLoadFloat3(&GetWorldTransform().Position);
 
     // Preload HalfExtent
     float hx = HalfExtent.x;

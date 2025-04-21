@@ -117,7 +117,7 @@ void LoadSystemConfig()
 	UConfigReadManager::Get()->GetValue("ScreenHeight", SCREEN_HEIGHT);
 	UConfigReadManager::Get()->GetValue("ConsoleWidth", CONSOLE_WIDTH);
 	UConfigReadManager::Get()->GetValue("ConsoleHeight", CONSOLE_HEIGHT);
-	UConfigReadManager::Get()->GetValue("VSYNC", VSYNC);
+	UConfigReadManager::Get()->GetValue("bVSync", VSYNC);
 }
 
 
@@ -204,7 +204,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();
 	assert(RenderHardware->Initialize(hWnd));
-	RenderHardware->SetVSync(false);
+	RenderHardware->SetVSync(VSYNC);
 
 	//Renderer
 	auto rhPtr = Engine::Cast<IRenderHardware>(RenderHardware);

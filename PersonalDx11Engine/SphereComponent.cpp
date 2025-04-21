@@ -1,10 +1,10 @@
 #include "SphereComponent.h"
 
-Vector3 USphereComponent::GetSupportPoint(const Vector3& Direction, const FTransform& WorldTransform) const
+Vector3 USphereComponent::GetSupportPoint(const Vector3& Direction) const
 {
     XMVECTOR Dir = XMLoadFloat3(&Direction);
     XMVECTOR NormDir = XMVector3Normalize(Dir);
-    XMVECTOR Center = XMLoadFloat3(&WorldTransform.Position);
+    XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
     XMVECTOR Support = XMVectorAdd(Center, XMVectorScale(NormDir, HalfExtent.x));
 
     Vector3 Result;
@@ -21,9 +21,9 @@ Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const
     return Vector3(Inertia, Inertia, Inertia);
 }
 
-void USphereComponent::CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const
+void USphereComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 {
-    XMVECTOR Center = XMLoadFloat3(&WorldTransform.Position);
+    XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
     XMVECTOR Extent = XMVectorReplicate(HalfExtent.x); // (r, r, r, r)
 
     XMVECTOR MinPoint = XMVectorSubtract(Center, Extent);

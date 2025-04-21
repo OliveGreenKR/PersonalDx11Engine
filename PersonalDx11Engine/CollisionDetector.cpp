@@ -9,6 +9,7 @@ FCollisionDetector::FCollisionDetector()
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
 	UConfigReadManager::Get()->GetValue("GJKEpsilon", GJK_EPSILON);
 	UConfigReadManager::Get()->GetValue("EPAEpsilon", EPA_EPSILON);
+	UConfigReadManager::Get()->GetValue("UseGJKEPA", bUSE_GJKEPA);
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
@@ -17,10 +18,17 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	const ICollisionShape& ShapeB,
 	const FTransform& TransformB)
 {
-	return DetectCollisionShapeBasedDiscrete(ShapeA, TransformA,
-									  ShapeB, TransformB);
-	//return DetectCollisionGJKEPADiscrete(ShapeA, TransformA,
-	//										 ShapeB, TransformB);
+	if (bUSE_GJKEPA)
+	{
+		return DetectCollisionGJKEPADiscrete(ShapeA, TransformA,
+											 ShapeB, TransformB);
+	}
+	else
+	{
+		return DetectCollisionShapeBasedDiscrete(ShapeA, TransformA,
+								  ShapeB, TransformB);
+
+	}
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
@@ -127,7 +135,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionGJKEPADiscrete(cons
 		// 충돌 발생 - EPA로 침투 깊이와 법선 계산
 		//Result = EPA(ShapeA, TransformA, ShapeB, TransformB, Simplex);
 		Result.bCollided = true;
-		LOG("GJK Detected Collision");
+		LOG("GJK Detection Succdeed");
 	}
 	else {
 		// 충돌 없음
@@ -448,12 +456,227 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 	return Result;
 }
 
-bool FCollisionDetector::GJK(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB, FSimplex& InSimplex)
+//////////////////////////////////////
+
+XMVECTOR FCollisionDetector::Support(const ICollisionShape& ShapeA, const ICollisionShape& ShapeB, const Vector3& Direction)
 {
+	// A에서 방향으로 가장 멀리 있는 점
+	Vector3 SupportA = ShapeA.GetSupportPoint(Direction);
+
+	// B에서 반대 방향으로 가장 멀리 있는 점
+	Vector3 SupportB = ShapeB.GetSupportPoint(-Direction);
+
+	XMVECTOR vA = XMLoadFloat3(&SupportA);
+	XMVECTOR vB = XMLoadFloat3(&SupportB);
+
+	// 민코프스키 차에서의 점 (A - B)
+	return XMVectorSubtract(vA, vB);
+}
+
+bool FCollisionDetector::GJK(
+	const ICollisionShape& ShapeA, const FTransform& TransformA,
+	const ICollisionShape& ShapeB, const FTransform& TransformB,
+	FSimplex& OutSimplex)
+{
+	// 초기 방향 (임의 설정)
+	Vector3 Direction = TransformB.Position - TransformA.Position;
+	if (Direction.LengthSquared() < KINDA_SMALL)
+		Direction = Vector3(1.0f, 0.0f, 0.0f); // fallback
+
+	// 첫 번째 점 얻기
+	XMVECTOR Support = FCollisionDetector::Support(ShapeA, ShapeB, Direction);
+	// 심플렉스 초기화
+	OutSimplex.Points[0] = Support;
+	OutSimplex.Size = 1;
+
+	// 다음 방향은 원점 방향
+	XMVECTOR vDirection = XMVectorNegate(Support);
+	for (int i = 0; i < GJK_MAX_ITERATION; i++)
+	{
+		// 방향 적용
+		XMStoreFloat3(&Direction, vDirection);
+		// 새로운 지원점 얻기
+		Support = FCollisionDetector::Support(ShapeA, ShapeB, Direction);
+
+		// 새 지원점이 방향에서 원점을 넘어가지 않으면 충돌 없음
+		if (XMVectorGetX(XMVector3Dot(Support, vDirection)) < GJK_EPSILON)
+		{
+			return false;
+		}
+
+		// 심플렉스에 점 추가
+		OutSimplex.Points[OutSimplex.Size++] = Support;
+
+		// 심플렉스 처리 및 새 방향 계산
+		if (ProcessSimplex(OutSimplex, vDirection))
+		{
+			return true; // 원점 포함, 충돌 감지
+		}
+	}
+
+	// 최대 반복 횟수 초과
 	return false;
 }
 
-//////////////////////////////////////
+bool FCollisionDetector::ProcessSimplex(FSimplex& Simplex, XMVECTOR& Direction)
+{
+	// Ensure valid simplex size
+	if (Simplex.Size < 2 || Simplex.Size > 4) {
+		LOG_FUNC_CALL("[ERROR] Invalid Simplex size");
+		return false;
+	}
 
+	switch (Simplex.Size)
+	{
+		case 2: // 선(Line)
+			return ProcessLine(Simplex, Direction);
+		case 3: // 삼각형(Triangle)
+			return ProcessTriangle(Simplex, Direction);
+		case 4: // 사면체(Tetrahedron)
+			return ProcessTetrahedron(Simplex, Direction);
+	}
 
+	//잘못된 상황
+	LOG_FUNC_CALL("[ERROR] Invalid Simplex");
+	return false;
+}
+bool FCollisionDetector::ProcessLine(FSimplex& Simplex, XMVECTOR& Direction)
+{
+	XMVECTOR A = Simplex.Points[0];
+	XMVECTOR B = Simplex.Points[1];
+	XMVECTOR AB = XMVectorSubtract(B, A);
+	XMVECTOR AO = XMVectorNegate(A);
+
+	// AB 방향
+	float ABdotAO = XMVectorGetX(XMVector3Dot(AB, AO));
+	if (ABdotAO > 0.0f) {
+		// AB 방향의 수직 평면 계산 (삼중 외적)
+		XMVECTOR Cross = XMVector3Cross(AB, AO);
+		Direction = XMVector3Cross(Cross, AB);
+	}
+	else {
+		// 원점은 A 방향에 있음
+		Direction = AO;
+		// 단순화 - B 제거, A만 유지-
+		Simplex.Size = 1;
+	}
+
+	return false;
+}
+bool FCollisionDetector::ProcessTriangle(FSimplex& Simplex, XMVECTOR& Direction)
+{
+	XMVECTOR A = Simplex.Points[0];
+	XMVECTOR B = Simplex.Points[1];
+	XMVECTOR C = Simplex.Points[2];
+
+	// 삼각형 법선 계산
+	XMVECTOR AO = XMVectorNegate(A);
+	XMVECTOR AB = XMVectorSubtract(B, A);
+	XMVECTOR AC = XMVectorSubtract(C, A);
+	XMVECTOR ABC = XMVector3Cross(AB, AC);
+
+	// AC와 AO
+	XMVECTOR ABCxAC = XMVector3Cross(ABC, AC);
+	if (XMVectorGetX(XMVector3Dot(ABCxAC, AO)) > 0.0f)
+	{
+		if (XMVectorGetX(XMVector3Dot(AC, AO)) > 0.0f)
+		{
+			Simplex.Points[0] = A;
+			Simplex.Points[1] = C;
+			Simplex.Size = 2;
+			Direction = XMVector3Cross(XMVector3Cross(AC, AO), AC);
+		}
+		else
+		{
+			Simplex.Points[0] = A;
+			Simplex.Points[1] = B;
+			Simplex.Size = 2;
+			return false;
+		}
+
+	}
+	else
+	{
+		//AB와 AO
+		XMVECTOR ABxABC = XMVector3Cross(AB, ABC);
+		if (XMVectorGetX(XMVector3Dot(ABxABC, AO)) > 0.0f)
+		{
+			Simplex.Points[0] = A;
+			Simplex.Points[1] = B;
+			Simplex.Size = 2;
+			return false;
+		}
+		else
+		{
+			//삼각형 내부에 존재
+			if (XMVectorGetX(XMVector3Dot(ABC, AO)) > 0.0f)
+			{
+				//기존 삼각형 위
+				Direction = ABC;
+			}
+			else
+			{
+				//기존 삼각형 아래
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = C;
+				Simplex.Points[2] = B;
+				Direction = XMVectorNegate(ABC);
+			}
+		}
+	}
+
+	return false;
+}
+bool FCollisionDetector::ProcessTetrahedron(FSimplex& Simplex, XMVECTOR& Direction)
+{
+	XMVECTOR A = Simplex.Points[0];
+	XMVECTOR B = Simplex.Points[1];
+	XMVECTOR C = Simplex.Points[2];
+	XMVECTOR D = Simplex.Points[3];
+
+	// 4개의 삼각형 면 법선
+	XMVECTOR AO = XMVectorNegate(A);
+	XMVECTOR AB = XMVectorSubtract(B, A);
+	XMVECTOR AC = XMVectorSubtract(C, A);
+	XMVECTOR AD = XMVectorSubtract(D, A);
+
+	XMVECTOR ABC = XMVector3Cross(AB, AC);
+	XMVECTOR ACD = XMVector3Cross(AC, AD);
+	XMVECTOR ADB = XMVector3Cross(AD, AB);
+
+	// 각 면에 대한 원점 방향 확인
+	float ABCdot = XMVectorGetX(XMVector3Dot(ABC, AO));
+	float ACDdot = XMVectorGetX(XMVector3Dot(ACD, AO));
+	float ADBdot = XMVectorGetX(XMVector3Dot(ADB, AO));
+
+	// 면 테스트
+	if (ABCdot > 0.0f) {
+		// ABC 면 위
+		Simplex.Size = 3;
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = B;
+		Simplex.Points[2] = C;
+		return false;
+	}
+	if (ACDdot > 0.0f) {
+		// ACD 면 위
+		Simplex.Size = 3;
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = C;
+		Simplex.Points[2] = D;
+		return false;
+	}
+
+	if (ADBdot > 0.0f) {
+		// ADB 면 방향으로 조사
+		Simplex.Size = 3;
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = D;
+		Simplex.Points[2] = B;
+		return false;
+	}
+
+	// 원점이 사면체 내부에 있음
+	return true;
+}
 

@@ -31,9 +31,9 @@ public:
 	Vector3 GetHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 
-	virtual Vector3 GetSupportPoint(const Vector3& Direction, const FTransform& WorldTransform) const  = 0;
+	virtual Vector3 GetSupportPoint(const Vector3& Direction) const = 0;
 	virtual Vector3 CalculateInertiaTensor(float Mass) const = 0;
-	virtual void CalculateAABB(const FTransform& WorldTransform, Vector3& OutMin, Vector3& OutMax) const = 0;
+	virtual void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const = 0;
 
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 
