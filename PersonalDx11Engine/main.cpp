@@ -196,9 +196,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		LOG("No collision detected");
 	}
 
-	std::string input;
-	std::getline(std::cin, input); // 사용자 입력을 기다림
-	return 0;
+	//std::string input;
+	//std::getline(std::cin, input); // 사용자 입력을 기다림
+	//return 0;
 
 
 	//Hardware

@@ -4,29 +4,18 @@
 #include "CollisionDefines.h"
 #include "CollisionShapeInterface.h"
 
+using namespace DirectX;
+
 // 충돌 검사 알고리즘 모음
 class  FCollisionDetector
 {
     //원점을 포함하는 Simplex 정보
     struct FSimplex
     {
-        Vector3 Points[4];          // 최대 4개의 점(테트라헤드론)
-        Vector3 MinkowskiPoints[4]; // 민코프스키 차 공간의 실제 점
+        XMVECTOR Points[4];          // 심플렉스 정점
         int Size;                   // 현재 심플렉스의 점 개수
     };
 
-    // EPA 내부 구조체 - 면을 표현
-    struct FFace
-    {
-        int Indices[3];       // 심플렉스 점들의 인덱스
-        Vector3 Normal;       // 면의 법선 벡터
-        float Distance;       // 원점에서 면까지의 거리
-
-        bool operator<(const FFace& Other) const
-        {
-            return Distance < Other.Distance;
-        }
-    };
 public:
     FCollisionDetector();
 
@@ -75,42 +64,11 @@ private:
         float SphereRadius, const FTransform& SphereTransform);
 
 private:
-    // 서포트 함수 - 특정 방향으로 가장 멀리 있는 점 반환
-    Vector3 Support(
-        const ICollisionShape& ShapeA, const FTransform& TransformA,
-        const ICollisionShape& ShapeB, const FTransform& TransformB,
-        const Vector3& Direction);
-
-    // GJK 알고리즘 - 두 볼록 형상의 충돌 여부 검사
-    bool GJK(
-        const ICollisionShape& ShapeA, const FTransform& TransformA,
-        const ICollisionShape& ShapeB, const FTransform& TransformB,
-        FSimplex& OutSimplex);
-
-    bool ProcessLine(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
-
-    bool ProcessTriangle(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
-    bool ProcessTetrahedron(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
-    bool ProcessPoint(XMVECTOR* Points, FSimplex& Simplex, Vector3& Direction);
-
-    // EPA 알고리즘 - 침투 깊이와 충돌 법선 계산
-    FCollisionDetectionResult EPA(
-        const ICollisionShape& ShapeA, const FTransform& TransformA,
-        const ICollisionShape& ShapeB, const FTransform& TransformB,
-        FSimplex& Simplex);
-
-    // GJK 내부 함수 - 다음 방향 찾기
-    bool ProcessSimplex(FSimplex& Simplex, Vector3& Direction);
+    bool GJK(const ICollisionShape& ShapeA, const FTransform& TransformA,
+             const ICollisionShape& ShapeB, const FTransform& TransformB,
+             FSimplex& InSimplex);
 
 
-    std::vector<FFace> BuildInitialPolyhedron(const FSimplex& Simplex);
-    int FindClosestFace(const std::vector<FFace>& Faces);
-
-    void ExpandPolyhedron(std::vector<FFace>& Faces,
-                          const Vector3& NewPoint, 
-                          FSimplex& Simplex, 
-                          const ICollisionShape& ShapeA, const FTransform& TransformA, 
-                          const ICollisionShape& ShapeB, const FTransform& TransformB);
 
 public:
     float CCDTimeStep = 0.02f;
