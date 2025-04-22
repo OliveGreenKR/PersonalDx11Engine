@@ -9,11 +9,11 @@ using namespace DirectX;
 // 충돌 검사 알고리즘 모음
 class  FCollisionDetector
 {
-    //원점을 포함하는 Simplex 정보
-    struct FSimplex
+    // 원점을 포함하는 Simplex 정보
+    struct alignas(16) FSimplex
     {
-        XMVECTOR Points[4];          // 심플렉스 정점
-        int Size;                   // 현재 심플렉스의 점 개수
+        XMVECTOR Points[4];        // 심플렉스 정점 (SIMD 최적화를 위해 XMVECTOR 사용)
+        int32_t Size;              // 현재 심플렉스의 점 개수
     };
 
 public:
@@ -39,9 +39,9 @@ public:
 private:
     FCollisionDetectionResult DetectCollisionShapeBasedDiscrete(const ICollisionShape& ShapeA,const FTransform& TransformA,
                                                            const ICollisionShape& ShapeB,const FTransform& TransformB);
-    // GJK+EPA 통합 충돌 감지 함수
-    FCollisionDetectionResult DetectCollisionGJKEPADiscrete(const ICollisionShape& ShapeA, const FTransform& TransformA,
-                                                            const ICollisionShape& ShapeB, const FTransform& TransformB);
+    //// TODO GJK+EPA 통합 충돌 감지 함수
+    //FCollisionDetectionResult DetectCollisionGJKEPADiscrete(const ICollisionShape& ShapeA, const FTransform& TransformA,
+    //                                                        const ICollisionShape& ShapeB, const FTransform& TransformB);
 
 private:
     // Box-Box 충돌 검사
@@ -62,27 +62,6 @@ private:
     FCollisionDetectionResult BoxSphereSimple(
         const Vector3& BoxExtent, const FTransform& BoxTransform,
         float SphereRadius, const FTransform& SphereTransform);
-
-private:
-    bool GJK(const ICollisionShape& ShapeA, const FTransform& TransformA,
-             const ICollisionShape& ShapeB, const FTransform& TransformB,
-             FSimplex& InSimplex);
-    // 서포트 함수 - 특정 방향으로 가장 멀리 있는 점 반환
-    XMVECTOR Support(const ICollisionShape& ShapeA, const ICollisionShape& ShapeB,
-                     const Vector3 & Direction);
-
-    bool ProcessSimplex(FSimplex& Simplex, XMVECTOR& Direction);
-    bool ProcessLine(FSimplex& Simplex, XMVECTOR& Direction);
-    bool ProcessTriangle(FSimplex& Simplex, XMVECTOR& Direction);
-    bool ProcessTetrahedron(FSimplex& Simplex, XMVECTOR& Direction);
-
-
 public:
     float CCDTimeStep = 0.02f;
-    int GJK_MAX_ITERATION = 32;
-    float GJK_EPSILON = 0.0001f;
-    float EPA_EPSILON = 0.0001f;
-    int EPA_MAX_ITERATIONS = 32;
-
-    bool bUSE_GJKEPA = true;
 }; 

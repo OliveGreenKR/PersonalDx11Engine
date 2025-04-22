@@ -524,8 +524,12 @@ void FD3DContextDebugger::Release()
     ShaderResources.clear();
     Samplers.clear();
 
-    if (RenderTargets)
-        delete[] RenderTargets;
+   
+    for (auto& rt : RenderTargets) {
+        rt.bIsValid = false;
+        rt.Resource = nullptr;
+        rt.Slot = 0;
+    }
 
     RasterizerState.Resource = nullptr;
     BlendState.Resource = nullptr;
