@@ -292,7 +292,6 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::PopItemWidth();
             ImGui::End();
 
-
         }
 
         if (Character2)
@@ -428,7 +427,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->StartMove(Vector3::Forward);
+                                     Character->ApplyForce(Vector3::Up * InForceMagnitude);
                                  }
                                  else
                                  {
@@ -445,7 +444,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->StartMove(-Vector3::Forward);
+                                     Character->ApplyForce(-Vector3::Up * InForceMagnitude);
                                  }
                                  else
                                  {
@@ -506,7 +505,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->StartMove(Vector3::Forward);
+                                     Character2->ApplyForce(Vector3::Up * InForceMagnitude);
                                  }
                                  else
                                  {
@@ -523,7 +522,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->StartMove(-Vector3::Forward);
+                                     Character2->ApplyForce(-Vector3::Up * InForceMagnitude);
                                  }
                                  else
                                  {
