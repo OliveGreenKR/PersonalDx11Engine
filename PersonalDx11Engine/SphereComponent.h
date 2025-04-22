@@ -11,5 +11,7 @@ public:
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::Sphere; }
 
 	virtual const char* GetComponentClassName() const override { return "USphere"; }
+
+
 };
 

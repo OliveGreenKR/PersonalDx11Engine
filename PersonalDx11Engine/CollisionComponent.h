@@ -16,12 +16,10 @@ class UCollisionComponentBase : public USceneComponent, public IDynamicBoundable
 {
 	friend class UCollisionManager;
 public:
-	UCollisionComponentBase(const Vector3& InHalfExtents);
 	UCollisionComponentBase();
 
 	~UCollisionComponentBase();
 public:
-
 	// Inherited via IDynamicBoundable
 	Vector3 GetScaledHalfExtent() const override;
 	bool IsStatic() const override;
@@ -37,6 +35,7 @@ public:
 
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 
+	
 protected:  
 	virtual void PostInitialized() override;
 	virtual void PostTreeInitialized() override;
@@ -81,8 +80,4 @@ private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
 	// CCD를 위한 이전 프레임 월드 트랜스폼
 	FTransform PrevWorldTransform = FTransform();
-
-protected:
-	//로컬 extent -  기본값 0.5f
-	Vector3 HalfExtent = Vector3::One * 0.5f;
 };

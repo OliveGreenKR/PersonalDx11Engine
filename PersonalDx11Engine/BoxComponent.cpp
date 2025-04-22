@@ -9,6 +9,7 @@ Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
     
 
     // 부호에 따라 지원점 계산
+    Vector3 HalfExtent = GetHalfExtent();
     XMVECTOR SupportExtent = XMLoadFloat3(&HalfExtent);
     XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero()); // d_i >= 0 ? 0xFFFFFFFF : 0
     XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask); // d_i >= 0 ? +h_i : -h_i
@@ -26,6 +27,7 @@ Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
 Vector3 UBoxComponent::CalculateInertiaTensor(float Mass) const
 {
     // Load half extents into SIMD vector
+    Vector3 HalfExtent = GetHalfExtent();
     XMVECTOR vHalfExtent = XMLoadFloat3(&HalfExtent);
 
     // Square each component: he * he
@@ -59,10 +61,10 @@ void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
     XMMATRIX WorldRotateMatrix = GetWorldTransform().GetRotationMatrix();
     XMVECTOR Position = XMLoadFloat3(&GetWorldTransform().Position);
 
-    // Preload HalfExtent
-    float hx = HalfExtent.x;
-    float hy = HalfExtent.y;
-    float hz = HalfExtent.z;
+    // Preload GetHalfExtent()
+    float hx = GetHalfExtent().x;
+    float hy = GetHalfExtent().y;
+    float hz = GetHalfExtent().z;
 
     // Precomputed 8 local corners in SIMD directly
     XMVECTOR Points[8];

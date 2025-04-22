@@ -6,11 +6,10 @@
 #include "TypeCast.h"
 
 
-UCollisionComponentBase::UCollisionComponentBase(const Vector3& InHalfExtents) 
-	: UCollisionComponentBase()
-{
-	HalfExtent = InHalfExtents;
-}
+//UCollisionComponentBase::UCollisionComponentBase(const Vector3& InHalfExtents) 
+//	: UCollisionComponentBase()
+//{
+//}
 
 UCollisionComponentBase::UCollisionComponentBase() 
 {
@@ -22,11 +21,12 @@ UCollisionComponentBase::~UCollisionComponentBase()
 
 Vector3 UCollisionComponentBase::GetHalfExtent() const
 {
-	return HalfExtent;
+	return GetLocalTransform().Scale * 0.5f;
 }
 
 Vector3 UCollisionComponentBase::GetScaledHalfExtent() const
 {
+	Vector3 HalfExtent = GetHalfExtent();
 	return Vector3(
 		HalfExtent.x * GetWorldTransform().Scale.x,
 		HalfExtent.y * GetWorldTransform().Scale.y,
@@ -56,7 +56,7 @@ void UCollisionComponentBase::BindRigidBody(const std::shared_ptr<URigidBodyComp
 
 void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)
 {
-	HalfExtent = InHalfExtent;
+	SetLocalScale(InHalfExtent * 2.0f);
 }
 
 void UCollisionComponentBase::Activate()
