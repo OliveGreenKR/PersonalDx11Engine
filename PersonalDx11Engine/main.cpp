@@ -164,43 +164,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	// 테스트용 박스 충돌체 생성
-	UBoxComponent boxA;
-	UBoxComponent boxB;
-
-	// 크기 설정
-	boxA.SetHalfExtent(Vector3(0.5f, 0.5f, 0.5f));
-	boxB.SetHalfExtent(Vector3(0.5f, 0.5f, 0.5f));
-
-	// 위치 설정 - 충돌 상태
-	FTransform transA;
-	FTransform transB;
-	transA.Position = Vector3(0.0f, 0.0f, 0.0f);
-	transB.Position = Vector3(0.8f, 0.0f, 0.0f); // 부분 겹침
-
-	//// 회전 추가 - 선형성 파괴를 위해
-	//Quaternion rotB;
-	//rotB = Math::EulerToQuaternion(Vector3(15.0f, 0.0f, 0.0f));
-	//transB.Rotation = rotB;
-
-	// 충돌 검사
-	FCollisionDetector detector;
-	FCollisionDetectionResult result = detector.DetectCollisionDiscrete(boxA, transA, boxB, transB);
-
-
-	if (result.bCollided) {
-		LOG("Collision detected! Depth: %f", result.PenetrationDepth);
-		LOG("Normal: (%f, %f, %f)", result.Normal.x, result.Normal.y, result.Normal.z);
-	}
-	else {
-		LOG("No collision detected");
-	}
-
-	std::string input;
-	std::getline(std::cin, input); // 사용자 입력을 기다림
-	//return 0;
-
-
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();
 	assert(RenderHardware->Initialize(hWnd));
