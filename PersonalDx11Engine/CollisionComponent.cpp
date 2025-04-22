@@ -118,5 +118,10 @@ void UCollisionComponentBase::Tick(const float DeltaTime)
 
 	//이전 트랜스폼 저장
 	PrevWorldTransform = GetWorldTransform();
+
+	if (bIsDebugVisualize)
+	{
+		RequestDebugRender(DeltaTime);
+	}
 }
 

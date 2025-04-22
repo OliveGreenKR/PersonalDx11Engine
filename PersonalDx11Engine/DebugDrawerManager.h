@@ -6,6 +6,7 @@
 #include "FixedObjectPool.h"
 #include <array>
 
+constexpr uint16_t DEBUGDRASWER_POOL_SIZE = 256;
 
 // 디버그 도형 관리 클래스
 class UDebugDrawManager
@@ -57,7 +58,7 @@ private:
     ~UDebugDrawManager();
 
     //PrimitiveComp 풀
-    std::unique_ptr<TFixedObjectPool<FDebugShape,128>> FixedPool;
+    std::unique_ptr<TFixedObjectPool<FDebugShape, DEBUGDRASWER_POOL_SIZE>> FixedPool;
 
     // 기본 재질/모델 핸들
     FResourceHandle SphereModelHandle_High;

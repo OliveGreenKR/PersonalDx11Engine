@@ -35,11 +35,14 @@ public:
 
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 
+	void SetDebugVisualize(const bool InBool) { bIsDebugVisualize = InBool; }
 	
 protected:  
 	virtual void PostInitialized() override;
 	virtual void PostTreeInitialized() override;
 	virtual void Tick(const float DeltaTime) override;
+
+	virtual void RequestDebugRender(const float DeltaTime) = 0;
 
 public:
 	// 초기화
@@ -80,4 +83,6 @@ private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
 	// CCD를 위한 이전 프레임 월드 트랜스폼
 	FTransform PrevWorldTransform = FTransform();
+
+	bool bIsDebugVisualize = false;
 };

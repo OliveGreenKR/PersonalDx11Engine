@@ -1,4 +1,5 @@
 #include "BoxComponent.h"
+#include "DebugDrawerManager.h"
 
 Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
 {
@@ -98,4 +99,15 @@ void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
     // Store back
     XMStoreFloat3(&OutMin, MinPoint);
     XMStoreFloat3(&OutMax, MaxPoint);
+}
+
+void UBoxComponent::RequestDebugRender(const float DeltaTime)
+{
+    UDebugDrawManager::Get()->DrawBox(
+        GetWorldPosition(),
+        GetWorldScale(),
+        GetWorldRotation(),
+        Vector4(1, 1, 0, 1),
+        DeltaTime
+    );
 }

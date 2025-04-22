@@ -12,6 +12,8 @@ public:
 
 	virtual const char* GetComponentClassName() const override { return "USphere"; }
 
+protected:
+	virtual void RequestDebugRender(const float DeltaTime);
 
 };
 

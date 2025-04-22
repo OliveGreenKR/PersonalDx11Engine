@@ -1,6 +1,5 @@
 #include "SphereComponent.h"
 #include "DebugDrawerManager.h"
-#include "SceneManager.h"
 
 Vector3 USphereComponent::GetSupportPoint(const Vector3& Direction) const
 {
@@ -34,4 +33,15 @@ void USphereComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 
     XMStoreFloat3(&OutMin, MinPoint);
     XMStoreFloat3(&OutMax, MaxPoint);
+}
+
+void USphereComponent::RequestDebugRender(const float DeltaTime)
+{
+    UDebugDrawManager::Get()->DrawSphere(
+        GetWorldPosition(),
+        GetWorldScale().x * 0.5f,
+        GetWorldRotation(),
+        Vector4(1, 1, 0, 1),
+        DeltaTime
+    );
 }

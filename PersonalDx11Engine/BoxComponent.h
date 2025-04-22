@@ -11,5 +11,9 @@ public:
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::Box; }
 
 	virtual const char* GetComponentClassName() const override { return "UBox"; }
+
+protected:
+	virtual void RequestDebugRender(const float DeltaTime);
+
 };
 

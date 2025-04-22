@@ -7,6 +7,7 @@
 #include "SceneManager.h" 
 #include "Model.h"
 #include "Material.h"
+#include "ConfigReadManager.h"
 
 void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const Vector4& Color, float Thickness, float Duration, bool bPersist)
 {
@@ -87,7 +88,7 @@ void UDebugDrawManager::SetupPrimitive(UPrimitiveComponent* TargetPrimitive,
 
 UDebugDrawManager::UDebugDrawManager()
 {
-	FixedPool = std::make_unique< TFixedObjectPool<FDebugShape, 128>>();
+	FixedPool = std::make_unique< TFixedObjectPool<FDebugShape, DEBUGDRASWER_POOL_SIZE>>();
 }
 
 UDebugDrawManager::~UDebugDrawManager()
@@ -130,7 +131,7 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 
 void UDebugDrawManager::Tick(const float DeltaTime)
 {
-	using PoolHandle = TFixedObjectPool<UDebugDrawManager::FDebugShape, 128>::WeakedObject;
+	using PoolHandle = TFixedObjectPool<UDebugDrawManager::FDebugShape, DEBUGDRASWER_POOL_SIZE>::WeakedObject;
 	std::vector<PoolHandle> ToReleased;
 	ToReleased.reserve(FixedPool->GetActiveCount());
 

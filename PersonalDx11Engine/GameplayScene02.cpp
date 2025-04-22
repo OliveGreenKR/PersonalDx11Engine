@@ -122,6 +122,10 @@ void UGameplayScene02::Initialize()
         LOG("CollisionStay"); }, "OnCollisionEnter_P1");
     Colli.lock()->OnCollisionExit.BindSystem([](const FCollisionEventData& InEvent) {
         LOG("CollisionExit"); }, "OnCollisionEnter_P1");
+    Colli.lock()->SetLocalScale(Vector3::One * 1.05f);
+
+    auto Colli2 = Character2->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
+    Colli2.lock()->SetLocalScale(Vector3::One * 1.05f);
 
     //트랜스폼 테스트
     //Character->GetRootComp()->AddChild(Character2->GetRootComp());
@@ -205,28 +209,12 @@ void UGameplayScene02::SubmitRender(URenderer* Renderer)
             Renderer->SubmitJob(RenderJob2);
         }
     }
-
-    float LastDeltaTime = USceneManager::Get()->GetLastTickTime();
-    //UDebugDrawManager::Get()->DrawLine(Character->GetTransform().Position,
-    //                                   Character2->GetTransform().Position,
-    //                                   Vector4(1,1,0,1),
-    //                                   0.001f,
-    //                                   0.1f);
-    UDebugDrawManager::Get()->DrawBox(Character->GetTransform().Position,
-                                       Character->GetTransform().Scale * 1.0f,
-                                      Character->GetTransform().Rotation,
-                                       Vector4(1, 1, 0, 1),
-                                      LastDeltaTime,false);
-    UDebugDrawManager::Get()->DrawSphere(Character2->GetTransform().Position,
-                                         Character2->GetTransform().Scale.x * 0.5f,
-                                         Character2->GetTransform().Rotation,
-                                         Vector4(0, 1, 1, 1),
-                                         LastDeltaTime, false);
-
 }
 
 void UGameplayScene02::SubmitRenderUI()
 {
+    static bool bIsVisualizeCollision = false;
+
     const ImGuiWindowFlags UIWindowFlags =
         ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
@@ -244,6 +232,8 @@ void UGameplayScene02::SubmitRenderUI()
 
         if (Character)
         {
+            Vector3 Scale = Character->GetTransform().Scale;
+            bool bScale = false;
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
             Vector3 CurrentPos = Character->GetTransform().Position;
             bool bGravity = Character->IsGravity();
@@ -277,7 +267,31 @@ void UGameplayScene02::SubmitRenderUI()
             {
                 Character->GetRootComp()->PrintComponentTree();
             }
+
+            ImGui::Text("Scale");
+            ImGui::SameLine();
+            ImGui::PushItemWidth(50.0f);
+            if (ImGui::DragFloat("x", &Scale.x, 0.1f, 0.01f,5.0f,"%.2f"))
+            {
+                bScale = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::DragFloat("y", &Scale.y, 0.1f, 0.01f, 5.0f, "%.2f"))
+            {
+                bScale = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::DragFloat("z", &Scale.z, 0.1f, 0.01f, 5.0f, "%.2f"))
+            {
+                bScale = true;
+            }
+            if (bScale && Scale.Length() > KINDA_SMALL)
+            {
+                Character->SetScale(Scale);
+            }
+            ImGui::PopItemWidth();
             ImGui::End();
+
 
         }
 
@@ -316,6 +330,25 @@ void UGameplayScene02::SubmitRenderUI()
         }
         ImGui::SetNextItemWidth(50.0f);
         ImGui::InputFloat("PowerMags", &PowerMagnitude, 0.0f, 0.0f, "%.02f");
+        if(ImGui::Checkbox("CollisionVisualize", &bIsVisualizeCollision))
+        {
+            if (Character)
+            {
+                auto Colli = Character->GetComponentByType<UCollisionComponentBase>();
+                if (Colli)
+                {
+                    Colli->SetDebugVisualize(bIsVisualizeCollision);
+                }
+            }
+            if (Character2)
+            {
+                auto Colli = Character2->GetComponentByType<UCollisionComponentBase>();
+                if (Colli)
+                {
+                    Colli->SetDebugVisualize(bIsVisualizeCollision);
+                }
+            }
+        }
         ImGui::End();
         });
 }
