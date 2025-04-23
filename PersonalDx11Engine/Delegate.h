@@ -12,7 +12,7 @@ template<typename T>
 constexpr bool IsBindable = std::is_base_of_v<IBindable, T>;
 
 template<typename... Args>
-class FDelegate
+class TDelegate
 {
 public:
     using FunctionType = std::function<void(Args...)>;
@@ -48,10 +48,10 @@ private:
     std::vector<FBoundFunction> BoundFunctions;
 
     // 자신을 키로 사용하는 고유 포인터
-    void* GetKeyForThis() const { return const_cast<FDelegate*>(this); }
+    void* GetKeyForThis() const { return const_cast<TDelegate*>(this); }
 
 public:
-    ~FDelegate()
+    ~TDelegate()
     {
         UnbindAll();
     }

@@ -21,7 +21,7 @@ struct FKeyEventData
 };
 
 // 키 이벤트 델리게이트 타입 정의
-using FOnKeyEvent = FDelegate<const FKeyEventData&>;
+using FOnKeyEvent = TDelegate<const FKeyEventData&>;
 
 //행동에 따른 키 바인딩
 class UInputAction 

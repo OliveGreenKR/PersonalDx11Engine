@@ -60,9 +60,9 @@ private:
 	void DeActivateCollision();
 public:
 	// 충돌 이벤트 델리게이트
-	FDelegate<const FCollisionEventData&> OnCollisionEnter;
-	FDelegate<const FCollisionEventData&> OnCollisionStay;
-	FDelegate<const FCollisionEventData&> OnCollisionExit;
+	TDelegate<const FCollisionEventData&> OnCollisionEnter;
+	TDelegate<const FCollisionEventData&> OnCollisionStay;
+	TDelegate<const FCollisionEventData&> OnCollisionExit;
 
 	// 충돌 이벤트 publish
 	void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {

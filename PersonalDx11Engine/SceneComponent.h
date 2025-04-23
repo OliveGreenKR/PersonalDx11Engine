@@ -9,8 +9,8 @@ class USceneComponent : public UActorComponent
 {
 public:
     // 트랜스폼 변경 이벤트 델리게이트
-    FDelegate<const FTransform&> OnLocalTransformChangedDelegate;
-    FDelegate<const FTransform&> OnWorldTransformChangedDelegate;
+    TDelegate<const FTransform&> OnLocalTransformChangedDelegate;
+    TDelegate<const FTransform&> OnWorldTransformChangedDelegate;
 
 private:
     FTransform LocalTransform;                      // 로컬 트랜스폼 (부모 기준)
