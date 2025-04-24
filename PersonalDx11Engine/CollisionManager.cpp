@@ -371,99 +371,23 @@ void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionCompone
 		return;
 
 	ResponseResult.Mass = RigidPtr->GetMass();
-	ResponseResult.RotationalInertia = RigidPtr->GetRotationalInertia();
-	ResponseResult.Position = RigidPtr->GetWorldTransform().Position;
-	ResponseResult.Velocity = RigidPtr->GetVelocity();
-	ResponseResult.AngularVelocity = RigidPtr->GetAngularVelocity();
+
+	Vector3 RotInerteria = RigidPtr->GetRotationalInertia();
+    ResponseResult.RotationalInertia = XMLoadFloat3(&RotInerteria);  
+
+    Vector3 Position = RigidPtr->GetWorldTransform().Position;  
+    ResponseResult.Position = XMLoadFloat3(&Position);  
+
+    Vector3 Velocity = RigidPtr->GetVelocity();  
+    ResponseResult.Velocity = XMLoadFloat3(&Velocity);
+
+	ResponseResult.AngularVelocity = XMLoadFloat3(&(RigidPtr->GetAngularVelocity()));
+
 	ResponseResult.Restitution = RigidPtr->GetRestitution();
 	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
 	ResponseResult.FrictionStatic = RigidPtr->GetFrictionStatic();
-	ResponseResult.Rotation = RigidPtr->GetWorldTransform().Rotation;
-
+	ResponseResult.Rotation = XMLoadFloat4(&(RigidPtr->GetWorldTransform().Rotation));
 	return;
-}
-
-void UCollisionManager::ApplyCollisionResponseByImpulse(const std::shared_ptr<UCollisionComponentBase>& ComponentA, const std::shared_ptr<UCollisionComponentBase>& ComponentB, const FCollisionDetectionResult& DetectResult)
-{
-	if (!ComponentA.get() || !ComponentA.get()->GetRigidBody() ||
-		!ComponentB.get() || !ComponentB.get()->GetRigidBody())
-		return;
-
-	FPhysicsParameters ParamsA, ParamsB;
-	GetPhysicsParams(ComponentA, ParamsA);
-	GetPhysicsParams(ComponentB , ParamsB);
-	FCollisionResponseResult collisionResponse = ResponseCalculator->CalculateResponseByImpulse(DetectResult, ParamsA, ParamsB);
-
-	auto RigidPtrA = ComponentA.get()->GetRigidBody();
-	auto RigidPtrB = ComponentB.get()->GetRigidBody();
-
-	//DX 규칙에따른 법선으로 계산한 임펄스이므로 방향을 반대로 적용해야함
-	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-}
-
-void UCollisionManager::HandlePersistentCollision(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
-{
-	auto CompA = RegisteredComponents[InPair.TreeIdA].lock();
-	auto CompB = RegisteredComponents[InPair.TreeIdB].lock();
-
-	if (!CompA || !CompB) return;
-
-	auto RigidA = CompA->GetRigidBody();
-	auto RigidB = CompB->GetRigidBody();
-
-	if (!RigidA || !RigidB) return;
-
-	const float BiasFactor = 0.2f;
-	const float AngularBiasFactor = 0.2f;
-	const float Slop = 0.005f;
-
-	// 목표 : 상대속도 0으로 만들기
-
-	// 선형 속도 처리
-	Vector3 RelativeVel = RigidB->GetVelocity() - RigidA->GetVelocity();
-	float NormalVelocity = Vector3::Dot(RelativeVel, DetectResult.Normal);
-
-	float desiredDeltaVelocity = 0.0f;
-	if (DetectResult.PenetrationDepth > Slop)
-	{
-		desiredDeltaVelocity = (DetectResult.PenetrationDepth - Slop) * BiasFactor;
-	}
-
-	// 선형 속도 보정
-	float velocityError = -NormalVelocity + desiredDeltaVelocity;
-
-	float invMassA = RigidA->IsStatic() ? 0.0f : 1.0f / RigidA->GetMass();
-	float invMassB = RigidB->IsStatic() ? 0.0f : 1.0f / RigidB->GetMass();
-
-	if (invMassA + invMassB > 0.0f)
-	{
-		Vector3 velocityChange = DetectResult.Normal * velocityError;
-
-		if (!RigidA->IsStatic())
-		{
-			RigidA->SetVelocity(RigidA->GetVelocity() - velocityChange * (invMassA / (invMassA + invMassB)));
-		}
-
-		if (!RigidB->IsStatic())
-		{
-			RigidB->SetVelocity(RigidB->GetVelocity() + velocityChange * (invMassB / (invMassA + invMassB)));
-		}
-	}
-
-	// 각속도 처리
-	Vector3 RelativeAngularVel = RigidB->GetAngularVelocity() - RigidA->GetAngularVelocity();
-
-	// 각속도 보정
-	if (!RigidA->IsStatic())
-	{
-		RigidA->SetAngularVelocity(RigidA->GetAngularVelocity() - RelativeAngularVel * AngularBiasFactor);
-	}
-
-	if (!RigidB->IsStatic())
-	{
-		RigidB->SetAngularVelocity(RigidB->GetAngularVelocity() + RelativeAngularVel * AngularBiasFactor);
-	}
 }
 
 void UCollisionManager::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB, 

@@ -132,6 +132,9 @@
       <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
     </ClCompile>
     <ClCompile Include="ConfigReadManager.cpp" />
+    <ClCompile Include="VelocityConstraint.cpp">
+      <Filter>Engine\Physics\Constraints\Velocity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -313,6 +316,12 @@
     </Filter>
     <Filter Include="Engine\Utils">
       <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Constraints">
+      <UniqueIdentifier>{1e39890a-6ee9-462e-965a-ea518b0ed84e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Constraints\Velocity">
+      <UniqueIdentifier>{e066b9a0-2ae3-4e1d-9fb0-d6e252638dee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -540,6 +549,12 @@
     </ClInclude>
     <ClInclude Include="ConfigReadManager.h">
       <Filter>Engine\Managers\ConfigReadeer</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstraintInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="VelocityConstraint.h">
+      <Filter>Engine\Physics\Constraints\Velocity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

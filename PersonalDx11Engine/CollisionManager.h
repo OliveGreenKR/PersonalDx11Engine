@@ -139,18 +139,6 @@ private:
 
     void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
 
-    //일반적인 충돌반응 (충격량기반 속도 변화)
-    void ApplyCollisionResponseByImpulse(
-        const std::shared_ptr<UCollisionComponentBase>& ComponentA,
-        const std::shared_ptr<UCollisionComponentBase>& ComponentB,
-        const FCollisionDetectionResult& DetectResult);
-
-    //연속적인 충돌 반응 (속도 기반)
-    void HandlePersistentCollision(
-        const FCollisionPair& InPair,
-        const FCollisionDetectionResult& DetectResult,
-        const float DeltaTime);
-
     void ApplyPositionCorrection(
         const std::shared_ptr<UCollisionComponentBase>& ComponentA,
         const std::shared_ptr<UCollisionComponentBase>& ComponentB,

@@ -1,16 +1,11 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include "CollisionDefines.h"
+#include "ConstraintInterface.h"
 
 class FCollisionResponseCalculator
 {
 public:
-    // 충돌 응답을 계산하는 주 함수
-    FCollisionResponseResult CalculateResponseByImpulse(
-        const FCollisionDetectionResult& DetectionResult,
-        const FPhysicsParameters& ParameterA,
-        const FPhysicsParameters& ParameterB
-    );
 
     FCollisionResponseResult CalculateResponseByContraints(
         const FCollisionDetectionResult& DetectionResult,
@@ -27,22 +22,8 @@ private:
     };
 
 private:
-    // 충격량 기반 : 수직 충격량 계산 (탄성 충돌)
-    XMVECTOR CalculateNormalImpulse(
-        const FCollisionDetectionResult& DetectionResult,
-        const FPhysicsParameters& ParameterA,
-        const FPhysicsParameters& ParameterB
-    );
 
-    // 충격량 기반 : 마찰력에 의한 충격량 계산
-    XMVECTOR CalculateFrictionImpulse(
-        const XMVECTOR& NormalImpulse,
-        const FCollisionDetectionResult& DetectionResult,
-        const FPhysicsParameters& ParameterA,
-        const FPhysicsParameters& ParameterB
-    );
-
-    // 충격량 기반 : 상대 속도 계산
+    // 상대 속도 계산
     XMVECTOR CalculateRelativeVelocity(
         const Vector3& ContactPoint,
         const FPhysicsParameters& ParameterA,

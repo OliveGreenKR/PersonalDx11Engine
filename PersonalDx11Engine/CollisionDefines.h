@@ -21,11 +21,11 @@ struct FPhysicsParameters
 	//if negative mass, it means invalied params
 	float Mass = -1.0f;  
 
-	Vector3 RotationalInertia = Vector3::Zero;
-	Vector3 Position = Vector3::Zero;
-	Vector3 Velocity = Vector3::Zero;
-	Vector3 AngularVelocity = Vector3::Zero;
-	Quaternion Rotation = Quaternion::Identity;
+	XMVECTOR RotationalInertia = XMVectorZero();
+	XMVECTOR Position = XMVectorZero();
+	XMVECTOR Velocity = XMVectorZero();
+	XMVECTOR AngularVelocity = XMVectorZero();
+	XMVECTOR Rotation = XMQuaternionIdentity();
 
 	float Restitution = 0.5f; // 반발계수
 	float FrictionStatic = 0.8f;

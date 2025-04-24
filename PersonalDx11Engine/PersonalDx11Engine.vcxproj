@@ -175,6 +175,7 @@
     <ClCompile Include="SphereComponent.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="VelocityConstraint.cpp" />
     <ClCompile Include="VertexShader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +190,7 @@
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />
     <ClInclude Include="ConfigReadManager.h" />
+    <ClInclude Include="ConstraintInterface.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
@@ -252,6 +254,7 @@
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TypeCast.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="VelocityConstraint.h" />
     <ClInclude Include="VertexDataContainer.h" />
     <ClInclude Include="VertexFormat.h" />
     <ClInclude Include="VertexShader.h" />
