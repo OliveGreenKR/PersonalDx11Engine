@@ -107,6 +107,19 @@ void UCollisionComponentBase::PostInitialized()
 void UCollisionComponentBase::PostTreeInitialized()
 {
 	USceneComponent::PostTreeInitialized();
+	//Rigid가 없다면 부모중에 Rigid 검색
+	if (!RigidBody.lock())
+	{
+		auto Rigid = GetRoot()->FindComponentByType<URigidBodyComponent>();
+		if (Rigid.lock())
+		{
+			auto RigidChild = Rigid.lock()->FindChildByType<UCollisionComponentBase>();
+			if (RigidChild.lock() && RigidChild.lock().get() == this)
+			{
+				BindRigidBody(Rigid.lock());
+			}
+		}
+	}
 }
 
 void UCollisionComponentBase::Tick(const float DeltaTime)
