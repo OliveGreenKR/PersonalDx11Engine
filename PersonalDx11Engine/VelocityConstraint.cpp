@@ -1,12 +1,17 @@
 #include "VelocityConstraint.h"
 #include "CollisionDefines.h"
 
-inline FVelocityConstraint::FVelocityConstraint(const Vector3& TargetDirection, float InDesireSpeed, float minLamda)
-    : Direction(XMLoadFloat3(&TargetDirection)), DesiredSpeed(InDesireSpeed), Bias(0.0f), PositionError(0.0f), MinLamda(minLamda)
+FVelocityConstraint::FVelocityConstraint(const Vector3& TargetDirection, float InDesireSpeed, float minLamda)
+    : Direction(XMLoadFloat3(&TargetDirection)), DesiredSpeed(InDesireSpeed), MinLamda(minLamda)
 {
 }
 
-inline void FVelocityConstraint::SetContactData(const Vector3& InContactPoint, const Vector3& InContactNormal, float InPenetrationDepth)
+FVelocityConstraint::FVelocityConstraint(const XMVECTOR& TargetDirection, float InDesiredSpeed, float minLamda)
+    : Direction(TargetDirection), DesiredSpeed(InDesiredSpeed), MinLamda(minLamda)
+{
+}
+
+void FVelocityConstraint::SetContactData(const Vector3& InContactPoint, const Vector3& InContactNormal, float InPenetrationDepth)
 {
     ContactPoint = XMLoadFloat3(&InContactPoint);
     ContactNormal = XMLoadFloat3(&InContactNormal);

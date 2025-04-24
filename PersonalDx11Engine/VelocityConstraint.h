@@ -14,12 +14,12 @@ private:
     float Bias = 0.0f;               // 위치 오차 보정 계수
     float PositionError = 0.0f;      // 위치 오차 
     float MinLamda = FLT_MIN;        //Lamda 제약
-    XMVECTOR ContactPoint;
-    XMVECTOR ContactNormal;
+    XMVECTOR ContactPoint = XMVectorZero();
+    XMVECTOR ContactNormal = XMVectorZero();
 
 public:
     FVelocityConstraint(const Vector3& TargetDirection, float InDesiredSpeed = 0.0f, float minLamda = FLT_MIN);
-
+    FVelocityConstraint(const XMVECTOR& TargetDirection, float InDesiredSpeed = 0.0f, float minLamda = FLT_MIN);
     // IConstraint 구현
     virtual Vector3 Solve(const FPhysicsParameters& ParameterA,
                           const FPhysicsParameters& ParameterB,
@@ -34,7 +34,6 @@ public:
     // 위치 오차 보정용 설정
     void SetBias(float InBias) { Bias = InBias; }
 
-protected:
 
     float CalculateEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
                                  const XMVECTOR& Point, const XMVECTOR& Dir) const;
