@@ -3,6 +3,7 @@
 
 class IPhysicsState
 {
+public:
 	virtual float GetMass() const = 0;
     virtual Vector3 GetRotationalInertia() const = 0;
     virtual Vector3 GetWorldPosition() const = 0;
