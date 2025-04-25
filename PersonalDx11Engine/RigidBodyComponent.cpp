@@ -1,4 +1,4 @@
-﻿#include "RigidBodyComponent.h"
+#include "RigidBodyComponent.h"
 #include "Transform.h"
 #include "GameObject.h"
 #include "Debug.h"
@@ -162,6 +162,7 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
 	return GetWorldTransform().Position;
 }
+
 
 void URigidBodyComponent::SetMass(float InMass)
 {

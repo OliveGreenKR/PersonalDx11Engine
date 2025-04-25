@@ -53,13 +53,13 @@ public:
     const FTransform& GetWorldTransform() const;
 
     // 위치, 회전, 크기 개별 접근자
-	const Vector3& GetLocalPosition() const { return GetLocalTransform().Position; }
-	const Quaternion& GetLocalRotation() const { return GetLocalTransform().Rotation; }
-	const Vector3& GetLocalScale() const { return GetLocalTransform().Scale; }
+	Vector3 GetLocalPosition() const { return GetLocalTransform().Position; }
+	Quaternion GetLocalRotation() const { return GetLocalTransform().Rotation; }
+	Vector3 GetLocalScale() const { return GetLocalTransform().Scale; }
 
-    Vector3 GetWorldPosition() { return GetWorldTransform().Position; }
-    Quaternion GetWorldRotation() { return GetWorldTransform().Rotation; }
-    Vector3 GetWorldScale() { return GetWorldTransform().Scale; }
+    Vector3 GetWorldPosition() const { return GetWorldTransform().Position; }
+    Quaternion GetWorldRotation() const { return GetWorldTransform().Rotation; }
+    Vector3 GetWorldScale() const { return GetWorldTransform().Scale; }
 
     // 특수 기능
     void LookAt(const Vector3& TargetWorldPosition);

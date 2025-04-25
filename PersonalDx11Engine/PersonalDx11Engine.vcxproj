@@ -218,6 +218,9 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="FixedObjectPool.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="PhysicsStateInterface.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />

@@ -380,8 +380,8 @@ void UCollisionManager::GetPhysicsParams(const std::shared_ptr<UCollisionCompone
 
     Vector3 Velocity = RigidPtr->GetVelocity();  
     ResponseResult.Velocity = XMLoadFloat3(&Velocity);
-
-	ResponseResult.AngularVelocity = XMLoadFloat3(&(RigidPtr->GetAngularVelocity()));
+	Vector3 AngularVelocity = RigidPtr->GetAngularVelocity();
+	ResponseResult.AngularVelocity = XMLoadFloat3(&(AngularVelocity));
 
 	ResponseResult.Restitution = RigidPtr->GetRestitution();
 	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();

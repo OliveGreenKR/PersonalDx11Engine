@@ -3,6 +3,7 @@
 #include <memory>
 #include "ActorComponent.h"
 #include "SceneComponent.h"
+#include "PhysicsStateInterface.h"
 
 class UGameObject;
 
@@ -12,7 +13,7 @@ enum class ERigidBodyType
 	Static
 };
 
-class URigidBodyComponent : public USceneComponent
+class URigidBodyComponent : public USceneComponent , public IPhysicsState
 {
 public:
 	// 회전관성 접근제어 토근
@@ -30,26 +31,31 @@ public:
 	virtual void Tick(const float DeltaTime) override;
 
 	// 속도 기반 인터페이스
-	void SetVelocity(const Vector3& InVelocity);
-	void AddVelocity(const Vector3& InVelocityDelta);
-	void SetAngularVelocity(const Vector3& InAngularVelocity);
-	void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
+	void SetVelocity(const Vector3& InVelocity) override;
+	void AddVelocity(const Vector3& InVelocityDelta) override;
+	void SetAngularVelocity(const Vector3& InAngularVelocity) override;
+	void AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
 
 	// 힘 기반 인터페이스 (내부적으로 가속도로 변환)
-	inline void ApplyForce(const Vector3& Force) { ApplyForce(Force, GetCenterOfMass()); }
-	void ApplyForce(const Vector3& Force, const Vector3& Location);
+	inline void ApplyForce(const Vector3& Force) override  { ApplyForce(Force, GetCenterOfMass()); }
+	void ApplyForce(const Vector3& Force, const Vector3& Location) override ;
 	inline void ApplyImpulse(const Vector3& Impulse) { ApplyImpulse(Impulse, GetCenterOfMass()); }
-	void ApplyImpulse(const Vector3& Impulse, const Vector3& Location);
+	void ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;
 
 	// Getters
-	inline const Vector3& GetVelocity() const { return Velocity; }
-	inline const Vector3& GetAngularVelocity() const { return AngularVelocity; }
+	inline Vector3 GetVelocity() const override { return Velocity; }
+	inline Vector3 GetAngularVelocity() const override { return AngularVelocity; }
+	inline float GetMass() const override { return IsStatic() ? 1 / KINDA_SMALL : Mass; }
+	inline Vector3 GetRotationalInertia() const override { return RotationalInertia; }
+	inline float GetRestitution() const override { return Restitution; }
+	inline float GetFrictionKinetic() const override { return FrictionKinetic; }
+	inline float GetFrictionStatic() const override { return FrictionStatic; }
+
 	inline float GetSpeed() const { return Velocity.Length(); }
-	inline float GetMass() const { return IsStatic() ? 1 / KINDA_SMALL : Mass; }
-	inline Vector3 GetRotationalInertia() const { return RotationalInertia; }
-	inline float GetRestitution() const { return Restitution; }
-	inline float GetFrictionKinetic() const { return FrictionKinetic; }
-	inline float GetFrictionStatic() const { return FrictionStatic; }
+
+	// Inherited via IPhysicsState
+	Vector3 GetWorldPosition() const override { return USceneComponent::GetWorldPosition(); }
+	Quaternion GetWorldRotation() const override { return USceneComponent::GetWorldRotation(); }
 
 	// 물리 속성 설정
 	void SetMass(float InMass);
