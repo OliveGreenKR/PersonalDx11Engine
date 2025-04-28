@@ -63,9 +63,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
         XMStoreFloat3(&Tangent, vTangent);
 
         // 접선 방향 제약 조건 (마찰력)
-        float MaxFriction = std::abs(NormalLambda) *
-            ((ParameterA.FrictionStatic + ParameterB.FrictionStatic) * 0.5f);
-        FVelocityConstraint FrictionConstraint(Tangent, 0.0f, -MaxFriction);
+        FVelocityConstraint FrictionConstraint(Tangent, 0.0f);
         FrictionConstraint.SetContactData(DetectionResult.Point, Normal, 0.0f);
 
         // Warm Starting: 이전 프레임의 마찰 람다 재사용
@@ -82,8 +80,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     }
     
     // 최종 충격량 합산
-    float DamipingFactor = 0.95f;
-    ResponseData.NetImpulse = DamipingFactor *(NormalImpulse + TangentImpulse);
+    ResponseData.NetImpulse = (NormalImpulse + TangentImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
 
     return ResponseData;

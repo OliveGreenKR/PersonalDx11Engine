@@ -86,11 +86,11 @@ void UGameplayScene02::Initialize()
     SetMaxSpeeds(MaxSpeed);
     CharacterMass = Character->GetTransform().Scale.Length() * 20.0f;
     Character->SetMass(CharacterMass);
-    Character->SetRestitution(0.35f);
+    Character->SetRestitution(0.60f);
 
     Character2Mass = Character2->GetTransform().Scale.Length() * 20.0f;
     Character2->SetMass(Character2Mass);
-    Character2->SetRestitution(0.35f);
+    Character2->SetRestitution(0.80f);
 
     //매터리얼 설정
     auto Primitive1 = Character->GetComponentByType<UPrimitiveComponent>();

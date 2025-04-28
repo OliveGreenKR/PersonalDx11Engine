@@ -54,7 +54,6 @@ struct FCollisionSystemConfig
     float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
     float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
-    int ConstraintInterations = 5;
     //fixedTimeStep
     bool bUseFixedTimestep = true;       // 고정 타임스텝 사용 여부
     float FixedTimeStep = 0.016f;        // 고정 타임스텝 크기 (60Hz)

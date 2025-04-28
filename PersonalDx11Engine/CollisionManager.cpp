@@ -437,7 +437,8 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
 
 	if (!ComponentA || !ComponentA->GetRigidBody() ||
-		!ComponentB || !ComponentB->GetRigidBody())
+		!ComponentB || !ComponentB->GetRigidBody() ||
+		!DetectResult.bCollided)
 		return;
 
 	FPhysicsParameters ParamsA, ParamsB;
@@ -453,19 +454,14 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 		Accumulation.Scale(0.8f);  // 안정성을 위한 스케일링
 	}
 
-	for (int i = 0; i < Config.ConstraintInterations ; ++i)
-	{
-		FCollisionResponseResult collisionResponse = 
-			ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
+	FCollisionResponseResult collisionResponse =
+		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
+	auto RigidPtrA = ComponentA.get()->GetRigidBody();
+	auto RigidPtrB = ComponentB.get()->GetRigidBody();
+	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
-		auto RigidPtrA = ComponentA.get()->GetRigidBody();
-		auto RigidPtrB = ComponentB.get()->GetRigidBody();
-
-		//중간단계 적용
-		RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-		RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-	}
-
+	//반응 결과 저장
 	CollisionPair.PrevConstraints = Accumulation;
 }
 
@@ -518,7 +514,6 @@ void UCollisionManager::LoadConfigFromIni()
 	UConfigReadManager::Get()->GetValue("MinimumTimeStep", Config.MinimumTimeStep);
 	UConfigReadManager::Get()->GetValue("MaximumTimeStep", Config.MaximumTimeStep);
 	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", Config.CCDVelocityThreshold);
-	UConfigReadManager::Get()->GetValue("ConstraintInterations", Config.ConstraintInterations);
 	UConfigReadManager::Get()->GetValue("bUseFixedTimestep", Config.bUseFixedTimestep);
 	UConfigReadManager::Get()->GetValue("FixedTimeStep", Config.FixedTimeStep);
 	UConfigReadManager::Get()->GetValue("MaxSubSteps", Config.MaxSubSteps);
