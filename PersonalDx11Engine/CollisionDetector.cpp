@@ -39,16 +39,14 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	FCollisionDetectionResult EndResult = DetectCollisionDiscrete(ShapeA, CurrentTransformA, ShapeB, CurrentTransformB);
 	if (!EndResult.bCollided)
 	{
-		//// 시작과 끝 모두 충돌하지 않으며, 경로가 매우 짧은 경우 -> 충돌 검사 건너띄기
-		//Vector3 RelativeMotion = (CurrentTransformA.Position - PrevTransformA.Position) -
-		//	(CurrentTransformB.Position - PrevTransformB.Position);
-		//if (RelativeMotion.LengthSquared() < KINDA_SMALL * KINDA_SMALL)
-		//{
-		//	UDebugDrawManager::Get()->DrawLine(PrevTransformA.Position, CurrentTransformA.Position, Vector4(0, 1, 1, 1),
-		//									   2.0f, 0.5f);
-		//	LOG("CCD SKip");
-		//	return EndResult;
-		//}
+		// 시작과 끝 모두 충돌하지 않으며, 경로가 매우 짧은 경우 -> 충돌 검사 건너띄기
+		Vector3 RelativeMotion = (CurrentTransformA.Position - PrevTransformA.Position) -
+			(CurrentTransformB.Position - PrevTransformB.Position);
+		if (RelativeMotion.LengthSquared() < KINDA_SMALL * KINDA_SMALL)
+		{
+			LOG("CCD SKip");
+			return EndResult;
+		}
 	}
 
 	float currentTime = KINDA_SMALLER;
@@ -56,44 +54,52 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	FCollisionDetectionResult Result;
 	Result.bCollided = false;
 
-	float alpha = 0.5f;
-	for (int i = 0; i < 10; ++i)
+	
+	float right = 1.0f;
+	float left = 0.0f;
+	Result.TimeOfImpact = right;
+	for (int i = 0; i < 30; ++i)
 	{
+		float mid = (left + right) * 0.5f;
+
 		// 중간 시점의 Transform 계산
-		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, alpha);
-		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, alpha);
+		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, mid);
+		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, mid);
 		//최초 충돌 시점 찾기
 		Result = DetectCollisionDiscrete(ShapeA, InterpolatedTransformA, ShapeB, InterpolatedTransformB);
 		if (Result.bCollided)
 		{
-			Result.TimeOfImpact = DeltaTime * alpha;
+			//충돌 발생 = 더 이른 시점 찾기
+			right = mid;
+			Result.TimeOfImpact = std::min(Result.TimeOfImpact, mid);
 			break;
 		}
 		else
 		{
-
+			//더 늦은 시점
+			left = mid;
 		}
 	}
 
-	while (currentTime < DeltaTime)
-	{
-		float alpha = currentTime / DeltaTime;
+	//while (currentTime < DeltaTime)
+	//{
+	//	float alpha = currentTime / DeltaTime;
 
-		// 중간 시점의 Transform 계산
-		FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, alpha);
-		FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, alpha);
+	//	// 중간 시점의 Transform 계산
+	//	FTransform InterpolatedTransformA = FTransform::InterpolateTransform(PrevTransformA, CurrentTransformA, alpha);
+	//	FTransform InterpolatedTransformB = FTransform::InterpolateTransform(PrevTransformB, CurrentTransformB, alpha);
 
-		//최초 충돌 시점 찾기
-		Result = DetectCollisionDiscrete(ShapeA, InterpolatedTransformA, ShapeB, InterpolatedTransformB);
+	//	//최초 충돌 시점 찾기
+	//	Result = DetectCollisionDiscrete(ShapeA, InterpolatedTransformA, ShapeB, InterpolatedTransformB);
 
-		if (Result.bCollided)
-		{
-			Result.TimeOfImpact = currentTime;
-			break;
-		}
+	//	if (Result.bCollided)
+	//	{
+	//		Result.TimeOfImpact = currentTime;
+	//		break;
+	//	}
 
-		currentTime += CCDTimeStep;
-	}
+	//	currentTime += CCDTimeStep;
+	//}
 
 	return EndResult;  // 최종 상태의 결과 반환
 }
