@@ -51,6 +51,7 @@ UGameplayScene02::~UGameplayScene02()
 
 void UGameplayScene02::Initialize()
 {
+    LOG("[SCENE] Scene02 Init");
     int VIEW_WIDTH, VIEW_HEIGHT;
     UConfigReadManager::Get()->GetValue("ScreenWidth", VIEW_WIDTH);
     UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);

@@ -1,9 +1,9 @@
 #include "SceneComponent.h"
 
-// ·ÎÄÃ Æ®·£½ºÆû º¯°æ ½Ã È£ÃâµÇ´Â ÇÔ¼ö
+// ë¡œì»¬ íŠ¸ëœìŠ¤í¼ ë³€ê²½ ì‹œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 void USceneComponent::OnLocalTransformChanged()
 {
-    // 1. ³ªÀÇ ¿ùµå Æ®·£½ºÆû ¾÷µ¥ÀÌÆ®
+    // 1. ë‚˜ì˜ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì—…ë°ì´íŠ¸
     auto Parent = GetSceneParent();
     if (Parent)
     {
@@ -15,18 +15,18 @@ void USceneComponent::OnLocalTransformChanged()
         WorldTransform = LocalTransform;
     }
 
-    // 2. º¯°æ ÀÌº¥Æ® ¹ß»ı
+    // 2. ë³€ê²½ ì´ë²¤íŠ¸ ë°œìƒ
     OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
     OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
 
-    // 3. ÀÚ½Ä ÄÄÆ÷³ÍÆ®µéÀÇ ¿ùµå Æ®·£½ºÆû Àç±ÍÀû ¾÷µ¥ÀÌÆ®
+    // 3. ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ì˜ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì¬ê·€ì  ì—…ë°ì´íŠ¸
     PropagateWorldTransformToChildren();
 }
 
-// ¿ùµå Æ®·£½ºÆû º¯°æ ½Ã È£ÃâµÇ´Â ÇÔ¼ö
+// ì›”ë“œ íŠ¸ëœìŠ¤í¼ ë³€ê²½ ì‹œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 void USceneComponent::OnWorldTransformChanged()
 {
-    // 1. ³ªÀÇ ·ÎÄÃ Æ®·£½ºÆû ¾÷µ¥ÀÌÆ®
+    // 1. ë‚˜ì˜ ë¡œì»¬ íŠ¸ëœìŠ¤í¼ ì—…ë°ì´íŠ¸
     auto Parent = GetSceneParent();
     if (Parent)
     {
@@ -38,44 +38,44 @@ void USceneComponent::OnWorldTransformChanged()
         LocalTransform = WorldTransform;
     }
 
-    // 2. º¯°æ ÀÌº¥Æ® ¹ß»ı
+    // 2. ë³€ê²½ ì´ë²¤íŠ¸ ë°œìƒ
     OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
     OnWorldTransformChangedDelegate.Broadcast(WorldTransform);
 
-    // 3. ÀÚ½Ä ÄÄÆ÷³ÍÆ®µéÀÇ ¿ùµå Æ®·£½ºÆû Àç±ÍÀû ¾÷µ¥ÀÌÆ®
+    // 3. ìì‹ ì»´í¬ë„ŒíŠ¸ë“¤ì˜ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì¬ê·€ì  ì—…ë°ì´íŠ¸
     PropagateWorldTransformToChildren();
 }
 
-// ºÎ¸ğ º¯°æ ½Ã È£ÃâµÇ´Â ÇÔ¼ö
+// ë¶€ëª¨ ë³€ê²½ ì‹œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 void USceneComponent::OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent)
 {
-    // ÇöÀç ¿ùµå Æ®·£½ºÆû ÀúÀå
+    // í˜„ì¬ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì €ì¥
     FTransform CurrentWorldTransform = GetWorldTransform();
 
-    // 1. ActorComponent ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+    // 1. ActorComponent ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
     if (auto OldParent = GetParent())
     {
         UActorComponent::SetParent(nullptr);
     }
 
-    // 2. »õ ºÎ¸ğ¿ÍÀÇ °ü°è ¼³Á¤
+    // 2. ìƒˆ ë¶€ëª¨ì™€ì˜ ê´€ê³„ ì„¤ì •
     if (NewParent)
     {
         UActorComponent::SetParent(NewParent);
 
-        // 3. ¿ùµå Æ®·£½ºÆû À¯ÁöÇÏ¸ç ·ÎÄÃ Æ®·£½ºÆû Àç°è»ê
+        // 3. ì›”ë“œ íŠ¸ëœìŠ¤í¼ ìœ ì§€í•˜ë©° ë¡œì»¬ íŠ¸ëœìŠ¤í¼ ì¬ê³„ì‚°
         WorldTransform = CurrentWorldTransform;
         const FTransform& ParentWorldTransform = NewParent->GetWorldTransform();
         LocalTransform = WorldToLocal(ParentWorldTransform);
     }
     else
     {
-        // ºÎ¸ğ°¡ ¾ø´Â °æ¿ì ·ÎÄÃ=¿ùµå
+        // ë¶€ëª¨ê°€ ì—†ëŠ” ê²½ìš° ë¡œì»¬=ì›”ë“œ
         LocalTransform = CurrentWorldTransform;
         WorldTransform = CurrentWorldTransform;
     }
 
-    // 4. º¯°æ ÀÌº¥Æ® ¹ß»ı
+    // 4. ë³€ê²½ ì´ë²¤íŠ¸ ë°œìƒ
     OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
 }
 
@@ -119,18 +119,18 @@ void USceneComponent::SetLocalPosition(const Vector3& InPosition)
 
 void USceneComponent::SetLocalRotation(const Quaternion& InRotation)
 {
-     // º¯È­·®ÀÌ ÀÇ¹Ì ÀÖ´ÂÁö È®ÀÎ
-    float Dot = Quaternion::Dot(Quaternion::Identity, InRotation);
+     // ë³€í™”ëŸ‰ì´ ì˜ë¯¸ ìˆëŠ”ì§€ í™•ì¸
+    float Dot = Quaternion::Dot(LocalTransform.Rotation, InRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
     if (ChangeMagnitude > TRANSFORM_EPSILON)
     {
-         // Á¤±ÔÈ­ ¹× ÀúÀå
+         // ì •ê·œí™” ë° ì €ì¥
         XMVECTOR RotQuat = XMLoadFloat4(&InRotation);
         XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
         XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
 
-        // º¯°æ ÇÃ·¡±× ¼³Á¤ ¹× ÀüÆÄ
+        // ë³€ê²½ í”Œë˜ê·¸ ì„¤ì • ë° ì „íŒŒ
         OnLocalTransformChanged();
     }
 }
@@ -162,24 +162,24 @@ void USceneComponent::AddLocalPosition(const Vector3& InDeltaPosition)
 
 void USceneComponent::AddLocalRotation(const Quaternion& InDeltaRotation)
 {
-    // º¯È­·®ÀÌ ÀÇ¹Ì ÀÖ´ÂÁö È®ÀÎ
+    // ë³€í™”ëŸ‰ì´ ì˜ë¯¸ ìˆëŠ”ì§€ í™•ì¸
     float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
     if (ChangeMagnitude > TRANSFORM_EPSILON)
     {
-        // ÇöÀç È¸Àü¿¡ »õ È¸ÀüÀ» ÇÕ¼º
+        // í˜„ì¬ íšŒì „ì— ìƒˆ íšŒì „ì„ í•©ì„±
         XMVECTOR CurrentQuat = XMLoadFloat4(&LocalTransform.Rotation);
         XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
 
-        // ÄõÅÍ´Ï¾ğ °öÀ¸·Î È¸Àü °áÇÕ (¼ø¼­ Áß¿ä: µ¨Å¸ * ÇöÀç)
+        // ì¿¼í„°ë‹ˆì–¸ ê³±ìœ¼ë¡œ íšŒì „ ê²°í•© (ìˆœì„œ ì¤‘ìš”: ë¸íƒ€ * í˜„ì¬)
         XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
 
-        // Á¤±ÔÈ­ ¹× ÀúÀå
+        // ì •ê·œí™” ë° ì €ì¥
         ResultQuat = XMQuaternionNormalize(ResultQuat);
         XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
 
-        // º¯°æ ÇÃ·¡±× ¼³Á¤ ¹× ÀüÆÄ
+        // ë³€ê²½ í”Œë˜ê·¸ ì„¤ì • ë° ì „íŒŒ
         OnLocalTransformChanged();
     }
 }
@@ -190,17 +190,16 @@ void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
     AddLocalRotation(Delta);
 }
 
-// ¿ùµå Æ®·£½ºÆû ¼³Á¤ÀÚ
+// ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì„¤ì •ì
 void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
-    // 1. ³ªÀÇ ¿ùµå º¯°æ
+    // 1. ë‚˜ì˜ ì›”ë“œ ë³€ê²½
     WorldTransform = InWorldTransform;
     OnWorldTransformChanged();
 }
 
 void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 {
- 
     if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
@@ -212,15 +211,15 @@ void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 
 void USceneComponent::SetWorldRotation(const Quaternion& InWorldRotation)
 {
-     // º¯È­·®ÀÌ ÀÇ¹Ì ÀÖ´ÂÁö È®ÀÎ
-    float Dot = Quaternion::Dot(Quaternion::Identity, InWorldRotation);
+     // ë³€í™”ëŸ‰ì´ ì˜ë¯¸ ìˆëŠ”ì§€ í™•ì¸
+    float Dot = Quaternion::Dot(WorldTransform.Rotation, InWorldRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
     if (ChangeMagnitude > TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
 
-         // Á¤±ÔÈ­ ¹× ÀúÀå
+         // ì •ê·œí™” ë° ì €ì¥
         XMVECTOR RotQuat = XMLoadFloat4(&InWorldRotation);
         XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
         XMStoreFloat4(&NewWorldTransform.Rotation, ResultQuat);
@@ -253,7 +252,7 @@ void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
 
 void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
 {
-    // º¯È­·®ÀÌ ÀÇ¹Ì ÀÖ´ÂÁö È®ÀÎ
+    // ë³€í™”ëŸ‰ì´ ì˜ë¯¸ ìˆëŠ”ì§€ í™•ì¸
     float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
@@ -261,14 +260,14 @@ void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
     {
         FTransform NewTransform = WorldTransform;
 
-        // ÇöÀç È¸Àü¿¡ »õ È¸ÀüÀ» ÇÕ¼º
+        // í˜„ì¬ íšŒì „ì— ìƒˆ íšŒì „ì„ í•©ì„±
         XMVECTOR CurrentQuat = XMLoadFloat4(&NewTransform.Rotation);
         XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
 
-        // ÄõÅÍ´Ï¾ğ °öÀ¸·Î È¸Àü °áÇÕ (¼ø¼­ Áß¿ä: µ¨Å¸ * ÇöÀç)
+        // ì¿¼í„°ë‹ˆì–¸ ê³±ìœ¼ë¡œ íšŒì „ ê²°í•© (ìˆœì„œ ì¤‘ìš”: ë¸íƒ€ * í˜„ì¬)
         XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
 
-        // Á¤±ÔÈ­ ¹× ÀúÀå
+        // ì •ê·œí™” ë° ì €ì¥
         ResultQuat = XMQuaternionNormalize(ResultQuat);
         XMStoreFloat4(&NewTransform.Rotation, ResultQuat);
 
@@ -283,35 +282,35 @@ void USceneComponent::AddWorldRotationEuler(const Vector3& InDeltaEuler)
     AddWorldRotation(InQuat);
 }
 
-// Æ®·£½ºÆû º¯È¯ ÇÔ¼ö
+// íŠ¸ëœìŠ¤í¼ ë³€í™˜ í•¨ìˆ˜
 FTransform USceneComponent::LocalToWorld(const FTransform& InParentWorldTransform) const
 {
     FTransform Result;
 
-    // ½ºÄÉÀÏ: ºÎ¸ğ ½ºÄÉÀÏ * ·ÎÄÃ ½ºÄÉÀÏ
+    // ìŠ¤ì¼€ì¼: ë¶€ëª¨ ìŠ¤ì¼€ì¼ * ë¡œì»¬ ìŠ¤ì¼€ì¼
     Result.Scale = Vector3(
         InParentWorldTransform.Scale.x * LocalTransform.Scale.x,
         InParentWorldTransform.Scale.y * LocalTransform.Scale.y,
         InParentWorldTransform.Scale.z * LocalTransform.Scale.z
     );
 
-    // È¸Àü: ºÎ¸ğ È¸Àü * ·ÎÄÃ È¸Àü
+    // íšŒì „: ë¶€ëª¨ íšŒì „ * ë¡œì»¬ íšŒì „
     XMVECTOR ParentRot = XMLoadFloat4(&InParentWorldTransform.Rotation);
     XMVECTOR LocalRot = XMLoadFloat4(&LocalTransform.Rotation);
     XMVECTOR WorldRot = XMQuaternionMultiply(ParentRot, LocalRot);
     XMStoreFloat4(&Result.Rotation, WorldRot);
 
-    // À§Ä¡: ºÎ¸ğ À§Ä¡ + (ºÎ¸ğ È¸Àü * ºÎ¸ğ ½ºÄÉÀÏ * ·ÎÄÃ À§Ä¡)
+    // ìœ„ì¹˜: ë¶€ëª¨ ìœ„ì¹˜ + (ë¶€ëª¨ íšŒì „ * ë¶€ëª¨ ìŠ¤ì¼€ì¼ * ë¡œì»¬ ìœ„ì¹˜)
     XMVECTOR LocalPos = XMLoadFloat3(&LocalTransform.Position);
     XMVECTOR ParentScale = XMLoadFloat3(&InParentWorldTransform.Scale);
 
-    // ½ºÄÉÀÏ Àû¿ë
+    // ìŠ¤ì¼€ì¼ ì ìš©
     XMVECTOR ScaledPos = XMVectorMultiply(LocalPos, ParentScale);
 
-    // È¸Àü Àû¿ë
+    // íšŒì „ ì ìš©
     XMVECTOR RotatedPos = XMVector3Rotate(ScaledPos, ParentRot);
 
-    // ºÎ¸ğ À§Ä¡¿¡ ´õÇÏ±â
+    // ë¶€ëª¨ ìœ„ì¹˜ì— ë”í•˜ê¸°
     XMVECTOR ParentPos = XMLoadFloat3(&InParentWorldTransform.Position);
     XMVECTOR WorldPos = XMVectorAdd(ParentPos, RotatedPos);
 
@@ -324,29 +323,29 @@ FTransform USceneComponent::WorldToLocal(const FTransform& InParentWorldTransfor
 {
     FTransform Result;
 
-    // ½ºÄÉÀÏ: ¿ùµå ½ºÄÉÀÏ / ºÎ¸ğ ½ºÄÉÀÏ
+    // ìŠ¤ì¼€ì¼: ì›”ë“œ ìŠ¤ì¼€ì¼ / ë¶€ëª¨ ìŠ¤ì¼€ì¼
     Result.Scale = Vector3(
         WorldTransform.Scale.x / InParentWorldTransform.Scale.x,
         WorldTransform.Scale.y / InParentWorldTransform.Scale.y,
         WorldTransform.Scale.z / InParentWorldTransform.Scale.z
     );
 
-    // È¸Àü: ºÎ¸ğ È¸ÀüÀÇ ¿ª * ¿ùµå È¸Àü
+    // íšŒì „: ë¶€ëª¨ íšŒì „ì˜ ì—­ * ì›”ë“œ íšŒì „
     XMVECTOR ParentRot = XMLoadFloat4(&InParentWorldTransform.Rotation);
     XMVECTOR WorldRot = XMLoadFloat4(&WorldTransform.Rotation);
     XMVECTOR InvParentRot = XMQuaternionInverse(ParentRot);
     XMVECTOR LocalRot = XMQuaternionMultiply(InvParentRot, WorldRot);
     XMStoreFloat4(&Result.Rotation, LocalRot);
 
-    // À§Ä¡: (ºÎ¸ğ È¸ÀüÀÇ ¿ª * (¿ùµå À§Ä¡ - ºÎ¸ğ À§Ä¡)) / ºÎ¸ğ ½ºÄÉÀÏ
+    // ìœ„ì¹˜: (ë¶€ëª¨ íšŒì „ì˜ ì—­ * (ì›”ë“œ ìœ„ì¹˜ - ë¶€ëª¨ ìœ„ì¹˜)) / ë¶€ëª¨ ìŠ¤ì¼€ì¼
     XMVECTOR WorldPos = XMLoadFloat3(&WorldTransform.Position);
     XMVECTOR ParentPos = XMLoadFloat3(&InParentWorldTransform.Position);
     XMVECTOR RelativePos = XMVectorSubtract(WorldPos, ParentPos);
 
-    // ºÎ¸ğ È¸ÀüÀÇ ¿ª Àû¿ë
+    // ë¶€ëª¨ íšŒì „ì˜ ì—­ ì ìš©
     XMVECTOR UnrotatedPos = XMVector3Rotate(RelativePos, InvParentRot);
 
-    // ºÎ¸ğ ½ºÄÉÀÏÀÇ ¿ª Àû¿ë
+    // ë¶€ëª¨ ìŠ¤ì¼€ì¼ì˜ ì—­ ì ìš©
     XMVECTOR InvParentScale = XMVectorReciprocal(XMLoadFloat3(&InParentWorldTransform.Scale));
     XMVECTOR LocalPos = XMVectorMultiply(UnrotatedPos, InvParentScale);
 
@@ -355,10 +354,10 @@ FTransform USceneComponent::WorldToLocal(const FTransform& InParentWorldTransfor
     return Result;
 }
 
-// Æ®·£½ºÆû ÀüÆÄ ÇÔ¼ö
+// íŠ¸ëœìŠ¤í¼ ì „íŒŒ í•¨ìˆ˜
 void USceneComponent::PropagateWorldTransformToChildren()
 {
-    // ÀÚ½Ä ÄÄÆ÷³ÍÆ®¿¡ ¿ùµå Æ®·£½ºÆû º¯°æ ÀüÆÄ
+    // ìì‹ ì»´í¬ë„ŒíŠ¸ì— ì›”ë“œ íŠ¸ëœìŠ¤í¼ ë³€ê²½ ì „íŒŒ
     auto Children = GetChildren();
     for (const auto& Child : Children)
     {
@@ -384,92 +383,92 @@ const FTransform& USceneComponent::GetLocalTransform() const
 
 void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
 {
-   // ÇöÀç ¿ùµå À§Ä¡ °¡Á®¿À±â
+   // í˜„ì¬ ì›”ë“œ ìœ„ì¹˜ ê°€ì ¸ì˜¤ê¸°
     Vector3 WorldPos = GetWorldPosition();
 
-    // Å¸°Ù ¹æÇâ º¤ÅÍ °è»ê
+    // íƒ€ê²Ÿ ë°©í–¥ ë²¡í„° ê³„ì‚°
     Vector3 Direction = TargetWorldPosition - WorldPos;
 
-    // ¹æÇâ º¤ÅÍ°¡ ³Ê¹« ÀÛÀ¸¸é È¸ÀüÇÏÁö ¾ÊÀ½
+    // ë°©í–¥ ë²¡í„°ê°€ ë„ˆë¬´ ì‘ìœ¼ë©´ íšŒì „í•˜ì§€ ì•ŠìŒ
     if (Direction.LengthSquared() < TRANSFORM_EPSILON)
         return;
 
-    // ¹æÇâÀ» Á¤±ÔÈ­
+    // ë°©í–¥ì„ ì •ê·œí™”
     Direction.Normalize();
 
-    // ±âº»ÀûÀ¸·Î ·ÎÄÃ Àü¹æ º¤ÅÍ´Â (0,0,1)ÀÌ°í, »óÇâ º¤ÅÍ´Â (0,1,0)
+    // ê¸°ë³¸ì ìœ¼ë¡œ ë¡œì»¬ ì „ë°© ë²¡í„°ëŠ” (0,0,1)ì´ê³ , ìƒí–¥ ë²¡í„°ëŠ” (0,1,0)
     Vector3 Forward = Vector3::Forward;
     Vector3 Up = Vector3::Up;
 
-    // ¹æÇâ¿¡ ¸Â´Â È¸Àü ÄõÅÍ´Ï¾ğ »ı¼º
+    // ë°©í–¥ì— ë§ëŠ” íšŒì „ ì¿¼í„°ë‹ˆì–¸ ìƒì„±
     Quaternion NewRotation = Quaternion::LookRotation(Direction, Up);
 
-    // ¿ùµå È¸Àü ¼³Á¤
+    // ì›”ë“œ íšŒì „ ì„¤ì •
     SetWorldRotation(NewRotation);
 }
 
 void USceneComponent::RotateAroundAxis(const Vector3& Axis, float AngleDegrees)
 {
-   // °¢µµ°¡ ³Ê¹« ÀÛ°Å³ª ÃàÀÌ ³Ê¹« ÀÛÀ¸¸é È¸ÀüÇÏÁö ¾ÊÀ½
+   // ê°ë„ê°€ ë„ˆë¬´ ì‘ê±°ë‚˜ ì¶•ì´ ë„ˆë¬´ ì‘ìœ¼ë©´ íšŒì „í•˜ì§€ ì•ŠìŒ
     if (std::abs(AngleDegrees) < TRANSFORM_EPSILON || Axis.LengthSquared() < TRANSFORM_EPSILON)
         return;
 
-    // ÇöÀç ¿ùµå È¸Àü °¡Á®¿À±â
+    // í˜„ì¬ ì›”ë“œ íšŒì „ ê°€ì ¸ì˜¤ê¸°
     Quaternion WorldRot = GetWorldRotation();
 
-    // È¸ÀüÃà Á¤±ÔÈ­
+    // íšŒì „ì¶• ì •ê·œí™”
     Vector3 NormalizedAxis = Axis;
     NormalizedAxis.Normalize();
 
-    // ¶óµğ¾ÈÀ¸·Î º¯È¯
+    // ë¼ë””ì•ˆìœ¼ë¡œ ë³€í™˜
     float AngleRadians = Math::DegreeToRad(AngleDegrees);
 
-    // È¸Àü ÄõÅÍ´Ï¾ğ »ı¼º
+    // íšŒì „ ì¿¼í„°ë‹ˆì–¸ ìƒì„±
     XMVECTOR AxisVec = XMLoadFloat3(&NormalizedAxis);
     XMVECTOR DeltaRot = XMQuaternionRotationAxis(AxisVec, AngleRadians);
 
-    // ÇöÀç È¸Àü¿¡ Àû¿ë
+    // í˜„ì¬ íšŒì „ì— ì ìš©
     XMVECTOR CurrentRot = XMLoadFloat4(&WorldRot);
     XMVECTOR ResultRot = XMQuaternionMultiply(DeltaRot, CurrentRot);
 
-    // Á¤±ÔÈ­ ¹× Àû¿ë
+    // ì •ê·œí™” ë° ì ìš©
     ResultRot = XMQuaternionNormalize(ResultRot);
 
     Quaternion NewRotation;
     XMStoreFloat4(&NewRotation, ResultRot);
 
-    // ¿ùµå È¸Àü ¼³Á¤
+    // ì›”ë“œ íšŒì „ ì„¤ì •
     SetWorldRotation(NewRotation);
 }
 
-// ºÎ¸ğ ¼³Á¤ ¿À¹ö¶óÀÌµå
+// ë¶€ëª¨ ì„¤ì • ì˜¤ë²„ë¼ì´ë“œ
 void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent)
 {
-    // ºÎ¸ğ º¯°æ Àü ÇöÀç ¿ùµå Æ®·£½ºÆû ÀúÀå
+    // ë¶€ëª¨ ë³€ê²½ ì „ í˜„ì¬ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ì €ì¥
     FTransform CurrentWorldTransform = GetWorldTransform();
 
-    // ±âÁ¸ ºÎ¸ğ¿¡¼­ ºĞ¸® - »õºÎ¸ğ¼³Á¤°úÁ¤¿¡¼­ ActorComponent°¡ Ã³¸®
+    // ê¸°ì¡´ ë¶€ëª¨ì—ì„œ ë¶„ë¦¬ - ìƒˆë¶€ëª¨ì„¤ì •ê³¼ì •ì—ì„œ ActorComponentê°€ ì²˜ë¦¬
     auto OldParent = GetParent();
     //if (OldParent)
     //{
     //    DetachFromParent();
     //}
 
-    // »õ ºÎ¸ğ°¡ ÀÖÀ¸¸é ¿¬°á
+    // ìƒˆ ë¶€ëª¨ê°€ ìˆìœ¼ë©´ ì—°ê²°
     if (InParent)
     {
-        // ºÎ¸ğ-ÀÚ½Ä °ü°è ¼³Á¤
+        // ë¶€ëª¨-ìì‹ ê´€ê³„ ì„¤ì •
         UActorComponent::SetParent(InParent);
 
-        // ¿ùµå Æ®·£½ºÆû À¯Áö¸¦ À§ÇÑ ·ÎÄÃ Æ®·£½ºÆû °è»ê
+        // ì›”ë“œ íŠ¸ëœìŠ¤í¼ ìœ ì§€ë¥¼ ìœ„í•œ ë¡œì»¬ íŠ¸ëœìŠ¤í¼ ê³„ì‚°
         FTransform NewLocal = WorldToLocal(InParent->GetWorldTransform());
         SetLocalTransform(NewLocal);
     }
     else
     {
-        // ºÎ¸ğ°¡ ¾ø´Â °æ¿ì, ¿ùµå
+        // ë¶€ëª¨ê°€ ì—†ëŠ” ê²½ìš°, ì›”ë“œ
         UActorComponent::SetParent(nullptr);
-        LocalTransform = FTransform(); //ÃÊ±âÈ­(0)
+        LocalTransform = FTransform(); //ì´ˆê¸°í™”(0)
         WorldTransform = CurrentWorldTransform;
     }
 }

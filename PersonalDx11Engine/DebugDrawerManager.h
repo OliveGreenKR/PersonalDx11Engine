@@ -37,19 +37,8 @@ private:
         FDebugShape& operator=(FDebugShape&&) noexcept = default;
 
         // 재사용을 위한 초기화 메서드 
-        void Reset() {
-            RemainingTime = 0.0f;
-            bPersistent = false;
-            // 프리미티브 컴포넌트 상태 초기화
-            if (Primitive) {
-                Primitive->SetWorldPosition(Vector3::Zero);
-                Primitive->SetWorldRotation(Quaternion::Identity);
-                Primitive->SetWorldScale(Vector3::One);
-                Primitive->SetColor(Vector4(1, 1, 1, 1));
-            }
-        }
-        
-        
+        void Reset();
+
     };
 
     // 싱글톤 구현

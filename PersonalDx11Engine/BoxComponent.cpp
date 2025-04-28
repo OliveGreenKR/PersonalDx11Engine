@@ -1,5 +1,6 @@
 #include "BoxComponent.h"
 #include "DebugDrawerManager.h"
+#include "Debug.h"
 
 Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
 {
@@ -103,6 +104,18 @@ void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 
 void UBoxComponent::RequestDebugRender(const float DeltaTime)
 {
+    
+    //static float accum = 0.0f;
+    //static const float duration = 1.0f;
+    //accum += DeltaTime;
+    //if (accum > duration)
+    //{
+    //    auto& WolrdTransform = GetWorldTransform();
+    //    auto& LocalTransform = GetLocalTransform();
+    //    accum = 0.0f;
+    //    LOG("BOX WolrdTransform ==========\n %s \n===============",Debug::ToString(WolrdTransform));
+    //    LOG("BOX LocalTransform ==========\n %s \n===============",Debug::ToString(LocalTransform));
+    //}
     UDebugDrawManager::Get()->DrawBox(
         GetWorldPosition(),
         GetWorldScale(),

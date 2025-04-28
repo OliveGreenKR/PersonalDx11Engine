@@ -32,6 +32,7 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 		//LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
+	DrawDebugPtr->Reset();
 	auto Primitive = DrawDebugPtr->Primitive.get();
 	if (!Primitive)
 	{
@@ -55,10 +56,24 @@ void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, c
 		//LOG_FUNC_CALL("Allocation Faied!");
 		return;
 	}
+	DrawDebugPtr->Reset();
 	auto Primitive = DrawDebugPtr->Primitive.get();
 	if (!Primitive)
 	{
 		return;
+	}
+
+
+	static float accum = 0.0f;
+	static const float duration = 1.0f;
+	accum += Duration;
+	if (accum > duration)
+	{
+		auto& WolrdTransform = Primitive->GetWorldTransform();
+		auto& LocalTransform = Primitive->GetLocalTransform();
+		accum = 0.0f;
+		LOG("BOX WolrdTransform ==========\n %s \n===============", Debug::ToString(WolrdTransform));
+		LOG("BOX LocalTransform ==========\n %s \n===============", Debug::ToString(LocalTransform));
 	}
 
 	SetupPrimitive(Primitive, BoxModelHandle,
@@ -84,6 +99,7 @@ void UDebugDrawManager::SetupPrimitive(UPrimitiveComponent* TargetPrimitive,
 	TargetPrimitive->SetWorldRotation(Rotation);
 	TargetPrimitive->SetWorldScale(Scale);
 	TargetPrimitive->SetColor(Color);
+
 }
 
 UDebugDrawManager::UDebugDrawManager()
@@ -174,5 +190,20 @@ UDebugDrawManager::FDebugShape::FDebugShape()
 	if (!Primitive)
 	{
 		LOG_FUNC_CALL("Allocation Failed");
+	}
+}
+
+void UDebugDrawManager::FDebugShape::Reset()
+{
+	RemainingTime = 0.0f;
+	bPersistent = false;
+
+	if (Primitive)
+	{
+		//초기화
+		Primitive->SetLocalPosition(Vector3::Zero);
+		Primitive->SetLocalRotation(Quaternion::Identity);
+		Primitive->SetLocalScale(Vector3::One);
+		Primitive->SetColor(Vector4(1, 1, 1, 1));
 	}
 }
