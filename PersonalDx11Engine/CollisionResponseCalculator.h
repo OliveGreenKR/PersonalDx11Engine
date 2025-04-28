@@ -3,6 +3,9 @@
 #include "CollisionDefines.h"
 #include "ConstraintInterface.h"
 
+
+class IPhysicsState;
+
 class FCollisionResponseCalculator
 {
 public:

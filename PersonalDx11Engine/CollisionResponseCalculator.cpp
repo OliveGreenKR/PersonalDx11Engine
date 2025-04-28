@@ -1,5 +1,6 @@
 #include "CollisionResponseCalculator.h"
 #include "VelocityConstraint.h"
+#include "PhysicsStateInterface.h"
 
 // CollisionResponseCalculator.cpp 수정
 FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContraints(
@@ -23,8 +24,8 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     NormalConstraint.SetContactData(DetectionResult.Point, Normal, DetectionResult.PenetrationDepth);
 
     // 반발 계수 적용 (두 물체의 평균)
-    float RestitutionCoef = (ParameterA.Restitution + ParameterB.Restitution) * 0.5f;
-    float BiasFactor = 0.2f;  // 위치 보정 계수
+    float RestitutionCoef = std::min(0.9999f,(ParameterA.Restitution + ParameterB.Restitution) * 0.5f);
+    float BiasFactor = 0.05f;  // 위치 보정 계수
 
     // 상대 속도가 임계값 이하일 때는 반발 계수를 0으로 설정 (마찰과 함께 정지 상태 유지)
     XMVECTOR vRelativeVel = NormalConstraint.CalculateRelativeVelocity(
@@ -62,7 +63,9 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
         XMStoreFloat3(&Tangent, vTangent);
 
         // 접선 방향 제약 조건 (마찰력)
-        FVelocityConstraint FrictionConstraint(Tangent, 0.0f, -FLT_MAX);
+        float MaxFriction = std::abs(NormalLambda) *
+            ((ParameterA.FrictionStatic + ParameterB.FrictionStatic) * 0.5f);
+        FVelocityConstraint FrictionConstraint(Tangent, 0.0f, -MaxFriction);
         FrictionConstraint.SetContactData(DetectionResult.Point, Normal, 0.0f);
 
         // Warm Starting: 이전 프레임의 마찰 람다 재사용
@@ -77,9 +80,10 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 
         Accumulation.frictionLambda = FrictionLambda;
     }
-
+    
     // 최종 충격량 합산
-    ResponseData.NetImpulse = NormalImpulse + TangentImpulse;
+    float DamipingFactor = 0.95f;
+    ResponseData.NetImpulse = DamipingFactor *(NormalImpulse + TangentImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
 
     return ResponseData;
