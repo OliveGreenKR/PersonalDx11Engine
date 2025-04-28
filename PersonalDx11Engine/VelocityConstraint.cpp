@@ -20,8 +20,7 @@ void FVelocityConstraint::SetContactData(const Vector3& InContactPoint, const Ve
 
 
 Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
-                                   const FPhysicsParameters& ParameterB,
-                                   float& OutAccumulatedLambda) const
+                                   const FPhysicsParameters& ParameterB, float & InOutLambda) const
 {
     // 충돌 지점에서의 상대 속도 계산
     XMVECTOR RelativeVelocity = CalculateRelativeVelocity(ParameterA, ParameterB, ContactPoint);
@@ -42,14 +41,14 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     float DeltaLambda = -(VelocityError + PositionCorrection) / EffectiveMass;
 
     // 람다 누적 (제약조건에 따라 제한할 수 있음)
-    float OldLambda = OutAccumulatedLambda;
-    OutAccumulatedLambda += DeltaLambda;
+    float OldLambda = InOutLambda;
+    InOutLambda += DeltaLambda;
 
     // 제약조건에 따라 람다 제한 (예: 충돌은 양수만 가능)
-     OutAccumulatedLambda = std::max(OutAccumulatedLambda, MinLamda);
+     InOutLambda = std::max(InOutLambda, MinLamda);
 
     // 실제 적용할 람다 계산
-    float AppliedLambda = OutAccumulatedLambda - OldLambda;
+    float AppliedLambda = InOutLambda - OldLambda;
     
     // 임펄스 계산 및 반환
     XMVECTOR vResult = XMVectorScale(Direction, AppliedLambda);

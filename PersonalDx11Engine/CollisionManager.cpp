@@ -450,7 +450,7 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 	if (CollisionPair.bPrevCollided)
 	{
 		Accumulation = CollisionPair.PrevConstraints;
-		Accumulation.Scale(0.65f);  // 안정성을 위한 스케일링
+		Accumulation.Scale(0.8f);  // 안정성을 위한 스케일링
 	}
 
 	for (int i = 0; i < Config.ConstraintInterations ; ++i)

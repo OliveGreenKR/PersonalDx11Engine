@@ -22,8 +22,7 @@ public:
     FVelocityConstraint(const XMVECTOR& TargetDirection, float InDesiredSpeed = 0.0f, float minLamda = FLT_MIN);
     // IConstraint 구현
     virtual Vector3 Solve(const FPhysicsParameters& ParameterA,
-                          const FPhysicsParameters& ParameterB,
-                          float& OutAccumulatedLambda) const override;
+                          const FPhysicsParameters& ParameterB, float & InOutLambda) const override;
 
     
 
@@ -33,7 +32,8 @@ public:
 
     // 위치 오차 보정용 설정
     void SetBias(float InBias) { Bias = InBias; }
-
+    // 목표 속도 설정
+    void SetDesiredSpeed(float InDesiredSpeed) { DesiredSpeed = InDesiredSpeed; }
 
     float CalculateEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
                                  const XMVECTOR& Point, const XMVECTOR& Dir) const;
