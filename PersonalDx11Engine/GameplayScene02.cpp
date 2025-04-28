@@ -55,6 +55,10 @@ void UGameplayScene02::Initialize()
     int VIEW_WIDTH, VIEW_HEIGHT;
     UConfigReadManager::Get()->GetValue("ScreenWidth", VIEW_WIDTH);
     UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);
+    UConfigReadManager::Get()->GetValue("Scene02MaxSpeed", MaxSpeed);
+    UConfigReadManager::Get()->GetValue("Scene02PowerMagnitude", PowerMagnitude);
+    UConfigReadManager::Get()->GetValue("Scene02CharacterMass", CharacterMass);
+    UConfigReadManager::Get()->GetValue("Scene02Character2Mass", Character2Mass);
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
@@ -430,11 +434,12 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(Vector3::Up * InForceMagnitude);
+                                     Character->ApplyForce(Vector3::Forward * InForceMagnitude);
+                                     
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(Vector3::Forward * InForceMagnitude);
+                                     Character->ApplyForce(Vector3::Up * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -447,11 +452,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(-Vector3::Up * InForceMagnitude);
+                                     Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
+                                     Character->ApplyForce(-Vector3::Up * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -508,11 +513,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(Vector3::Up * InForceMagnitude);
+                                     Character2->ApplyForce(Vector3::Forward * InForceMagnitude);           
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(Vector3::Forward * InForceMagnitude);
+                                     Character2->ApplyForce(Vector3::Up * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -525,11 +530,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(-Vector3::Up * InForceMagnitude);
+                                     Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
+                                     Character2->ApplyForce(-Vector3::Up * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");

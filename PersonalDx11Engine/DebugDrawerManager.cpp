@@ -11,16 +11,18 @@
 
 void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const Vector4& Color, float Thickness, float Duration, bool bPersist)
 {
-	Vector3 Center = (Start + End) * 0.5f;
-
+	if ((End - Start).LengthSquared() < KINDA_SMALL * KINDA_SMALL)
+		return;
 	float Length = (End - Start).Length();
+	Vector3 Center = (Start + End) * 0.5f;
 	Vector3 Extent = Vector3(Length, Thickness, Thickness);
 
-	Vector3 Direciton = (End - Start).GetNormalized();
+	Vector3 Direction = (End - Start).GetNormalized();
 
-	//Local X축이 Direciton이 되도록 회전
-	Quaternion Rotation = Math::GetRotationBetweenVectors(Vector3(1, 0, 0),Direciton );
-	
+	//Local X축이 Direction이 되도록 회전
+	Vector3 AxisX = Vector3(1, 0, 0);
+	Quaternion Rotation = Math::GetRotationBetweenVectors(AxisX, Direction);
+
 	DrawBox(Center, Extent, Rotation, Color, Duration, bPersist);
 }
 void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Quaternion& Rotation, const Vector4& Color, float Duration, bool bPersist)

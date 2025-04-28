@@ -9,6 +9,14 @@ using namespace DirectX;
 // 충돌 검사 알고리즘 모음
 class  FCollisionDetector
 {
+    struct FSweptCylinder {
+        Vector3 Start;          // 시작 위치
+        Vector3 End;            // 끝 위치
+        Vector3 Axis;           // 축 방향 (정규화됨)
+        float Length;           // 축 길이
+        float Radius;           // 원기둥 반지름
+    };
+
     // 원점을 포함하는 Simplex 정보
     struct alignas(16) FSimplex
     {
@@ -62,6 +70,15 @@ private:
     FCollisionDetectionResult BoxSphereSimple(
         const Vector3& BoxExtent, const FTransform& BoxTransform,
         float SphereRadius, const FTransform& SphereTransform);
+
+    //근사 swep volume  생성
+    FSweptCylinder CreateSweptCylinder(
+        const ICollisionShape& Shape,
+        const FTransform& StartTransform,
+        const FTransform& EndTransform);
+
+    float CalculateBoundingSphereRadius(const ICollisionShape& Shape, const FTransform& Transform);
+
 public:
     float CCDTimeStep = 0.02f;
 }; 
