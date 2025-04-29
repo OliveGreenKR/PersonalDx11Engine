@@ -6,24 +6,24 @@ void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
     if (AngleDegrees <= KINDA_SMALL || InAxis.LengthSquared() < KINDA_SMALL)
         return;
 
-    // ÇöÀç È¸Àü Çà·Ä
+    // í˜„ìž¬ íšŒì „ í–‰ë ¬
     Matrix CurrentRotation = GetRotationMatrix();
 
-    // ¿ùµå °ø°£ È¸ÀüÃàÀ» ·ÎÄÃ °ø°£À¸·Î º¯È¯
+    // ì›”ë“œ ê³µê°„ íšŒì „ì¶•ì„ ë¡œì»¬ ê³µê°„ìœ¼ë¡œ ë³€í™˜
     XMVECTOR LocalAxis = XMVector3TransformNormal(XMLoadFloat3(&InAxis), CurrentRotation);
 
-    //È¸ÀüÃà Á¤±ÔÈ­
+    //íšŒì „ì¶• ì •ê·œí™”
     LocalAxis = XMVector3Normalize(LocalAxis);
 
-    // È¸Àü ÄõÅÍ´Ï¿Â »ý¼º
+    // íšŒì „ ì¿¼í„°ë‹ˆì˜¨ ìƒì„±
     float AngleRadians = Math::DegreeToRad(AngleDegrees);
     XMVECTOR DeltaRotation = XMQuaternionRotationAxis(LocalAxis, AngleRadians);
 
-    // ±âÁ¸ È¸Àü¿¡ »õ È¸Àü °áÇÕ
+    // ê¸°ì¡´ íšŒì „ì— ìƒˆ íšŒì „ ê²°í•©
     XMVECTOR CurrentQuat = XMLoadFloat4(&Rotation);
     XMVECTOR FinalQuat = XMQuaternionMultiply(DeltaRotation, CurrentQuat);
 
-    // Á¤±ÔÈ­ ¹× ÀúÀå
+    // ì •ê·œí™” ë° ì €ìž¥
     FinalQuat = XMQuaternionNormalize(FinalQuat);
     XMStoreFloat4(&Rotation, FinalQuat);
 }
@@ -32,13 +32,13 @@ FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTran
 {
     FTransform Result;
 
-    // À§Ä¡ ¼±Çü º¸°£
+    // ìœ„ì¹˜ ì„ í˜• ë³´ê°„
     Result.Position = Math::Lerp(Start.Position, End.Position, Alpha);
 
-    // È¸Àü ±¸¸é ¼±Çü º¸°£
+    // íšŒì „ êµ¬ë©´ ì„ í˜• ë³´ê°„
     Result.Rotation = Math::Slerp(Start.Rotation, End.Rotation, Alpha);
 
-    // ½ºÄÉÀÏ ¼±Çü º¸°£
+    // ìŠ¤ì¼€ì¼ ì„ í˜• ë³´ê°„
     Result.Scale = Math::Lerp(Start.Scale, End.Scale, Alpha);
 
     return Result;
@@ -46,29 +46,27 @@ FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTran
 
 Matrix FTransform::GetTranslationMatrix() const
 {
-    DirectX::XMVECTOR VPosition = DirectX::XMLoadFloat3(&Position);
-    return DirectX::XMMatrixTranslationFromVector(VPosition);
+    return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);
 }
 
 Matrix FTransform::GetScaleMatrix() const
 {
-    DirectX::XMVECTOR VScale = DirectX::XMLoadFloat3(&Scale);
-    return XMMatrixScalingFromVector(VScale);
+    return DirectX::XMMatrixScaling(Scale.x, Scale.y, Scale.z);
 }
 
 Matrix FTransform::GetRotationMatrix() const
 {
     DirectX::XMVECTOR VRotation = DirectX::XMLoadFloat4(&Rotation);
-    return XMMatrixRotationQuaternion(VRotation);
+    VRotation = DirectX::XMQuaternionNormalize(VRotation);
+    return DirectX::XMMatrixRotationQuaternion(VRotation);
 }
 
 Matrix FTransform::GetModelingMatrix() const
 {
-    //¸ÅÆ®¸¯½º »ý¼º
+    //ë§¤íŠ¸ë¦­ìŠ¤ ìƒì„±
     Matrix ScaleMatrix = GetScaleMatrix();
     Matrix RotationMatrix = GetRotationMatrix();
     Matrix TranslationMatrix = GetTranslationMatrix();;
 
-    // M = SRT
     return ScaleMatrix * RotationMatrix * TranslationMatrix;
 }

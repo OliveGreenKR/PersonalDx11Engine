@@ -65,19 +65,6 @@ void UDebugDrawManager::DrawBox(const Vector3& Center, const Vector3& Extents, c
 		return;
 	}
 
-
-	static float accum = 0.0f;
-	static const float duration = 1.0f;
-	accum += Duration;
-	if (accum > duration)
-	{
-		auto& WolrdTransform = Primitive->GetWorldTransform();
-		auto& LocalTransform = Primitive->GetLocalTransform();
-		accum = 0.0f;
-		LOG("BOX WolrdTransform ==========\n %s \n===============", Debug::ToString(WolrdTransform));
-		LOG("BOX LocalTransform ==========\n %s \n===============", Debug::ToString(LocalTransform));
-	}
-
 	SetupPrimitive(Primitive, BoxModelHandle,
 				   Center, Rotation, Extents,
 				   Color);

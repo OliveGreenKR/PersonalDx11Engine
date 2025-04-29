@@ -4,23 +4,28 @@
 
 Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
 {
+    // 입력 방향 확인 및 정규화
+    XMVECTOR Dir = XMLoadFloat3(&Direction);
+    if (XMVector3LengthSq(Dir).m128_f32[0] < KINDA_SMALL)
+    {
+        Dir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    }
+    Dir = XMVector3Normalize(Dir);
+
     // 로컬 방향으로 변환
-    XMMATRIX RotationMatrix = GetWorldTransform().GetRotationMatrix();
-    XMMATRIX InvRotation = XMMatrixInverse(nullptr, RotationMatrix);
-    XMVECTOR LocalDir = XMVector3Normalize(XMVector3Transform(XMLoadFloat3(&Direction), InvRotation));
-    
+    XMMATRIX ModelingMatrix = GetWorldTransform().GetModelingMatrix();
+    XMMATRIX InvModeling = XMMatrixInverse(nullptr, ModelingMatrix);
+    XMVECTOR LocalDir = XMVector3Transform(Dir, InvModeling);
 
     // 부호에 따라 지원점 계산
     Vector3 HalfExtent = GetHalfExtent();
     XMVECTOR SupportExtent = XMLoadFloat3(&HalfExtent);
-    XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero()); // d_i >= 0 ? 0xFFFFFFFF : 0
-    XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask); // d_i >= 0 ? +h_i : -h_i
+    XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero());
+    XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask);
 
     // 월드 공간으로 변환
-    XMMATRIX ModelingMatrix = GetWorldTransform().GetModelingMatrix();
-    XMVECTOR WorldSupport = XMVector3TransformCoord(LocalSupport, ModelingMatrix);
+    XMVECTOR WorldSupport = XMVector3TransformCoord (LocalSupport, ModelingMatrix);
 
-    // 결과 저장
     Vector3 Result;
     XMStoreFloat3(&Result, WorldSupport);
     return Result;

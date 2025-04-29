@@ -6,6 +6,11 @@
 FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
+	UConfigReadManager::Get()->GetValue("bUseGJKEPA", bUseGJKEPA);
+	UConfigReadManager::Get()->GetValue("CASafetyFactor", CASafetyFactor);
+	UConfigReadManager::Get()->GetValue("MaxGJKIterations", MaxGJKIterations);
+	UConfigReadManager::Get()->GetValue("MaxEPAIterations", MaxEPAIterations);
+	UConfigReadManager::Get()->GetValue("EPATolerance", EPATolerance);
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
@@ -15,8 +20,25 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	const FTransform& TransformB)
 {
 
-	return DetectCollisionShapeBasedDiscrete(ShapeA, TransformA,
-											 ShapeB, TransformB);
+	FCollisionDetectionResult Result; 
+	if (bUseGJKEPA)
+	{
+		Result =  DetectCollisionGJKEPA(ShapeA, TransformA,
+									 ShapeB, TransformB);
+	}
+	else
+	{
+		Result = DetectCollisionShapeBasedDiscrete(ShapeA, TransformA,
+												   ShapeB, TransformB);
+	}
+
+	if (Result.bCollided)
+	{
+		auto sNormal = Debug::ToString(Result.Normal, "");
+		LOG("[PDepth] : %.3f \n[ToImpace] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
+		LOG("[DetectNormal] : %s", sNormal);
+	}
+	return Result;
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
@@ -28,6 +50,16 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	const FTransform& CurrentTransformB,
 	const float DeltaTime)
 {
+	//test dcd
+	if (bUseGJKEPA)
+	{
+		return DetectCollisionGJKEPA(ShapeA, CurrentTransformA,
+									 ShapeB, CurrentTransformB);
+	}
+
+	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
+											 ShapeB, CurrentTransformB);
+
 	// 초기 상태와 최종 상태에서의 충돌 검사
 	FCollisionDetectionResult startResult = DetectCollisionDiscrete(
 		ShapeA, PrevTransformA, ShapeB, PrevTransformB);
@@ -607,7 +639,7 @@ float FCollisionDetector::ComputeMinimumDistance(
 	}
 
 	// GJK 유사 접근법으로 거리 계산 반복
-	for (int i = 0; i < MAX_GJK_ITERATIONS; i++)
+	for (int i = 0; i < MaxGJKIterations; i++)
 	{
 		// 각 충돌체의 지원점 계산
 		Vector3 supportA = ShapeA.GetSupportPoint(-direction);
@@ -805,5 +837,510 @@ float FCollisionDetector::PerformConservativeAdvancementStep(
 
 	// 남은 시간을 초과하지 않도록 제한
 	return std::min(safeTimeStep, DeltaTime - CurrentTime);
+}
+#pragma endregion
+//////////////////////////////////////
+#pragma region GJK_EPA
+FCollisionDetectionResult FCollisionDetector::DetectCollisionGJKEPA(
+	const ICollisionShape& ShapeA,
+	const FTransform& TransformA,
+	const ICollisionShape& ShapeB,
+	const FTransform& TransformB)
+{
+	// 결과 구조체 초기화
+	FCollisionDetectionResult Result;
+
+	// Simplex 구조체 생성
+	FSimplex Simplex;
+	Simplex.Size = 0;
+
+	// GJK로 충돌 여부 확인
+	if (!GJKCollision(ShapeA, TransformA, ShapeB, TransformB, Simplex))
+	{
+		// 충돌 없음
+		return Result;
+	}
+	else
+	{
+		LOG("--------[DetectGJK]------");
+	}
+
+	// EPA로 충돌 정보 계산
+	Result = EPACollision(ShapeA, TransformA, ShapeB, TransformB, Simplex);
+	return Result;
+}
+
+bool FCollisionDetector::GJKCollision(
+	const ICollisionShape& ShapeA,
+	const FTransform& TransformA,
+	const ICollisionShape& ShapeB,
+	const FTransform& TransformB,
+	FSimplex& OutSimplex)
+{
+	// 초기 방향 설정 (B에서 A 방향)
+	XMVECTOR Direction = XMVectorSubtract(
+		XMLoadFloat3(&TransformB.Position),
+		XMLoadFloat3(&TransformA.Position));
+	if (XMVector3LengthSq(Direction).m128_f32[0] < KINDA_SMALL)
+	{
+		Direction = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // 기본 방향
+	}
+	Direction = XMVector3Normalize(Direction);
+
+	// 초기 Simplex 설정
+	OutSimplex.Size = 0;
+
+	// 초기 지원점 추가
+	XMVECTOR SupportA, SupportB;
+	XMVECTOR Point = ComputeMinkowskiSupport(
+		ShapeA, TransformA, ShapeB, TransformB, Direction, SupportA, SupportB);
+	OutSimplex.Points[0] = Point;
+	OutSimplex.SupportPointsA[0] = SupportA;
+	OutSimplex.SupportPointsB[0] = SupportB;
+	OutSimplex.Size = 1;
+
+	// 원점 방향으로 방향 반전
+	Direction = XMVectorNegate(Point);
+
+	// GJK 반복
+	for (int Iteration = 0; Iteration < MaxGJKIterations; ++Iteration)
+	{
+		// 새로운 지원점 계산
+		Point = ComputeMinkowskiSupport(
+			ShapeA, TransformA, ShapeB, TransformB, Direction, SupportA, SupportB);
+
+		// 원점을 지나지 못하면 충돌 없음
+		if (XMVector3Dot(Point, Direction).m128_f32[0] <= 0.0f)
+		{
+			return false;
+		}
+
+		// Simplex에 점 추가
+		OutSimplex.Points[OutSimplex.Size] = Point;
+		OutSimplex.SupportPointsA[OutSimplex.Size] = SupportA;
+		OutSimplex.SupportPointsB[OutSimplex.Size] = SupportB;
+		++OutSimplex.Size;
+
+		// Simplex 업데이트 및 원점 포함 여부 확인
+		if (UpdateSimplex(OutSimplex, Direction))
+		{
+			return true; // 원점 포함, 충돌 발생
+		}
+	}
+
+	// 최대 반복 횟수 초과
+	return true;
+}
+
+FCollisionDetectionResult FCollisionDetector::EPACollision(
+	const ICollisionShape& ShapeA,
+	const FTransform& TransformA,
+	const ICollisionShape& ShapeB,
+	const FTransform& TransformB,
+	const FSimplex& Simplex)
+{
+	// 결과 구조체 초기화
+	FCollisionDetectionResult Result;
+
+	// EPA용 Polytope: 삼각형(면) 리스트
+	struct Face
+	{
+		XMVECTOR Vertices[3]; // 삼각형 정점
+		XMVECTOR Normal;      // 법선 (B->A 방향)
+		float Distance;       // 원점에서 면까지의 거리
+		int Indices[3];       // Simplex 인덱스
+	};
+	std::vector<Face> Polytope;
+
+	// 초기 Simplex에서 테트라헤드론 생성
+	static const int TetraIndices[4][3] = {
+		{0, 1, 2}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}
+	};
+	for (int i = 0; i < 4; ++i)
+	{
+		Face Face;
+		for (int j = 0; j < 3; ++j)
+		{
+			Face.Vertices[j] = Simplex.Points[TetraIndices[i][j]];
+			Face.Indices[j] = TetraIndices[i][j];
+		}
+
+		// 법선 계산 (외부를 향하도록)
+		XMVECTOR Edge1 = XMVectorSubtract(Face.Vertices[1], Face.Vertices[0]);
+		XMVECTOR Edge2 = XMVectorSubtract(Face.Vertices[2], Face.Vertices[0]);
+		Face.Normal = XMVector3Normalize(XMVector3Cross(Edge1, Edge2));
+
+		// 원점에서 면까지의 거리
+		Face.Distance = XMVector3Dot(Face.Vertices[0], Face.Normal).m128_f32[0];
+
+		// 법선이 원점을 향하도록 보정 (B->A 방향)
+		XMVECTOR FaceCenter = XMVectorScale(XMVectorAdd(XMVectorAdd(Face.Vertices[0], Face.Vertices[1]), Face.Vertices[2]), 1.0f / 3.0f);
+		if (XMVector3Dot(Face.Normal, FaceCenter).m128_f32[0] > 0.0f)
+		{
+			Face.Normal = XMVectorNegate(Face.Normal);
+			Face.Distance = -Face.Distance;
+			std::swap(Face.Vertices[1], Face.Vertices[2]);
+			std::swap(Face.Indices[1], Face.Indices[2]);
+		}
+
+		Polytope.push_back(Face);
+	}
+
+	// 추가 정점 저장
+	std::vector<XMVECTOR> Vertices = { Simplex.Points[0], Simplex.Points[1], Simplex.Points[2], Simplex.Points[3] };
+	std::vector<XMVECTOR> SupportA = { Simplex.SupportPointsA[0], Simplex.SupportPointsA[1], Simplex.SupportPointsA[2], Simplex.SupportPointsA[3] };
+	std::vector<XMVECTOR> SupportB = { Simplex.SupportPointsB[0], Simplex.SupportPointsB[1], Simplex.SupportPointsB[2], Simplex.SupportPointsB[3] };
+
+	// EPA 반복
+	for (int Iteration = 0; Iteration < MaxEPAIterations; ++Iteration)
+	{
+		// 가장 가까운 면 찾기
+		auto ClosestFace = std::min_element(Polytope.begin(), Polytope.end(),
+											[](const Face& A, const Face& B) { return A.Distance < B.Distance; });
+
+		// 법선 방향으로 지원점 계산
+		XMVECTOR Direction = ClosestFace->Normal;
+		XMVECTOR NewSupportA, NewSupportB;
+		XMVECTOR NewPoint = ComputeMinkowskiSupport(
+			ShapeA, TransformA, ShapeB, TransformB, Direction, NewSupportA, NewSupportB);
+
+		// 새로운 점과 면의 거리 계산
+		float NewDistance = XMVector3Dot(NewPoint, Direction).m128_f32[0];
+
+		// 수렴 확인
+		if (NewDistance - ClosestFace->Distance < EPATolerance)
+		{
+			// 충돌 정보 설정
+			Result.bCollided = true;
+			Result.PenetrationDepth = ClosestFace->Distance;
+			XMStoreFloat3(&Result.Normal, ClosestFace->Normal);
+
+			// 충돌 지점 계산 (ShapeA 표면 근사)
+			XMVECTOR CollisionPointA = XMVectorZero();
+			XMVECTOR CollisionPointB = XMVectorZero();
+			for (int i = 0; i < 3; ++i)
+			{
+				CollisionPointA = XMVectorAdd(CollisionPointA, SupportA[ClosestFace->Indices[i]]);
+				CollisionPointB = XMVectorAdd(CollisionPointB, SupportB[ClosestFace->Indices[i]]);
+			}
+			CollisionPointA = XMVectorScale(CollisionPointA, 1.0f / 3.0f);
+			CollisionPointB = XMVectorScale(CollisionPointB, 1.0f / 3.0f);
+			XMVECTOR CollisionPoint = XMVectorLerp(CollisionPointA, CollisionPointB, 0.5f);
+			XMStoreFloat3(&Result.Point, CollisionPoint);
+
+			return Result;
+		}
+
+		// 새로운 정점 추가
+		int NewIndex = static_cast<int>(Vertices.size());
+		Vertices.push_back(NewPoint);
+		SupportA.push_back(NewSupportA);
+		SupportB.push_back(NewSupportB);
+
+		// 볼록 껍질 갱신
+		std::vector<Face> NewPolytope;
+		std::vector<std::pair<int, int>> Edges;
+		for (const auto& Face : Polytope)
+		{
+			if (XMVector3Dot(XMVectorSubtract(NewPoint, Face.Vertices[0]), Face.Normal).m128_f32[0] > 0.0f)
+			{
+				// 보이는 면의 경계 간선 저장
+				for (int i = 0; i < 3; ++i)
+				{
+					int i0 = Face.Indices[i];
+					int i1 = Face.Indices[(i + 1) % 3];
+					Edges.emplace_back(std::min(i0, i1), std::max(i0, i1));
+				}
+			}
+			else
+			{
+				NewPolytope.push_back(Face);
+			}
+		}
+
+		// 중복 간선 제거
+		std::sort(Edges.begin(), Edges.end());
+		Edges.erase(std::unique(Edges.begin(), Edges.end()), Edges.end());
+
+		// 새로운 면 생성
+		for (const auto& Edge : Edges)
+		{
+			Face NewFace;
+			NewFace.Vertices[0] = Vertices[Edge.first];
+			NewFace.Vertices[1] = Vertices[Edge.second];
+			NewFace.Vertices[2] = NewPoint;
+			NewFace.Indices[0] = Edge.first;
+			NewFace.Indices[1] = Edge.second;
+			NewFace.Indices[2] = NewIndex;
+
+			// 법선 계산
+			XMVECTOR Edge1 = XMVectorSubtract(NewFace.Vertices[1], NewFace.Vertices[0]);
+			XMVECTOR Edge2 = XMVectorSubtract(NewFace.Vertices[2], NewFace.Vertices[0]);
+			NewFace.Normal = XMVector3Normalize(XMVector3Cross(Edge1, Edge2));
+
+			// 원점에서 면까지의 거리
+			NewFace.Distance = XMVector3Dot(NewFace.Vertices[0], NewFace.Normal).m128_f32[0];
+
+			// 법선이 원점을 향하도록 보정 (B->A 방향)
+			XMVECTOR FaceCenter = XMVectorScale(XMVectorAdd(XMVectorAdd(NewFace.Vertices[0], NewFace.Vertices[1]), NewFace.Vertices[2]), 1.0f / 3.0f);
+			if (XMVector3Dot(NewFace.Normal, FaceCenter).m128_f32[0] > 0.0f)
+			{
+				NewFace.Normal = XMVectorNegate(NewFace.Normal);
+				NewFace.Distance = -NewFace.Distance;
+				std::swap(NewFace.Vertices[1], NewFace.Vertices[2]);
+				std::swap(NewFace.Indices[1], NewFace.Indices[2]);
+			}
+
+			NewPolytope.push_back(NewFace);
+		}
+
+		Polytope = std::move(NewPolytope);
+	}
+
+	// 최대 반복 횟수 초과 시 최종 결과 반환
+	//Result.bCollided = false;
+	//return Result;
+
+	auto ClosestFace = std::min_element(Polytope.begin(), Polytope.end(),
+										[](const Face& A, const Face& B) { return A.Distance < B.Distance; });
+	Result.bCollided = true;
+	Result.PenetrationDepth = ClosestFace->Distance;
+	XMStoreFloat3(&Result.Normal, ClosestFace->Normal);
+
+	// 충돌 지점 계산
+	XMVECTOR CollisionPointA = XMVectorZero();
+	XMVECTOR CollisionPointB = XMVectorZero();
+	for (int i = 0; i < 3; ++i)
+	{
+		CollisionPointA = XMVectorAdd(CollisionPointA, SupportA[ClosestFace->Indices[i]]);
+		CollisionPointB = XMVectorAdd(CollisionPointB, SupportB[ClosestFace->Indices[i]]);
+	}
+	CollisionPointA = XMVectorScale(CollisionPointA, 1.0f / 3.0f);
+	CollisionPointB = XMVectorScale(CollisionPointB, 1.0f / 3.0f);
+	XMVECTOR CollisionPoint = XMVectorLerp(CollisionPointA, CollisionPointB, 0.5f);
+	XMStoreFloat3(&Result.Point, CollisionPoint);
+
+	return Result;
+}
+
+XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
+	const ICollisionShape& ShapeA,
+	const FTransform& TransformA,
+	const ICollisionShape& ShapeB,
+	const FTransform& TransformB,
+	const XMVECTOR& Direction,
+	XMVECTOR& OutSupportA,
+	XMVECTOR& OutSupportB)
+{
+	// ShapeA의 지원점 계산 (반대 방향)
+	XMVECTOR NegDirection = XMVectorNegate(Direction);
+	Vector3 WorldSupportA = ShapeA.GetSupportPoint(Vector3(NegDirection.m128_f32[0], NegDirection.m128_f32[1], NegDirection.m128_f32[2]));
+	OutSupportA = XMLoadFloat3(&WorldSupportA);
+
+	// ShapeB의 지원점 계산
+	Vector3 WorldSupportB = ShapeB.GetSupportPoint(Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]));
+	OutSupportB = XMLoadFloat3(&WorldSupportB);
+
+	// Minkowski 차분 계산
+	return XMVectorSubtract(OutSupportB, OutSupportA);
+}
+
+bool FCollisionDetector::UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction)
+{
+	// Simplex 크기에 따른 처리
+	switch (Simplex.Size)
+	{
+		case 2: // 선분
+		{
+			// 선분 AB와 원점
+			XMVECTOR A = Simplex.Points[0];
+			XMVECTOR B = Simplex.Points[1];
+			XMVECTOR AB = XMVectorSubtract(B, A);
+			XMVECTOR AO = XMVectorNegate(A);
+
+			// 원점이 선분에 가장 가까운지 확인
+			float DotAB_AO = XMVector3Dot(AB, AO).m128_f32[0];
+			float DotAB_AB = XMVector3Dot(AB, AB).m128_f32[0];
+
+			if (DotAB_AO <= 0.0f)
+			{
+				// A 방향
+				Simplex.Points[0] = A;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.Size = 1;
+				Direction = AO;
+			}
+			else if (DotAB_AO >= DotAB_AB)
+			{
+				// B 방향
+				Simplex.Points[0] = B;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[1];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[1];
+				Simplex.Size = 1;
+				Direction = XMVectorNegate(B);
+			}
+			else
+			{
+				// 선분에 수직인 방향
+				Direction = XMVector3Cross(XMVector3Cross(AB, AO), AB);
+				if (XMVector3LengthSq(Direction).m128_f32[0] < KINDA_SMALL)
+				{
+					Direction = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+				}
+				Direction = XMVector3Normalize(Direction);
+			}
+			return false;
+		}
+
+		case 3: // 삼각형
+		{
+			// 삼각형 ABC와 원점
+			XMVECTOR A = Simplex.Points[0];
+			XMVECTOR B = Simplex.Points[1];
+			XMVECTOR C = Simplex.Points[2];
+			XMVECTOR AO = XMVectorNegate(A);
+			XMVECTOR AB = XMVectorSubtract(B, A);
+			XMVECTOR AC = XMVectorSubtract(C, A);
+			XMVECTOR ABC = XMVector3Cross(AB, AC);
+
+			// 법선 방향 확인
+			if (XMVector3Dot(XMVector3Cross(ABC, AC), AO).m128_f32[0] > 0.0f)
+			{
+				// AC 방향
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = C;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[2];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[2];
+				Simplex.Size = 2;
+				Direction = XMVector3Cross(XMVector3Cross(AC, AO), AC);
+				if (XMVector3LengthSq(Direction).m128_f32[0] < KINDA_SMALL)
+				{
+					Direction = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+				}
+				return false;
+			}
+
+			if (XMVector3Dot(XMVector3Cross(AB, ABC), AO).m128_f32[0] > 0.0f)
+			{
+				// AB 방향
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = B;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
+				Simplex.Size = 2;
+				Direction = XMVector3Cross(XMVector3Cross(AB, AO), AB);
+				if (XMVector3LengthSq(Direction).m128_f32[0] < KINDA_SMALL)
+				{
+					Direction = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+				}
+				return false;
+			}
+
+			// 삼각형 내부 또는 법선 방향
+			if (XMVector3Dot(ABC, AO).m128_f32[0] > 0.0f)
+			{
+				Direction = ABC;
+			}
+			else
+			{
+				Direction = XMVectorNegate(ABC);
+				// 순서 반전
+				XMVECTOR Temp = Simplex.Points[1];
+				Simplex.Points[1] = Simplex.Points[2];
+				Simplex.Points[2] = Temp;
+				Temp = Simplex.SupportPointsA[1];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[2];
+				Simplex.SupportPointsA[2] = Temp;
+				Temp = Simplex.SupportPointsB[1];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[2];
+				Simplex.SupportPointsB[2] = Temp;
+			}
+			return false;
+		}
+
+		case 4: // 테트라헤드론
+		{
+			// 테트라헤드론 ABCD와 원점
+			XMVECTOR A = Simplex.Points[0];
+			XMVECTOR B = Simplex.Points[1];
+			XMVECTOR C = Simplex.Points[2];
+			XMVECTOR D = Simplex.Points[3];
+			XMVECTOR AO = XMVectorNegate(A);
+			XMVECTOR AB = XMVectorSubtract(B, A);
+			XMVECTOR AC = XMVectorSubtract(C, A);
+			XMVECTOR AD = XMVectorSubtract(D, A);
+
+			// 각 면의 법선 계산
+			XMVECTOR ABC = XMVector3Cross(AB, AC);
+			XMVECTOR ABD = XMVector3Cross(AB, AD);
+			XMVECTOR ACD = XMVector3Cross(AD, AC);
+
+			// 원점이 각 면의 외부인지 확인
+			bool OutsideABC = XMVector3Dot(ABC, AO).m128_f32[0] > 0.0f;
+			bool OutsideABD = XMVector3Dot(ABD, AO).m128_f32[0] > 0.0f;
+			bool OutsideACD = XMVector3Dot(ACD, AO).m128_f32[0] > 0.0f;
+
+			if (OutsideABC)
+			{
+				// ABC 면 유지
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = B;
+				Simplex.Points[2] = C;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
+				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[2];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
+				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[2];
+				Simplex.Size = 3;
+				Direction = ABC;
+				return false;
+			}
+
+			if (OutsideABD)
+			{
+				// ABD 면 유지
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = B;
+				Simplex.Points[2] = D;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
+				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
+				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
+				Simplex.Size = 3;
+				Direction = ABD;
+				return false;
+			}
+
+			if (OutsideACD)
+			{
+				// ACD 면 유지
+				Simplex.Points[0] = A;
+				Simplex.Points[1] = C;
+				Simplex.Points[2] = D;
+				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[2];
+				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
+				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[2];
+				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
+				Simplex.Size = 3;
+				Direction = ACD;
+				return false;
+			}
+
+			// 원점이 테트라헤드론 내부
+			return true;
+		}
+	}
+
+	return false;
 }
 #pragma endregion

@@ -4,9 +4,13 @@
 Vector3 USphereComponent::GetSupportPoint(const Vector3& Direction) const
 {
     XMVECTOR Dir = XMLoadFloat3(&Direction);
-    XMVECTOR NormDir = XMVector3Normalize(Dir);
+    if (XMVector3LengthSq(Dir).m128_f32[0] < KINDA_SMALL)
+    {
+        Dir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); //기본 Y방향
+    }
+    Dir = XMVector3Normalize(Dir);
     XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
-    XMVECTOR Support = XMVectorAdd(Center, XMVectorScale(NormDir, GetHalfExtent().x));
+    XMVECTOR Support = XMVectorAdd(Center, XMVectorScale(Dir, GetScaledHalfExtent().x));
 
     Vector3 Result;
     XMStoreFloat3(&Result, Support);
