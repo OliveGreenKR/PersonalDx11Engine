@@ -44,6 +44,8 @@ private:
     //                                                        const ICollisionShape& ShapeB, const FTransform& TransformB);
 
 private:
+#pragma region Shape_based Helper
+private:
     // Box-Box 충돌 검사
     FCollisionDetectionResult BoxBoxAABB(
         const Vector3& ExtentA, const FTransform& TransformA,
@@ -62,7 +64,49 @@ private:
     FCollisionDetectionResult BoxSphereSimple(
         const Vector3& BoxExtent, const FTransform& BoxTransform,
         float SphereRadius, const FTransform& SphereTransform);
+#pragma endregion
+#pragma region Conservative Advanced Helper
+private:
+    // 두 충돌체 간의 최소 거리 계산
+    float ComputeMinimumDistance(
+        const ICollisionShape& ShapeA,
+        const FTransform& TransformA,
+        const ICollisionShape& ShapeB,
+        const FTransform& TransformB) const;
 
+    // 두 충돌체 간의 상대 속도 계산 (선형 + 회전)
+    Vector3 ComputeRelativeVelocity(
+        const FTransform& PrevTransformA,
+        const FTransform& CurrentTransformA,
+        const FTransform& PrevTransformB,
+        const FTransform& CurrentTransformB,
+        const Vector3& ContactPoint,
+        float DeltaTime) const;
+
+    // 특정 방향으로의 접근 속도 계산
+    float ComputeApproachSpeed(
+        const Vector3& RelativeVelocity,
+        const Vector3& Direction) const;
+
+    // 콘서버티브 어드밴스먼트 단계 수행
+    float PerformConservativeAdvancementStep(
+        const ICollisionShape& ShapeA,
+        const FTransform& PrevTransformA,
+        const FTransform& CurrentTransformA,
+        const ICollisionShape& ShapeB,
+        const FTransform& PrevTransformB,
+        const FTransform& CurrentTransformB,
+        float CurrentTime,
+        float DeltaTime,
+        Vector3& CollisionNormal) const;
+#pragma endregion
 public:
     float CCDTimeStep = 0.02f;
+    float CASafetyFactor = 1.1f;         // 안전 계수
+    float CAMinTimeStep = 0.001f;        // 최소 시간 스텝
+    int   CCDMaxIterations = 10;          // 최대 반복 횟수
+
+    float DistanceThreshold = 0.001f;  // 접촉 간주 거리 임계값
+    int MAX_GJK_ITERATIONS = 5;
+
 }; 
