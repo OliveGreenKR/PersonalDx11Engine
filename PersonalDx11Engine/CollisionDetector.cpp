@@ -860,10 +860,10 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionGJKEPA(
 		// 충돌 없음
 		return Result;
 	}
-	else
-	{
-		LOG("--------[DetectGJK]------");
-	}
+	//else
+	//{
+	//	LOG("--------[DetectGJK]------");
+	//}
 
 	// EPA로 충돌 정보 계산
 	Result = EPACollision(ShapeA, TransformA, ShapeB, TransformB, Simplex);
@@ -947,7 +947,7 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	{
 		XMVECTOR Vertices[3]; // 삼각형 정점
 		XMVECTOR Normal;      // 법선 (B->A 방향)
-		float Distance;       // 원점에서 면까지의 거리
+		float Distance;       // 원점에서 면까지의 거리 (절대값)
 		int Indices[3];       // Simplex 인덱스
 	};
 	std::vector<Face> Polytope;
@@ -970,15 +970,15 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 		XMVECTOR Edge2 = XMVectorSubtract(Face.Vertices[2], Face.Vertices[0]);
 		Face.Normal = XMVector3Normalize(XMVector3Cross(Edge1, Edge2));
 
-		// 원점에서 면까지의 거리
-		Face.Distance = XMVector3Dot(Face.Vertices[0], Face.Normal).m128_f32[0];
+		// 원점에서 면까지의 거리 (스칼라)
+		Face.Distance = fabs(XMVector3Dot(Face.Vertices[0], Face.Normal).m128_f32[0]);
 
-		// 법선이 원점을 향하도록 보정 (B->A 방향)
+		// 법선이 B->A 방향을 향하도록 보정
 		XMVECTOR FaceCenter = XMVectorScale(XMVectorAdd(XMVectorAdd(Face.Vertices[0], Face.Vertices[1]), Face.Vertices[2]), 1.0f / 3.0f);
-		if (XMVector3Dot(Face.Normal, FaceCenter).m128_f32[0] > 0.0f)
+		XMVECTOR SupportDiff = XMVectorSubtract(Simplex.SupportPointsB[Face.Indices[0]], Simplex.SupportPointsA[Face.Indices[0]]);
+		if (XMVector3Dot(Face.Normal, SupportDiff).m128_f32[0] < 0.0f)
 		{
 			Face.Normal = XMVectorNegate(Face.Normal);
-			Face.Distance = -Face.Distance;
 			std::swap(Face.Vertices[1], Face.Vertices[2]);
 			std::swap(Face.Indices[1], Face.Indices[2]);
 		}
@@ -1004,18 +1004,18 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 		XMVECTOR NewPoint = ComputeMinkowskiSupport(
 			ShapeA, TransformA, ShapeB, TransformB, Direction, NewSupportA, NewSupportB);
 
-		// 새로운 점과 면의 거리 계산
-		float NewDistance = XMVector3Dot(NewPoint, Direction).m128_f32[0];
+		// 새로운 점과 면의 거리 계산 (스칼라)
+		float NewDistance = fabs(XMVector3Dot(NewPoint, Direction).m128_f32[0]);
 
 		// 수렴 확인
 		if (NewDistance - ClosestFace->Distance < EPATolerance)
 		{
 			// 충돌 정보 설정
 			Result.bCollided = true;
-			Result.PenetrationDepth = ClosestFace->Distance;
+			Result.PenetrationDepth = ClosestFace->Distance; // 스칼라 값
 			XMStoreFloat3(&Result.Normal, ClosestFace->Normal);
 
-			// 충돌 지점 계산 (ShapeA 표면 근사)
+			// 충돌 지점 계산 (ShapeA와 ShapeB 표면 근사)
 			XMVECTOR CollisionPointA = XMVectorZero();
 			XMVECTOR CollisionPointB = XMVectorZero();
 			for (int i = 0; i < 3; ++i)
@@ -1078,15 +1078,15 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 			XMVECTOR Edge2 = XMVectorSubtract(NewFace.Vertices[2], NewFace.Vertices[0]);
 			NewFace.Normal = XMVector3Normalize(XMVector3Cross(Edge1, Edge2));
 
-			// 원점에서 면까지의 거리
-			NewFace.Distance = XMVector3Dot(NewFace.Vertices[0], NewFace.Normal).m128_f32[0];
+			// 원점에서 면까지의 거리 (스칼라)
+			NewFace.Distance = fabs(XMVector3Dot(NewFace.Vertices[0], NewFace.Normal).m128_f32[0]);
 
-			// 법선이 원점을 향하도록 보정 (B->A 방향)
+			// 법선이 B->A 방향을 향하도록 보정
 			XMVECTOR FaceCenter = XMVectorScale(XMVectorAdd(XMVectorAdd(NewFace.Vertices[0], NewFace.Vertices[1]), NewFace.Vertices[2]), 1.0f / 3.0f);
-			if (XMVector3Dot(NewFace.Normal, FaceCenter).m128_f32[0] > 0.0f)
+			XMVECTOR SupportDiff = XMVectorSubtract(NewSupportB, NewSupportA);
+			if (XMVector3Dot(NewFace.Normal, SupportDiff).m128_f32[0] < 0.0f)
 			{
 				NewFace.Normal = XMVectorNegate(NewFace.Normal);
-				NewFace.Distance = -NewFace.Distance;
 				std::swap(NewFace.Vertices[1], NewFace.Vertices[2]);
 				std::swap(NewFace.Indices[1], NewFace.Indices[2]);
 			}
@@ -1097,14 +1097,14 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 		Polytope = std::move(NewPolytope);
 	}
 
-	// 최대 반복 횟수 초과 시 최종 결과 반환
-	//Result.bCollided = false;
-	//return Result;
+	Result.bCollided = false;
+	return Result;
 
+	// 최대 반복 횟수 초과 시 최종 결과 반환
 	auto ClosestFace = std::min_element(Polytope.begin(), Polytope.end(),
 										[](const Face& A, const Face& B) { return A.Distance < B.Distance; });
 	Result.bCollided = true;
-	Result.PenetrationDepth = ClosestFace->Distance;
+	Result.PenetrationDepth = ClosestFace->Distance; // 스칼라 값
 	XMStoreFloat3(&Result.Normal, ClosestFace->Normal);
 
 	// 충돌 지점 계산
