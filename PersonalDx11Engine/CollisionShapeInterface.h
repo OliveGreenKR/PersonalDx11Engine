@@ -15,7 +15,7 @@ class ICollisionShape
 public:
     virtual ~ICollisionShape() = default;
 
-    // 지원 함수 (Support function) - 주어진 방향의 가장 먼 월드 좌표 점
+    // 지원 함수 (Support function) - 주어진 월드 방향의 가장 먼 로컬 좌표 점
     virtual Vector3 GetSupportPoint(const Vector3& Direction) const = 0;
 
     // 관성 텐서 계산 (질량 기반)

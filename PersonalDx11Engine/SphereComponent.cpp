@@ -3,17 +3,33 @@
 
 Vector3 USphereComponent::GetSupportPoint(const Vector3& Direction) const
 {
+    // 입력 방향 확인 및 정규화
     XMVECTOR Dir = XMLoadFloat3(&Direction);
     if (XMVector3LengthSq(Dir).m128_f32[0] < KINDA_SMALL)
     {
-        Dir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); //기본 Y방향
+        Dir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     }
     Dir = XMVector3Normalize(Dir);
-    XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
-    XMVECTOR Support = XMVectorAdd(Center, XMVectorScale(Dir, GetScaledHalfExtent().x));
+
+    // 월드 → 로컬 방향 변환
+    XMMATRIX ModelingMatrix = GetWorldTransform().GetModelingMatrix();
+    XMMATRIX InvModeling = XMMatrixInverse(nullptr, ModelingMatrix);
+    XMVECTOR LocalDir = XMVector3Transform(Dir, InvModeling);
+
+    // 0 벡터 방지
+    if (XMVector3LengthSq(LocalDir).m128_f32[0] < KINDA_SMALL)
+    {
+        LocalDir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // 기본 Y 방향
+    }
+
+    LocalDir = XMVector3Normalize(LocalDir);
+
+    // 로컬 구의 중심은 항상 (0,0,0), 반지름은 x축 기준 반지름
+    float Radius = GetScaledHalfExtent().x;
+    XMVECTOR SupportLocal = XMVectorScale(LocalDir, Radius);
 
     Vector3 Result;
-    XMStoreFloat3(&Result, Support);
+    XMStoreFloat3(&Result, SupportLocal);
     return Result;
 }
 

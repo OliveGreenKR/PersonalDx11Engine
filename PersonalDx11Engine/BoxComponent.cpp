@@ -23,11 +23,11 @@ Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
     XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero());
     XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask);
 
-    // 월드 공간으로 변환
-    XMVECTOR WorldSupport = XMVector3TransformCoord (LocalSupport, ModelingMatrix);
+    //// 월드 공간으로 변환
+    //XMVECTOR WorldSupport = XMVector3TransformCoord (LocalSupport, ModelingMatrix);
 
     Vector3 Result;
-    XMStoreFloat3(&Result, WorldSupport);
+    XMStoreFloat3(&Result, LocalSupport);
     return Result;
 }
 

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "ConfigReadManager.h"
 #include "DebugDrawerManager.h"
-#include <set>
+#include <map>/
 FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
@@ -406,7 +406,9 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 	return Result;
 }
 #pragma endregion
+
 //////////////////////////////////////
+
 #pragma region GJK_EPA
 FCollisionDetectionResult FCollisionDetector::DetectCollisionGJKEPA(
 	const ICollisionShape& ShapeA,
@@ -427,10 +429,10 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionGJKEPA(
 		// 충돌 없음
 		return Result;
 	}
-	//else
-	//{
-	//	LOG("--------[DetectGJK]------");
-	//}
+	else
+	{
+		LOG("--------[DetectGJK]------");
+	}
 
 	// EPA로 충돌 정보 계산
 	Result = EPACollision(ShapeA, TransformA, ShapeB, TransformB, Simplex);
@@ -515,12 +517,12 @@ XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
 	Vector3 Dir = Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]);
 	
 	//ShapeA의 지원점 게산
-	Vector3 WorldSupportA = ShapeA.GetSupportPoint(NegDir);
-	OutSupportA = XMLoadFloat3(&WorldSupportA);
+	Vector3 SupportA = ShapeA.GetSupportPoint(NegDir);
+	OutSupportA = XMLoadFloat3(&SupportA);
 
 	// ShapeB의 지원점 계산
-	Vector3 WorldSupportB = ShapeB.GetSupportPoint(Dir);
-	OutSupportB = XMLoadFloat3(&WorldSupportB);
+	Vector3 SupportB = ShapeB.GetSupportPoint(Dir);
+	OutSupportB = XMLoadFloat3(&SupportB);
 
 	// Minkowski 차분 계산
 	return XMVectorSubtract(OutSupportB, OutSupportA);
@@ -734,196 +736,7 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	const FTransform& TransformB,
 	const FSimplex& Simplex)
 {
-	using namespace DirectX;
-	using FFace = std::array<int32_t, 3>;
-
 	FCollisionDetectionResult Result;
-	Result.bCollided = false;
-
-	// 폴리토프 초기화 (XMVECTOR로 변환)
-	std::vector<XMVECTOR> Polytope;
-	Polytope.reserve(4);
-	for (const auto& Point : Simplex.Points)
-	{
-		Polytope.push_back(Point);
-	}
-
-	// 초기 테트라헤드론 면 정의
-	std::vector<FFace> Faces{
-		{0, 1, 2},
-		{0, 2, 3},
-		{0, 3, 1},
-		{1, 3, 2}
-	};
-
-	// 최대 반복 횟수 제한
-	int32_t Iteration = 0;
-	float MinDistance = FLT_MAX;
-	//while (Iteration < MaxEPAIterations)
-	while (Iteration < MaxEPAIterations)
-	{
-		// 가장 가까운 면 찾기
-		int32_t MinFaceIndex = -1;
-		XMVECTOR MinNormal = XMVectorZero();
-
-		for (size_t i = 0; i < Faces.size(); ++i)
-		{
-			const FFace& Face = Faces[i];
-			XMVECTOR A = Polytope[Face[0]];
-			XMVECTOR B = Polytope[Face[1]];
-			XMVECTOR C = Polytope[Face[2]];
-
-			// 면의 법선 계산
-			XMVECTOR Normal = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(B, A), XMVectorSubtract(C, A)));
-			float Distance = XMVectorGetX(XMVector3Dot(Normal, A));
-
-			// 원점에서 면까지의 거리
-			if (Distance < 0)
-			{
-				Distance = -Distance;
-				Normal = XMVectorNegate(Normal);
-			}
-
-			if (Distance < MinDistance)
-			{
-				MinDistance = Distance;
-				MinNormal = Normal;
-				MinFaceIndex = static_cast<int32_t>(i);
-			}
-		}
-
-		// 서포트 포인트 계산
-		XMFLOAT3 MinNormalFloat3;
-		XMStoreFloat3(&MinNormalFloat3, MinNormal);
-		Vector3 NormalVec(MinNormalFloat3.x, MinNormalFloat3.y, MinNormalFloat3.z);
-
-		Vector3 SupportA = ShapeA.GetSupportPoint(NormalVec);
-		Vector3 SupportB = ShapeB.GetSupportPoint(-NormalVec);
-
-
-		XMVECTOR Support = XMVectorSubtract(
-			XMLoadFloat3(&SupportA),
-			XMLoadFloat3(&SupportB)
-		);
-
-		// 기존 폴리토프 점들과의 거리 체크
-		float SupportDistance = XMVectorGetX(XMVector3Dot(MinNormal, Support));
-
-		//수렴조건
-		if (std::abs(SupportDistance - MinDistance) < EPATolerance)
-		{
-			// 결과 설정
-			Result.bCollided = true;
-			Result.PenetrationDepth = MinDistance;
-
-			// 법선 변환
-			XMFLOAT3 NormalFloat3;
-			XMStoreFloat3(&NormalFloat3, MinNormal);
-			Result.Normal = Vector3(NormalFloat3.x, NormalFloat3.y, NormalFloat3.z);
-
-			// 충돌 지점 계산 (가장 가까운 면의 중심)
-			const FFace& Face = Faces[MinFaceIndex];
-			XMVECTOR Point = XMVectorScale(
-				XMVectorAdd(
-					XMVectorAdd(Polytope[Face[0]], Polytope[Face[1]]),
-					Polytope[Face[2]]
-				),
-				1.0f / 3.0f
-			);
-			XMFLOAT3 PointFloat3;
-			XMStoreFloat3(&PointFloat3, Point);
-			Result.Point = Vector3(PointFloat3.x, PointFloat3.y, PointFloat3.z);
-
-			break;
-		}
-		else
-		{
-			MinDistance = FLT_MAX;
-		}
-
-		// 새로운 점 추가
-		int32_t NewVertexIndex = static_cast<int32_t>(Polytope.size());
-		Polytope.push_back(Support);
-
-		// 새 면 생성 및 기존 면 제거
-		std::vector<FFace> NewFaces;
-		std::vector<FFace> FacesToRemove;
-
-		// 새로운 면의 에지 집합
-		std::set<std::pair<int32_t, int32_t>> NewEdges;
-
-		for (const FFace& Face : Faces)
-		{
-			XMVECTOR A = Polytope[Face[0]];
-			XMVECTOR B = Polytope[Face[1]];
-			XMVECTOR C = Polytope[Face[2]];
-			XMVECTOR Normal = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(B, A), XMVectorSubtract(C, A)));
-
-			if (XMVectorGetX(XMVector3Dot(Normal, XMVectorSubtract(Support, A))) > 0)
-			{
-				FacesToRemove.push_back(Face);
-			}
-			else
-			{
-				NewFaces.push_back(Face);
-			}
-		}
-
-		// 새 면 추가 및 에지 기록
-		for (const FFace& Face : FacesToRemove)
-		{
-			FFace NewFace1 = { Face[0], Face[1], NewVertexIndex };
-			FFace NewFace2 = { Face[1], Face[2], NewVertexIndex };
-			FFace NewFace3 = { Face[2], Face[0], NewVertexIndex };
-
-			NewFaces.push_back(NewFace1);
-			NewFaces.push_back(NewFace2);
-			NewFaces.push_back(NewFace3);
-
-			// 새 면의 에지 추가 (정방향)
-			NewEdges.emplace(Face[0], Face[1]);
-			NewEdges.emplace(Face[1], Face[2]);
-			NewEdges.emplace(Face[2], Face[0]);
-		}
-
-		// 역방향 에지를 가진 기존 면 제거
-		std::vector<FFace> FinalFaces;
-		for (const FFace& Face : NewFaces)
-		{
-			bool ShouldRemove = false;
-			// 면의 에지 (정방향)
-			std::array<std::pair<int32_t, int32_t>, 3> FaceEdges = {
-				std::make_pair(Face[0], Face[1]),
-				std::make_pair(Face[1], Face[2]),
-				std::make_pair(Face[2], Face[0])
-			};
-
-			// 역방향 에지 체크
-			for (const auto& Edge : FaceEdges)
-			{
-				std::pair<int32_t, int32_t> ReverseEdge(Edge.second, Edge.first);
-				if (NewEdges.find(ReverseEdge) != NewEdges.end())
-				{
-					ShouldRemove = true;
-					break;
-				}
-			}
-
-			if (!ShouldRemove)
-			{
-				FinalFaces.push_back(Face);
-			}
-		}
-
-		Faces = std::move(FinalFaces);
-		++Iteration;
-	}
-	if (Result.bCollided)
-	{
-		LOG("EPA Solved : %d Iterations", Iteration);
-	}
-	
-
 	return Result;
 }
 
