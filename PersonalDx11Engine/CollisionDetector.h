@@ -18,6 +18,14 @@ class FCollisionDetector
         int32_t Size;              // 현재 심플렉스의 점 개수
     };
 
+    // 다면체 구조: 정점과 면 인덱스
+    struct alignas(16) FFace
+    {
+        int32_t Indices[3]; // 삼각형 정점 인덱스
+        XMVECTOR Normal;    // 법선 (B->A 방향)
+        float Distance;     // 원점에서 면까지의 거리
+    };
+
 public:
     FCollisionDetector();
 
@@ -69,6 +77,20 @@ private:
         const ICollisionShape& ShapeB,
         const FTransform& TransformB,
         const FSimplex& Simplex);
+
+    void UpdateFaceNormalsAndDistances(const std::vector<XMVECTOR>& Polytope, const std::vector<size_t>& Faces, 
+                                       std::vector<XMVECTOR>& Normals, std::vector<float>& Distances, const std::vector<XMVECTOR>& SupportA,
+                                       const std::vector<XMVECTOR>& SupportB, 
+                                       float& MinDistance, XMVECTOR& MinNormal);
+
+    XMVECTOR ComputeCollisionPoint(const std::vector<size_t>& Faces, const std::vector<XMVECTOR>& Normals,
+                                   XMVECTOR MinNormal,
+                                   const std::vector<XMVECTOR>& Polytope, 
+                                   const std::vector<XMVECTOR>& SupportA, const std::vector<XMVECTOR>& SupportB);
+
+    void AddIfUniqueEdge(std::vector<std::pair<size_t, size_t>>& Edges,
+                         const std::vector<size_t>& Faces, 
+                         size_t A, size_t B);
 
     // Minkowski 차분 지원점 계산 (SIMD 최적화)
     XMVECTOR ComputeMinkowskiSupport(
