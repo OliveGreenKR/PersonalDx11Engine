@@ -105,41 +105,6 @@ private:
         float SphereRadius, const FTransform& SphereTransform);
 #pragma endregion
 
-#pragma region Conservative Advancement Helper
-    // 두 충돌체 간의 최소 거리 계산
-    float ComputeMinimumDistance(
-        const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
-        const ICollisionShape& ShapeB,
-        const FTransform& TransformB) const;
-
-    // 두 충돌체 간의 상대 속도 계산
-    Vector3 ComputeRelativeVelocity(
-        const FTransform& PrevTransformA,
-        const FTransform& CurrentTransformA,
-        const FTransform& PrevTransformB,
-        const FTransform& CurrentTransformB,
-        const Vector3& ContactPoint,
-        float DeltaTime) const;
-
-    // 특정 방향으로의 접근 속도 계산
-    float ComputeApproachSpeed(
-        const Vector3& RelativeVelocity,
-        const Vector3& Direction) const;
-
-    // 콘서버티브 어드밴스먼트 단계 수행
-    float PerformConservativeAdvancementStep(
-        const ICollisionShape& ShapeA,
-        const FTransform& PrevTransformA,
-        const FTransform& CurrentTransformA,
-        const ICollisionShape& ShapeB,
-        const FTransform& PrevTransformB,
-        const FTransform& CurrentTransformB,
-        float CurrentTime,
-        float DeltaTime,
-        Vector3& CollisionNormal) const;
-#pragma endregion
-
 public:
     float CCDTimeStep = 0.02f;         // CCD 시간 스텝
     float CASafetyFactor = 1.1f;       // CA 안전 계수
