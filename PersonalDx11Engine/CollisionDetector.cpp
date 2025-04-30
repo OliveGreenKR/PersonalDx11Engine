@@ -517,11 +517,11 @@ XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
 	Vector3 Dir = Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]);
 	
 	//ShapeA의 지원점 게산
-	Vector3 SupportA = ShapeA.GetSupportPoint(NegDir);
+	Vector3 SupportA = ShapeA.GetLocalSupportPoint(NegDir);
 	OutSupportA = XMLoadFloat3(&SupportA);
 
 	// ShapeB의 지원점 계산
-	Vector3 SupportB = ShapeB.GetSupportPoint(Dir);
+	Vector3 SupportB = ShapeB.GetLocalSupportPoint(Dir);
 	OutSupportB = XMLoadFloat3(&SupportB);
 
 	// Minkowski 차분 계산

@@ -16,7 +16,7 @@ public:
     virtual ~ICollisionShape() = default;
 
     // 지원 함수 (Support function) - 주어진 월드 방향의 가장 먼 로컬 좌표 점
-    virtual Vector3 GetSupportPoint(const Vector3& Direction) const = 0;
+    virtual Vector3 GetLocalSupportPoint(const Vector3& WorldDirection) const = 0;
 
     // 관성 텐서 계산 (질량 기반)
     virtual Vector3 CalculateInertiaTensor(float Mass) const = 0;

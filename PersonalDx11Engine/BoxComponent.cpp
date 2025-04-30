@@ -2,10 +2,10 @@
 #include "DebugDrawerManager.h"
 #include "Debug.h"
 
-Vector3 UBoxComponent::GetSupportPoint(const Vector3& Direction) const
+Vector3 UBoxComponent::GetLocalSupportPoint(const Vector3& WorldDirection) const
 {
     // 입력 방향 확인 및 정규화
-    XMVECTOR Dir = XMLoadFloat3(&Direction);
+    XMVECTOR Dir = XMLoadFloat3(&WorldDirection);
     if (XMVector3LengthSq(Dir).m128_f32[0] < KINDA_SMALL)
     {
         Dir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
