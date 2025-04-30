@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "ConfigReadManager.h"
 #include "DebugDrawerManager.h"
-
+#include <set>
 FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
@@ -943,11 +943,16 @@ XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
 {
 	// ShapeA의 지원점 계산 (반대 방향)
 	XMVECTOR NegDirection = XMVectorNegate(Direction);
-	Vector3 WorldSupportA = ShapeA.GetSupportPoint(Vector3(NegDirection.m128_f32[0], NegDirection.m128_f32[1], NegDirection.m128_f32[2]));
+
+	Vector3 NegDir = Vector3(NegDirection.m128_f32[0], NegDirection.m128_f32[1], NegDirection.m128_f32[2]);
+	Vector3 Dir = Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]);
+	
+	//ShapeA의 지원점 게산
+	Vector3 WorldSupportA = ShapeA.GetSupportPoint(NegDir);
 	OutSupportA = XMLoadFloat3(&WorldSupportA);
 
 	// ShapeB의 지원점 계산
-	Vector3 WorldSupportB = ShapeB.GetSupportPoint(Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]));
+	Vector3 WorldSupportB = ShapeB.GetSupportPoint(Dir);
 	OutSupportB = XMLoadFloat3(&WorldSupportB);
 
 	// Minkowski 차분 계산
@@ -1154,6 +1159,7 @@ bool FCollisionDetector::UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction)
 }
 
 ///////////////////////////////
+
 FCollisionDetectionResult FCollisionDetector::EPACollision(
 	const ICollisionShape& ShapeA,
 	const FTransform& TransformA,
@@ -1161,232 +1167,197 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	const FTransform& TransformB,
 	const FSimplex& Simplex)
 {
+	using namespace DirectX;
+	using FFace = std::array<int32_t, 3>;
+
 	FCollisionDetectionResult Result;
+	Result.bCollided = false;
 
-	// SoA 구조
-	std::vector<XMVECTOR> Polytope = { Simplex.Points[0], Simplex.Points[1], Simplex.Points[2], Simplex.Points[3] };
-	std::vector<XMVECTOR> SupportA = { Simplex.SupportPointsA[0], Simplex.SupportPointsA[1], Simplex.SupportPointsA[2], Simplex.SupportPointsA[3] };
-	std::vector<XMVECTOR> SupportB = { Simplex.SupportPointsB[0], Simplex.SupportPointsB[1], Simplex.SupportPointsB[2], Simplex.SupportPointsB[3] };
-	std::vector<size_t> Faces = { 0, 1, 2, 0, 3, 1, 0, 2, 3, 1, 3, 2 }; // 초기 테트라헤드론
-	std::vector<XMVECTOR> Normals;
-	std::vector<float> Distances;
-
-	// 최소 거리 및 법선 초기화
-	float MinDistance = FLT_MAX;
-	XMVECTOR MinNormal = XMVectorZero();
-
-	// 초기 면 법선 및 거리 계산
-	UpdateFaceNormalsAndDistances(Polytope, Faces, Normals, Distances, SupportA, SupportB, MinDistance, MinNormal);
-
-	// 초기 면이 없으면 종료
-	if (Normals.empty())
+	// 폴리토프 초기화 (XMVECTOR로 변환)
+	std::vector<XMVECTOR> Polytope;
+	Polytope.reserve(4);
+	for (const auto& Point : Simplex.Points)
 	{
-		Result.bCollided = false;
-		return Result;
+		Polytope.push_back(Point);
 	}
 
-	// EPA 반복
-	for (int Iteration = 0; Iteration < MaxEPAIterations; ++Iteration)
+	// 초기 테트라헤드론 면 정의
+	std::vector<FFace> Faces{
+		{0, 1, 2},
+		{0, 2, 3},
+		{0, 3, 1},
+		{1, 3, 2}
+	};
+
+	// 최대 반복 횟수 제한
+	int32_t Iteration = 0;
+	float MinDistance = FLT_MAX;
+	//while (Iteration < MaxEPAIterations)
+	while (Iteration < MaxEPAIterations)
 	{
-		// 지원점 계산
-		XMVECTOR NewSupportA, NewSupportB;
-		XMVECTOR NewPoint = ComputeMinkowskiSupport(ShapeA, TransformA, ShapeB, TransformB, MinNormal, NewSupportA, NewSupportB);
-		float SDistance = XMVector3Dot(MinNormal, NewPoint).m128_f32[0];
+		// 가장 가까운 면 찾기
+		int32_t MinFaceIndex = -1;
+		XMVECTOR MinNormal = XMVectorZero();
 
-		// 수렴 확인
-		if (fabs(SDistance - MinDistance) <= EPATolerance)
+		for (size_t i = 0; i < Faces.size(); ++i)
 		{
-			Result.bCollided = true;
-			Result.PenetrationDepth = MinDistance;
-			XMStoreFloat3(&Result.Normal, MinNormal);
-			XMVECTOR CollisionPoint = ComputeCollisionPoint(Faces, Normals, MinNormal, Polytope, SupportA, SupportB);
-			XMStoreFloat3(&Result.Point, CollisionPoint);
-			return Result;
-		}
+			const FFace& Face = Faces[i];
+			XMVECTOR A = Polytope[Face[0]];
+			XMVECTOR B = Polytope[Face[1]];
+			XMVECTOR C = Polytope[Face[2]];
 
-		// 새로운 정점 추가
-		size_t NewIndex = Polytope.size();
-		Polytope.push_back(NewPoint);
-		SupportA.push_back(NewSupportA);
-		SupportB.push_back(NewSupportB);
+			// 면의 법선 계산
+			XMVECTOR Normal = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(B, A), XMVectorSubtract(C, A)));
+			float Distance = XMVectorGetX(XMVector3Dot(Normal, A));
 
-		// 유니크 간선 수집
-		std::vector<std::pair<size_t, size_t>> UniqueEdges;
-		std::vector<size_t> NewFaces;
-		std::vector<XMVECTOR> NewNormals;
-		std::vector<float> NewDistances;
-
-		// 보이는 면 제거 및 간선 수집
-		for (size_t i = 0; i < Normals.size(); ++i)
-		{
-			if (Faces[i * 3] >= Polytope.size()) continue; // 유효성 체크
-			if (XMVector3Dot(Normals[i], XMVectorSubtract(NewPoint, Polytope[Faces[i * 3]])).m128_f32[0] > 0.0f)
+			// 원점에서 면까지의 거리
+			if (Distance < 0)
 			{
-				size_t f = i * 3;
-				AddIfUniqueEdge(UniqueEdges, Faces, f, f + 1);
-				AddIfUniqueEdge(UniqueEdges, Faces, f + 1, f + 2);
-				AddIfUniqueEdge(UniqueEdges, Faces, f + 2, f);
+				Distance = -Distance;
+				Normal = XMVectorNegate(Normal);
+			}
 
-				// 면 제거
-				Faces[f + 2] = Faces[Faces.size() - 1]; Faces.pop_back();
-				Faces[f + 1] = Faces[Faces.size() - 1]; Faces.pop_back();
-				Faces[f] = Faces[Faces.size() - 1]; Faces.pop_back();
-				Normals[i] = Normals[Normals.size() - 1]; Normals.pop_back();
-				Distances[i] = Distances[Distances.size() - 1]; Distances.pop_back();
-				--i;
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				MinNormal = Normal;
+				MinFaceIndex = static_cast<int32_t>(i);
 			}
 		}
 
-		// 새로운 면 생성
-		for (const auto& Edge : UniqueEdges)
+		// 서포트 포인트 계산
+		XMFLOAT3 MinNormalFloat3;
+		XMStoreFloat3(&MinNormalFloat3, MinNormal);
+		Vector3 NormalVec(MinNormalFloat3.x, MinNormalFloat3.y, MinNormalFloat3.z);
+
+		Vector3 SupportA = ShapeA.GetSupportPoint(NormalVec);
+		Vector3 SupportB = ShapeB.GetSupportPoint(-NormalVec);
+
+
+		XMVECTOR Support = XMVectorSubtract(
+			XMLoadFloat3(&SupportA),
+			XMLoadFloat3(&SupportB)
+		);
+
+		// 기존 폴리토프 점들과의 거리 체크
+		float SupportDistance = XMVectorGetX(XMVector3Dot(MinNormal, Support));
+
+		//수렴조건
+		if (std::abs(SupportDistance - MinDistance) < EPATolerance)
 		{
-			NewFaces.push_back(Edge.first);
-			NewFaces.push_back(Edge.second);
-			NewFaces.push_back(NewIndex);
+			// 결과 설정
+			Result.bCollided = true;
+			Result.PenetrationDepth = MinDistance;
+
+			// 법선 변환
+			XMFLOAT3 NormalFloat3;
+			XMStoreFloat3(&NormalFloat3, MinNormal);
+			Result.Normal = Vector3(NormalFloat3.x, NormalFloat3.y, NormalFloat3.z);
+
+			// 충돌 지점 계산 (가장 가까운 면의 중심)
+			const FFace& Face = Faces[MinFaceIndex];
+			XMVECTOR Point = XMVectorScale(
+				XMVectorAdd(
+					XMVectorAdd(Polytope[Face[0]], Polytope[Face[1]]),
+					Polytope[Face[2]]
+				),
+				1.0f / 3.0f
+			);
+			XMFLOAT3 PointFloat3;
+			XMStoreFloat3(&PointFloat3, Point);
+			Result.Point = Vector3(PointFloat3.x, PointFloat3.y, PointFloat3.z);
+
+			break;
+		}
+		else
+		{
+			MinDistance = FLT_MAX;
 		}
 
-		// 새로운 면의 법선 및 거리 계산
-		float NewMinDistance = FLT_MAX;
-		XMVECTOR NewMinNormal = XMVectorZero();
-		UpdateFaceNormalsAndDistances(Polytope, NewFaces, NewNormals, NewDistances, SupportA, SupportB, NewMinDistance, NewMinNormal);
+		// 새로운 점 추가
+		int32_t NewVertexIndex = static_cast<int32_t>(Polytope.size());
+		Polytope.push_back(Support);
 
-		// 기존 최소 거리와 비교
-		if (NewNormals.size() > 0 && NewMinDistance < MinDistance)
+		// 새 면 생성 및 기존 면 제거
+		std::vector<FFace> NewFaces;
+		std::vector<FFace> FacesToRemove;
+
+		// 새로운 면의 에지 집합
+		std::set<std::pair<int32_t, int32_t>> NewEdges;
+
+		for (const FFace& Face : Faces)
 		{
-			MinDistance = NewMinDistance;
-			MinNormal = NewMinNormal;
+			XMVECTOR A = Polytope[Face[0]];
+			XMVECTOR B = Polytope[Face[1]];
+			XMVECTOR C = Polytope[Face[2]];
+			XMVECTOR Normal = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(B, A), XMVectorSubtract(C, A)));
+
+			if (XMVectorGetX(XMVector3Dot(Normal, XMVectorSubtract(Support, A))) > 0)
+			{
+				FacesToRemove.push_back(Face);
+			}
+			else
+			{
+				NewFaces.push_back(Face);
+			}
 		}
 
-		// 새로운 면과 데이터 병합
-		Faces.insert(Faces.end(), NewFaces.begin(), NewFaces.end());
-		Normals.insert(Normals.end(), NewNormals.begin(), NewNormals.end());
-		Distances.insert(Distances.end(), NewDistances.begin(), NewDistances.end());
-
-		// Normals가 비어 있으면 종료
-		if (Normals.empty())
+		// 새 면 추가 및 에지 기록
+		for (const FFace& Face : FacesToRemove)
 		{
-			Result.bCollided = false;
-			return Result;
+			FFace NewFace1 = { Face[0], Face[1], NewVertexIndex };
+			FFace NewFace2 = { Face[1], Face[2], NewVertexIndex };
+			FFace NewFace3 = { Face[2], Face[0], NewVertexIndex };
+
+			NewFaces.push_back(NewFace1);
+			NewFaces.push_back(NewFace2);
+			NewFaces.push_back(NewFace3);
+
+			// 새 면의 에지 추가 (정방향)
+			NewEdges.emplace(Face[0], Face[1]);
+			NewEdges.emplace(Face[1], Face[2]);
+			NewEdges.emplace(Face[2], Face[0]);
 		}
+
+		// 역방향 에지를 가진 기존 면 제거
+		std::vector<FFace> FinalFaces;
+		for (const FFace& Face : NewFaces)
+		{
+			bool ShouldRemove = false;
+			// 면의 에지 (정방향)
+			std::array<std::pair<int32_t, int32_t>, 3> FaceEdges = {
+				std::make_pair(Face[0], Face[1]),
+				std::make_pair(Face[1], Face[2]),
+				std::make_pair(Face[2], Face[0])
+			};
+
+			// 역방향 에지 체크
+			for (const auto& Edge : FaceEdges)
+			{
+				std::pair<int32_t, int32_t> ReverseEdge(Edge.second, Edge.first);
+				if (NewEdges.find(ReverseEdge) != NewEdges.end())
+				{
+					ShouldRemove = true;
+					break;
+				}
+			}
+
+			if (!ShouldRemove)
+			{
+				FinalFaces.push_back(Face);
+			}
+		}
+
+		Faces = std::move(FinalFaces);
+		++Iteration;
 	}
+	if (Result.bCollided)
+	{
+		LOG("EPA Solved : %d Iterations", Iteration);
+	}
+	
 
-	// 최대 반복 초과 시 결과 반환
-	Result.bCollided = true;
-	Result.PenetrationDepth = MinDistance + KINDA_SMALL;
-	XMStoreFloat3(&Result.Normal, MinNormal);
-	XMVECTOR CollisionPoint = ComputeCollisionPoint(Faces, Normals, MinNormal, Polytope, SupportA, SupportB);
-	XMStoreFloat3(&Result.Point, CollisionPoint);
 	return Result;
 }
 
-void FCollisionDetector::UpdateFaceNormalsAndDistances(
-	const std::vector<XMVECTOR>& Polytope,
-	const std::vector<size_t>& Faces,
-	std::vector<XMVECTOR>& Normals,
-	std::vector<float>& Distances,
-	const std::vector<XMVECTOR>& SupportA,
-	const std::vector<XMVECTOR>& SupportB,
-	float& MinDistance,
-	XMVECTOR& MinNormal)
-{
-	Normals.clear();
-	Distances.clear();
-	MinDistance = FLT_MAX;
-	MinNormal = XMVectorZero();
-
-	// Faces가3의 배수가 아닌 경우 처리
-	assert((Faces.size() >= 0) && (Faces.size() % 3 == 0));
-
-	for (size_t i = 0; i < Faces.size(); i += 3)
-	{
-		// 인덱스 유효성 확인
-		assert(!(Faces[i] >= Polytope.size() || Faces[i + 1] >= Polytope.size() || Faces[i + 2] >= Polytope.size()));
-		//if (Faces[i] >= Polytope.size() || Faces[i + 1] >= Polytope.size() || Faces[i + 2] >= Polytope.size())
-		//{
-		//	continue; // 유효하지 않은 인덱스는 건너뜀
-		//}
-
-		XMVECTOR V0 = Polytope[Faces[i]];
-		XMVECTOR V1 = Polytope[Faces[i + 1]];
-		XMVECTOR V2 = Polytope[Faces[i + 2]];
-		XMVECTOR Edge1 = XMVectorSubtract(V1, V0);
-		XMVECTOR Edge2 = XMVectorSubtract(V2, V0);
-		XMVECTOR Normal = XMVector3Normalize(XMVector3Cross(Edge1, Edge2));
-
-		// 법선이 유효한지 확인 (NaN 방지)
-		assert(!XMVector3Equal(Normal, XMVectorZero()));
-		//if (XMVector3Equal(Normal, XMVectorZero()))
-		//{
-		//	continue;
-		//}
-
-		float Distance = fabs(XMVector3Dot(V0, Normal).m128_f32[0]);
-
-		// 법선 방향 보정
-		XMVECTOR FaceCenter = XMVectorScale(XMVectorAdd(XMVectorAdd(V0, V1), V2), 1.0f / 3.0f);
-		XMVECTOR SupportDiff = XMVectorSubtract(SupportB[Faces[i]], SupportA[Faces[i]]);
-		if (XMVector3Dot(Normal, SupportDiff).m128_f32[0] < 0.0f)
-		{
-			Normal = XMVectorNegate(Normal);
-			std::swap(const_cast<size_t&>(Faces[i + 1]), const_cast<size_t&>(Faces[i + 2]));
-		}
-
-		Normals.push_back(Normal);
-		Distances.push_back(Distance);
-
-		if (Distance < MinDistance)
-		{
-			MinDistance = Distance;
-			MinNormal = Normal;
-		}
-	}
-}
-
-
-XMVECTOR FCollisionDetector::ComputeCollisionPoint(
-	const std::vector<size_t>& Faces,
-	const std::vector<XMVECTOR>& Normals,
-	XMVECTOR MinNormal,
-	const std::vector<XMVECTOR>& Polytope,
-	const std::vector<XMVECTOR>& SupportA,
-	const std::vector<XMVECTOR>& SupportB)
-{
-	XMVECTOR CollisionPointA = XMVectorZero();
-	XMVECTOR CollisionPointB = XMVectorZero();
-
-	// MinNormal과 일치하는 면 찾기
-	for (size_t i = 0; i < Normals.size(); ++i)
-	{
-		if (XMVector3Equal(Normals[i], MinNormal))
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				CollisionPointA = XMVectorAdd(CollisionPointA, SupportA[Faces[i * 3 + j]]);
-				CollisionPointB = XMVectorAdd(CollisionPointB, SupportB[Faces[i * 3 + j]]);
-			}
-			break;
-		}
-	}
-
-	CollisionPointA = XMVectorScale(CollisionPointA, 1.0f / 3.0f);
-	CollisionPointB = XMVectorScale(CollisionPointB, 1.0f / 3.0f);
-	return XMVectorLerp(CollisionPointA, CollisionPointB, 0.5f);
-}
-
-void FCollisionDetector::AddIfUniqueEdge(
-	std::vector<std::pair<size_t, size_t>>& Edges,
-	const std::vector<size_t>& Faces,
-	size_t A,
-	size_t B)
-{
-	auto Reverse = std::find(Edges.begin(), Edges.end(), std::make_pair(Faces[B], Faces[A]));
-	if (Reverse != Edges.end())
-	{
-		Edges.erase(Reverse);
-	}
-	else
-	{
-		Edges.emplace_back(Faces[A], Faces[B]);
-	}
-}
 #pragma endregion

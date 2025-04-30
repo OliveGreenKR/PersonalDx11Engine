@@ -73,7 +73,7 @@ void UGameplayScene02::Initialize()
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
     Character2->SetScale(0.35f * Vector3::One);
-    Character2->SetPosition({ 0.75f, 0, -0.1f });
+    Character2->SetPosition({ 0.75f, 0, 0.0f });
 
     // 초기화 및 설정
     Camera->PostInitialized();
