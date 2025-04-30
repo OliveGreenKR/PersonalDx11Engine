@@ -737,6 +737,8 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	const FSimplex& Simplex)
 {
 	FCollisionDetectionResult Result;
+
+	
 	return Result;
 }
 
