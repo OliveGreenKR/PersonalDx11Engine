@@ -11,7 +11,7 @@
 
 #include  "BoxComponent.h"
 #include "SphereComponent.h"
-
+#include <windows.h> // Sleep 함수 사용
 #include "CollisionDetector.h"
 
 UTestScene01::UTestScene01()
@@ -133,23 +133,26 @@ void UTestScene01::Tick(float DeltaTime)
                               *Sphere, Sphere->GetWorldTransform(),
                               Simplex))
     {
-        Vector3 A = ToVector(Simplex.Points[0]);
-        Vector3 B = ToVector(Simplex.Points[1]);
-        Vector3 C = ToVector(Simplex.Points[2]);
-        Vector3 D = ToVector(Simplex.Points[3]);
-        Vector4 Color = Vector4(1, 1, 1, 1);
+        //Vector3 A = ToVector(Simplex.Points[0]);
+        //Vector3 B = ToVector(Simplex.Points[1]);
+        //Vector3 C = ToVector(Simplex.Points[2]);
+        //Vector3 D = ToVector(Simplex.Points[3]);
+        //Vector4 Color = Vector4(1, 1, 1, 1);
 
-        float thickness = KINDA_SMALL;
-        //A
-        UDebugDrawManager::Get()->DrawLine(A, B, Color, thickness, DeltaTime);
-        UDebugDrawManager::Get()->DrawLine(A, C, Color, thickness, DeltaTime);
-        UDebugDrawManager::Get()->DrawLine(A, D, Color, thickness, DeltaTime);
-        //Bc
-        UDebugDrawManager::Get()->DrawLine(B, C, Color, thickness, DeltaTime);
-        //cd
-        UDebugDrawManager::Get()->DrawLine(C, D, Color, thickness, DeltaTime);
-        //db
-        UDebugDrawManager::Get()->DrawLine(D, B, Color, thickness, DeltaTime);
+        //float thickness = KINDA_SMALL;
+        ////A
+        //UDebugDrawManager::Get()->DrawLine(A, B, Color, thickness, DeltaTime);
+        //UDebugDrawManager::Get()->DrawLine(A, C, Color, thickness, DeltaTime);
+        //UDebugDrawManager::Get()->DrawLine(A, D, Color, thickness, DeltaTime);
+        ////Bc
+        //UDebugDrawManager::Get()->DrawLine(B, C, Color, thickness, DeltaTime);
+        ////cd
+        //UDebugDrawManager::Get()->DrawLine(C, D, Color, thickness, DeltaTime);
+        ////db
+        //UDebugDrawManager::Get()->DrawLine(D, B, Color, thickness, DeltaTime);
+        EPACollision(*Box, Box->GetWorldTransform(),
+                     *Sphere, Sphere->GetWorldTransform(),
+                     Simplex, Detector);
     }
 
 
@@ -270,4 +273,275 @@ Vector3 UTestScene01::CalculateSphericPosition(float Latitude, float Longitude)
     float z = -radius * cos(latRad) * cos(lonRad);   // z 좌표
 
     return Vector3(x, y, z);
+}
+
+
+///////////////
+
+bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
+								const FTransform& TransformA,
+								const ICollisionShape& ShapeB,
+								const FTransform& TransformB,
+								const FCollisionDetector::FSimplex& InitialSimplex, 
+								FCollisionDetector& InDetector)
+{
+	bool Result = false;
+
+	using PolytopeSOA = FCollisionDetector::PolytopeSOA;
+	using FSimplex = FCollisionDetector::FSimplex;
+
+	constexpr int MaxEPAIterations = 30;
+
+	// 입력 심플렉스가 4면체인지 확인
+	if (InitialSimplex.Size != 4) {
+		// 4면체가 아닌 경우 종료
+		return Result;
+	}
+
+	// EPA에 필요한 보조 데이터 구조
+	struct ContactInfo {
+		std::vector<XMVECTOR> VerticesA;    // ShapeA의 대응점
+		std::vector<XMVECTOR> VerticesB;    // ShapeB의 대응점
+	};
+
+	// 다면체 초기화
+	PolytopeSOA Poly;
+	ContactInfo ContactData;
+
+	// 정점 초기화 (GJK에서 얻은 Simplex로 시작)
+	for (int i = 0; i < InitialSimplex.Size; ++i) {
+		Poly.Vertices.push_back(InitialSimplex.Points[i]);
+		ContactData.VerticesA.push_back(InitialSimplex.SupportPointsA[i]);
+		ContactData.VerticesB.push_back(InitialSimplex.SupportPointsB[i]);
+	}
+
+	// 초기 다면체 구성 (4면체)
+	static const int faceIndices[][3] = {
+		{0, 1, 2}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}
+	};
+
+	// 인덱스와 법선 초기화
+	for (int i = 0; i < 4; ++i) {
+		// 면의 인덱스 추가
+		Poly.Indices.push_back(faceIndices[i][0]);
+		Poly.Indices.push_back(faceIndices[i][1]);
+		Poly.Indices.push_back(faceIndices[i][2]);
+
+		// 면의 법선 계산
+		XMVECTOR v1 = XMVectorSubtract(Poly.Vertices[faceIndices[i][1]], Poly.Vertices[faceIndices[i][0]]);
+		XMVECTOR v2 = XMVectorSubtract(Poly.Vertices[faceIndices[i][2]], Poly.Vertices[faceIndices[i][0]]);
+		XMVECTOR normal = XMVector3Cross(v1, v2);
+
+		// 법선이 원점을 향하도록 보장
+		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[faceIndices[i][0]]);
+		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) {
+			normal = XMVectorNegate(normal);
+			// 인덱스 순서 변경
+			int lastIdx = static_cast<int>(Poly.Indices.size());
+			std::swap(Poly.Indices[lastIdx - 2], Poly.Indices[lastIdx - 1]);
+		}
+
+		normal = XMVector3Normalize(normal);
+		Poly.Normals.push_back(normal);
+
+		// 원점에서 면까지의 거리 계산
+		float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, Poly.Vertices[faceIndices[i][0]])));
+		Poly.Distances.push_back(distance);
+	}
+
+	// EPA 반복 수행
+	bool bConverged = false;
+	XMVECTOR ClosestNormal = XMVectorZero();
+	float ClosestDistance = FLT_MAX;
+	int ClosestFaceIndex = -1;
+    float IterPauseTime = 0.6f;
+	for (int Iteration = 0; Iteration < MaxEPAIterations && !bConverged; ++Iteration) {
+
+        DrawPolytope(Poly, Vector4(1, 1, 1, 1), 0.6f, false);
+
+		// 원점에서 가장 가까운 면 찾기
+		ClosestFaceIndex = -1;
+		ClosestDistance = FLT_MAX;
+
+		for (size_t i = 0; i < Poly.Distances.size(); ++i) {
+			if (Poly.Distances[i] < ClosestDistance && Poly.Distances[i] > 0) {
+				ClosestDistance = Poly.Distances[i];
+				ClosestFaceIndex = static_cast<int>(i);
+				ClosestNormal = Poly.Normals[i];
+			}
+		}
+
+		if (ClosestFaceIndex == -1) {
+			// 적합한 면이 없음 (드문 경우)
+			LOG("Error : There is No Face");
+			break;
+		}
+
+		// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
+		XMVECTOR SearchDir = ClosestNormal;
+		XMVECTOR SupportA, SupportB;
+		XMVECTOR NewPoint = InDetector.ComputeMinkowskiSupport(
+			ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
+
+		// 새 지원점과 가장 가까운 면 사이의 거리 계산
+		float NewDistance = std::abs(XMVectorGetX(XMVector3Dot(NewPoint, SearchDir)));
+
+		// 수렴 확인 (더 이상 진행이 없거나 충분히 가까움)
+		if (fabs(NewDistance - ClosestDistance) < KINDA_SMALLER) {
+			// 수렴 - 결과 설정
+			Vector3 Normal;
+			XMStoreFloat3(&Normal, ClosestNormal);
+			Normal *= ClosestDistance;
+
+			// 충돌 지점 계산 (법선 방향의 중간점)
+			int faceStartIdx = ClosestFaceIndex * 3;
+			XMVECTOR ContactPointA = XMVectorZero();
+			XMVECTOR ContactPointB = XMVectorZero();
+
+			for (int i = 0; i < 3; ++i) {
+				int vertexIndex = Poly.Indices[faceStartIdx + i];
+				ContactPointA = XMVectorAdd(ContactPointA, ContactData.VerticesA[vertexIndex]);
+				ContactPointB = XMVectorAdd(ContactPointB, ContactData.VerticesB[vertexIndex]);
+			}
+
+			ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
+			ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
+
+			//// 반발 방향으로 살짝 이동된 지점 사용
+			//XMVECTOR ContactPoint = XMVectorAdd(
+			//	ContactPointA,
+			//	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
+			//);
+			Vector3 ContactPoint;
+			XMStoreFloat3(&ContactPoint, ContactPointA);
+			bConverged = true;
+			UDebugDrawManager::Get()->DrawLine(ContactPoint, ContactPoint + Normal, Vector4(0, 1, 0, 1), 0.001f, 0.1f);
+			return true;
+		}
+
+		// 새 정점 추가
+		int NewPointIndex = static_cast<int>(Poly.Vertices.size());
+		Poly.Vertices.push_back(NewPoint);
+		ContactData.VerticesA.push_back(SupportA);
+		ContactData.VerticesB.push_back(SupportB);
+
+		// QuickHull 알고리즘으로 다면체 재구성
+		InDetector.UpdatePolytopeWithQuickHull(Poly, NewPointIndex);
+
+        Sleep(IterPauseTime * 1e3);
+	}
+
+	// 수렴하지 않은 경우의 처리 (최대 반복 횟수 초과)
+	if (!bConverged && ClosestFaceIndex != -1) {
+		// 마지막 계산된 가장 가까운 면 사용
+		Vector3 Normal;
+		XMStoreFloat3(&Normal, ClosestNormal);
+		Normal *= ClosestDistance;
+
+		// 충돌 지점 추정
+		int faceStartIdx = ClosestFaceIndex * 3;
+		XMVECTOR ContactPointA = XMVectorZero();
+		XMVECTOR ContactPointB = XMVectorZero();
+
+		for (int i = 0; i < 3; ++i) {
+			int vertexIndex = Poly.Indices[faceStartIdx + i];
+			ContactPointA = XMVectorAdd(ContactPointA, ContactData.VerticesA[vertexIndex]);
+			ContactPointB = XMVectorAdd(ContactPointB, ContactData.VerticesB[vertexIndex]);
+		}
+
+		ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
+		ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
+
+		//XMVECTOR ContactPoint = XMVectorAdd(
+		//	ContactPointA,
+		//	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
+		//);
+
+		//XMStoreFloat3(&Result.Point, ContactPoint);
+		Vector3 ContactPoint;
+		XMStoreFloat3(&ContactPoint, ContactPointA);
+		bConverged = true;
+		UDebugDrawManager::Get()->DrawLine(ContactPoint, ContactPoint + Normal, Vector4(0, 1, 0, 1), 0.001f, 0.1f);
+	}
+
+	return true;
+}
+
+
+void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, const Vector4& Color, float LifeTime = 0.1f, bool bDrawNormals = false)
+{
+
+    using PolytopeSOA = FCollisionDetector::PolytopeSOA;
+
+    if (Polytope.Indices.empty() || Polytope.Vertices.empty())
+        return;
+
+    auto* DebugDrawer = UDebugDrawManager::Get();
+    if (!DebugDrawer)
+        return;
+
+    // 각 면(triangle)마다 처리
+    for (size_t i = 0; i < Polytope.Indices.size(); i += 3)
+    {
+        if (i + 2 >= Polytope.Indices.size())
+            break; // 안전 검사
+
+        // 삼각형의 세 꼭지점 인덱스
+        int IdxA = Polytope.Indices[i];
+        int IdxB = Polytope.Indices[i + 1];
+        int IdxC = Polytope.Indices[i + 2];
+
+        // 인덱스 유효성 검사
+        if (IdxA >= Polytope.Vertices.size() || IdxB >= Polytope.Vertices.size() || IdxC >= Polytope.Vertices.size() ||
+            IdxA < 0 || IdxB < 0 || IdxC < 0)
+            continue;
+
+        // 삼각형 꼭지점 좌표
+        Vector3 VertA, VertB, VertC;
+        XMStoreFloat3(&VertA, Polytope.Vertices[IdxA]);
+        XMStoreFloat3(&VertB, Polytope.Vertices[IdxB]);
+        XMStoreFloat3(&VertC, Polytope.Vertices[IdxC]);
+
+        // 삼각형 외곽선 그리기
+        DebugDrawer->DrawLine(VertA, VertB, Color, 0.001f,LifeTime);
+        DebugDrawer->DrawLine(VertB, VertC, Color, 0.001f,LifeTime);
+        DebugDrawer->DrawLine(VertC, VertA, Color, 0.001f,LifeTime);
+    }
+
+    // 추가적으로 면의 법선 시각화 (선택적)
+    if (bDrawNormals && Polytope.Normals.size() * 3 >= Polytope.Indices.size())
+    {
+        Vector4 NormalColor = Vector4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+        float NormalLength = 0.1f; // 법선 길이
+
+        for (size_t i = 0; i < Polytope.Normals.size(); i++)
+        {
+            // 삼각형의 중심점 계산
+            size_t TriIdx = i * 3;
+            if (TriIdx + 2 >= Polytope.Indices.size())
+                break;
+
+            int IdxA = Polytope.Indices[TriIdx];
+            int IdxB = Polytope.Indices[TriIdx + 1];
+            int IdxC = Polytope.Indices[TriIdx + 2];
+
+            if (IdxA >= Polytope.Vertices.size() || IdxB >= Polytope.Vertices.size() || IdxC >= Polytope.Vertices.size() ||
+                IdxA < 0 || IdxB < 0 || IdxC < 0)
+                continue;
+
+            // 삼각형 중심 계산
+            XMVECTOR TriCenter = XMVectorScale(
+                XMVectorAdd(XMVectorAdd(Polytope.Vertices[IdxA], Polytope.Vertices[IdxB]), Polytope.Vertices[IdxC]),
+                1.0f / 3.0f);
+
+            // 법선 벡터 계산
+            XMVECTOR NormalEnd = XMVectorAdd(TriCenter, XMVectorScale(Polytope.Normals[i], NormalLength));
+
+            // 법선 그리기
+            Vector3 Start, End;
+            XMStoreFloat3(&Start, TriCenter);
+            XMStoreFloat3(&End, NormalEnd);
+            DebugDrawer->DrawLine(Start, End, NormalColor, 0.001f,LifeTime);
+        }
+    }
 }

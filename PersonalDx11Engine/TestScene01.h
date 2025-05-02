@@ -6,6 +6,7 @@
 #include "ResourceHandle.h"
 #include "FixedObjectPool.h"
 #include "PrimitiveComponent.h"
+#include "CollisionDetector.h"
 
 
 class UTestScene01 : public ISceneInterface
@@ -46,6 +47,10 @@ private:
 private:
 	void SetupInput();
 	Vector3 CalculateSphericPosition(float Latidue, float Longitude);
+
+	bool EPACollision(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB, const FCollisionDetector::FSimplex& InitialSimplex, FCollisionDetector& InDetector);
+
+	void DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, const Vector4& Color, float LifeTime, bool bDrawNormals);
 
 
 };
