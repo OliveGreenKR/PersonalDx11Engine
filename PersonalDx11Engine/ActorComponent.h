@@ -41,10 +41,10 @@ public:
 	 
 private:
     // private 복사/이동 생성자와 대입 연산자
-    UActorComponent(const UActorComponent&) = delete;
-    UActorComponent& operator=(const UActorComponent&) = delete;
-    UActorComponent(UActorComponent&&) = delete;
-    UActorComponent& operator=(UActorComponent&&) = delete;
+    //UActorComponent(const UActorComponent&) = delete;
+    //UActorComponent& operator=(const UActorComponent&) = delete;
+    //UActorComponent(UActorComponent&&) = delete;
+    //UActorComponent& operator=(UActorComponent&&) = delete;
 	 
 public:
 	//Called When GameObject::PostInitialzed

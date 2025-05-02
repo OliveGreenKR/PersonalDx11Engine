@@ -9,6 +9,8 @@ using namespace DirectX;
 // 충돌 검사 알고리즘 모음
 class FCollisionDetector
 {
+//for test
+public:
     // 원점을 포함하는 Simplex 정보 (SIMD 최적화)
     struct alignas(16) FSimplex
     {
@@ -16,6 +18,31 @@ class FCollisionDetector
         XMVECTOR SupportPointsA[4]; // 도형 A의 지원점
         XMVECTOR SupportPointsB[4]; // 도형 B의 지원점
         int32_t Size;              // 현재 심플렉스의 점 개수
+    };
+
+    struct Edge {
+        int Start, End;
+
+        Edge(int start, int end) : Start(start), End(end) {
+            if (start > end) std::swap(Start, End); // 순서에 상관없이 동일한 에지로 처리
+        }
+
+        bool operator==(const Edge& other) const {
+            return Start == other.Start && End == other.End;
+        }
+    };
+
+    struct EdgeHash {
+        std::size_t operator()(const Edge& e) const {
+            return std::hash<int>()(e.Start) ^ std::hash<int>()(e.End);
+        }
+    };
+
+    struct PolytopeSOA {
+        std::vector<XMVECTOR> Vertices;
+        std::vector<XMVECTOR> Normals;
+        std::vector<float> Distances;
+        std::vector<int> Indices; // 각 면의 정점 인덱스 (3개씩 묶음)
     };
 
 public:
@@ -39,7 +66,7 @@ public:
         const FTransform& CurrentTransformB,
         const float DeltaTime);
 
-private:
+public:
     // 형상 기반 이산 충돌 검사 (기존 유지)
     FCollisionDetectionResult DetectCollisionShapeBasedDiscrete(
         const ICollisionShape& ShapeA,
@@ -82,6 +109,20 @@ private:
 
     // Simplex 업데이트 헬퍼 함수
     bool UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction);
+
+    bool IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, const XMVECTOR& p3, const XMVECTOR& p4) const;
+
+    bool HasDuplicateVertices(const std::vector<XMVECTOR>& Vertices) const;
+
+    bool InitializePolytope(PolytopeSOA& Poly, const std::vector<XMVECTOR>& InitialVertices);
+
+    std::vector<int> FindVisibleFaces(const PolytopeSOA& Poly, int PointIndex) const;
+
+    std::vector<Edge> FindHorizonEdges(const PolytopeSOA& Poly, const std::vector<int>& VisibleFaces) const;
+
+    void AddNewFace(PolytopeSOA& Poly, const Edge& HorizonEdge, int NewPointIndex);
+
+    void UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex);
 
 #pragma region Shape-Based Helper
     // Box-Box 충돌 검사 (AABB)

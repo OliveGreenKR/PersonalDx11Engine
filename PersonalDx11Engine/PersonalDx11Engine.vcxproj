@@ -173,6 +173,7 @@
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="SceneComponent.cpp" />
     <ClCompile Include="SphereComponent.cpp" />
+    <ClCompile Include="TestScene01.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VelocityConstraint.cpp" />
@@ -252,6 +253,7 @@
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
+    <ClInclude Include="TestScene01.h" />
     <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
