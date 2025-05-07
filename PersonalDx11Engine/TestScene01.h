@@ -48,7 +48,6 @@ private:
 	FCollisionDetector Detector;
 	int CuurentIteration = 1;
 
-
 	float LongitudeThreshold = 180 - KINDA_SMALL;
 	float LatitudeThreshold = 89.0f - KINDA_SMALL;
 

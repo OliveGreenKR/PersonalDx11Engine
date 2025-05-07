@@ -336,9 +336,9 @@ bool UTestScene01::CreateInitialPolytope(const FCollisionDetector::FSimplex& InS
 		XMVECTOR v2 = XMVectorSubtract(Poly.Vertices[faceIndices[i][2]], Poly.Vertices[faceIndices[i][0]]);
 		XMVECTOR normal = XMVector3Cross(v1, v2);
 
-		// 법선이 원점을 향하도록 보장
+		// 법선이 원점에서 멀어지도록 보장
 		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[faceIndices[i][0]]);
-		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) {
+		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) > 0) {
 			normal = XMVectorNegate(normal);
 			// 인덱스 순서 변경
 			int lastIdx = static_cast<int>(Poly.Indices.size());
@@ -405,7 +405,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 
    
 	// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
-	XMVECTOR SearchDir = XMVectorNegate(ClosestNormal);
+	XMVECTOR SearchDir = ClosestNormal;
 	XMVECTOR SupportA, SupportB;
 	XMVECTOR NewPoint = InDetector.ComputeMinkowskiSupport(
 		ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
@@ -507,7 +507,7 @@ void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
     {
         Vector4 InvalidNormalColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red
         Vector4 ValidNormalColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
-        float NormalLength = 0.1f; // 법선 길이
+        float NormalLength = 0.2f; // 법선 길이
 
         for (size_t i = 0; i < Polytope.Normals.size(); i++)
         {
@@ -533,7 +533,7 @@ void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
             Vector4 NormalColor = ValidNormalColor;
             // 법선이 원점을 향하면 INvlaid
             XMVECTOR toOrigin = XMVectorNegate(Polytope.Vertices[IdxA]);
-            if (XMVectorGetX(XMVector3Dot(Polytope.Normals[i], toOrigin)) > 0) {
+            if (XMVectorGetX(XMVector3Dot(Polytope.Normals[i], toOrigin)) > KINDA_SMALL) {
                 NormalColor = InvalidNormalColor;
             }
 

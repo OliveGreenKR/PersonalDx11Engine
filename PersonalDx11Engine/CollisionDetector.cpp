@@ -479,7 +479,7 @@ bool FCollisionDetector::GJKCollision(
 			ShapeA, TransformA, ShapeB, TransformB, Direction, SupportA, SupportB);
 
 		// 원점을 지나지 못하면 충돌 없음
-		if (XMVector3Dot(Point, Direction).m128_f32[0] <= 0.0f)
+		if (XMVector3Dot(Point, Direction).m128_f32[0] < -KINDA_SMALLER)
 		{
 			return false;
 		}
@@ -907,7 +907,7 @@ bool FCollisionDetector::IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, cons
 	XMVECTOR v1 = p1 - p2;
 	XMVECTOR v2 = p3 - p2;
 	XMVECTOR normal = XMVector3Cross(v1, v2);
-	return std::abs(XMVectorGetX(XMVector3Dot(normal, p4 - p2))) < KINDA_SMALL;
+	return std::abs(XMVectorGetX(XMVector3Dot(normal, p4 - p2))) < -KINDA_SMALL;
 }
 
 bool FCollisionDetector::HasDuplicateVertices(const std::vector<XMVECTOR>& Vertices) const
@@ -940,7 +940,7 @@ bool FCollisionDetector::InitializePolytope(PolytopeSOA& Poly, const std::vector
 	std::vector<XMVECTOR> initialVertices = InitialVertices;
 
 	if (IsCoplanar(initialVertices[0], initialVertices[1], initialVertices[2], initialVertices[3])) {
-		LOG_FUNC_CALL("Error: 초기 4개의 정점이 동일 평면에 있습니다.");
+		LOG_FUNC_CALL("Error: The intial four Points are Coplanar.");
 		return false;
 	}
 
@@ -954,7 +954,7 @@ bool FCollisionDetector::InitializePolytope(PolytopeSOA& Poly, const std::vector
 		XMVECTOR v2 = Poly.Vertices[Poly.Indices[i + 2]] - Poly.Vertices[Poly.Indices[i]];
 		XMVECTOR normal = XMVector3Normalize(XMVector3Cross(v1, v2));
 		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[Poly.Indices[i]]);
-		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) {
+		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) > KINDA_SMALLER) {
 			normal = XMVectorNegate(normal);
 			std::swap(Poly.Indices[i + 1], Poly.Indices[i + 2]);
 		}
@@ -968,16 +968,43 @@ bool FCollisionDetector::InitializePolytope(PolytopeSOA& Poly, const std::vector
 std::vector<int> FCollisionDetector::FindVisibleFaces(const PolytopeSOA& Poly, int PointIndex) const
 {
 	std::vector<int> VisibleFaces;
+
+	// 인덱스 유효성 검사
+	if (PointIndex < 0 || PointIndex >= static_cast<int>(Poly.Vertices.size())) {
+		LOG_FUNC_CALL("Error : Invalid PointIndx %d", PointIndex);
+		return VisibleFaces;
+	}
+
+	if (Poly.Normals.empty() || Poly.Indices.size() < 3) {
+		LOG_FUNC_CALL("Error: Polytope has insufficient data (Normals or Indices).");
+		return VisibleFaces;
+	}
+
 	XMVECTOR Point = Poly.Vertices[PointIndex];
 
 	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
+		// 인덱스 유효성 검사
+		if (i * 3 + 2 >= Poly.Indices.size()) {
+			LOG_FUNC_CALL("Error :  Invalid Indices for Plane");
+			continue;
+		}
+
 		XMVECTOR Normal = Poly.Normals[i];
-		XMVECTOR Vertex = Poly.Vertices[Poly.Indices[i * 3]];
+		int vertexIndex = Poly.Indices[i * 3];
+		if (vertexIndex < 0 || vertexIndex >= static_cast<int>(Poly.Vertices.size())) {
+			continue;
+		}
+
+		XMVECTOR Vertex = Poly.Vertices[vertexIndex];
 		XMVECTOR FaceToPoint = XMVectorSubtract(Point, Vertex);
-		if (XMVectorGetX(XMVector3Dot(FaceToPoint, Normal)) > KINDA_SMALL) {
+		float dot = XMVectorGetX(XMVector3Dot(FaceToPoint, Normal));
+
+
+		if (dot > KINDA_SMALL) {
 			VisibleFaces.push_back(static_cast<int>(i));
 		}
 	}
+
 	return VisibleFaces;
 }
 
@@ -1008,76 +1035,134 @@ std::vector<FCollisionDetector::Edge> FCollisionDetector::FindHorizonEdges(const
 	return HorizonEdges;
 }
 
-void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& HorizonEdge, int NewPointIndex)
+void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& Edge, int NewPointIndex)
 {
-	XMVECTOR v1 = Poly.Vertices[HorizonEdge.End];
-	XMVECTOR v2 = Poly.Vertices[HorizonEdge.Start];
-	XMVECTOR v3 = Poly.Vertices[NewPointIndex];
+	// 새 면의 인덱스 구성 (Edge의 두 점 + 새 점)
+	int idx0 = Edge.Start;
+	int idx1 = Edge.End;
+	int idx2 = NewPointIndex;
 
-	XMVECTOR normal = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(v1, v2), XMVectorSubtract(v3, v2)));
-	XMVECTOR toOrigin = XMVectorNegate(v2);
-	if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) {
+	// 새 면의 정점
+	XMVECTOR v0 = Poly.Vertices[idx0];
+	XMVECTOR v1 = Poly.Vertices[idx1];
+	XMVECTOR v2 = Poly.Vertices[idx2];
+
+	// 법선 계산
+	XMVECTOR edge1 = XMVectorSubtract(v1, v0);
+	XMVECTOR edge2 = XMVectorSubtract(v2, v0);
+	XMVECTOR normal = XMVector3Cross(edge1, edge2);
+
+	// 법선 방향 보정: 원점에서 멀어지는 방향으로
+	float dot = XMVectorGetX(XMVector3Dot(normal, v0));
+	if (dot < 0) {
 		normal = XMVectorNegate(normal);
-		Poly.Indices.push_back(HorizonEdge.End);
-		Poly.Indices.push_back(HorizonEdge.Start);
-		Poly.Indices.push_back(NewPointIndex);
+		std::swap(idx1, idx2); // 인덱스 순서 변경
 	}
-	else {
-		Poly.Indices.push_back(HorizonEdge.Start);
-		Poly.Indices.push_back(HorizonEdge.End);
-		Poly.Indices.push_back(NewPointIndex);
-	}
+
+	// 법선 정규화
+	normal = XMVector3Normalize(normal);
+
+	// 원점에서 면까지의 거리 계산
+	float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, v0)));
+
+	// 새 면 데이터 추가
+	Poly.Indices.push_back(idx0);
+	Poly.Indices.push_back(idx1);
+	Poly.Indices.push_back(idx2);
 	Poly.Normals.push_back(normal);
-	Poly.Distances.push_back(XMVectorGetX(XMVector3Dot(normal, (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) ? v3 : v2)));
+	Poly.Distances.push_back(distance);
 }
 
 void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex)
 {
+	// 가시 면 찾기
 	std::vector<int> VisibleFacesIndices = FindVisibleFaces(Poly, NewPointIndex);
 	if (VisibleFacesIndices.empty()) {
-		LOG_FUNC_CALL("Error: The new point is inside the existing convex polytope.");
+		LOG_FUNC_CALL("Error: The new point is inside the existing convex polytope or on its surface.");
+		// 디버깅을 위해 추가 정보 출력
+		XMVECTOR newPoint = Poly.Vertices[NewPointIndex];
+		Vector3 point;
+		XMStoreFloat3(&point, newPoint);
 		return;
 	}
 
+	// 호라이즌 엣지 찾기
 	std::vector<Edge> HorizonEdges = FindHorizonEdges(Poly, VisibleFacesIndices);
-
-	// 새로운 면 추가
-	for (const auto& edge : HorizonEdges) {
-		AddNewFace(Poly, edge, NewPointIndex);
+	if (HorizonEdges.empty()) {
+		LOG_FUNC_CALL("Error: No horizon edges found.");
+		return;
 	}
 
-	// 가시 면 제거 (인덱스 기반으로 처리)
+	// 새로운 면을 저장할 임시 컨테이너
 	std::vector<XMVECTOR> newNormals;
 	std::vector<float> newDistances;
 	std::vector<int> newIndices;
+
+	// 새로운 면 추가
+	for (const auto& edge : HorizonEdges) {
+		// 새 면의 인덱스, 법선, 거리를 임시 컨테이너에 저장
+		int idx0 = edge.Start;
+		int idx1 = edge.End;
+		int idx2 = NewPointIndex;
+
+		XMVECTOR v0 = Poly.Vertices[idx0];
+		XMVECTOR v1 = Poly.Vertices[idx1];
+		XMVECTOR v2 = Poly.Vertices[idx2];
+
+		// 법선 계산
+		XMVECTOR edge1 = XMVectorSubtract(v1, v0);
+		XMVECTOR edge2 = XMVectorSubtract(v2, v0);
+		XMVECTOR normal = XMVector3Cross(edge1, edge2);
+
+		// 법선 방향 보정 - 원점 밖
+		float dot = XMVectorGetX(XMVector3Dot(normal, v0));
+		if (dot < 0) {
+			normal = XMVectorNegate(normal);
+			std::swap(idx1, idx2);
+		}
+
+		normal = XMVector3Normalize(normal);
+		float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, v0)));
+
+		// 새 면 데이터 추가
+		newIndices.push_back(idx0);
+		newIndices.push_back(idx1);
+		newIndices.push_back(idx2);
+		newNormals.push_back(normal);
+		newDistances.push_back(distance);
+	}
+
+	// 가시 면 제거
+	std::vector<XMVECTOR> updatedNormals;
+	std::vector<float> updatedDistances;
+	std::vector<int> updatedIndices;
 	std::vector<bool> isVisibleFace(Poly.Normals.size(), false);
+
+	// 가시 면 표시
 	for (int index : VisibleFacesIndices) {
 		isVisibleFace[index] = true;
 	}
 
+	// 비가시 면만 유지
 	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
 		if (!isVisibleFace[i]) {
-			newNormals.push_back(Poly.Normals[i]);
-			newDistances.push_back(Poly.Distances[i]);
-			newIndices.push_back(Poly.Indices[i * 3]);
-			newIndices.push_back(Poly.Indices[i * 3 + 1]);
-			newIndices.push_back(Poly.Indices[i * 3 + 2]);
+			updatedNormals.push_back(Poly.Normals[i]);
+			updatedDistances.push_back(Poly.Distances[i]);
+			updatedIndices.push_back(Poly.Indices[i * 3]);
+			updatedIndices.push_back(Poly.Indices[i * 3 + 1]);
+			updatedIndices.push_back(Poly.Indices[i * 3 + 2]);
 		}
 	}
 
-	// 새로운 면의 Normal, Distance, Indices 추가
-	Poly.Normals.insert(Poly.Normals.end(), newNormals.begin(), newNormals.end());
-	Poly.Distances.insert(Poly.Distances.end(), newDistances.begin(), newDistances.end());
-	Poly.Indices.insert(Poly.Indices.end(), newIndices.begin(), newIndices.end());
+	// 새로운 면 추가
+	updatedNormals.insert(updatedNormals.end(), newNormals.begin(), newNormals.end());
+	updatedDistances.insert(updatedDistances.end(), newDistances.begin(), newDistances.end());
+	updatedIndices.insert(updatedIndices.end(), newIndices.begin(), newIndices.end());
 
-
-	// 가시 면에 해당하는 이전 데이터 제거
-	size_t visibleCount = VisibleFacesIndices.size();
-	for (size_t i = 0; i < visibleCount; ++i) {
-		Poly.Normals.erase(Poly.Normals.begin());
-		Poly.Distances.erase(Poly.Distances.begin());
-		Poly.Indices.erase(Poly.Indices.begin(), Poly.Indices.begin() + 3);
-	}
+	// 다면체 데이터 갱신
+	Poly.Normals = std::move(updatedNormals);
+	Poly.Distances = std::move(updatedDistances);
+	Poly.Indices = std::move(updatedIndices);
 }
 
 #pragma endregion
