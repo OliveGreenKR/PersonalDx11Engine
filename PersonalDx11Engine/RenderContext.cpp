@@ -174,7 +174,7 @@ void FRenderContext::DrawRenderData(const IRenderData* InData)
         this->BindPixelShaderResource(Slot, SRV);
     }
 
-    // 5. 샘플러 (인터페이스에 정의되지 않았으므로 유지 불가 - 주석 처리)
+    // 5. 샘플러 (렌더 스테이트 에서 등록)
     /*
     for (const auto& Samp : Samplers)
     {

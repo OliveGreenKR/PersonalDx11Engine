@@ -940,7 +940,7 @@ bool FCollisionDetector::InitializePolytope(PolytopeSOA& Poly, const std::vector
 	std::vector<XMVECTOR> initialVertices = InitialVertices;
 
 	if (IsCoplanar(initialVertices[0], initialVertices[1], initialVertices[2], initialVertices[3])) {
-		LOG("Error: 초기 4개의 정점이 동일 평면에 있습니다.");
+		LOG_FUNC_CALL("Error: 초기 4개의 정점이 동일 평면에 있습니다.");
 		return false;
 	}
 
@@ -986,6 +986,7 @@ std::vector<FCollisionDetector::Edge> FCollisionDetector::FindHorizonEdges(const
 	std::unordered_set<Edge, EdgeHash> AllEdges;
 	std::unordered_set<Edge, EdgeHash> InternalEdges;
 
+	//중복 edge 찾기
 	for (int faceIndex : VisibleFaces) {
 		for (int j = 0; j < 3; ++j) {
 			Edge e(Poly.Indices[faceIndex * 3 + j], Poly.Indices[faceIndex * 3 + ((j + 1) % 3)]);
@@ -1032,11 +1033,9 @@ void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& HorizonEdge, 
 
 void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex)
 {
-	// 특이 사례 검사: 새로운 점이 기존 볼록 다면체 내부에 있는지 여부는
-	// 가시 면이 없는 경우로 판단할 수 있습니다.
 	std::vector<int> VisibleFacesIndices = FindVisibleFaces(Poly, NewPointIndex);
 	if (VisibleFacesIndices.empty()) {
-		LOG("Error: 새로운 점이 기존 볼록 다면체 내부에 있습니다.");
+		LOG_FUNC_CALL("Error: 새로운 점이 기존 볼록 다면체 내부에 있습니다.");
 		return;
 	}
 

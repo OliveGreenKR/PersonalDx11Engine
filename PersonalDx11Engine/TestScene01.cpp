@@ -69,6 +69,17 @@ void UTestScene01::Initialize()
     OPoint->SetModel(FResourceHandle(MDL_SPHERE_Low));
     OPoint->SetWorldScale(Vector3::One * 0.1f);
 
+
+    //EPA
+    Detector = FCollisionDetector();
+    FCollisionDetector::FSimplex Simplex;
+    if (Detector.GJKCollision(*Box, Box->GetWorldTransform(),
+                              *Sphere, Sphere->GetWorldTransform(),
+                              Simplex))
+    {
+        assert(CreatePolytope(Simplex, Detector, Poly));
+    }
+
     SetupInput();
     
 }
@@ -104,57 +115,35 @@ void UTestScene01::Tick(float DeltaTime)
         Camera->LookAt(Vector3::Zero);
         Camera->Tick(DeltaTime);
     }
+    if (bDebug01)
+    {
+        auto TransformA = Box->GetWorldTransform();
+        auto TransformB = Sphere->GetWorldTransform();
 
-    auto TransformA = Box->GetWorldTransform();
-    auto TransformB = Sphere->GetWorldTransform();
+        UDebugDrawManager::Get()->DrawBox(
+            TransformA.Position,
+            TransformA.Scale,
+            TransformA.Rotation,
+            Vector4(1, 1, 0, 1),
+            DeltaTime
+        );
 
-    UDebugDrawManager::Get()->DrawBox(
-        TransformA.Position,
-        TransformA.Scale,
-        TransformA.Rotation,
-        Vector4(1, 1, 0, 1),
-        DeltaTime
-    );
-
-    UDebugDrawManager::Get()->DrawSphere(
-        TransformB.Position,
-        TransformB.Scale.x * 0.5f,
-        TransformB.Rotation,
-        Vector4(0, 1, 1, 1),
-        DeltaTime
-    );
-
-    static FCollisionDetector Detector;
+        UDebugDrawManager::Get()->DrawSphere(
+            TransformB.Position,
+            TransformB.Scale.x * 0.5f,
+            TransformB.Rotation,
+            Vector4(0, 1, 1, 1),
+            DeltaTime
+        );
+    }
+ 
 
     auto ToVector = [](const XMVECTOR& InVec) { return Vector3(InVec.m128_f32[0], InVec.m128_f32[1], InVec.m128_f32[2]); };
 
-    FCollisionDetector::FSimplex Simplex;
-    if (Detector.GJKCollision(*Box, Box->GetWorldTransform(),
-                              *Sphere, Sphere->GetWorldTransform(),
-                              Simplex))
-    {
-        //Vector3 A = ToVector(Simplex.Points[0]);
-        //Vector3 B = ToVector(Simplex.Points[1]);
-        //Vector3 C = ToVector(Simplex.Points[2]);
-        //Vector3 D = ToVector(Simplex.Points[3]);
-        //Vector4 Color = Vector4(1, 1, 1, 1);
-
-        //float thickness = KINDA_SMALL;
-        ////A
-        //UDebugDrawManager::Get()->DrawLine(A, B, Color, thickness, DeltaTime);
-        //UDebugDrawManager::Get()->DrawLine(A, C, Color, thickness, DeltaTime);
-        //UDebugDrawManager::Get()->DrawLine(A, D, Color, thickness, DeltaTime);
-        ////Bc
-        //UDebugDrawManager::Get()->DrawLine(B, C, Color, thickness, DeltaTime);
-        ////cd
-        //UDebugDrawManager::Get()->DrawLine(C, D, Color, thickness, DeltaTime);
-        ////db
-        //UDebugDrawManager::Get()->DrawLine(D, B, Color, thickness, DeltaTime);
-        EPACollision(*Box, Box->GetWorldTransform(),
-                     *Sphere, Sphere->GetWorldTransform(),
-                     Simplex, Detector);
-    }
-
+   
+    EPACollision(*Box, Box->GetWorldTransform(),
+                 *Sphere, Sphere->GetWorldTransform(),
+                 Poly, Detector);
 
 }
 
@@ -193,6 +182,8 @@ void UTestScene01::SubmitRenderUI()
         {
             Latitude = Math::Clamp(Latitude, -LongitudeThreshold, LongitudeThreshold);
         }
+        ImGui::Checkbox("CollisionShape", &bDebug01);
+        ImGui::Checkbox("PolytopeEPA", &bDebug02);
         ImGui::End();
                                          });
 }
@@ -278,12 +269,9 @@ Vector3 UTestScene01::CalculateSphericPosition(float Latitude, float Longitude)
 
 ///////////////
 
-bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
-								const FTransform& TransformA,
-								const ICollisionShape& ShapeB,
-								const FTransform& TransformB,
-								const FCollisionDetector::FSimplex& InitialSimplex, 
-								FCollisionDetector& InDetector)
+bool UTestScene01::CreatePolytope(const FCollisionDetector::FSimplex& InSimplex,
+                                  FCollisionDetector& InDetector,
+								  FCollisionDetector::PolytopeSOA& OutPoly)
 {
 	bool Result = false;
 
@@ -293,7 +281,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	constexpr int MaxEPAIterations = 30;
 
 	// 입력 심플렉스가 4면체인지 확인
-	if (InitialSimplex.Size != 4) {
+	if (InSimplex.Size != 4) {
 		// 4면체가 아닌 경우 종료
 		return Result;
 	}
@@ -309,10 +297,10 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	ContactInfo ContactData;
 
 	// 정점 초기화 (GJK에서 얻은 Simplex로 시작)
-	for (int i = 0; i < InitialSimplex.Size; ++i) {
-		Poly.Vertices.push_back(InitialSimplex.Points[i]);
-		ContactData.VerticesA.push_back(InitialSimplex.SupportPointsA[i]);
-		ContactData.VerticesB.push_back(InitialSimplex.SupportPointsB[i]);
+	for (int i = 0; i < InSimplex.Size; ++i) {
+		Poly.Vertices.push_back(InSimplex.Points[i]);
+		ContactData.VerticesA.push_back(InSimplex.SupportPointsA[i]);
+		ContactData.VerticesB.push_back(InSimplex.SupportPointsB[i]);
 	}
 
 	// 초기 다면체 구성 (4면체)
@@ -349,96 +337,83 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 		Poly.Distances.push_back(distance);
 	}
 
+	OutPoly = Poly;
+	return true;
+
+}
+
+bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
+								const FTransform& TransformA,
+								const ICollisionShape& ShapeB,
+								const FTransform& TransformB, 
+								FCollisionDetector::PolytopeSOA& Poly,
+								FCollisionDetector& InDetector)
+{
+	bool Result = false;
+
+	using PolytopeSOA = FCollisionDetector::PolytopeSOA;
+	using FSimplex = FCollisionDetector::FSimplex;
+
+
 	// EPA 반복 수행
-	bool bConverged = false;
+	static bool bConverged = false;
+    static int Iterations = 0;
 	XMVECTOR ClosestNormal = XMVectorZero();
 	float ClosestDistance = FLT_MAX;
 	int ClosestFaceIndex = -1;
-    float IterPauseTime = 0.6f;
-	for (int Iteration = 0; Iteration < MaxEPAIterations && !bConverged; ++Iteration) {
+    float IterPauseTime = 1.0f;
 
-        DrawPolytope(Poly, Vector4(1, 1, 1, 1), 0.6f, false);
+    // EPA에 필요한 보조 데이터 구조
+    struct ContactInfo {
+        std::vector<XMVECTOR> VerticesA;    // ShapeA의 대응점
+        std::vector<XMVECTOR> VerticesB;    // ShapeB의 대응점
+    } ContactData;
 
-		// 원점에서 가장 가까운 면 찾기
-		ClosestFaceIndex = -1;
-		ClosestDistance = FLT_MAX;
+    DrawPolytope(Poly, Vector4(1, 1, 1, 1), IterPauseTime, true);
 
-		for (size_t i = 0; i < Poly.Distances.size(); ++i) {
-			if (Poly.Distances[i] < ClosestDistance && Poly.Distances[i] > 0) {
-				ClosestDistance = Poly.Distances[i];
-				ClosestFaceIndex = static_cast<int>(i);
-				ClosestNormal = Poly.Normals[i];
-			}
-		}
+    if (!bConverged)
+    {
+        std::cout << "Press Enter  somethin for next EPA Iterattion : "  << Iterations++ << endl;
+        std::string input;
+        std::getline(std::cin, input); // 반복을 위한 다음 입력 대기
+    }
 
-		if (ClosestFaceIndex == -1) {
-			// 적합한 면이 없음 (드문 경우)
-			LOG("Error : There is No Face");
-			break;
-		}
+    // 원점에서 가장 가까운 면 찾기
+    ClosestFaceIndex = -1;
+    ClosestDistance = FLT_MAX;
 
-		// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
-		XMVECTOR SearchDir = ClosestNormal;
-		XMVECTOR SupportA, SupportB;
-		XMVECTOR NewPoint = InDetector.ComputeMinkowskiSupport(
-			ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
+    for (size_t i = 0; i < Poly.Distances.size(); ++i) {
+        if (Poly.Distances[i] < ClosestDistance && Poly.Distances[i] > 0) {
+            ClosestDistance = Poly.Distances[i];
+            ClosestFaceIndex = static_cast<int>(i);
+            ClosestNormal = Poly.Normals[i];
+        }
+    }
 
-		// 새 지원점과 가장 가까운 면 사이의 거리 계산
-		float NewDistance = std::abs(XMVectorGetX(XMVector3Dot(NewPoint, SearchDir)));
+    if (ClosestFaceIndex == -1) {
+        // 적합한 면이 없음 (드문 경우)
+        LOG_FUNC_CALL("Error : There is No Face");
+        return false;
+    }
 
-		// 수렴 확인 (더 이상 진행이 없거나 충분히 가까움)
-		if (fabs(NewDistance - ClosestDistance) < KINDA_SMALLER) {
-			// 수렴 - 결과 설정
-			Vector3 Normal;
-			XMStoreFloat3(&Normal, ClosestNormal);
-			Normal *= ClosestDistance;
+   
+	// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
+	XMVECTOR SearchDir = (ClosestNormal);
+	XMVECTOR SupportA, SupportB;
+	XMVECTOR NewPoint = InDetector.ComputeMinkowskiSupport(
+		ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
 
-			// 충돌 지점 계산 (법선 방향의 중간점)
-			int faceStartIdx = ClosestFaceIndex * 3;
-			XMVECTOR ContactPointA = XMVectorZero();
-			XMVECTOR ContactPointB = XMVectorZero();
+	// 새 지원점과 가장 가까운 면 사이의 거리 계산
+	float NewDistance = std::abs(XMVectorGetX(XMVector3Dot(NewPoint, SearchDir)));
 
-			for (int i = 0; i < 3; ++i) {
-				int vertexIndex = Poly.Indices[faceStartIdx + i];
-				ContactPointA = XMVectorAdd(ContactPointA, ContactData.VerticesA[vertexIndex]);
-				ContactPointB = XMVectorAdd(ContactPointB, ContactData.VerticesB[vertexIndex]);
-			}
-
-			ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
-			ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
-
-			//// 반발 방향으로 살짝 이동된 지점 사용
-			//XMVECTOR ContactPoint = XMVectorAdd(
-			//	ContactPointA,
-			//	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
-			//);
-			Vector3 ContactPoint;
-			XMStoreFloat3(&ContactPoint, ContactPointA);
-			bConverged = true;
-			UDebugDrawManager::Get()->DrawLine(ContactPoint, ContactPoint + Normal, Vector4(0, 1, 0, 1), 0.001f, 0.1f);
-			return true;
-		}
-
-		// 새 정점 추가
-		int NewPointIndex = static_cast<int>(Poly.Vertices.size());
-		Poly.Vertices.push_back(NewPoint);
-		ContactData.VerticesA.push_back(SupportA);
-		ContactData.VerticesB.push_back(SupportB);
-
-		// QuickHull 알고리즘으로 다면체 재구성
-		InDetector.UpdatePolytopeWithQuickHull(Poly, NewPointIndex);
-
-        Sleep(IterPauseTime * 1e3);
-	}
-
-	// 수렴하지 않은 경우의 처리 (최대 반복 횟수 초과)
-	if (!bConverged && ClosestFaceIndex != -1) {
-		// 마지막 계산된 가장 가까운 면 사용
+	// 수렴 확인 (더 이상 진행이 없거나 충분히 가까움)
+	if (fabs(NewDistance - ClosestDistance) < KINDA_SMALLER) {
+		// 수렴 - 결과 설정
 		Vector3 Normal;
 		XMStoreFloat3(&Normal, ClosestNormal);
 		Normal *= ClosestDistance;
 
-		// 충돌 지점 추정
+		// 충돌 지점 계산 (법선 방향의 중간점)
 		int faceStartIdx = ClosestFaceIndex * 3;
 		XMVECTOR ContactPointA = XMVectorZero();
 		XMVECTOR ContactPointB = XMVectorZero();
@@ -452,17 +427,28 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 		ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
 		ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
 
-		//XMVECTOR ContactPoint = XMVectorAdd(
-		//	ContactPointA,
-		//	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
-		//);
+        //// 반발 방향으로 살짝 이동된 지점 사용
+        //XMVECTOR ContactPoint = XMVectorAdd(
+        //	ContactPointA,
+        //	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
+        //);
 
-		//XMStoreFloat3(&Result.Point, ContactPoint);
-		Vector3 ContactPoint;
-		XMStoreFloat3(&ContactPoint, ContactPointA);
-		bConverged = true;
-		UDebugDrawManager::Get()->DrawLine(ContactPoint, ContactPoint + Normal, Vector4(0, 1, 0, 1), 0.001f, 0.1f);
-	}
+        LOG_FUNC_CALL("EPA Converged");
+        Vector3 ContactPoint;
+        XMStoreFloat3(&ContactPoint, ContactPointA);
+        bConverged = true;
+        UDebugDrawManager::Get()->DrawLine(ContactPoint, ContactPoint + Normal, Vector4(0, 1, 0, 1), 0.001f, 0.1f);
+        return true;
+    }
+
+    // 새 정점 추가
+    int NewPointIndex = static_cast<int>(Poly.Vertices.size());
+    Poly.Vertices.push_back(NewPoint);
+    ContactData.VerticesA.push_back(SupportA);
+    ContactData.VerticesB.push_back(SupportB);
+
+    // QuickHull 알고리즘으로 다면체 재구성
+    InDetector.UpdatePolytopeWithQuickHull(Poly, NewPointIndex);
 
 	return true;
 }
@@ -470,7 +456,8 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 
 void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, const Vector4& Color, float LifeTime = 0.1f, bool bDrawNormals = false)
 {
-
+    if (!bDebug02)
+        return;
     using PolytopeSOA = FCollisionDetector::PolytopeSOA;
 
     if (Polytope.Indices.empty() || Polytope.Vertices.empty())
@@ -511,7 +498,7 @@ void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
     // 추가적으로 면의 법선 시각화 (선택적)
     if (bDrawNormals && Polytope.Normals.size() * 3 >= Polytope.Indices.size())
     {
-        Vector4 NormalColor = Vector4(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+        Vector4 NormalColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red
         float NormalLength = 0.1f; // 법선 길이
 
         for (size_t i = 0; i < Polytope.Normals.size(); i++)
