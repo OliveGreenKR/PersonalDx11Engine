@@ -71,13 +71,14 @@ void UTestScene01::Initialize()
 
 
     //EPA
+    CuurentIteration = 1;
     Detector = FCollisionDetector();
     FCollisionDetector::FSimplex Simplex;
     if (Detector.GJKCollision(*Box, Box->GetWorldTransform(),
                               *Sphere, Sphere->GetWorldTransform(),
                               Simplex))
     {
-        assert(CreatePolytope(Simplex, Detector, Poly));
+        assert(CreateInitialPolytope(Simplex, Detector, Poly));
     }
 
     SetupInput();
@@ -108,6 +109,8 @@ void UTestScene01::Unload()
 
 void UTestScene01::Tick(float DeltaTime)
 {
+
+    static int PrevIteration = 0;
     if (Camera)
     {
         Vector3 NewPos = CalculateSphericPosition(Latitude, Longitude);
@@ -140,11 +143,18 @@ void UTestScene01::Tick(float DeltaTime)
 
     auto ToVector = [](const XMVECTOR& InVec) { return Vector3(InVec.m128_f32[0], InVec.m128_f32[1], InVec.m128_f32[2]); };
 
-   
-    EPACollision(*Box, Box->GetWorldTransform(),
-                 *Sphere, Sphere->GetWorldTransform(),
-                 Poly, Detector);
-
+    if (CuurentIteration > PrevIteration)
+    {
+        EPACollision(*Box, Box->GetWorldTransform(),
+                     *Sphere, Sphere->GetWorldTransform(),
+                     Poly, Detector);
+    }
+    else
+    {
+        DrawPolytope(Poly, Vector4(1, 1, 1, 1), DeltaTime, true);
+    }
+    
+    PrevIteration = CuurentIteration;
 }
 
 void UTestScene01::SubmitRender(URenderer* Renderer)
@@ -184,6 +194,12 @@ void UTestScene01::SubmitRenderUI()
         }
         ImGui::Checkbox("CollisionShape", &bDebug01);
         ImGui::Checkbox("PolytopeEPA", &bDebug02);
+        ImGui::TextColored(ImVec4(1, 0, 1, 1), "EPAIteration %d", CuurentIteration);
+        ImGui::SameLine();
+        if (ImGui::Button("+"))
+        {
+            CuurentIteration++;
+        }
         ImGui::End();
                                          });
 }
@@ -269,9 +285,9 @@ Vector3 UTestScene01::CalculateSphericPosition(float Latitude, float Longitude)
 
 ///////////////
 
-bool UTestScene01::CreatePolytope(const FCollisionDetector::FSimplex& InSimplex,
-                                  FCollisionDetector& InDetector,
-								  FCollisionDetector::PolytopeSOA& OutPoly)
+bool UTestScene01::CreateInitialPolytope(const FCollisionDetector::FSimplex& InSimplex,
+                                         FCollisionDetector& InDetector,
+                                         FCollisionDetector::PolytopeSOA& OutPoly)
 {
 	bool Result = false;
 
@@ -369,15 +385,6 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
         std::vector<XMVECTOR> VerticesB;    // ShapeB의 대응점
     } ContactData;
 
-    DrawPolytope(Poly, Vector4(1, 1, 1, 1), IterPauseTime, true);
-
-    if (!bConverged)
-    {
-        std::cout << "Press Enter  somethin for next EPA Iterattion : "  << Iterations++ << endl;
-        std::string input;
-        std::getline(std::cin, input); // 반복을 위한 다음 입력 대기
-    }
-
     // 원점에서 가장 가까운 면 찾기
     ClosestFaceIndex = -1;
     ClosestDistance = FLT_MAX;
@@ -398,7 +405,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 
    
 	// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
-	XMVECTOR SearchDir = (ClosestNormal);
+	XMVECTOR SearchDir = XMVectorNegate(ClosestNormal);
 	XMVECTOR SupportA, SupportB;
 	XMVECTOR NewPoint = InDetector.ComputeMinkowskiSupport(
 		ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
@@ -498,7 +505,8 @@ void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
     // 추가적으로 면의 법선 시각화 (선택적)
     if (bDrawNormals && Polytope.Normals.size() * 3 >= Polytope.Indices.size())
     {
-        Vector4 NormalColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+        Vector4 InvalidNormalColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+        Vector4 ValidNormalColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
         float NormalLength = 0.1f; // 법선 길이
 
         for (size_t i = 0; i < Polytope.Normals.size(); i++)
@@ -520,6 +528,14 @@ void UTestScene01::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
             XMVECTOR TriCenter = XMVectorScale(
                 XMVectorAdd(XMVectorAdd(Polytope.Vertices[IdxA], Polytope.Vertices[IdxB]), Polytope.Vertices[IdxC]),
                 1.0f / 3.0f);
+
+            //법선 원점 방향 검사
+            Vector4 NormalColor = ValidNormalColor;
+            // 법선이 원점을 향하면 INvlaid
+            XMVECTOR toOrigin = XMVectorNegate(Polytope.Vertices[IdxA]);
+            if (XMVectorGetX(XMVector3Dot(Polytope.Normals[i], toOrigin)) > 0) {
+                NormalColor = InvalidNormalColor;
+            }
 
             // 법선 벡터 계산
             XMVECTOR NormalEnd = XMVectorAdd(TriCenter, XMVectorScale(Polytope.Normals[i], NormalLength));

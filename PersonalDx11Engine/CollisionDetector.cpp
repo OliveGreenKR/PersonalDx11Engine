@@ -1035,7 +1035,7 @@ void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewP
 {
 	std::vector<int> VisibleFacesIndices = FindVisibleFaces(Poly, NewPointIndex);
 	if (VisibleFacesIndices.empty()) {
-		LOG_FUNC_CALL("Error: 새로운 점이 기존 볼록 다면체 내부에 있습니다.");
+		LOG_FUNC_CALL("Error: The new point is inside the existing convex polytope.");
 		return;
 	}
 

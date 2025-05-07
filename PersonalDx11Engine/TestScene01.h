@@ -46,6 +46,8 @@ private:
 	
 	FCollisionDetector::PolytopeSOA Poly;
 	FCollisionDetector Detector;
+	int CuurentIteration = 1;
+
 
 	float LongitudeThreshold = 180 - KINDA_SMALL;
 	float LatitudeThreshold = 89.0f - KINDA_SMALL;
@@ -54,7 +56,7 @@ private:
 	void SetupInput();
 	Vector3 CalculateSphericPosition(float Latidue, float Longitude);
 
-	bool CreatePolytope(const FCollisionDetector::FSimplex& InSimplex, FCollisionDetector& InDetector, FCollisionDetector::PolytopeSOA& OutPoly);
+	bool CreateInitialPolytope(const FCollisionDetector::FSimplex& InSimplex, FCollisionDetector& InDetector, FCollisionDetector::PolytopeSOA& OutPoly);
 
 	bool EPACollision(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB, FCollisionDetector::PolytopeSOA& InOutPoly, FCollisionDetector& InDetector);
 
