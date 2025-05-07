@@ -117,10 +117,16 @@ public:
     bool InitializePolytope(PolytopeSOA& Poly, const std::vector<XMVECTOR>& InitialVertices);
 
     std::vector<int> FindVisibleFaces(const PolytopeSOA& Poly, int PointIndex) const;
-
+    
+    //가시면과 비가시면이 공유하는 경계 모서리 검출
     std::vector<Edge> FindHorizonEdges(const PolytopeSOA& Poly, const std::vector<int>& VisibleFaces) const;
 
-    void AddNewFace(PolytopeSOA& Poly, const Edge& HorizonEdge, int NewPointIndex);
+    void AddNewFace(PolytopeSOA& Poly, const Edge& Edge, 
+                    int NewPointIndex, 
+                    std::vector<XMVECTOR>& OutNormals, 
+                    std::vector<float>& OutDistances, 
+                    std::vector<int>& OutIndices) const;
+
 
     void UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex);
 

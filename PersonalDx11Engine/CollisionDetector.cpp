@@ -901,6 +901,7 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 
 	return Result;
 }
+
 ////////////////////////////////////////////////////////
 bool FCollisionDetector::IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, const XMVECTOR& p3, const XMVECTOR& p4) const
 {
@@ -971,7 +972,7 @@ std::vector<int> FCollisionDetector::FindVisibleFaces(const PolytopeSOA& Poly, i
 
 	// 인덱스 유효성 검사
 	if (PointIndex < 0 || PointIndex >= static_cast<int>(Poly.Vertices.size())) {
-		LOG_FUNC_CALL("Error : Invalid PointIndx %d", PointIndex);
+		LOG_FUNC_CALL("Error: Invalid PointIndex %d", (PointIndex));
 		return VisibleFaces;
 	}
 
@@ -981,17 +982,18 @@ std::vector<int> FCollisionDetector::FindVisibleFaces(const PolytopeSOA& Poly, i
 	}
 
 	XMVECTOR Point = Poly.Vertices[PointIndex];
+	constexpr float VisibilityThreshold = 1e-4f; // EPA 수렴 기준과 일치
 
 	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
-		// 인덱스 유효성 검사
 		if (i * 3 + 2 >= Poly.Indices.size()) {
-			LOG_FUNC_CALL("Error :  Invalid Indices for Plane");
+			LOG_FUNC_CALL("Error: Invalid index access for face  %d" ,i);
 			continue;
 		}
 
 		XMVECTOR Normal = Poly.Normals[i];
 		int vertexIndex = Poly.Indices[i * 3];
 		if (vertexIndex < 0 || vertexIndex >= static_cast<int>(Poly.Vertices.size())) {
+			LOG_FUNC_CALL("Error: Invalid vertex index [%d] for face [%d]",vertexIndex, i);
 			continue;
 		}
 
@@ -999,50 +1001,132 @@ std::vector<int> FCollisionDetector::FindVisibleFaces(const PolytopeSOA& Poly, i
 		XMVECTOR FaceToPoint = XMVectorSubtract(Point, Vertex);
 		float dot = XMVectorGetX(XMVector3Dot(FaceToPoint, Normal));
 
-
-		if (dot > KINDA_SMALL) {
+		if (dot > VisibilityThreshold) {
 			VisibleFaces.push_back(static_cast<int>(i));
 		}
+	}
+
+	// 디버깅: 가시 면 없음 경고
+	if (VisibleFaces.empty()) {
+		Vector3 point;
+		XMStoreFloat3(&point, Point);
+		LOG_FUNC_CALL("Warning: No visible faces! Point may be inside or on polytope surface.");
 	}
 
 	return VisibleFaces;
 }
 
-std::vector<FCollisionDetector::Edge> FCollisionDetector::FindHorizonEdges(const PolytopeSOA& Poly, const std::vector<int>& VisibleFaces) const
+std::vector<FCollisionDetector::Edge> FCollisionDetector::FindHorizonEdges(const PolytopeSOA& Poly, 
+																		   const std::vector<int>& VisibleFacesIndices) const
 {
-	std::unordered_set<Edge, EdgeHash> AllEdges;
-	std::unordered_set<Edge, EdgeHash> InternalEdges;
+	std::vector<Edge> HorizonEdges;
+	if (VisibleFacesIndices.empty()) {
+		LOG_FUNC_CALL("Error: No visible faces provided");
+		return HorizonEdges;
+	}
 
-	//중복 edge 찾기
-	for (int faceIndex : VisibleFaces) {
-		for (int j = 0; j < 3; ++j) {
-			Edge e(Poly.Indices[faceIndex * 3 + j], Poly.Indices[faceIndex * 3 + ((j + 1) % 3)]);
-			if (AllEdges.find(e) != AllEdges.end()) {
-				InternalEdges.insert(e);
+	if (VisibleFacesIndices.size() == Poly.Normals.size()) {
+		LOG_FUNC_CALL("Error: All faces are visible, polytope may not contain origin");
+		return HorizonEdges;
+	}
+
+	// 엣지 저장을 위한 unordered_set
+	std::unordered_set<Edge, EdgeHash> edgeSet;
+
+	// 비가시 면의 엣지 추가
+	std::vector<bool> isVisible(Poly.Normals.size(), false);
+	for (int faceIdx : VisibleFacesIndices) {
+		if (faceIdx >= 0 && faceIdx < static_cast<int>(Poly.Normals.size())) {
+			isVisible[faceIdx] = true;
+		}
+		else {
+			LOG_FUNC_CALL("Error: Invalid visible face index [%d]", faceIdx);
+		}
+	}
+
+	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
+		if (isVisible[i]) continue;
+
+		size_t idx = i * 3;
+		if (idx + 2 >= Poly.Indices.size()) {
+			LOG_FUNC_CALL("Error: Invalid index access for face [%zu]", i);
+			continue;
+		}
+
+		int idx0 = Poly.Indices[idx];
+		int idx1 = Poly.Indices[idx + 1];
+		int idx2 = Poly.Indices[idx + 2];
+
+		// 유효성 검사
+		if (idx0 < 0 || idx0 >= static_cast<int>(Poly.Vertices.size()) ||
+			idx1 < 0 || idx1 >= static_cast<int>(Poly.Vertices.size()) ||
+			idx2 < 0 || idx2 >= static_cast<int>(Poly.Vertices.size())) {
+			LOG_FUNC_CALL("Error: Invalid vertex indices [%d, %d, %d] for face [%zu]", idx0, idx1, idx2, i);
+			continue;
+		}
+
+		edgeSet.emplace(idx0, idx1);
+		edgeSet.emplace(idx1, idx2);
+		edgeSet.emplace(idx2, idx0);
+	}
+
+	// 가시 면의 엣지 처리
+	for (int faceIdx : VisibleFacesIndices) {
+		size_t idx = faceIdx * 3;
+		if (idx + 2 >= Poly.Indices.size()) {
+			LOG_FUNC_CALL("Error: Invalid index access for visible face [%d]", faceIdx);
+			continue;
+		}
+
+		int idx0 = Poly.Indices[idx];
+		int idx1 = Poly.Indices[idx + 1];
+		int idx2 = Poly.Indices[idx + 2];
+
+		if (idx0 < 0 || idx0 >= static_cast<int>(Poly.Vertices.size()) ||
+			idx1 < 0 || idx1 >= static_cast<int>(Poly.Vertices.size()) ||
+			idx2 < 0 || idx2 >= static_cast<int>(Poly.Vertices.size())) {
+			LOG_FUNC_CALL("Error: Invalid vertex indices [%d, %d, %d] for visible face [%d]", idx0, idx1, idx2, faceIdx);
+			continue;
+		}
+
+		Edge edges[] = { {idx0, idx1}, {idx1, idx2}, {idx2, idx0} };
+		for (const auto& edge : edges) {
+			auto it = edgeSet.find(edge);
+			if (it != edgeSet.end()) {
+				edgeSet.erase(it); // 가시/비가시 경계가 아닌 엣지
 			}
 			else {
-				AllEdges.insert(e);
+				edgeSet.insert(edge); // 호라이즌 엣지 후보
 			}
 		}
 	}
 
-	std::vector<Edge> HorizonEdges;
-	for (const auto& edge : AllEdges) {
-		if (InternalEdges.find(edge) == InternalEdges.end()) {
-			HorizonEdges.push_back(edge);
-		}
-	}
+	// 호라이즌 엣지 수집
+	HorizonEdges.assign(edgeSet.begin(), edgeSet.end());
+
 	return HorizonEdges;
 }
 
-void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& Edge, int NewPointIndex)
+void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& Edge, int NewPointIndex,
+									std::vector<XMVECTOR>& OutNormals,
+									std::vector<float>& OutDistances,
+									std::vector<int>& OutIndices) const
 {
-	// 새 면의 인덱스 구성 (Edge의 두 점 + 새 점)
+	// 인덱스 유효성 검사
+	if (NewPointIndex < 0 || NewPointIndex >= static_cast<int>(Poly.Vertices.size()) ||
+		Edge.Start < 0 || Edge.Start >= static_cast<int>(Poly.Vertices.size()) ||
+		Edge.End < 0 || Edge.End >= static_cast<int>(Poly.Vertices.size())) {
+		LOG_FUNC_CALL("Error: Invalid indices in AddNewFace: NewPoint=[%d], Edge=(%d,%d)",
+					  NewPointIndex, Edge.Start, Edge.End);
+		return;
+	}
+
+	// 새 면의 인덱스
 	int idx0 = Edge.Start;
 	int idx1 = Edge.End;
 	int idx2 = NewPointIndex;
 
-	// 새 면의 정점
+	// 정점
 	XMVECTOR v0 = Poly.Vertices[idx0];
 	XMVECTOR v1 = Poly.Vertices[idx1];
 	XMVECTOR v2 = Poly.Vertices[idx2];
@@ -1052,25 +1136,23 @@ void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& Edge, int New
 	XMVECTOR edge2 = XMVectorSubtract(v2, v0);
 	XMVECTOR normal = XMVector3Cross(edge1, edge2);
 
-	// 법선 방향 보정: 원점에서 멀어지는 방향으로
+	// 법선 방향 보정
 	float dot = XMVectorGetX(XMVector3Dot(normal, v0));
 	if (dot < 0) {
 		normal = XMVectorNegate(normal);
-		std::swap(idx1, idx2); // 인덱스 순서 변경
+		std::swap(idx1, idx2);
 	}
 
-	// 법선 정규화
 	normal = XMVector3Normalize(normal);
-
-	// 원점에서 면까지의 거리 계산
 	float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, v0)));
 
-	// 새 면 데이터 추가
-	Poly.Indices.push_back(idx0);
-	Poly.Indices.push_back(idx1);
-	Poly.Indices.push_back(idx2);
-	Poly.Normals.push_back(normal);
-	Poly.Distances.push_back(distance);
+	// 출력 컨테이너에 추가
+	OutIndices.push_back(idx0);
+	OutIndices.push_back(idx1);
+	OutIndices.push_back(idx2);
+	OutNormals.push_back(normal);
+	OutDistances.push_back(distance);
+
 }
 
 void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex)
@@ -1078,58 +1160,27 @@ void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewP
 	// 가시 면 찾기
 	std::vector<int> VisibleFacesIndices = FindVisibleFaces(Poly, NewPointIndex);
 	if (VisibleFacesIndices.empty()) {
-		LOG_FUNC_CALL("Error: The new point is inside the existing convex polytope or on its surface.");
-		// 디버깅을 위해 추가 정보 출력
-		XMVECTOR newPoint = Poly.Vertices[NewPointIndex];
 		Vector3 point;
-		XMStoreFloat3(&point, newPoint);
+		XMStoreFloat3(&point, Poly.Vertices[NewPointIndex]);
+		LOG_FUNC_CALL("Error: No visible faces for point, Skipping update");
 		return;
 	}
 
 	// 호라이즌 엣지 찾기
 	std::vector<Edge> HorizonEdges = FindHorizonEdges(Poly, VisibleFacesIndices);
 	if (HorizonEdges.empty()) {
-		LOG_FUNC_CALL("Error: No horizon edges found.");
+		LOG_FUNC_CALL("Error: No horizon edges found");
 		return;
 	}
 
-	// 새로운 면을 저장할 임시 컨테이너
+	// 새 면 데이터
 	std::vector<XMVECTOR> newNormals;
 	std::vector<float> newDistances;
 	std::vector<int> newIndices;
 
-	// 새로운 면 추가
+	// 새 면 추가
 	for (const auto& edge : HorizonEdges) {
-		// 새 면의 인덱스, 법선, 거리를 임시 컨테이너에 저장
-		int idx0 = edge.Start;
-		int idx1 = edge.End;
-		int idx2 = NewPointIndex;
-
-		XMVECTOR v0 = Poly.Vertices[idx0];
-		XMVECTOR v1 = Poly.Vertices[idx1];
-		XMVECTOR v2 = Poly.Vertices[idx2];
-
-		// 법선 계산
-		XMVECTOR edge1 = XMVectorSubtract(v1, v0);
-		XMVECTOR edge2 = XMVectorSubtract(v2, v0);
-		XMVECTOR normal = XMVector3Cross(edge1, edge2);
-
-		// 법선 방향 보정 - 원점 밖
-		float dot = XMVectorGetX(XMVector3Dot(normal, v0));
-		if (dot < 0) {
-			normal = XMVectorNegate(normal);
-			std::swap(idx1, idx2);
-		}
-
-		normal = XMVector3Normalize(normal);
-		float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, v0)));
-
-		// 새 면 데이터 추가
-		newIndices.push_back(idx0);
-		newIndices.push_back(idx1);
-		newIndices.push_back(idx2);
-		newNormals.push_back(normal);
-		newDistances.push_back(distance);
+		AddNewFace(Poly, edge, NewPointIndex, newNormals, newDistances, newIndices);
 	}
 
 	// 가시 면 제거
@@ -1138,12 +1189,15 @@ void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewP
 	std::vector<int> updatedIndices;
 	std::vector<bool> isVisibleFace(Poly.Normals.size(), false);
 
-	// 가시 면 표시
 	for (int index : VisibleFacesIndices) {
-		isVisibleFace[index] = true;
+		if (index >= 0 && index < static_cast<int>(Poly.Normals.size())) {
+			isVisibleFace[index] = true;
+		}
+		else {
+			LOG_FUNC_CALL("Error: Invalid visible face index [%d]", index);
+		}
 	}
 
-	// 비가시 면만 유지
 	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
 		if (!isVisibleFace[i]) {
 			updatedNormals.push_back(Poly.Normals[i]);
@@ -1154,15 +1208,28 @@ void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewP
 		}
 	}
 
-	// 새로운 면 추가
+	// 새 면 데이터 추가
 	updatedNormals.insert(updatedNormals.end(), newNormals.begin(), newNormals.end());
 	updatedDistances.insert(updatedDistances.end(), newDistances.begin(), newDistances.end());
 	updatedIndices.insert(updatedIndices.end(), newIndices.begin(), newIndices.end());
 
-	// 다면체 데이터 갱신
+	// 다면체 갱신
 	Poly.Normals = std::move(updatedNormals);
 	Poly.Distances = std::move(updatedDistances);
 	Poly.Indices = std::move(updatedIndices);
+
+	// 원점 포함 확인
+	constexpr float Epsilon = 1e-4f;
+	bool containsOrigin = true;
+	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
+		if (Poly.Distances[i] < -Epsilon) {
+			containsOrigin = false;
+			break;
+		}
+	}
+	if (!containsOrigin) {
+		LOG_FUNC_CALL("Warning: Polytope does not contain origin after update");
+	}
 }
 
 #pragma endregion
