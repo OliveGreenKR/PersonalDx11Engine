@@ -480,7 +480,7 @@ bool FCollisionDetector::GJKCollision(
 			ShapeA, TransformA, ShapeB, TransformB, Direction, SupportA, SupportB);
 
 		// 원점을 지나지 못하면 충돌 없음
-		if (XMVector3Dot(Point, Direction).m128_f32[0] < -KINDA_SMALLER)
+		if (XMVector3Dot(Point, Direction).m128_f32[0] < 0)
 		{
 			return false;
 		}
@@ -531,6 +531,7 @@ XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
 
 bool FCollisionDetector::UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction)
 {
+	LOG("PreUpdate simplex %d", Simplex.Size);
 	// Simplex 크기에 따른 처리
 	switch (Simplex.Size)
 	{
@@ -649,83 +650,110 @@ bool FCollisionDetector::UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction)
 
 		case 4: // 테트라헤드론
 		{
-			// 테트라헤드론 ABCD와 원점
-			XMVECTOR A = Simplex.Points[0];
-			XMVECTOR B = Simplex.Points[1];
-			XMVECTOR C = Simplex.Points[2];
-			XMVECTOR D = Simplex.Points[3];
-			XMVECTOR AO = XMVectorNegate(A);
-			XMVECTOR AB = XMVectorSubtract(B, A);
-			XMVECTOR AC = XMVectorSubtract(C, A);
-			XMVECTOR AD = XMVectorSubtract(D, A);
-
-			// 각 면의 법선 계산
-			XMVECTOR ABC = XMVector3Cross(AB, AC);
-			XMVECTOR ABD = XMVector3Cross(AB, AD);
-			XMVECTOR ACD = XMVector3Cross(AD, AC);
-
-			// 원점이 각 면의 외부인지 확인
-			bool OutsideABC = XMVector3Dot(ABC, AO).m128_f32[0] > 0.0f;
-			bool OutsideABD = XMVector3Dot(ABD, AO).m128_f32[0] > 0.0f;
-			bool OutsideACD = XMVector3Dot(ACD, AO).m128_f32[0] > 0.0f;
-
-			if (OutsideABC)
-			{
-				// ABC 면 유지
-				Simplex.Points[0] = A;
-				Simplex.Points[1] = B;
-				Simplex.Points[2] = C;
-				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
-				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
-				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[2];
-				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
-				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
-				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[2];
-				Simplex.Size = 3;
-				Direction = ABC;
-				return false;
-			}
-
-			if (OutsideABD)
-			{
-				// ABD 면 유지
-				Simplex.Points[0] = A;
-				Simplex.Points[1] = B;
-				Simplex.Points[2] = D;
-				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
-				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
-				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
-				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
-				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
-				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
-				Simplex.Size = 3;
-				Direction = ABD;
-				return false;
-			}
-
-			if (OutsideACD)
-			{
-				// ACD 면 유지
-				Simplex.Points[0] = A;
-				Simplex.Points[1] = C;
-				Simplex.Points[2] = D;
-				Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
-				Simplex.SupportPointsA[1] = Simplex.SupportPointsA[2];
-				Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
-				Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
-				Simplex.SupportPointsB[1] = Simplex.SupportPointsB[2];
-				Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
-				Simplex.Size = 3;
-				Direction = ACD;
-				return false;
-			}
-
-			// 원점이 테트라헤드론 내부
-			return true;
+			return GJKHandleTetrahedron(Simplex, Direction);
 		}
 	}
-
 	return false;
+}
+
+XMVECTOR FCollisionDetector::ClosestPointOnSegmentToOrigin(FXMVECTOR P1, FXMVECTOR P2)
+{
+	const XMVECTOR O = XMVectorZero();
+	const XMVECTOR P1P2 = XMVectorSubtract(P2, P1);
+	const XMVECTOR P1O = XMVectorSubtract(O, P1); // O - P1 = -P1
+
+	// Handle case where P1 == P2 (degenerate segment)
+	float lenSq = XMVector3LengthSq(P1P2).m128_f32[0];
+	if (lenSq < KINDA_SMALL)
+	{
+		return P1; // Return P1 if segment is a point
+	}
+
+	// Project P1O onto P1P2
+	float t = XMVector3Dot(P1O, P1P2).m128_f32[0] / lenSq;
+
+	// Clamp t to the range [0, 1] to find closest point on the segment
+	t = std::clamp(t, 0.0f, 1.0f);
+
+	// Closest point is P1 + t * (P2 - P1)
+	return XMVectorAdd(P1, XMVectorScale(P1P2, t));
+}
+
+bool FCollisionDetector::GJKHandleTetrahedron(FSimplex& Simplex,XMVECTOR& Direction)
+{
+	// 테트라헤드론 ABCD와 원점
+	XMVECTOR A = Simplex.Points[0];
+	XMVECTOR B = Simplex.Points[1];
+	XMVECTOR C = Simplex.Points[2];
+	XMVECTOR D = Simplex.Points[3];
+	XMVECTOR AO = XMVectorNegate(A);
+	XMVECTOR AB = XMVectorSubtract(B, A);
+	XMVECTOR AC = XMVectorSubtract(C, A);
+	XMVECTOR AD = XMVectorSubtract(D, A);
+
+	// 각 면의 법선 계산
+	XMVECTOR ABC = XMVector3Cross(AB, AC);
+	XMVECTOR ABD = XMVector3Cross(AB, AD);
+	XMVECTOR ACD = XMVector3Cross(AD, AC);
+
+	// 원점이 각 면의 외부인지 확인
+	bool OutsideABC = XMVector3Dot(ABC, AO).m128_f32[0] > 0.0f;
+	bool OutsideABD = XMVector3Dot(ABD, AO).m128_f32[0] > 0.0f;
+	bool OutsideACD = XMVector3Dot(ACD, AO).m128_f32[0] > 0.0f;
+
+	if (OutsideABC)
+	{
+		// ABC 면 유지
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = B;
+		Simplex.Points[2] = C;
+		Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+		Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
+		Simplex.SupportPointsA[2] = Simplex.SupportPointsA[2];
+		Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+		Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
+		Simplex.SupportPointsB[2] = Simplex.SupportPointsB[2];
+		Simplex.Size = 3;
+		Direction = ABC;
+		return false;
+	}
+
+	if (OutsideABD)
+	{
+		// ABD 면 유지
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = B;
+		Simplex.Points[2] = D;
+		Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+		Simplex.SupportPointsA[1] = Simplex.SupportPointsA[1];
+		Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
+		Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+		Simplex.SupportPointsB[1] = Simplex.SupportPointsB[1];
+		Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
+		Simplex.Size = 3;
+		Direction = ABD;
+		return false;
+	}
+
+	if (OutsideACD)
+	{
+		// ACD 면 유지
+		Simplex.Points[0] = A;
+		Simplex.Points[1] = C;
+		Simplex.Points[2] = D;
+		Simplex.SupportPointsA[0] = Simplex.SupportPointsA[0];
+		Simplex.SupportPointsA[1] = Simplex.SupportPointsA[2];
+		Simplex.SupportPointsA[2] = Simplex.SupportPointsA[3];
+		Simplex.SupportPointsB[0] = Simplex.SupportPointsB[0];
+		Simplex.SupportPointsB[1] = Simplex.SupportPointsB[2];
+		Simplex.SupportPointsB[2] = Simplex.SupportPointsB[3];
+		Simplex.Size = 3;
+		Direction = ACD;
+		return false;
+	}
+
+	// 원점이 테트라헤드론 내부
+	return true;
 }
 
 ///////////////////////////////
@@ -738,505 +766,496 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	const FSimplex& InitialSimplex)
 {
 	FCollisionDetectionResult Result;
+	// Start with bCollided = true, assume GJK confirmed overlap
 	Result.bCollided = true;
 
-	// 입력 심플렉스가 4면체인지 확인
+	// EPA requires a starting simplex that encloses the origin (a tetrahedron)
 	if (InitialSimplex.Size != 4) {
-		// 4면체가 아닌 경우 종료
+		LOG_FUNC_CALL("Error: Initial simplex size is not 4 (%d). EPA requires a tetrahedron.", InitialSimplex.Size);
+		Result.bCollided = false; // Cannot perform EPA without a volume
 		return Result;
 	}
 
-	// EPA에 필요한 보조 데이터 구조
-	struct ContactInfo {
-		std::vector<XMVECTOR> VerticesA;    // ShapeA의 대응점
-		std::vector<XMVECTOR> VerticesB;    // ShapeB의 대응점
-	};
-
-	// 다면체 초기화
+	// Initialize the polytope (convex hull) and corresponding support points
 	PolytopeSOA Poly;
-	ContactInfo ContactData;
 
-	
-	// 정점 초기화 (GJK에서 얻은 Simplex로 시작)
+	// Initialize vertices from the GJK simplex
+	// Reserve space to avoid reallocations during expansion
+	Poly.Vertices.reserve(MaxEPAIterations + 4);
+	Poly.VerticesA.reserve(MaxEPAIterations + 4);
+	Poly.VerticesB.reserve(MaxEPAIterations + 4);
+
 	for (int i = 0; i < InitialSimplex.Size; ++i) {
 		Poly.Vertices.push_back(InitialSimplex.Points[i]);
-		ContactData.VerticesA.push_back(InitialSimplex.SupportPointsA[i]);
-		ContactData.VerticesB.push_back(InitialSimplex.SupportPointsB[i]);
+		Poly.VerticesA.push_back(InitialSimplex.SupportPointsA[i]);
+		Poly.VerticesB.push_back(InitialSimplex.SupportPointsB[i]);
 	}
 
-	// 초기 다면체 구성 (4면체)
+	// Define indices for the initial tetrahedron faces
+	// Order is important for initial normal calculation
 	static const int faceIndices[][3] = {
 		{0, 1, 2}, {0, 3, 1}, {0, 2, 3}, {1, 3, 2}
 	};
 
-	// 인덱스와 법선 초기화
+	// Initialize faces (indices, normals, distances) for the tetrahedron
+	Poly.Indices.reserve(4 * 3); // 4 faces, 3 indices each
+	Poly.Normals.reserve(4);
+	Poly.Distances.reserve(4);
+
 	for (int i = 0; i < 4; ++i) {
-		// 면의 인덱스 추가
+		// Add face indices
 		Poly.Indices.push_back(faceIndices[i][0]);
 		Poly.Indices.push_back(faceIndices[i][1]);
 		Poly.Indices.push_back(faceIndices[i][2]);
 
-		// 면의 법선 계산
-		XMVECTOR v1 = XMVectorSubtract(Poly.Vertices[faceIndices[i][1]], Poly.Vertices[faceIndices[i][0]]);
-		XMVECTOR v2 = XMVectorSubtract(Poly.Vertices[faceIndices[i][2]], Poly.Vertices[faceIndices[i][0]]);
-		XMVECTOR normal = XMVector3Cross(v1, v2);
+		// Get vertex vectors using SIMD
+		XMVECTOR v0 = Poly.Vertices[faceIndices[i][0]];
+		XMVECTOR v1 = Poly.Vertices[faceIndices[i][1]];
+		XMVECTOR v2 = Poly.Vertices[faceIndices[i][2]];
 
-		// 법선이 원점에서 멀어지도록 보장
-		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[faceIndices[i][0]]);
-		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) > 0) {
+		// Calculate edge vectors using SIMD
+		XMVECTOR edge1 = XMVectorSubtract(v1, v0);
+		XMVECTOR edge2 = XMVectorSubtract(v2, v0);
+
+		// Calculate potential face normal using SIMD cross product
+		XMVECTOR normal = XMVector3Cross(edge1, edge2);
+
+		// Ensure the normal points away from the origin
+		// Check the dot product with a vector from a vertex to the origin (-v0).
+		// If the dot product is positive, the normal points towards the origin, so flip it.
+		if (XMVectorGetX(XMVector3Dot(normal, XMVectorNegate(v0))) > EPATolerance) { // Use tolerance for robustness
 			normal = XMVectorNegate(normal);
-			// 인덱스 순서 변경
-			int lastIdx = static_cast<int>(Poly.Indices.size());
+			// Reverse winding order if normal is flipped to maintain consistency
+			size_t lastIdx = Poly.Indices.size();
 			std::swap(Poly.Indices[lastIdx - 2], Poly.Indices[lastIdx - 1]);
 		}
-
-		normal = XMVector3Normalize(normal);
-		Poly.Normals.push_back(normal);
-
-		// 원점에서 면까지의 거리 계산
-		float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, Poly.Vertices[faceIndices[i][0]])));
-		Poly.Distances.push_back(distance);
-	}
-
-	// EPA 반복 수행
-	bool bConverged = false;
-	XMVECTOR ClosestNormal = XMVectorZero();
-	float ClosestDistance = FLT_MAX;
-	int ClosestFaceIndex = -1;
-
-	for (int Iteration = 0; Iteration < MaxEPAIterations && !bConverged; ++Iteration) {
-		// 원점에서 가장 가까운 면 찾기
-		ClosestFaceIndex = -1;
-		ClosestDistance = FLT_MAX;
-
-		for (size_t i = 0; i < Poly.Distances.size(); ++i) {
-			if (Poly.Distances[i] < ClosestDistance && Poly.Distances[i] > 0) {
-				ClosestDistance = Poly.Distances[i];
-				ClosestFaceIndex = static_cast<int>(i);
-				ClosestNormal = Poly.Normals[i];
+		else if (XMVectorGetX(XMVector3Dot(normal, XMVectorNegate(v0))) < -EPATolerance) {
+			// Normal is pointing away, which is good.
+		}
+		else {
+			// Normal is close to perpendicular to the vector to origin (origin near face plane)
+			// Let's assume valid initial simplex and check magnitude.
+			if (XMVectorGetX(XMVector3LengthSq(normal)) < EPATolerance * EPATolerance) {
+				LOG_FUNC_CALL("Error: Degenerate face found during initial polytope setup.");
+				// Remove the face indices if degenerate? Or just proceed hoping EPA fixes it.
+				Result.bCollided = false; // Cannot perform EPA without a volume
+				return Result;
 			}
 		}
 
-		if (ClosestFaceIndex == -1) {
-			// 적합한 면이 없음 (드문 경우)
-			LOG_FUNC_CALL("Error : There is No Face");
-			break;
+		// Normalize the normal using SIMD
+		normal = XMVector3Normalize(normal);
+		Poly.Normals.push_back(normal);
+
+		// Calculate distance from origin to the face along the normal direction.
+		// Since normal points away, this dot product should be non-negative.
+		float distance = XMVectorGetX(XMVector3Dot(normal, v0));
+		Poly.Distances.push_back(distance);
+	}
+
+	// EPA Iteration loop
+	// We iterate to find the face closest to the origin
+	int ClosestFaceIndex = -1;
+	XMVECTOR ClosestNormal = XMVectorZero();
+	float ClosestDistance = FLT_MAX;
+
+	for (int Iteration = 0; Iteration < MaxEPAIterations; ++Iteration) {
+		// Find the face closest to the origin in the current polytope
+		ClosestFaceIndex = -1;
+		ClosestDistance = FLT_MAX;
+
+		int num_faces = Poly.Distances.size(); // Use current size as faces are added/removed
+		for (int i = 0; i < num_faces; ++i) {
+			// Find the minimum distance among faces whose normal points away from origin (distance >= 0)
+			if (Poly.Distances[i] < ClosestDistance && Poly.Distances[i] >= -EPATolerance) { // Check >= -tolerance for robustness
+				ClosestDistance = Poly.Distances[i];
+				ClosestFaceIndex = i;
+			}
 		}
 
-		// 가장 가까운 면의 법선 방향으로 새 지원점 찾기
+		// If no closest face found (shouldn't happen with a valid polytope)
+		if (ClosestFaceIndex == -1) {
+			LOG_FUNC_CALL("Error: No closest face found in EPA loop. Polytope may be invalid.");
+			Result.bCollided = false; // Cannot find penetration data
+			return Result;
+		}
+
+		// Get the normal of the closest face
+		ClosestNormal = Poly.Normals[ClosestFaceIndex];
+
+		// Search direction is the normal of the closest face
 		XMVECTOR SearchDir = ClosestNormal;
+
+		// Find a new support point in the search direction (farthest point on Minkowski difference)
 		XMVECTOR SupportA, SupportB;
 		XMVECTOR NewPoint = ComputeMinkowskiSupport(
 			ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
 
-		// 새 지원점과 가장 가까운 면 사이의 거리 계산
-		float NewDistance = XMVectorGetX(XMVector3Dot(NewPoint, SearchDir));
+		// Calculate the distance of the new point from the origin along the search direction
+		float NewPointDistance = XMVectorGetX(XMVector3Dot(NewPoint, SearchDir));
 
-		// 수렴 확인 (더 이상 진행이 없거나 충분히 가까움)
-		if (fabs(NewDistance - ClosestDistance) < EPATolerance) {
-			// 수렴 - 결과 설정
+		// Check for convergence
+		// If the new point is not significantly further along the normal than the closest face's distance,
+		// the polytope has expanded sufficiently. The origin is effectively on the closest face plane.
+		if (std::fabs(NewPointDistance - ClosestDistance) < EPATolerance) {
+			// Converged - the current closest face represents the penetration data
 			XMStoreFloat3(&Result.Normal, ClosestNormal);
-			Result.PenetrationDepth = ClosestDistance;
+			Result.PenetrationDepth = ClosestDistance; // Use the distance of the closest face
 
-			// 충돌 지점 계산 (법선 방향의 중간점)
+			// Calculate contact point
+			// A common approximation is the midpoint between the average of support points on A
+			// and the average of support points on B for the vertices of the closest face.
 			int faceStartIdx = ClosestFaceIndex * 3;
-			XMVECTOR ContactPointA = XMVectorZero();
-			XMVECTOR ContactPointB = XMVectorZero();
+			XMVECTOR ContactPointA_Sum = XMVectorZero();
+			XMVECTOR ContactPointB_Sum = XMVectorZero();
 
 			for (int i = 0; i < 3; ++i) {
 				int vertexIndex = Poly.Indices[faceStartIdx + i];
-				ContactPointA = XMVectorAdd(ContactPointA, ContactData.VerticesA[vertexIndex]);
-				ContactPointB = XMVectorAdd(ContactPointB, ContactData.VerticesB[vertexIndex]);
+				// Accumulate corresponding support points from Poly
+				ContactPointA_Sum = XMVectorAdd(ContactPointA_Sum, Poly.VerticesA[vertexIndex]);
+				ContactPointB_Sum = XMVectorAdd(ContactPointB_Sum, Poly.VerticesB[vertexIndex]);
 			}
 
-			ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
-			ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
+			// Average the sums
+			XMVECTOR ContactPointA_Avg = XMVectorScale(ContactPointA_Sum, 1.0f / 3.0f);
+			XMVECTOR ContactPointB_Avg = XMVectorScale(ContactPointB_Sum, 1.0f / 3.0f);
 
-			// 반발 방향으로 살짝 이동된 지점 사용
-			XMVECTOR ContactPoint = XMVectorAdd(
-				ContactPointA,
-				XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
-			);
+			// Approximate the contact point as the midpoint between the averaged support points
+			XMVECTOR ResultContactPoint = XMVectorScale(XMVectorAdd(ContactPointA_Avg, ContactPointB_Avg), 0.5f);
 
-			XMStoreFloat3(&Result.Point, ContactPoint);
-			bConverged = true;
-			continue;
+			XMStoreFloat3(&Result.Point, ResultContactPoint);
+
+			// Successfully found penetration data
+			return Result; // Exit EPA function early
 		}
 
-		// 새 정점 추가
+		// If not converged, add the new point to the polytope vertices
 		int NewPointIndex = static_cast<int>(Poly.Vertices.size());
 		Poly.Vertices.push_back(NewPoint);
-		ContactData.VerticesA.push_back(SupportA);
-		ContactData.VerticesB.push_back(SupportB);
+		Poly.VerticesA.push_back(SupportA); // Store corresponding support points
+		Poly.VerticesB.push_back(SupportB);
 
-		// QuickHull 알고리즘으로 다면체 재구성
-		UpdatePolytopeWithQuickHull(Poly, NewPointIndex);
+		// Expand the polytope by removing faces visible from the new point
+		// and creating new faces connecting the new point to the horizon edges.
+		UpdatePolytope(Poly, NewPointIndex);
 	}
 
-	// 수렴하지 않은 경우의 처리 (최대 반복 횟수 초과)
-	if (!bConverged && ClosestFaceIndex != -1) {
-		// 마지막 계산된 가장 가까운 면 사용
-		XMStoreFloat3(&Result.Normal, ClosestNormal);
-		Result.PenetrationDepth = ClosestDistance;
+	// If the loop finishes without converging (reached MaxEPAIterations)
+	// Use the data from the closest face found in the *last* iteration.
+	// ClosestFaceIndex, ClosestNormal, and ClosestDistance still hold this data.
+	// If ClosestFaceIndex is -1, it means an error occurred inside the loop (already handled).
+	// If we reach here, ClosestFaceIndex should be valid from the last iteration.
+	LOG_FUNC_CALL("Warning: EPA reached max iterations without full convergence. Using last closest face data.");
 
-		// 충돌 지점 추정
+	// Populate result with data from the last closest face
+	XMStoreFloat3(&Result.Normal, ClosestNormal);
+	Result.PenetrationDepth = ClosestDistance;
+
+	// Recalculate contact point using the last closest face's data (indices might change if UpdatePolytope reordered, but face indices are stable for a given face)
+	// Re-finding the indices here ensures they match the final Poly.Indices
+	ClosestFaceIndex = -1;
+	float FinalClosestDistance = FLT_MAX;
+	int num_faces = Poly.Distances.size();
+	for (int i = 0; i < num_faces; ++i) {
+		if (Poly.Distances[i] < FinalClosestDistance && Poly.Distances[i] >= -EPATolerance) {
+			FinalClosestDistance = Poly.Distances[i];
+			ClosestFaceIndex = i;
+		}
+	}
+
+	if (ClosestFaceIndex != -1) { // Should be found if loop didn't error
+		XMStoreFloat3(&Result.Normal, Poly.Normals[ClosestFaceIndex]); // Use the final normal
+		Result.PenetrationDepth = Poly.Distances[ClosestFaceIndex]; // Use the final distance
+
 		int faceStartIdx = ClosestFaceIndex * 3;
-		XMVECTOR ContactPointA = XMVectorZero();
-		XMVECTOR ContactPointB = XMVectorZero();
+		XMVECTOR ContactPointA_Sum = XMVectorZero();
+		XMVECTOR ContactPointB_Sum = XMVectorZero();
 
 		for (int i = 0; i < 3; ++i) {
 			int vertexIndex = Poly.Indices[faceStartIdx + i];
-			ContactPointA = XMVectorAdd(ContactPointA, ContactData.VerticesA[vertexIndex]);
-			ContactPointB = XMVectorAdd(ContactPointB, ContactData.VerticesB[vertexIndex]);
+			ContactPointA_Sum = XMVectorAdd(ContactPointA_Sum, Poly.VerticesA[vertexIndex]);
+			ContactPointB_Sum = XMVectorAdd(ContactPointB_Sum, Poly.VerticesB[vertexIndex]);
 		}
 
-		ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
-		ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
+		XMVECTOR ContactPointA_Avg = XMVectorScale(ContactPointA_Sum, 1.0f / 3.0f);
+		XMVECTOR ContactPointB_Avg = XMVectorScale(ContactPointB_Sum, 1.0f / 3.0f);
 
-		XMVECTOR ContactPoint = XMVectorAdd(
-			ContactPointA,
-			XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
-		);
+		XMVECTOR ResultContactPoint = XMVectorScale(XMVectorAdd(ContactPointA_Avg, ContactPointB_Avg), 0.5f);
+		XMStoreFloat3(&Result.Point, ResultContactPoint);
 
-		XMStoreFloat3(&Result.Point, ContactPoint);
+	}
+	else {
+		LOG_FUNC_CALL("Error: Could not find closest face after max iterations.");
+		Result.bCollided = false; // Indicate failure if final face lookup fails
 	}
 
 	return Result;
 }
 
-////////////////////////////////////////////////////////
-bool FCollisionDetector::IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, const XMVECTOR& p3, const XMVECTOR& p4) const
+void FCollisionDetector::CalculateFaceNormalAndDistance(const PolytopeSOA& Poly, int face_index, DirectX::XMVECTOR& out_normal, float& out_distance) const
 {
-	XMVECTOR v1 = p1 - p2;
-	XMVECTOR v2 = p3 - p2;
-	XMVECTOR normal = XMVector3Cross(v1, v2);
-	return std::abs(XMVectorGetX(XMVector3Dot(normal, p4 - p2))) < -KINDA_SMALL;
+	// Calculate the normal and distance for a given face
+	// The normal is oriented to point away from the origin
+
+	// Get vertex indices for the triangle
+	int i0 = Poly.Indices[face_index * 3];
+	int i1 = Poly.Indices[face_index * 3 + 1];
+	int i2 = Poly.Indices[face_index * 3 + 2];
+
+	// Get vertex coordinates using XMVectorLoadFloat3 (or direct use if already XMVECTOR)
+	DirectX::XMVECTOR v0 = Poly.Vertices[i0];
+	DirectX::XMVECTOR v1 = Poly.Vertices[i1];
+	DirectX::XMVECTOR v2 = Poly.Vertices[i2];
+
+	// Calculate edge vectors using SIMD
+	DirectX::XMVECTOR edge1 = DirectX::XMVectorSubtract(v1, v0);
+	DirectX::XMVECTOR edge2 = DirectX::XMVectorSubtract(v2, v0);
+
+	// Calculate potential normal using SIMD cross product
+	DirectX::XMVECTOR n_candidate = DirectX::XMVector3Cross(edge1, edge2);
+
+	// Normalize the normal using SIMD
+	n_candidate = DirectX::XMVector3Normalize(n_candidate);
+
+	// Check orientation relative to the origin using SIMD dot product
+	DirectX::XMVECTOR dot_origin_v = DirectX::XMVector3Dot(n_candidate, v0);
+	float dot_origin = DirectX::XMVectorGetX(dot_origin_v);
+
+	// Ensure the normal points away from the origin
+	if (dot_origin < 0)
+	{
+		out_normal = DirectX::XMVectorNegate(n_candidate);
+	}
+	else
+	{
+		out_normal = n_candidate;
+	}
+
+	// Calculate the distance from the origin
+	DirectX::XMVECTOR distance_v = DirectX::XMVector3Dot(out_normal, v0);
+	out_distance = DirectX::XMVectorGetX(distance_v);
 }
 
-bool FCollisionDetector::HasDuplicateVertices(const std::vector<XMVECTOR>& Vertices) const
+bool FCollisionDetector::IsFaceVisible(const PolytopeSOA& Poly, int face_index, const DirectX::XMVECTOR& new_point_vector, const DirectX::XMVECTOR& face_normal, float face_distance) const
 {
-	for (size_t i = 0; i < Vertices.size(); ++i) {
-		for (size_t j = i + 1; j < Vertices.size(); ++j) {
-			XMVECTOR diff = Vertices[i] - Vertices[j];
-			if (XMVectorGetX(XMVector3LengthSq(diff)) < KINDA_SMALL * KINDA_SMALL) {
-				return true;
-			}
-		}
-	}
-	return false;
+	// Check if a face is visible from a new point
+	// Visibility is determined by the sign of the dot product between the face normal
+	// and the vector from a point on the face to the new point.
+
+	// Get a vertex on the face (any vertex will do, using the first one)
+	int v_idx = Poly.Indices[face_index * 3];
+	DirectX::XMVECTOR v_on_face = Poly.Vertices[v_idx];
+
+	// Calculate the vector from the face vertex to the new point using SIMD
+	DirectX::XMVECTOR vec_to_new_point = DirectX::XMVectorSubtract(new_point_vector, v_on_face);
+
+	// Calculate the dot product using SIMD
+	DirectX::XMVECTOR dot_product_v = DirectX::XMVector3Dot(vec_to_new_point, face_normal);
+	float dot_product = DirectX::XMVectorGetX(dot_product_v);
+
+	// The face is visible if the dot product is positive within tolerance
+	return dot_product > EPATolerance;
 }
 
-bool FCollisionDetector::InitializePolytope(PolytopeSOA& Poly, const std::vector<XMVECTOR>& InitialVertices)
+std::vector<std::pair<int, int>> FCollisionDetector::BuildHorizonEdges(const PolytopeSOA& Poly, const std::vector<int>& visible_face_indices) const
 {
-	if (InitialVertices.size() < 4) {
-		LOG("Error: 초기 볼록 다면체를 구성하려면 최소 4개의 비평면 점이 필요합니다.");
-		return false;
+	// Find horizon edges separating visible faces from non-visible faces
+	// Horizon edges are those shared by exactly one visible face.
+
+	std::unordered_map<Edge, int, EdgeHash> edge_counts;
+	std::vector<std::pair<int, int>> horizon_edges;
+
+	// Iterate through all visible faces
+	for (int face_index : visible_face_indices)
+	{
+		// Get vertex indices for the triangle
+		int i0 = Poly.Indices[face_index * 3];
+		int i1 = Poly.Indices[face_index * 3 + 1];
+		int i2 = Poly.Indices[face_index * 3 + 2];
+
+		// Create Edge objects (constructor handles sorting indices)
+		Edge e0(i0, i1);
+		Edge e1(i1, i2);
+		Edge e2(i2, i0);
+
+		// Increment count for each edge
+		edge_counts[e0]++;
+		edge_counts[e1]++;
+		edge_counts[e2]++;
 	}
 
-	if (HasDuplicateVertices(InitialVertices)) {
-		LOG("Error: 초기 정점 리스트에 중복된 정점이 있습니다.");
-		return false;
-	}
-
-	// 임시 인덱스
-	std::vector<int> indices = { 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 };
-	std::vector<XMVECTOR> initialVertices = InitialVertices;
-
-	if (IsCoplanar(initialVertices[0], initialVertices[1], initialVertices[2], initialVertices[3])) {
-		LOG_FUNC_CALL("Error: The intial four Points are Coplanar.");
-		return false;
-	}
-
-	Poly.Vertices = initialVertices;
-	Poly.Indices = indices;
-	Poly.Normals.clear();
-	Poly.Distances.clear();
-
-	for (size_t i = 0; i < Poly.Indices.size(); i += 3) {
-		XMVECTOR v1 = Poly.Vertices[Poly.Indices[i + 1]] - Poly.Vertices[Poly.Indices[i]];
-		XMVECTOR v2 = Poly.Vertices[Poly.Indices[i + 2]] - Poly.Vertices[Poly.Indices[i]];
-		XMVECTOR normal = XMVector3Normalize(XMVector3Cross(v1, v2));
-		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[Poly.Indices[i]]);
-		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) > KINDA_SMALLER) {
-			normal = XMVectorNegate(normal);
-			std::swap(Poly.Indices[i + 1], Poly.Indices[i + 2]);
+	// Iterate through edge counts to find edges that appeared only once
+	for (const auto& pair : edge_counts)
+	{
+		if (pair.second == 1)
+		{
+			// This edge is on the boundary (horizon)
+			horizon_edges.push_back({ pair.first.Start, pair.first.End });
 		}
-		Poly.Normals.emplace_back() = normal;
-		Poly.Distances.push_back(XMVectorGetX(XMVector3Dot(normal, Poly.Vertices[Poly.Indices[i]])));
 	}
 
-	return true;
+	return horizon_edges;
 }
 
-std::vector<int> FCollisionDetector::FindVisibleFaces(const PolytopeSOA& Poly, int PointIndex) const
+void FCollisionDetector::CreateNewFaces(const std::vector<std::pair<int, int>>& horizon_edges, int new_point_index, const PolytopeSOA& original_poly, std::vector<int>& new_indices, std::vector<DirectX::XMVECTOR>& new_normals, std::vector<float>& new_distances) const
 {
-	std::vector<int> VisibleFaces;
+	// Create new triangular faces by connecting the new point to each horizon edge
 
-	// 인덱스 유효성 검사
-	if (PointIndex < 0 || PointIndex >= static_cast<int>(Poly.Vertices.size())) {
-		LOG_FUNC_CALL("Error: Invalid PointIndex %d", (PointIndex));
-		return VisibleFaces;
-	}
+	// Get the vector for the new point
+	DirectX::XMVECTOR new_point_v = original_poly.Vertices[new_point_index];
 
-	if (Poly.Normals.empty() || Poly.Indices.size() < 3) {
-		LOG_FUNC_CALL("Error: Polytope has insufficient data (Normals or Indices).");
-		return VisibleFaces;
-	}
+	for (const auto& edge : horizon_edges)
+	{
+		int v0_idx = edge.first;
+		int v1_idx = edge.second;
 
-	XMVECTOR Point = Poly.Vertices[PointIndex];
-	constexpr float VisibilityThreshold = 1e-4f; // EPA 수렴 기준과 일치
+		// Add indices for the new triangle (v0, v1, new_point)
+		new_indices.push_back(v0_idx);
+		new_indices.push_back(v1_idx);
+		new_indices.push_back(new_point_index);
 
-	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
-		if (i * 3 + 2 >= Poly.Indices.size()) {
-			LOG_FUNC_CALL("Error: Invalid index access for face  %d" ,i);
-			continue;
+		// Get vertices using XMVectorLoadFloat3 (or direct use if already XMVECTOR)
+		DirectX::XMVECTOR v0 = original_poly.Vertices[v0_idx];
+		DirectX::XMVECTOR v1 = original_poly.Vertices[v1_idx];
+
+		// Calculate edge vectors for the new face using SIMD
+		DirectX::XMVECTOR edge1 = DirectX::XMVectorSubtract(v1, v0);
+		DirectX::XMVECTOR edge2 = DirectX::XMVectorSubtract(new_point_v, v0);
+
+		// Calculate potential normal using SIMD cross product
+		DirectX::XMVECTOR n_candidate = DirectX::XMVector3Cross(edge1, edge2);
+
+		// Normalize the normal using SIMD
+		n_candidate = DirectX::XMVector3Normalize(n_candidate);
+
+		// Check orientation relative to the origin using SIMD dot product
+		DirectX::XMVECTOR dot_origin_v = DirectX::XMVector3Dot(n_candidate, v0);
+		float dot_origin = DirectX::XMVectorGetX(dot_origin_v);
+
+		// Determine final normal: Must point away from the origin
+		DirectX::XMVECTOR new_normal;
+		if (dot_origin < 0)
+		{
+			new_normal = DirectX::XMVectorNegate(n_candidate);
+		}
+		else
+		{
+			new_normal = n_candidate;
 		}
 
-		XMVECTOR Normal = Poly.Normals[i];
-		int vertexIndex = Poly.Indices[i * 3];
-		if (vertexIndex < 0 || vertexIndex >= static_cast<int>(Poly.Vertices.size())) {
-			LOG_FUNC_CALL("Error: Invalid vertex index [%d] for face [%d]",vertexIndex, i);
-			continue;
-		}
 
-		XMVECTOR Vertex = Poly.Vertices[vertexIndex];
-		XMVECTOR FaceToPoint = XMVectorSubtract(Point, Vertex);
-		float dot = XMVectorGetX(XMVector3Dot(FaceToPoint, Normal));
+		// Calculate the distance from the origin for the new face
+		DirectX::XMVECTOR distance_v = DirectX::XMVector3Dot(new_normal, v0);
+		float new_distance = DirectX::XMVectorGetX(distance_v);
 
-		if (dot > VisibilityThreshold) {
-			VisibleFaces.push_back(static_cast<int>(i));
-		}
-	}
-
-	// 디버깅: 가시 면 없음 경고
-	if (VisibleFaces.empty()) {
-		Vector3 point;
-		XMStoreFloat3(&point, Point);
-		LOG_FUNC_CALL("Warning: No visible faces! Point may be inside or on polytope surface.");
-	}
-
-	return VisibleFaces;
-}
-
-std::vector<FCollisionDetector::Edge> FCollisionDetector::FindHorizonEdges(const PolytopeSOA& Poly, 
-																		   const std::vector<int>& VisibleFacesIndices) const
-{
-	std::vector<Edge> HorizonEdges;
-	if (VisibleFacesIndices.empty()) {
-		LOG_FUNC_CALL("Error: No visible faces provided");
-		return HorizonEdges;
-	}
-
-	if (VisibleFacesIndices.size() == Poly.Normals.size()) {
-		LOG_FUNC_CALL("Error: All faces are visible, polytope may not contain origin");
-		return HorizonEdges;
-	}
-
-	// 엣지 저장을 위한 unordered_set
-	std::unordered_set<Edge, EdgeHash> edgeSet;
-
-	// 비가시 면의 엣지 추가
-	std::vector<bool> isVisible(Poly.Normals.size(), false);
-	for (int faceIdx : VisibleFacesIndices) {
-		if (faceIdx >= 0 && faceIdx < static_cast<int>(Poly.Normals.size())) {
-			isVisible[faceIdx] = true;
-		}
-		else {
-			LOG_FUNC_CALL("Error: Invalid visible face index [%d]", faceIdx);
-		}
-	}
-
-	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
-		if (isVisible[i]) continue;
-
-		size_t idx = i * 3;
-		if (idx + 2 >= Poly.Indices.size()) {
-			LOG_FUNC_CALL("Error: Invalid index access for face [%zu]", i);
-			continue;
-		}
-
-		int idx0 = Poly.Indices[idx];
-		int idx1 = Poly.Indices[idx + 1];
-		int idx2 = Poly.Indices[idx + 2];
-
-		// 유효성 검사
-		if (idx0 < 0 || idx0 >= static_cast<int>(Poly.Vertices.size()) ||
-			idx1 < 0 || idx1 >= static_cast<int>(Poly.Vertices.size()) ||
-			idx2 < 0 || idx2 >= static_cast<int>(Poly.Vertices.size())) {
-			LOG_FUNC_CALL("Error: Invalid vertex indices [%d, %d, %d] for face [%zu]", idx0, idx1, idx2, i);
-			continue;
-		}
-
-		edgeSet.emplace(idx0, idx1);
-		edgeSet.emplace(idx1, idx2);
-		edgeSet.emplace(idx2, idx0);
-	}
-
-	// 가시 면의 엣지 처리
-	for (int faceIdx : VisibleFacesIndices) {
-		size_t idx = faceIdx * 3;
-		if (idx + 2 >= Poly.Indices.size()) {
-			LOG_FUNC_CALL("Error: Invalid index access for visible face [%d]", faceIdx);
-			continue;
-		}
-
-		int idx0 = Poly.Indices[idx];
-		int idx1 = Poly.Indices[idx + 1];
-		int idx2 = Poly.Indices[idx + 2];
-
-		if (idx0 < 0 || idx0 >= static_cast<int>(Poly.Vertices.size()) ||
-			idx1 < 0 || idx1 >= static_cast<int>(Poly.Vertices.size()) ||
-			idx2 < 0 || idx2 >= static_cast<int>(Poly.Vertices.size())) {
-			LOG_FUNC_CALL("Error: Invalid vertex indices [%d, %d, %d] for visible face [%d]", idx0, idx1, idx2, faceIdx);
-			continue;
-		}
-
-		Edge edges[] = { {idx0, idx1}, {idx1, idx2}, {idx2, idx0} };
-		for (const auto& edge : edges) {
-			auto it = edgeSet.find(edge);
-			if (it != edgeSet.end()) {
-				edgeSet.erase(it); // 가시/비가시 경계가 아닌 엣지
-			}
-			else {
-				edgeSet.insert(edge); // 호라이즌 엣지 후보
-			}
-		}
-	}
-
-	// 호라이즌 엣지 수집
-	HorizonEdges.assign(edgeSet.begin(), edgeSet.end());
-
-	return HorizonEdges;
-}
-
-void FCollisionDetector::AddNewFace(PolytopeSOA& Poly, const Edge& Edge, int NewPointIndex,
-									std::vector<XMVECTOR>& OutNormals,
-									std::vector<float>& OutDistances,
-									std::vector<int>& OutIndices) const
-{
-	// 인덱스 유효성 검사
-	if (NewPointIndex < 0 || NewPointIndex >= static_cast<int>(Poly.Vertices.size()) ||
-		Edge.Start < 0 || Edge.Start >= static_cast<int>(Poly.Vertices.size()) ||
-		Edge.End < 0 || Edge.End >= static_cast<int>(Poly.Vertices.size())) {
-		LOG_FUNC_CALL("Error: Invalid indices in AddNewFace: NewPoint=[%d], Edge=(%d,%d)",
-					  NewPointIndex, Edge.Start, Edge.End);
-		return;
-	}
-
-	// 새 면의 인덱스
-	int idx0 = Edge.Start;
-	int idx1 = Edge.End;
-	int idx2 = NewPointIndex;
-
-	// 정점
-	XMVECTOR v0 = Poly.Vertices[idx0];
-	XMVECTOR v1 = Poly.Vertices[idx1];
-	XMVECTOR v2 = Poly.Vertices[idx2];
-
-	// 법선 계산
-	XMVECTOR edge1 = XMVectorSubtract(v1, v0);
-	XMVECTOR edge2 = XMVectorSubtract(v2, v0);
-	XMVECTOR normal = XMVector3Cross(edge1, edge2);
-
-	// 법선 방향 보정
-	float dot = XMVectorGetX(XMVector3Dot(normal, v0));
-	if (dot < 0) {
-		normal = XMVectorNegate(normal);
-		std::swap(idx1, idx2);
-	}
-
-	normal = XMVector3Normalize(normal);
-	float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, v0)));
-
-	// 출력 컨테이너에 추가
-	OutIndices.push_back(idx0);
-	OutIndices.push_back(idx1);
-	OutIndices.push_back(idx2);
-	OutNormals.push_back(normal);
-	OutDistances.push_back(distance);
-
-}
-
-void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex)
-{
-	// 가시 면 찾기
-	std::vector<int> VisibleFacesIndices = FindVisibleFaces(Poly, NewPointIndex);
-	if (VisibleFacesIndices.empty()) {
-		Vector3 point;
-		XMStoreFloat3(&point, Poly.Vertices[NewPointIndex]);
-		LOG_FUNC_CALL("Error: No visible faces for point, Skipping update");
-		return;
-	}
-
-	// 호라이즌 엣지 찾기
-	std::vector<Edge> HorizonEdges = FindHorizonEdges(Poly, VisibleFacesIndices);
-	if (HorizonEdges.empty()) {
-		LOG_FUNC_CALL("Error: No horizon edges found");
-		return;
-	}
-
-	// 새 면 데이터
-	std::vector<XMVECTOR> newNormals;
-	std::vector<float> newDistances;
-	std::vector<int> newIndices;
-
-	// 새 면 추가
-	for (const auto& edge : HorizonEdges) {
-		AddNewFace(Poly, edge, NewPointIndex, newNormals, newDistances, newIndices);
-	}
-
-	// 가시 면 제거
-	std::vector<XMVECTOR> updatedNormals;
-	std::vector<float> updatedDistances;
-	std::vector<int> updatedIndices;
-	std::vector<bool> isVisibleFace(Poly.Normals.size(), false);
-
-	for (int index : VisibleFacesIndices) {
-		if (index >= 0 && index < static_cast<int>(Poly.Normals.size())) {
-			isVisibleFace[index] = true;
-		}
-		else {
-			LOG_FUNC_CALL("Error: Invalid visible face index [%d]", index);
-		}
-	}
-
-	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
-		if (!isVisibleFace[i]) {
-			updatedNormals.push_back(Poly.Normals[i]);
-			updatedDistances.push_back(Poly.Distances[i]);
-			updatedIndices.push_back(Poly.Indices[i * 3]);
-			updatedIndices.push_back(Poly.Indices[i * 3 + 1]);
-			updatedIndices.push_back(Poly.Indices[i * 3 + 2]);
-		}
-	}
-
-	// 새 면 데이터 추가
-	updatedNormals.insert(updatedNormals.end(), newNormals.begin(), newNormals.end());
-	updatedDistances.insert(updatedDistances.end(), newDistances.begin(), newDistances.end());
-	updatedIndices.insert(updatedIndices.end(), newIndices.begin(), newIndices.end());
-
-	// 다면체 갱신
-	Poly.Normals = std::move(updatedNormals);
-	Poly.Distances = std::move(updatedDistances);
-	Poly.Indices = std::move(updatedIndices);
-
-	// 원점 포함 확인
-	constexpr float Epsilon = 1e-4f;
-	bool containsOrigin = true;
-	for (size_t i = 0; i < Poly.Normals.size(); ++i) {
-		if (Poly.Distances[i] < -Epsilon) {
-			containsOrigin = false;
-			break;
-		}
-	}
-	if (!containsOrigin) {
-		LOG_FUNC_CALL("Warning: Polytope does not contain origin after update");
+		// Add the calculated normal and distance
+		new_normals.push_back(new_normal);
+		new_distances.push_back(new_distance);
 	}
 }
 
+void FCollisionDetector::UpdatePolytope(PolytopeSOA& Poly, int NewPointIndex)
+{
+	LOG_FUNC_CALL("FCollisionDetector::UpdatePolytope(NewPointIndex: %d)", NewPointIndex);
+
+	// Temporary storage for the indices of faces visible from the new point
+	std::vector<int> visible_face_indices;
+	std::vector<XMVECTOR> current_face_normals; // Store current normals for visibility check
+	std::vector<float> current_face_distances; // Store current distances
+
+	// Get the vector for the new point (already exists in Poly.Vertices)
+	DirectX::XMVECTOR new_point_vector = Poly.Vertices[NewPointIndex];
+
+	// Iterate through current faces to identify visible ones
+	int num_faces = Poly.Indices.size() / 3;
+	current_face_normals.reserve(num_faces);
+	current_face_distances.reserve(num_faces);
+
+	for (int i = 0; i < num_faces; ++i)
+	{
+		// Use the stored normal and distance if they exist (for robustness, recalculate initially)
+		// In this revised approach, we calculate them once per face iteration here.
+		// A more advanced optimization might cache these, but recalculating per update step
+		// for *existing* faces is the source of potential drift.
+		// Let's rely on the *stored* normals and distances in Poly for the non-visible faces.
+
+		// Calculate face normal and distance for the current face (using a helper is fine here)
+		DirectX::XMVECTOR face_normal;
+		float face_distance;
+		// NOTE: Calling CalculateFaceNormalAndDistance here recalculates based on potentially
+		// slightly drifted vertex positions. To avoid this, we should ideally use the
+		// normals and distances already stored in Poly, which were calculated when the face was created.
+		// Let's modify the loop structure to use the stored data for non-visible faces.
+
+		 // --- Revised Loop Logic ---
+		// Calculate normal/distance if needed for visibility check, but use stored data for rebuilding
+		// Re-calculating normal/distance for visibility check might still be necessary if stored data isn't perfectly reliable.
+		// However, the core issue is using *recalculated* data for the *new* polytope lists for old faces.
+
+		// Option 1: Recalculate normal/distance *only* for the visibility check
+		CalculateFaceNormalAndDistance(Poly, i, face_normal, face_distance); // Recalculate based on current vertex positions for check
+
+		if (IsFaceVisible(Poly, i, new_point_vector, face_normal, face_distance)) // Use recalculated data for check
+		{
+			// This face is visible and will be removed
+			visible_face_indices.push_back(i);
+		}
+		// --- End Revised Loop Logic ---
+	}
+
+	// Temporary storage for the data of the next polytope (non-visible + new faces)
+	std::vector<int> next_indices;
+	std::vector<DirectX::XMVECTOR> next_normals;
+	std::vector<float> next_distances;
+
+	// Reserve approximate space: Number of non-visible faces + number of new faces (horizon edges count)
+	// Max horizon edges is roughly (visible_face_count * 3) / 2
+	int num_visible = visible_face_indices.size();
+	int num_non_visible = num_faces - num_visible;
+	// Estimating new faces is hard, let's just reserve some space
+	next_indices.reserve(num_non_visible * 3 + num_visible * 3); // Pessimistic
+	next_normals.reserve(num_non_visible + num_visible * 2); // Pessimistic
+	next_distances.reserve(num_non_visible + num_visible * 2); // Pessimistic
+
+
+	// Add the non-visible faces from the *original* polytope data
+	std::sort(visible_face_indices.begin(), visible_face_indices.end()); // Sort to use binary search
+
+	for (int i = 0; i < num_faces; ++i)
+	{
+		// If this face index is NOT in the visible_face_indices list
+		if (!std::binary_search(visible_face_indices.begin(), visible_face_indices.end(), i))
+		{
+			// This face is not visible and will be part of the new polytope.
+			// Use the NORMAL and DISTANCE ALREADY STORED in Poly.
+			next_indices.push_back(Poly.Indices[i * 3]);
+			next_indices.push_back(Poly.Indices[i * 3 + 1]);
+			next_indices.push_back(Poly.Indices[i * 3 + 2]);
+			next_normals.push_back(Poly.Normals[i]);   // <-- Use stored normal
+			next_distances.push_back(Poly.Distances[i]); // <-- Use stored distance
+		}
+	}
+
+
+	// Find the horizon edges from the visible faces
+	std::vector<std::pair<int, int>> horizon_edges = BuildHorizonEdges(Poly, visible_face_indices);
+
+	// Create new faces connecting the new point to the horizon edges
+	// CreateNewFaces calculates normals and distances for these new faces.
+	CreateNewFaces(horizon_edges, NewPointIndex, Poly, next_indices, next_normals, next_distances);
+
+	// Replace the old polytope data with the new data
+	Poly.Indices = std::move(next_indices);
+	Poly.Normals = std::move(next_normals);
+	Poly.Distances = std::move(next_distances);
+	// Poly.Vertices and ContactData.VerticesA/B are not modified here,
+	// they only grow when a NewPoint is added in EPACollision.
+
+	LOG_FUNC_CALL("FCollisionDetector::UpdatePolytope finished. New face count: %zu", Poly.Indices.size() / 3);
+}
 #pragma endregion
 
-
+#pragma region DEBUG
 //debug
 void FCollisionDetector::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
 									  float LifeTime = 0.1f, bool bDrawNormals = false, 
@@ -1325,6 +1344,4 @@ void FCollisionDetector::DrawPolytope(const FCollisionDetector::PolytopeSOA& Pol
 		}
 	}
 }
-
-
-////////////////
+#pragma endregion

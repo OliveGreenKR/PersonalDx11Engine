@@ -40,6 +40,8 @@ public:
 
     struct PolytopeSOA {
         std::vector<XMVECTOR> Vertices;
+        std::vector<XMVECTOR> VerticesA; // Corresponding points on ShapeA for Poly.Vertices
+        std::vector<XMVECTOR> VerticesB; // Corresponding points on ShapeB for Poly.Vertices
         std::vector<XMVECTOR> Normals;
         std::vector<float> Distances;
         std::vector<int> Indices; // 각 면의 정점 인덱스 (3개씩 묶음)
@@ -110,7 +112,12 @@ public:
     // Simplex 업데이트 헬퍼 함수
     bool UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction);
 
+    XMVECTOR ClosestPointOnSegmentToOrigin(FXMVECTOR P1, FXMVECTOR P2);
+
+    bool GJKHandleTetrahedron(FSimplex& Simplex, XMVECTOR& Direction);
+
     void UpdatePolytope(PolytopeSOA& Poly, int NewPointIndex);
+
     void CalculateFaceNormalAndDistance(const PolytopeSOA& Poly, 
                                         int face_index,
                                         DirectX::XMVECTOR& out_normal, 
@@ -130,28 +137,6 @@ public:
                         std::vector<DirectX::XMVECTOR>& new_normals, 
                         std::vector<float>& new_distances) const;
 
-
-    bool IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, const XMVECTOR& p3, const XMVECTOR& p4) const;
-
-    bool HasDuplicateVertices(const std::vector<XMVECTOR>& Vertices) const;
-
-    bool InitializePolytope(PolytopeSOA& Poly, const std::vector<XMVECTOR>& InitialVertices);
-
-    std::vector<int> FindVisibleFaces(const PolytopeSOA& Poly, int PointIndex) const;
-    
-    //가시면과 비가시면이 공유하는 경계 모서리 검출
-    std::vector<Edge> FindHorizonEdges(const PolytopeSOA& Poly, const std::vector<int>& VisibleFaces) const;
-
-    void AddNewFace(PolytopeSOA& Poly, const Edge& Edge, 
-                    int NewPointIndex, 
-                    std::vector<XMVECTOR>& OutNormals, 
-                    std::vector<float>& OutDistances, 
-                    std::vector<int>& OutIndices) const;
-
-
-    void UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex);
-
-private:
     void DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, 
                       float LifeTime, 
                       bool bDrawNormals, const Vector4 & Color);
