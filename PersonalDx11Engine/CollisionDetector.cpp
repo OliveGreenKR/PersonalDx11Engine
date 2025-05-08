@@ -1156,51 +1156,30 @@ void FCollisionDetector::CreateNewFaces(const std::vector<std::pair<int, int>>& 
 
 void FCollisionDetector::UpdatePolytope(PolytopeSOA& Poly, int NewPointIndex)
 {
-	LOG_FUNC_CALL("FCollisionDetector::UpdatePolytope(NewPointIndex: %d)", NewPointIndex);
-
 	// Temporary storage for the indices of faces visible from the new point
 	std::vector<int> visible_face_indices;
-	std::vector<XMVECTOR> current_face_normals; // Store current normals for visibility check
-	std::vector<float> current_face_distances; // Store current distances
 
 	// Get the vector for the new point (already exists in Poly.Vertices)
 	DirectX::XMVECTOR new_point_vector = Poly.Vertices[NewPointIndex];
 
 	// Iterate through current faces to identify visible ones
 	int num_faces = Poly.Indices.size() / 3;
-	current_face_normals.reserve(num_faces);
-	current_face_distances.reserve(num_faces);
 
 	for (int i = 0; i < num_faces; ++i)
 	{
-		// Use the stored normal and distance if they exist (for robustness, recalculate initially)
-		// In this revised approach, we calculate them once per face iteration here.
-		// A more advanced optimization might cache these, but recalculating per update step
-		// for *existing* faces is the source of potential drift.
-		// Let's rely on the *stored* normals and distances in Poly for the non-visible faces.
+		//가시성 검사
+		DirectX::XMVECTOR face_normal = Poly.Normals[i];
+		float face_distance = Poly.Distances[i];
 
-		// Calculate face normal and distance for the current face (using a helper is fine here)
-		DirectX::XMVECTOR face_normal;
-		float face_distance;
-		// NOTE: Calling CalculateFaceNormalAndDistance here recalculates based on potentially
-		// slightly drifted vertex positions. To avoid this, we should ideally use the
-		// normals and distances already stored in Poly, which were calculated when the face was created.
-		// Let's modify the loop structure to use the stored data for non-visible faces.
-
-		 // --- Revised Loop Logic ---
-		// Calculate normal/distance if needed for visibility check, but use stored data for rebuilding
-		// Re-calculating normal/distance for visibility check might still be necessary if stored data isn't perfectly reliable.
-		// However, the core issue is using *recalculated* data for the *new* polytope lists for old faces.
-
-		// Option 1: Recalculate normal/distance *only* for the visibility check
-		CalculateFaceNormalAndDistance(Poly, i, face_normal, face_distance); // Recalculate based on current vertex positions for check
+		//// Recalculate normal/distance *only* for the visibility check
+		//CalculateFaceNormalAndDistance(Poly, i, face_normal, face_distance); // Recalculate based on current vertex positions for check
 
 		if (IsFaceVisible(Poly, i, new_point_vector, face_normal, face_distance)) // Use recalculated data for check
 		{
 			// This face is visible and will be removed
 			visible_face_indices.push_back(i);
 		}
-		// --- End Revised Loop Logic ---
+
 	}
 
 	// Temporary storage for the data of the next polytope (non-visible + new faces)
@@ -1250,8 +1229,6 @@ void FCollisionDetector::UpdatePolytope(PolytopeSOA& Poly, int NewPointIndex)
 	Poly.Distances = std::move(next_distances);
 	// Poly.Vertices and ContactData.VerticesA/B are not modified here,
 	// they only grow when a NewPoint is added in EPACollision.
-
-	LOG_FUNC_CALL("FCollisionDetector::UpdatePolytope finished. New face count: %zu", Poly.Indices.size() / 3);
 }
 #pragma endregion
 

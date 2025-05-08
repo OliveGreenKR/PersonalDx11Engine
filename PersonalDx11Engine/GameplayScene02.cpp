@@ -61,19 +61,18 @@ void UGameplayScene02::Initialize()
     UConfigReadManager::Get()->GetValue("Scene02Character2Mass", Character2Mass);
 
     // 카메라 설정
-    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
-    Camera->SetPosition({ 0, 0.0f, -8.0f });
+    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);
+    Camera->SetPosition({ 0, 0.0f, -800.0f });
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
-    Vector3 NewScale = 0.5f * Vector3::One;
     Character->SetScale(0.5f * Vector3::One);
-    Character->SetPosition({ -0.75f, 0, 0 });
+    Character->SetPosition({ -75.0f, 0, 0 });
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
     Character2->SetScale(0.35f * Vector3::One);
-    Character2->SetPosition({ 0.75f, 0, 0.0f });
+    Character2->SetPosition({ 100.0f, 0, 0.0f });
 
     // 초기화 및 설정
     Camera->PostInitialized();
@@ -90,11 +89,9 @@ void UGameplayScene02::Initialize()
 
     //물리속성 설정
     SetMaxSpeeds(MaxSpeed);
-    CharacterMass = Character->GetTransform().Scale.Length() * 20.0f;
     Character->SetMass(CharacterMass);
     Character->SetRestitution(0.60f);
 
-    Character2Mass = Character2->GetTransform().Scale.Length() * 20.0f;
     Character2->SetMass(Character2Mass);
     Character2->SetRestitution(0.80f);
 

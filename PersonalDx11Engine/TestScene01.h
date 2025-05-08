@@ -37,7 +37,7 @@ private:
 	std::shared_ptr<class UBoxComponent> Box;
 	std::shared_ptr<class USphereComponent> Sphere;
 
-	float CameraDistance = 10.0f;
+	float CameraDistance = 800.0f;
 	float Latitude = 0.0f;
 	float Longitude = 0.0f;
 

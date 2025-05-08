@@ -39,7 +39,7 @@ void UTestScene01::Initialize()
     UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);
 
     // 카메라 설정
-    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
+    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);
     Camera->SetPosition({ 0, 0.0f, -CameraDistance });
     Camera->PostInitialized();
     Camera->PostInitializedComponents();
@@ -50,8 +50,8 @@ void UTestScene01::Initialize()
     Box = UActorComponent::Create<UBoxComponent>();
     Sphere = UActorComponent::Create<USphereComponent>();
 
-    const  Vector3 Pos1 = Vector3(-0.35f, 0, 0);
-    const  Vector3 Pos2 = Vector3(0.35f, 0, 0);
+    const  Vector3 Pos1 = Vector3(-35.0f, 0, 0);
+    const  Vector3 Pos2 = Vector3(35.0f, 0, 0);
     const  Vector3 Scale1 = Vector3::One;
     const  Vector3 Scale2 = Vector3::One * 0.75f;
 

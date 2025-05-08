@@ -111,17 +111,18 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 	{
 		return;
 	}
-
 	FTransform TargetTransform = GetWorldTransform();
 
-	// 위치 업데이트
-	Vector3 NewPosition = TargetTransform.Position + Velocity * DeltaTime;
-	TargetTransform.Position = NewPosition;
-
+	if (Velocity.Length() > KINDA_SMALLER)
+	{
+		// 위치 업데이트
+		Vector3 NewPosition = TargetTransform.Position + Velocity * DeltaTime;
+		TargetTransform.Position = NewPosition;
+	}
+	
 	// 회전 업데이트
 	Matrix WorldRotation = TargetTransform.GetRotationMatrix();
 	XMVECTOR WorldAngularVel = XMLoadFloat3(&AngularVelocity);
-
 	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
 	if (AngularSpeed > KINDA_SMALL)
 	{

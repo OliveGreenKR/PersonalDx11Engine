@@ -63,7 +63,7 @@
       <Filter>Engine\Physics</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>Engine\Model</Filter>
+      <Filter>Engine\Resources\Model</Filter>
     </ClCompile>
     <ClCompile Include="DynamicAABBTree.cpp">
       <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
@@ -154,9 +154,6 @@
     <Filter Include="Engine\Interface">
       <UniqueIdentifier>{370944e7-eb8c-4096-a67a-ea04f06dbf48}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Model">
-      <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Math">
       <UniqueIdentifier>{84f871a3-4134-4fb7-abd6-827c8f800c1a}</UniqueIdentifier>
     </Filter>
@@ -189,9 +186,6 @@
     </Filter>
     <Filter Include="Engine\Physics">
       <UniqueIdentifier>{54ddae73-1854-40a2-8f83-9ad503b0471a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Model\Vertex">
-      <UniqueIdentifier>{9ce88f28-62b5-4c33-8d44-9b50a670ef8e}</UniqueIdentifier>
     </Filter>
     <Filter Include="D3D\Buffer">
       <UniqueIdentifier>{4c3ccda6-25fe-4d99-9400-97d9cebbabe6}</UniqueIdentifier>
@@ -331,6 +325,12 @@
     <Filter Include="Contents\Scenes\testScene">
       <UniqueIdentifier>{5a45f421-6bbd-4f48-b831-51df6cdcc615}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Resources\Model">
+      <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Resources\Model\Vertex">
+      <UniqueIdentifier>{9ce88f28-62b5-4c33-8d44-9b50a670ef8e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -364,7 +364,7 @@
       <Filter>D3D</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>Engine\Model</Filter>
+      <Filter>Engine\Resources\Model</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Engine\Object\GameObject\Camera</Filter>
@@ -412,10 +412,10 @@
       <Filter>Engine\Physics</Filter>
     </ClInclude>
     <ClInclude Include="VertexFormat.h">
-      <Filter>Engine\Model\Vertex</Filter>
+      <Filter>Engine\Resources\Model\Vertex</Filter>
     </ClInclude>
     <ClInclude Include="VertexDataContainer.h">
-      <Filter>Engine\Model\Vertex</Filter>
+      <Filter>Engine\Resources\Model\Vertex</Filter>
     </ClInclude>
     <ClInclude Include="Random.h">
       <Filter>Engine\Math</Filter>

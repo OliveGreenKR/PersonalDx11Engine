@@ -1,5 +1,5 @@
 #include "SceneComponent.h"
-
+#include "Debug.h"
 // 로컬 트랜스폼 변경 시 호출되는 함수
 void USceneComponent::OnLocalTransformChanged()
 {
@@ -193,14 +193,22 @@ void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
 // 월드 트랜스폼 설정자
 void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
-    // 1. 나의 월드 변경
-    WorldTransform = InWorldTransform;
-    OnWorldTransformChanged();
+    bool bIsUpdate = false;
+
+    bIsUpdate = ((WorldTransform.Position - InWorldTransform.Position).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON) ||
+        ((std::abs(1.0f - std::abs(Quaternion::Dot(WorldTransform.Rotation, InWorldTransform.Rotation)))) > TRANSFORM_EPSILON) ||
+        ((WorldTransform.Scale - InWorldTransform.Scale).LengthSquared() > TRANSFORM_EPSILON* TRANSFORM_EPSILON);
+
+    if (bIsUpdate)
+    {
+        WorldTransform = InWorldTransform;
+        OnWorldTransformChanged();
+    } 
 }
 
 void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 {
-    if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON)
+    if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
         NewWorldTransform.Position = InWorldPosition;
@@ -236,7 +244,7 @@ void USceneComponent::SetWorldRotationEuler(const Vector3& InWorldEuler)
 
 void USceneComponent::SetWorldScale(const Vector3& InWorldScale)
 {
-    if ((WorldTransform.Scale - InWorldScale).LengthSquared() > TRANSFORM_EPSILON)
+    if ((WorldTransform.Scale - InWorldScale).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
     {
         FTransform NewWorldTransform = WorldTransform;
         NewWorldTransform.Scale = InWorldScale;
