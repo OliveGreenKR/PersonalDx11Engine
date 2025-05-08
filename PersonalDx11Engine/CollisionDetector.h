@@ -110,6 +110,27 @@ public:
     // Simplex 업데이트 헬퍼 함수
     bool UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction);
 
+    void UpdatePolytope(PolytopeSOA& Poly, int NewPointIndex);
+    void CalculateFaceNormalAndDistance(const PolytopeSOA& Poly, 
+                                        int face_index,
+                                        DirectX::XMVECTOR& out_normal, 
+                                        float& out_distance) const;
+
+    bool IsFaceVisible(const PolytopeSOA& Poly, int face_index, const DirectX::XMVECTOR& new_point_vector,
+                       const DirectX::XMVECTOR& face_normal,
+                       float face_distance) const;
+
+    std::vector<std::pair<int, int>> BuildHorizonEdges(const PolytopeSOA& Poly, 
+                                                       const std::vector<int>& visible_face_indices) const;
+
+    void CreateNewFaces(const std::vector<std::pair<int, int>>& horizon_edges, 
+                        int new_point_index, 
+                        const PolytopeSOA& original_poly,
+                        std::vector<int>& new_indices, 
+                        std::vector<DirectX::XMVECTOR>& new_normals, 
+                        std::vector<float>& new_distances) const;
+
+
     bool IsCoplanar(const XMVECTOR& p1, const XMVECTOR& p2, const XMVECTOR& p3, const XMVECTOR& p4) const;
 
     bool HasDuplicateVertices(const std::vector<XMVECTOR>& Vertices) const;
@@ -129,6 +150,11 @@ public:
 
 
     void UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewPointIndex);
+
+private:
+    void DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, 
+                      float LifeTime, 
+                      bool bDrawNormals, const Vector4 & Color);
 
 #pragma region Shape-Based Helper
     // Box-Box 충돌 검사 (AABB)

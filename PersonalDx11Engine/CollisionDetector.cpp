@@ -3,6 +3,7 @@
 #include "ConfigReadManager.h"
 #include "DebugDrawerManager.h"
 #include <unordered_set>
+
 FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
@@ -755,6 +756,7 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 	PolytopeSOA Poly;
 	ContactInfo ContactData;
 
+	
 	// 정점 초기화 (GJK에서 얻은 Simplex로 시작)
 	for (int i = 0; i < InitialSimplex.Size; ++i) {
 		Poly.Vertices.push_back(InitialSimplex.Points[i]);
@@ -779,20 +781,20 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 		XMVECTOR v2 = XMVectorSubtract(Poly.Vertices[faceIndices[i][2]], Poly.Vertices[faceIndices[i][0]]);
 		XMVECTOR normal = XMVector3Cross(v1, v2);
 
-		// 법선이 원점을 향하도록 보장
+		// 법선이 원점에서 멀어지도록 보장
 		XMVECTOR toOrigin = XMVectorNegate(Poly.Vertices[faceIndices[i][0]]);
-		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) < 0) {
+		if (XMVectorGetX(XMVector3Dot(normal, toOrigin)) > 0) {
 			normal = XMVectorNegate(normal);
 			// 인덱스 순서 변경
 			int lastIdx = static_cast<int>(Poly.Indices.size());
 			std::swap(Poly.Indices[lastIdx - 2], Poly.Indices[lastIdx - 1]);
-		}                              
+		}
 
 		normal = XMVector3Normalize(normal);
 		Poly.Normals.push_back(normal);
 
 		// 원점에서 면까지의 거리 계산
-		float distance = XMVectorGetX(XMVector3Dot(normal, Poly.Vertices[faceIndices[i][0]]));
+		float distance = std::fabs(XMVectorGetX(XMVector3Dot(normal, Poly.Vertices[faceIndices[i][0]])));
 		Poly.Distances.push_back(distance);
 	}
 
@@ -817,7 +819,7 @@ FCollisionDetectionResult FCollisionDetector::EPACollision(
 
 		if (ClosestFaceIndex == -1) {
 			// 적합한 면이 없음 (드문 경우)
-			LOG("Error : There is No Face");
+			LOG_FUNC_CALL("Error : There is No Face");
 			break;
 		}
 
@@ -1233,3 +1235,96 @@ void FCollisionDetector::UpdatePolytopeWithQuickHull(PolytopeSOA& Poly, int NewP
 }
 
 #pragma endregion
+
+
+//debug
+void FCollisionDetector::DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope,
+									  float LifeTime = 0.1f, bool bDrawNormals = false, 
+									  const Vector4& Color = Vector4(1, 1, 1, 1))
+{
+	using PolytopeSOA = FCollisionDetector::PolytopeSOA;
+
+	if (Polytope.Indices.empty() || Polytope.Vertices.empty())
+		return;
+
+	auto* DebugDrawer = UDebugDrawManager::Get();
+	if (!DebugDrawer)
+		return;
+
+	// 각 면(triangle)마다 처리
+	for (size_t i = 0; i < Polytope.Indices.size(); i += 3)
+	{
+		if (i + 2 >= Polytope.Indices.size())
+			break; // 안전 검사
+
+		// 삼각형의 세 꼭지점 인덱스
+		int IdxA = Polytope.Indices[i];
+		int IdxB = Polytope.Indices[i + 1];
+		int IdxC = Polytope.Indices[i + 2];
+
+		// 인덱스 유효성 검사
+		if (IdxA >= Polytope.Vertices.size() || IdxB >= Polytope.Vertices.size() || IdxC >= Polytope.Vertices.size() ||
+			IdxA < 0 || IdxB < 0 || IdxC < 0)
+			continue;
+
+		// 삼각형 꼭지점 좌표
+		Vector3 VertA, VertB, VertC;
+		XMStoreFloat3(&VertA, Polytope.Vertices[IdxA]);
+		XMStoreFloat3(&VertB, Polytope.Vertices[IdxB]);
+		XMStoreFloat3(&VertC, Polytope.Vertices[IdxC]);
+
+		// 삼각형 외곽선 그리기
+		DebugDrawer->DrawLine(VertA, VertB, Color, 0.001f, LifeTime);
+		DebugDrawer->DrawLine(VertB, VertC, Color, 0.001f, LifeTime);
+		DebugDrawer->DrawLine(VertC, VertA, Color, 0.001f, LifeTime);
+	}
+
+	// 추가적으로 면의 법선 시각화 (선택적)
+	if (bDrawNormals && Polytope.Normals.size() * 3 >= Polytope.Indices.size())
+	{
+		Vector4 InvalidNormalColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+		Vector4 ValidNormalColor = Vector4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
+		float NormalLength = 0.2f; // 법선 길이
+
+		for (size_t i = 0; i < Polytope.Normals.size(); i++)
+		{
+			// 삼각형의 중심점 계산
+			size_t TriIdx = i * 3;
+			if (TriIdx + 2 >= Polytope.Indices.size())
+				break;
+
+			int IdxA = Polytope.Indices[TriIdx];
+			int IdxB = Polytope.Indices[TriIdx + 1];
+			int IdxC = Polytope.Indices[TriIdx + 2];
+
+			if (IdxA >= Polytope.Vertices.size() || IdxB >= Polytope.Vertices.size() || IdxC >= Polytope.Vertices.size() ||
+				IdxA < 0 || IdxB < 0 || IdxC < 0)
+				continue;
+
+			// 삼각형 중심 계산
+			XMVECTOR TriCenter = XMVectorScale(
+				XMVectorAdd(XMVectorAdd(Polytope.Vertices[IdxA], Polytope.Vertices[IdxB]), Polytope.Vertices[IdxC]),
+				1.0f / 3.0f);
+
+			//법선 원점 방향 검사
+			Vector4 NormalColor = ValidNormalColor;
+			// 법선이 원점을 향하면 INvlaid
+			XMVECTOR toOrigin = XMVectorNegate(Polytope.Vertices[IdxA]);
+			if (XMVectorGetX(XMVector3Dot(Polytope.Normals[i], toOrigin)) > KINDA_SMALL) {
+				NormalColor = InvalidNormalColor;
+			}
+
+			// 법선 벡터 계산
+			XMVECTOR NormalEnd = XMVectorAdd(TriCenter, XMVectorScale(Polytope.Normals[i], NormalLength));
+
+			// 법선 그리기
+			Vector3 Start, End;
+			XMStoreFloat3(&Start, TriCenter);
+			XMStoreFloat3(&End, NormalEnd);
+			DebugDrawer->DrawLine(Start, End, NormalColor, 0.001f, LifeTime);
+		}
+	}
+}
+
+
+////////////////

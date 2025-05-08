@@ -377,7 +377,6 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	XMVECTOR ClosestNormal = XMVectorZero();
 	float ClosestDistance = FLT_MAX;
 	int ClosestFaceIndex = -1;
-    float IterPauseTime = 1.0f;
 
     // EPA에 필요한 보조 데이터 구조
     struct ContactInfo {
@@ -433,12 +432,6 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 
 		ContactPointA = XMVectorScale(ContactPointA, 1.0f / 3.0f);
 		ContactPointB = XMVectorScale(ContactPointB, 1.0f / 3.0f);
-
-        //// 반발 방향으로 살짝 이동된 지점 사용
-        //XMVECTOR ContactPoint = XMVectorAdd(
-        //	ContactPointA,
-        //	XMVectorScale(ClosestNormal, ClosestDistance * 0.5f)
-        //);
 
         LOG_FUNC_CALL("EPA Converged");
         Vector3 ContactPoint;
