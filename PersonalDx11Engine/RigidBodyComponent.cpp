@@ -2,6 +2,7 @@
 #include "Transform.h"
 #include "GameObject.h"
 #include "Debug.h"
+#include "PhysicsDefine.h"
 
 URigidBodyComponent::URigidBodyComponent()
 {
@@ -27,10 +28,11 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	Vector3 TotalAcceleration = Vector3::Zero;
 	Vector3 TotalAngularAcceleration = Vector3::Zero;
 
+	float GravityFactor = GravityScale * ONE_METER;
 	// 중력 가속도 추가
 	if (bGravity)
 	{
-		TotalAcceleration += GravityDirection * GravityScale;
+		TotalAcceleration += GravityDirection * GravityFactor;
 	}
 
 	//마찰력
@@ -39,7 +41,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 		// 정적 마찰력 영역에서 운동 마찰력 영역으로의 전환 확인
 		if (Velocity.Length() < KINDA_SMALL &&
-			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityScale )
+			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityFactor)
 		{
 			// 정적 마찰력이 외력을 상쇄
 			AccumulatedForce = Vector3::Zero;
@@ -47,7 +49,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		else
 		{
 			// 운동 마찰력 적용
-			Vector3 frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityScale;
+			Vector3 frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityFactor;
 			TotalAcceleration += frictionAccel;
 		}
 	}

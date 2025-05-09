@@ -570,6 +570,9 @@
     <ClInclude Include="PhysicsStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsDefine.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

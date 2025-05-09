@@ -66,12 +66,12 @@ void UGameplayScene02::Initialize()
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
-    Character->SetScale(0.5f * Vector3::One);
+    Character->SetScale(50.0f * Vector3::One);
     Character->SetPosition({ -75.0f, 0, 0 });
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
-    Character2->SetScale(0.35f * Vector3::One);
+    Character2->SetScale(35.0f * Vector3::One);
     Character2->SetPosition({ 100.0f, 0, 0.0f });
 
     // 초기화 및 설정
@@ -276,17 +276,17 @@ void UGameplayScene02::SubmitRenderUI()
             ImGui::Text("Scale");
             ImGui::SameLine();
             ImGui::PushItemWidth(50.0f);
-            if (ImGui::DragFloat("x", &Scale.x, 0.1f, 0.01f,5.0f,"%.2f"))
+            if (ImGui::DragFloat("x", &Scale.x, 0.1f, 0.01f,500.0f,"%.2f"))
             {
                 bScale = true;
             }
             ImGui::SameLine();
-            if (ImGui::DragFloat("y", &Scale.y, 0.1f, 0.01f, 5.0f, "%.2f"))
+            if (ImGui::DragFloat("y", &Scale.y, 0.1f, 0.01f, 500.0f, "%.2f"))
             {
                 bScale = true;
             }
             ImGui::SameLine();
-            if (ImGui::DragFloat("z", &Scale.z, 0.1f, 0.01f, 5.0f, "%.2f"))
+            if (ImGui::DragFloat("z", &Scale.z, 0.1f, 0.01f, 500.0f, "%.2f"))
             {
                 bScale = true;
             }
@@ -428,7 +428,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {
@@ -446,7 +446,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {
@@ -463,7 +463,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
 
                                  if (EventData.bShift)
                                  {
@@ -480,7 +480,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
 
                                  if (EventData.bShift)
                                  {
@@ -507,7 +507,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {
@@ -524,7 +524,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {
@@ -541,7 +541,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {
@@ -558,7 +558,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
                                  if (EventData.bShift)
                                  {

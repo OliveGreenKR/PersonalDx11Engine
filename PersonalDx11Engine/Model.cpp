@@ -158,7 +158,7 @@ FVertexDataContainer UModel::CreateCubeVertexData()
 	FVertexDataContainer data;
 
 	// 큐브 정점 데이터 (위치와 텍스처 좌표만 포함)
-	float size = 50.0f;
+	float size = 0.5f;
 
 	// 24개의 정점 (면별로 다른 정점, 텍스처 좌표를 위해)
 	// 전면 (Z+)
@@ -231,7 +231,7 @@ FVertexDataContainer UModel::CreateSphereVertexData(int InSegments)
 	FVertexDataContainer data;
 
 	// 구 정점 데이터 생성
-	const float radius = 50.0f;
+	const float radius = 0.5f;
 	const int segments = InSegments;
 	const int rings = segments;  // 더 부드러운 모델을 위해 링 수 증가
 
@@ -289,7 +289,7 @@ FVertexDataContainer UModel::CreatePlaneVertexData()
 	FVertexDataContainer data;
 
 	// 간단한 평면 정점 데이터 생성 (XZ 평면)
-	float size = 50.0f;
+	float size = 0.5f;
 
 	// 4개 정점 (정사각형)
 	data.Vertices = {

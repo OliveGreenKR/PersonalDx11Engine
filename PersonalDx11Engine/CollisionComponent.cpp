@@ -26,11 +26,7 @@ Vector3 UCollisionComponentBase::GetHalfExtent() const
 
 Vector3 UCollisionComponentBase::GetScaledHalfExtent() const
 {
-	Vector3 HalfExtent = GetHalfExtent();
-	return Vector3(
-		HalfExtent.x * GetWorldTransform().Scale.x,
-		HalfExtent.y * GetWorldTransform().Scale.y,
-		HalfExtent.z * GetWorldTransform().Scale.z);
+	return GetWorldTransform().Scale * 0.5f;
 }
 
 bool UCollisionComponentBase::IsStatic() const

@@ -52,8 +52,8 @@ void UTestScene01::Initialize()
 
     const  Vector3 Pos1 = Vector3(-35.0f, 0, 0);
     const  Vector3 Pos2 = Vector3(35.0f, 0, 0);
-    const  Vector3 Scale1 = Vector3::One;
-    const  Vector3 Scale2 = Vector3::One * 0.75f;
+    const  Vector3 Scale1 = Vector3::One * 100.0f;
+    const  Vector3 Scale2 = Vector3::One * 75.0f;
 
     Box->SetWorldPosition(Pos1);
     Box->SetWorldScale(Scale1);
@@ -61,13 +61,12 @@ void UTestScene01::Initialize()
     Sphere->SetWorldPosition(Pos2);
     Sphere->SetWorldScale(Scale2);
 
-
     //원점 표시
     auto OPointWeak = ObjectPool->AcquireForcely();
     auto OPoint = OPointWeak.Get();
     OPoint->SetColor(Vector4(1, 0, 1, 1));
     OPoint->SetModel(FResourceHandle(MDL_SPHERE_Low));
-    OPoint->SetWorldScale(Vector3::One * 0.1f);
+    OPoint->SetWorldScale(Scale1 * 0.05f);
 
 
     //EPA
@@ -396,12 +395,6 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
     XMVECTOR ClosestNormal = XMVectorZero();
     float ClosestDistance = FLT_MAX;
 
-
-
-
-	// Find the face closest to the origin in the current polytope
-	ClosestFaceIndex = -1;
-	ClosestDistance = FLT_MAX;
 
 	int num_faces = Poly.Distances.size(); // Use current size as faces are added/removed
 	for (int i = 0; i < num_faces; ++i) {
