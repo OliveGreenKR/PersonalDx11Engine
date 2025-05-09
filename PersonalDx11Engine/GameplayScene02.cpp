@@ -131,9 +131,6 @@ void UGameplayScene02::Initialize()
 
     auto Colli2 = Character2->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
     Colli2.lock()->SetLocalScale(Vector3::One * 1.05f);
-
-    //트랜스폼 테스트
-    //Character->GetRootComp()->AddChild(Character2->GetRootComp());
 }
 
 void UGameplayScene02::Load()
@@ -323,37 +320,50 @@ void UGameplayScene02::SubmitRenderUI()
                         CurrentRot.y,
                         CurrentRot.z, 
                         CurrentRot.w);
+            ImGui::Text("[LocalTransform] \n %s",
+                        Debug::ToString(Character2->GetRootComp()->GetLocalTransform()));
             ImGui::End();
         }
 
-        ImGui::Begin("Both", nullptr, UIWindowFlags);
-        ImGui::SetNextItemWidth(50.0f);
-        if (ImGui::InputFloat("MaxSpeed", &MaxSpeed, 0.0f, 0.0f, "%.02f"))
+        if (Character && Character2)
         {
-            SetMaxSpeeds(MaxSpeed);
-        }
-        ImGui::SetNextItemWidth(50.0f);
-        ImGui::InputFloat("PowerMags", &PowerMagnitude, 0.0f, 0.0f, "%.02f");
-        if(ImGui::Checkbox("CollisionVisualize", &bIsVisualizeCollision))
-        {
-            if (Character)
+            ImGui::Begin("Both", nullptr, UIWindowFlags);
+            ImGui::SetNextItemWidth(50.0f);
+            if (ImGui::InputFloat("MaxSpeed", &MaxSpeed, 0.0f, 0.0f, "%.02f"))
+            {
+                SetMaxSpeeds(MaxSpeed);
+            }
+            ImGui::SetNextItemWidth(50.0f);
+            ImGui::InputFloat("PowerMags", &PowerMagnitude, 0.0f, 0.0f, "%.02f");
+            if (ImGui::Checkbox("CollisionVisualize", &bIsVisualizeCollision))
             {
                 auto Colli = Character->GetComponentByType<UCollisionComponentBase>();
                 if (Colli)
                 {
                     Colli->SetDebugVisualize(bIsVisualizeCollision);
                 }
-            }
-            if (Character2)
-            {
-                auto Colli = Character2->GetComponentByType<UCollisionComponentBase>();
-                if (Colli)
+                auto Colli2 = Character2->GetComponentByType<UCollisionComponentBase>();
+                if (Colli2)
                 {
-                    Colli->SetDebugVisualize(bIsVisualizeCollision);
+                    Colli2->SetDebugVisualize(bIsVisualizeCollision);
                 }
             }
+            static bool bLink = false;
+            if (ImGui::Checkbox("Link", &bLink))
+            {
+                if (bLink)
+                {
+                    //트랜스폼 테스트
+					Character->GetRootComp()->AddChild(Character2->GetRootComp());
+                }
+                else
+                {
+                    Character2->GetRootComp()->SetParent(nullptr);
+                }
+            }
+            ImGui::End();
         }
-        ImGui::End();
+        
         });
 }
 

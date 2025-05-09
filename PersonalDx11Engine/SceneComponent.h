@@ -80,12 +80,14 @@ protected:
 
     void OnLocalTransformChanged();
     void OnWorldTransformChanged();
-    void OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent);
+    void OnParentSceneChanged(const std::shared_ptr<USceneComponent>& NewParent);
 
     //월드 트랜스폼 업데이트 전파
     void PropagateWorldTransformToChildren();
 
 
 private:
+    void OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent) override;
+
     static constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 };

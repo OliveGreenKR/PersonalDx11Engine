@@ -47,23 +47,15 @@ void USceneComponent::OnWorldTransformChanged()
 }
 
 // 부모 변경 시 호출되는 함수
-void USceneComponent::OnChangeParent(const std::shared_ptr<USceneComponent>& NewParent)
+void USceneComponent::OnParentSceneChanged(const std::shared_ptr<USceneComponent>& NewParent)
 {
     // 현재 월드 트랜스폼 저장
     FTransform CurrentWorldTransform = GetWorldTransform();
 
-    // 1. ActorComponent 부모-자식 관계 설정
-    if (auto OldParent = GetParent())
-    {
-        UActorComponent::SetParent(nullptr);
-    }
-
-    // 2. 새 부모와의 관계 설정
+    // 트랜스폼 계층구조
     if (NewParent)
     {
-        UActorComponent::SetParent(NewParent);
-
-        // 3. 월드 트랜스폼 유지하며 로컬 트랜스폼 재계산
+        // 월드 트랜스폼 유지하며 로컬 트랜스폼 재계산
         WorldTransform = CurrentWorldTransform;
         const FTransform& ParentWorldTransform = NewParent->GetWorldTransform();
         LocalTransform = WorldToLocal(ParentWorldTransform);
@@ -379,6 +371,14 @@ void USceneComponent::PropagateWorldTransformToChildren()
     }
 }
 
+void USceneComponent::OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent)
+{
+    if (auto ParentScene = Engine::Cast<USceneComponent>(NewParent))
+    {
+        OnParentSceneChanged(ParentScene);
+    }
+}
+
 const FTransform& USceneComponent::GetWorldTransform() const
 {
     return WorldTransform;
@@ -474,9 +474,9 @@ void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent
     }
     else
     {
-        // 부모가 없는 경우, 월드
+        // 부모가 없는 경우, 월드원점이 부모
         UActorComponent::SetParent(nullptr);
-        LocalTransform = FTransform(); //초기화(0)
+        LocalTransform = CurrentWorldTransform;
         WorldTransform = CurrentWorldTransform;
     }
 }
