@@ -48,6 +48,7 @@ void UTestScene01::Initialize()
 
     Latitude = 0.0f;
     Longitude = 0.0f;
+    bEPAConverged = false;
 
     Box = UActorComponent::Create<UBoxComponent>();
     Sphere = UActorComponent::Create<USphereComponent>();
@@ -158,7 +159,10 @@ void UTestScene01::Tick(float DeltaTime)
     {
         DrawPolytope(Poly, Vector4(1, 1, 1, 1), DeltaTime, true);
     }
-    
+    if (bEPAConverged)
+    {
+        CuurentIteration = PrevIteration;
+    }
     PrevIteration = CuurentIteration;
 }
 
@@ -443,7 +447,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
         Vector3 Normal;
         DirectX::XMStoreFloat3(&Normal, ClosestNormal);
         Normal *= ClosestDistance;
-        UDebugDrawManager::Get()->DrawLine(Vector3::Zero, Normal, Vector4(0, 1, 1, 1), 0.1f, true);
+        UDebugDrawManager::Get()->DrawLine(Vector3::Zero, Normal, Vector4(1, 0, 0, 1), 0.001f, 1.0f);
 
 
 		// Calculate contact point
@@ -469,6 +473,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
         Vector3 Point;
 		XMStoreFloat3(&Point, ResultContactPoint);
         LOG("EPA Result Point : %s", Debug::ToString(Point));
+        bEPAConverged = true;
 		// Successfully found penetration data
 		return true; // Exit EPA function early
 	}
