@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include "Delegate.h"
 
 class USceneManager
 {
@@ -17,6 +18,8 @@ private:
     USceneManager() = default;
 
 public:
+
+    TDelegate<> OnSceneChanged = TDelegate<>();
 
     static USceneManager* Get()
     {
@@ -68,7 +71,10 @@ public:
             ActiveScene->Initialize();
      
             bIsTransitioning = false;
+            OnSceneChanged.Broadcast();
         }
+
+
 
         // 활성 씬 업데이트
         if (ActiveScene)

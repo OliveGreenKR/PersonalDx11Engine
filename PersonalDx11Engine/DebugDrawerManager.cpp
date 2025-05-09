@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "Material.h"
 #include "ConfigReadManager.h"
+#include "SceneManager.h"
 
 void UDebugDrawManager::DrawLine(const Vector3& Start, const Vector3& End, const Vector4& Color, float Thickness, float Duration, bool bPersist)
 {
@@ -94,6 +95,10 @@ void UDebugDrawManager::SetupPrimitive(UPrimitiveComponent* TargetPrimitive,
 UDebugDrawManager::UDebugDrawManager()
 {
 	FixedPool = std::make_unique< TFixedObjectPool<FDebugShape, DEBUGDRASWER_POOL_SIZE>>();
+	USceneManager::Get()->OnSceneChanged.BindSystem([this]() 
+													{
+														ClearActives();
+													}, "DebugManager::OnSceneChanged");
 }
 
 UDebugDrawManager::~UDebugDrawManager()
