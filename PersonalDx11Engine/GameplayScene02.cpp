@@ -293,7 +293,6 @@ void UGameplayScene02::SubmitRenderUI()
             }
             ImGui::PopItemWidth();
             ImGui::End();
-
         }
 
         if (Character2)
@@ -522,6 +521,13 @@ void UGameplayScene02::SetupInput()
                                  if (EventData.bShift)
                                  {
                                      Character2->ApplyForce(Vector3::Forward() * InForceMagnitude);           
+                                 }
+                                 else if (EventData.bControl)
+                                 {
+                                     Vector3 Position = Character2->GetTransform().Position;
+                                     Position.x += Character->GetTransform().Scale.x * 0.25f;
+                                     Character2->GetComponentByType<URigidBodyComponent>()->ApplyForce(Vector3::Forward() * InForceMagnitude,
+                                                                                                       Position);
                                  }
                                  else
                                  {

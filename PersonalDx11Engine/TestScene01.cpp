@@ -444,7 +444,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
     Vector3 SDir;
     XMStoreFloat3(&SDir, SearchDir);
     SDir *= 100.0f;
-    float DrawDuration = 5.0f;
+    float DrawDuration = 2.0f;
     UDebugDrawManager::Get()->DrawSphere(SpA, 5.0f, Quaternion::Identity(), Color::ColorHex(0xd964b4), DrawDuration, false);
     UDebugDrawManager::Get()->DrawSphere(SpB, 5.0f, Quaternion::Identity(), Color::ColorHex(0x45dc3c), DrawDuration, false);
     UDebugDrawManager::Get()->DrawLine(SpA, SpA + SDir, Vector4(1, 0, 0, 1), 1.0f, DrawDuration, false);

@@ -52,9 +52,9 @@ private:
     int BodyNum = 0;
 
     // 경계 값
-    const float XBorder = 3.0f;
-    const float YBorder = 2.0f;
-    const float ZBorder = 5.0f;
+    const float XBorder = 300.0f;
+    const float YBorder = 200.0f;
+    const float ZBorder = 500.0f;
 
     //리소스
     FResourceHandle PoleMaterialHandle;

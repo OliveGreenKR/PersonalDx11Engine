@@ -10,7 +10,11 @@ UActorComponent::~UActorComponent()
 
     for (auto comps : ChildComponents)
     {
-        comps = nullptr;
+        if (comps.lock())
+        {
+            comps.reset();
+        }
+            
     }
     ChildComponents.clear();
 
@@ -25,9 +29,9 @@ void UActorComponent::BroadcastPostInitialized()
     // 모든 자식 컴포넌트에 대해 PostInitialized 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child.lock())
         {
-            Child->BroadcastPostInitialized();
+            Child.lock()->BroadcastPostInitialized();
         }
     }
 }
@@ -41,9 +45,9 @@ void UActorComponent::BroadcastPostTreeInitialized()
     // 모든 자식 컴포넌트에 대해 PostInitialized 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child.lock())
         {
-            Child->BroadcastPostTreeInitialized();
+            Child.lock()->BroadcastPostTreeInitialized();
         }
     }
 }
@@ -60,9 +64,9 @@ void UActorComponent::BroadcastTick(float DeltaTime)
     // 모든 활성화 자식 컴포넌트에 대해 Tick 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child && Child->IsActive())
+        if (Child.lock() && Child.lock()->IsActive())
         {
-            Child->BroadcastTick(DeltaTime);
+            Child.lock()->BroadcastTick(DeltaTime);
         }
     }
 }
@@ -80,9 +84,9 @@ void UActorComponent::Activate()
     // 모든 자식 컴포넌트에 대해 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child.lock())
         {
-            Child->SetActive(true);
+            Child.lock()->SetActive(true);
         }
     }
 }
@@ -92,9 +96,9 @@ void UActorComponent::DeActivate()
     // 모든 자식 컴포넌트에 대해 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child)
+        if (Child.lock())
         {
-            Child->SetActive(false);
+            Child.lock()->SetActive(false);
         }
     }
 }
@@ -106,6 +110,29 @@ void UActorComponent::PostInitialized()
 void UActorComponent::PostTreeInitialized()
 {
    
+}
+
+void UActorComponent::Tick(float DeltaTime)
+{
+    bool bDirty = false;
+    int RemoveCount = 0;
+    for (const auto& Child : ChildComponents)
+    {
+        if (!Child.lock())
+        {
+            bDirty = true;
+            RemoveCount++;
+        }
+    }
+
+    if (bDirty)
+    {
+        auto& children = ChildComponents;
+        children.erase(
+            std::remove_if(children.begin(), children.end(),
+                           [this](const auto& child) { return child.lock() == nullptr; }),
+            children.end());
+    }
 }
 
 void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)
@@ -137,7 +164,7 @@ void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& 
         auto& children = oldParent->ChildComponents;
         children.erase(
             std::remove_if(children.begin(), children.end(),
-                           [this](const auto& child) { return child.get() == this; }),
+                           [this](const auto& child) { return child.lock().get() == this; }),
             children.end());
     }
 
@@ -183,7 +210,7 @@ bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)
     // 중복 추가 방지
     auto it = std::find_if(ChildComponents.begin(), ChildComponents.end(),
                            [&Child](const auto& Existing) {
-                               return Existing.get() == Child.get();
+                               return Existing.lock() == Child;
                            });
 
     if (it != ChildComponents.end())
@@ -207,7 +234,7 @@ bool UActorComponent::RemoveChild(const std::shared_ptr<UActorComponent>& Child)
     // 자식 검색
     auto it = std::find_if(ChildComponents.begin(), ChildComponents.end(),
                            [&Child](const auto& Existing) {
-                               return Existing.get() == Child.get();
+                               return Existing.lock() == Child;
                            });
 
     // 자식이 없으면 종료
@@ -269,10 +296,11 @@ void UActorComponent::PrintComponentTreeInternal(std::ostream& os, std::string p
         // 각 자식 컴포넌트 출력
         for (size_t i = 0; i < ChildComponents.size(); ++i)
         {
-            if (ChildComponents[i])
+            auto Child = ChildComponents[i].lock();
+            if (Child)
             {
                 bool isChildLast = (i >= lastValidIndex);
-                ChildComponents[i]->PrintComponentTreeInternal(os, newPrefix, isChildLast);
+                Child->PrintComponentTreeInternal(os, newPrefix, isChildLast);
             }
             else
             {

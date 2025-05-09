@@ -44,8 +44,8 @@ void UGameplayScene01::Initialize()
     UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);
 
     // 카메라 설정
-    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 100.0f);
-    Camera->SetPosition({ 0, 0.0f, -10.0f });
+    Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);
+    Camera->SetPosition({ 0, 0.0f, -800.0f });
 
     // 입력 설정
     SetupInput();
@@ -331,8 +331,8 @@ void UGameplayScene01::SpawnElasticBody()
     body->PostInitialized();
     body->PostInitializedComponents();
 
-    body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One());
-    body->SetPosition(FRandom::RandVector(Vector3::One() * -1.5f, Vector3::One() * 1.5f));
+    body->SetScale(FRandom::RandVector(Vector3::One()*30.0f , Vector3::One()*80.0f));
+    body->SetPosition(FRandom::RandVector(Vector3::One() * -150.0f, Vector3::One() * 150.0f));
 
     auto Rigid = body->GetComponentByType<URigidBodyComponent>();
     if (Rigid)
@@ -340,7 +340,7 @@ void UGameplayScene01::SpawnElasticBody()
         //물리적 상태값 초기화
         Rigid->Reset();
     }
-    body->SetMass(FRandom::RandF(1.0f, 5.0f));
+    body->SetMass(FRandom::RandF(1.0f, 20.0f));
     body->SetGravity(bGravity);
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);

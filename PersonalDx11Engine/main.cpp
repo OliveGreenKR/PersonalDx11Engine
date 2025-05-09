@@ -242,8 +242,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 		UResourceManager::Get()->Tick(DeltaTime);
-		USceneManager::Get()->Tick(DeltaTime);
 		UCollisionManager::Get()->Tick(DeltaTime);
+		USceneManager::Get()->Tick(DeltaTime);
+	
 		UDebugDrawManager::Get()->Tick(DeltaTime);
 #pragma endregion 
 		

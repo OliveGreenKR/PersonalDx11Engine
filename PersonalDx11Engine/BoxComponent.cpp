@@ -1,6 +1,7 @@
 #include "BoxComponent.h"
 #include "DebugDrawerManager.h"
 #include "Debug.h"
+#include "PhysicsDefine.h"
 
 Vector3 UBoxComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
 {
@@ -33,18 +34,23 @@ Vector3 UBoxComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
 
 Vector3 UBoxComponent::CalculateInertiaTensor(float Mass) const
 {
-    // Load half extents into SIMD vector
-    Vector3 HalfExtent = GetHalfExtent();
-    XMVECTOR vHalfExtent = XMLoadFloat3(&HalfExtent);
+    // Load scaled half extents (world scale applied) into SIMD vector
+    Vector3 ScaledHalfExtent = GetScaledHalfExtent(); // cm 단위
+    XMVECTOR vScaledHalfExtent = XMLoadFloat3(&ScaledHalfExtent);
 
-    // Square each component: he * he
-    XMVECTOR vSquared = XMVectorMultiply(vHalfExtent, vHalfExtent); // (x², y², z²)
+    // Convert cm to meters (1 cm = 0.01 m)
+    vScaledHalfExtent = XMVectorScale(vScaledHalfExtent, 1.0f/ONE_METER);
+
+    // Square each component: (he * 0.01)² = he² * 0.0001
+    XMVECTOR vSquared = XMVectorMultiply(vScaledHalfExtent, vScaledHalfExtent); // (x², y², z²) in m²
+
+    // Scale by 4 to account for full extent: (2*he)² = 4*he²
+    vSquared = XMVectorScale(vSquared, 4.0f);
 
     // Shuffle to get the proper sum combinations for inertia tensor
     // I.x = (y² + z²)
     // I.y = (x² + z²)
     // I.z = (x² + y²)
-
     XMVECTOR tensor = XMVectorSet(
         XMVectorGetY(vSquared) + XMVectorGetZ(vSquared), // y² + z²
         XMVectorGetX(vSquared) + XMVectorGetZ(vSquared), // x² + z²
@@ -64,31 +70,30 @@ Vector3 UBoxComponent::CalculateInertiaTensor(float Mass) const
 
 void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 {
-    // Load rotation matrix once
-    XMMATRIX WorldRotateMatrix = GetWorldTransform().GetRotationMatrix();
-    XMVECTOR Position = XMLoadFloat3(&GetWorldTransform().Position);
+    // Load world transform matrix (Scale * Rotation * Translation)
+    XMMATRIX WorldTransformMatrix = GetWorldTransform().GetModelingMatrix();
 
-    // Preload GetHalfExtent()
+    // Preload GetHalfExtent() for local box
     float hx = GetHalfExtent().x;
     float hy = GetHalfExtent().y;
     float hz = GetHalfExtent().z;
 
     // Precomputed 8 local corners in SIMD directly
     XMVECTOR Points[8];
-    Points[0] = XMVectorSet(-hx, -hy, -hz, 0.0f);
-    Points[1] = XMVectorSet(+hx, -hy, -hz, 0.0f);
-    Points[2] = XMVectorSet(-hx, +hy, -hz, 0.0f);
-    Points[3] = XMVectorSet(+hx, +hy, -hz, 0.0f);
-    Points[4] = XMVectorSet(-hx, -hy, +hz, 0.0f);
-    Points[5] = XMVectorSet(+hx, -hy, +hz, 0.0f);
-    Points[6] = XMVectorSet(-hx, +hy, +hz, 0.0f);
-    Points[7] = XMVectorSet(+hx, +hy, +hz, 0.0f);
+    Points[0] = XMVectorSet(-hx, -hy, -hz, 1.0f); // w=1 for full transform
+    Points[1] = XMVectorSet(+hx, -hy, -hz, 1.0f);
+    Points[2] = XMVectorSet(-hx, +hy, -hz, 1.0f);
+    Points[3] = XMVectorSet(+hx, +hy, -hz, 1.0f);
+    Points[4] = XMVectorSet(-hx, -hy, +hz, 1.0f);
+    Points[5] = XMVectorSet(+hx, -hy, +hz, 1.0f);
+    Points[6] = XMVectorSet(-hx, +hy, +hz, 1.0f);
+    Points[7] = XMVectorSet(+hx, +hy, +hz, 1.0f);
 
-    // Apply rotation
+    // Apply full world transform (Scale, Rotation, Translation)
     for (int i = 0; i < 8; ++i)
-        Points[i] = XMVector3Transform(Points[i], WorldRotateMatrix);
+        Points[i] = XMVector4Transform(Points[i], WorldTransformMatrix);
 
-    // Initialize Min/Max with first rotated point
+    // Initialize Min/Max with first transformed point
     XMVECTOR MinPoint = Points[0];
     XMVECTOR MaxPoint = Points[0];
 
@@ -98,11 +103,7 @@ void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
         MaxPoint = XMVectorMax(MaxPoint, Points[i]);
     }
 
-    // Add world position in SIMD
-    MinPoint = XMVectorAdd(MinPoint, Position);
-    MaxPoint = XMVectorAdd(MaxPoint, Position);
-
-    // Store back
+    // Store back (only x, y, z components)
     XMStoreFloat3(&OutMin, MinPoint);
     XMStoreFloat3(&OutMax, MaxPoint);
 }

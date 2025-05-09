@@ -104,7 +104,7 @@ private:
 	// 물리 속성
 	float Mass = 1.0f;
 	Vector3 RotationalInertia = Vector3::One();
-	float MaxSpeed = 4.0f;
+	float MaxSpeed = 400.0f;
 	float MaxAngularSpeed = 6.0f * PI;
 	float FrictionKinetic = 0.3f;
 	float FrictionStatic = 0.5f;

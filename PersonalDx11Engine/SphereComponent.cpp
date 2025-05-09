@@ -1,5 +1,6 @@
 #include "SphereComponent.h"
 #include "DebugDrawerManager.h"
+#include "PhysicsDefine.h"
 
 Vector3 USphereComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
 {
@@ -21,7 +22,7 @@ Vector3 USphereComponent::GetWorldSupportPoint(const Vector3& WorldDirection) co
 Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const
 {
     // For a solid sphere: I = (2/5) * m * r^2
-    float r = GetHalfExtent().x;
+    float r = GetScaledHalfExtent().x / ONE_METER;
     float r2 = r * r;
     float Inertia = (2.0f / 5.0f) * Mass * r2;
 
@@ -31,7 +32,7 @@ Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const
 void USphereComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
 {
     XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
-    XMVECTOR Extent = XMVectorReplicate(GetHalfExtent().x); // (r, r, r, r)
+    XMVECTOR Extent = XMVectorReplicate(GetScaledHalfExtent().x); // (r, r, r, r)
 
     XMVECTOR MinPoint = XMVectorSubtract(Center, Extent);
     XMVECTOR MaxPoint = XMVectorAdd(Center, Extent);

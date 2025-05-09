@@ -68,5 +68,6 @@ Matrix FTransform::GetModelingMatrix() const
     Matrix RotationMatrix = GetRotationMatrix();
     Matrix TranslationMatrix = GetTranslationMatrix();;
 
+    // M = S*R*T
     return ScaleMatrix * RotationMatrix * TranslationMatrix;
 }

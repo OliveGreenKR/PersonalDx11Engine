@@ -8,7 +8,6 @@ FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
 	UConfigReadManager::Get()->GetValue("bUseGJKEPA", bUseGJKEPA);
-	UConfigReadManager::Get()->GetValue("CASafetyFactor", CASafetyFactor);
 	UConfigReadManager::Get()->GetValue("MaxGJKIterations", MaxGJKIterations);
 	UConfigReadManager::Get()->GetValue("MaxEPAIterations", MaxEPAIterations);
 	UConfigReadManager::Get()->GetValue("EPATolerance", EPATolerance);
@@ -57,6 +56,8 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 		return DetectCollisionGJKEPA(ShapeA, CurrentTransformA,
 									 ShapeB, CurrentTransformB);
 	}
+
+	//TODO CCD
 
 	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
 											 ShapeB, CurrentTransformB);

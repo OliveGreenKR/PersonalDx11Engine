@@ -13,22 +13,22 @@
 
 namespace TestSceneComponent
 {
-    // Å×½ºÆ®¿ë È®Àå ¾À ÄÄÆ÷³ÍÆ® Å¬·¡½º
+    // í…ŒìŠ¤íŠ¸ìš© í™•ì¥ ì”¬ ì»´í¬ë„ŒíŠ¸ í´ë˜ìŠ¤
     class FTestSceneComponent : public USceneComponent
     {
     private:
         int ID;
-        Vector3 PrevWorldPosition; // ÀÌÀü ¿ùµå À§Ä¡ ÀúÀå
+        Vector3 PrevWorldPosition; // ì´ì „ ì›”ë“œ ìœ„ì¹˜ ì €ì¥
         bool bWorldTransformNeedUpdate = false;
 
     public:
         FTestSceneComponent(int InID) : ID(InID)
         {
-            // ÃÊ±â ¿ùµå À§Ä¡ ÀúÀå
+            // ì´ˆê¸° ì›”ë“œ ìœ„ì¹˜ ì €ì¥
             PrevWorldPosition = GetWorldPosition();
         }
 
-        // ¿ùµå Æ®·£½ºÆûÀ» Ã¼Å©ÇÏ°í º¯°æ ¿©ºÎ ¾÷µ¥ÀÌÆ®
+        // ì›”ë“œ íŠ¸ëœìŠ¤í¼ì„ ì²´í¬í•˜ê³  ë³€ê²½ ì—¬ë¶€ ì—…ë°ì´íŠ¸
         void CheckWorldTransformChanged()
         {
             Vector3 CurrentWorldPosition = GetWorldPosition();
@@ -44,12 +44,12 @@ namespace TestSceneComponent
 
         int GetID() const { return ID; }
         bool HasWorldTransformChanged() const { return bWorldTransformNeedUpdate; }
-        // µğ¹ö±ë ¸ñÀûÀÇ ¹®ÀÚ¿­ Ç¥Çö
+        // ë””ë²„ê¹… ëª©ì ì˜ ë¬¸ìì—´ í‘œí˜„
         std::string ToString() const
         {
             std::stringstream ss;
 
-            // Æ®·£½ºÆû º¯°æ »óÅÂ¿¡ µû¸¥ ID Ç¥½Ã
+            // íŠ¸ëœìŠ¤í¼ ë³€ê²½ ìƒíƒœì— ë”°ë¥¸ ID í‘œì‹œ
             std::string idStr;
             if (bWorldTransformNeedUpdate)
                 idStr = "[" + std::to_string(ID) + "]";
@@ -67,41 +67,41 @@ namespace TestSceneComponent
         }
     };
 
-    // °èÃş ±¸Á¶ Å×½ºÆ® Å¬·¡½º
+    // ê³„ì¸µ êµ¬ì¡° í…ŒìŠ¤íŠ¸ í´ë˜ìŠ¤
     class FSceneHierarchyTester
     {
     private:
         std::vector<std::shared_ptr<FTestSceneComponent>> Components;
 
     public:
-        // ÁöÁ¤µÈ °³¼öÀÇ ³ëµå·Î °èÃş ±¸Á¶ »ı¼º
+        // ì§€ì •ëœ ê°œìˆ˜ì˜ ë…¸ë“œë¡œ ê³„ì¸µ êµ¬ì¡° ìƒì„±
         void CreateHierarchy(int NodeCount, int MaxChildrenPerNode = 3)
         {
             if (NodeCount <= 0)
                 return;
 
-            // ±âÁ¸ ÄÄÆ÷³ÍÆ® Á¤¸®
+            // ê¸°ì¡´ ì»´í¬ë„ŒíŠ¸ ì •ë¦¬
             Components.clear();
 
-            // ·çÆ® ³ëµå »ı¼º
+            // ë£¨íŠ¸ ë…¸ë“œ ìƒì„±
             auto RootNode = UActorComponent::Create<FTestSceneComponent>(0);
             Components.push_back(RootNode);
 
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> ChildCountDist(0, MaxChildrenPerNode);
-            std::uniform_int_distribution<> ParentSelectionDist(0, 0); // Ã³À½¿¡´Â ·çÆ®¸¸ ÀÖÀ½
+            std::uniform_int_distribution<> ParentSelectionDist(0, 0); // ì²˜ìŒì—ëŠ” ë£¨íŠ¸ë§Œ ìˆìŒ
 
-            // ³ª¸ÓÁö ³ëµå »ı¼º ¹× °èÃş ±¸Á¶ ±¸¼º
+            // ë‚˜ë¨¸ì§€ ë…¸ë“œ ìƒì„± ë° ê³„ì¸µ êµ¬ì¡° êµ¬ì„±
             for (int i = 1; i < NodeCount; ++i)
             {
                 auto NewNode = UActorComponent::Create<FTestSceneComponent>(i);
 
-                // 0ºÎÅÍ i-1 »çÀÌÀÇ ÀÓÀÇÀÇ ºÎ¸ğ ¼±ÅÃ
+                // 0ë¶€í„° i-1 ì‚¬ì´ì˜ ì„ì˜ì˜ ë¶€ëª¨ ì„ íƒ
                 ParentSelectionDist = std::uniform_int_distribution<>(0, i - 1);
                 int ParentIndex = ParentSelectionDist(gen);
 
-                // ºÎ¸ğÀÇ ÀÚ½Ä ³ëµå ¼ö°¡ ÃÖ´ë°ªÀ» ÃÊ°úÇÏÁö ¾Ê´ÂÁö È®ÀÎ
+                // ë¶€ëª¨ì˜ ìì‹ ë…¸ë“œ ìˆ˜ê°€ ìµœëŒ€ê°’ì„ ì´ˆê³¼í•˜ì§€ ì•ŠëŠ”ì§€ í™•ì¸
                 auto Parent = Components[ParentIndex];
                 if (Parent->GetChildren().size() < MaxChildrenPerNode)
                 {
@@ -109,7 +109,7 @@ namespace TestSceneComponent
                 }
                 else
                 {
-                    // ÀÚ½ÄÀÌ ÀÌ¹Ì ÃÖ´ëÀÎ °æ¿ì, ´Ù¸¥ ºÎ¸ğ Ã£±â
+                    // ìì‹ì´ ì´ë¯¸ ìµœëŒ€ì¸ ê²½ìš°, ë‹¤ë¥¸ ë¶€ëª¨ ì°¾ê¸°
                     bool FoundParent = false;
                     for (size_t j = 0; j < Components.size(); ++j)
                     {
@@ -121,7 +121,7 @@ namespace TestSceneComponent
                         }
                     }
 
-                    // ¸ğµç ³ëµå°¡ ÃÖ´ë ÀÚ½Ä ¼ö¿¡ µµ´ŞÇÑ °æ¿ì, ·çÆ®¿¡ Ãß°¡
+                    // ëª¨ë“  ë…¸ë“œê°€ ìµœëŒ€ ìì‹ ìˆ˜ì— ë„ë‹¬í•œ ê²½ìš°, ë£¨íŠ¸ì— ì¶”ê°€
                     if (!FoundParent)
                     {
                         RootNode->AddChild(NewNode);
@@ -131,14 +131,14 @@ namespace TestSceneComponent
                 Components.push_back(NewNode);
             }
 
-            // °èÃş ±¸Á¶ ÃÊ±âÈ­
+            // ê³„ì¸µ êµ¬ì¡° ì´ˆê¸°í™”
             for (auto& Component : Components)
             {
                 Component->ResetFlags();
             }
         }
 
-        // °èÃş ±¸Á¶ ½Ã°¢È­
+        // ê³„ì¸µ êµ¬ì¡° ì‹œê°í™”
         void PrintHierarchy(std::ostream& os = std::cout)
         {
             if (Components.empty())
@@ -151,7 +151,7 @@ namespace TestSceneComponent
             PrintNodeRecursive(Components[0], os, "", true);
         }
 
-        // ³ëµåÀÇ ¿ùµå Æ®·£½ºÆû º¯È­ Ã¼Å©
+        // ë…¸ë“œì˜ ì›”ë“œ íŠ¸ëœìŠ¤í¼ ë³€í™” ì²´í¬
         void CheckWorldTransformChanges()
         {
             for (auto& Component : Components)
@@ -160,7 +160,7 @@ namespace TestSceneComponent
             }
         }
 
-        // ·£´ı ³ëµåÀÇ Æ®·£½ºÆû º¯°æ Å×½ºÆ®
+        // ëœë¤ ë…¸ë“œì˜ íŠ¸ëœìŠ¤í¼ ë³€ê²½ í…ŒìŠ¤íŠ¸
         void TestRandomTransformChange(std::ostream& os = std::cout)
         {
             if (Components.empty())
@@ -169,7 +169,7 @@ namespace TestSceneComponent
                 return;
             }
 
-            // ·£´ı ³ëµå ¼±ÅÃ
+            // ëœë¤ ë…¸ë“œ ì„ íƒ
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> NodeDist(0, Components.size() - 1);
@@ -180,7 +180,7 @@ namespace TestSceneComponent
             PrintHierarchy(os);
             os << std::endl;
 
-            // ·£´ı Æ®·£½ºÆû º¯°æ
+            // ëœë¤ íŠ¸ëœìŠ¤í¼ ë³€ê²½
             Vector3 RandomPosition = Vector3(
                 FRandom::RandF(-10.0f, 10.0f),
                 FRandom::RandF(-10.0f, 10.0f),
@@ -195,7 +195,7 @@ namespace TestSceneComponent
                 << RandomPosition.z << ")" << std::endl;
             os << std::endl;
 
-            // Á¶È¸µÇ´Â USceneComponent°¡ ³»ºÎÀûÀ¸·Î º¯°æ»çÇ×À» Áï½Ã ÀüÆÄÇÔ(ÀÇµµ´ë·Î µ¿ÀÛ ½Ã)
+            // ì¡°íšŒë˜ëŠ” USceneComponentê°€ ë‚´ë¶€ì ìœ¼ë¡œ ë³€ê²½ì‚¬í•­ì„ ì¦‰ì‹œ ì „íŒŒí•¨(ì˜ë„ëŒ€ë¡œ ë™ì‘ ì‹œ)
             auto children = TargetNode->FindChildrenByType<USceneComponent>();
             if (children.size() > 0)
             {
@@ -211,7 +211,7 @@ namespace TestSceneComponent
             PrintHierarchy(os);
             os << std::endl;
 
-            // º¯°æµÈ ³»¿ë ÃÊ±âÈ­
+            // ë³€ê²½ëœ ë‚´ìš© ì´ˆê¸°í™”
             for (auto& Component : Components)
             {
                 Component->ResetFlags();
@@ -219,7 +219,7 @@ namespace TestSceneComponent
         }
 
     private:
-        // Àç±ÍÀûÀ¸·Î ³ëµå °èÃş ±¸Á¶ Ãâ·Â (Æ®¸® °¡Áö Ç¥½Ã Æ÷ÇÔ)
+        // ì¬ê·€ì ìœ¼ë¡œ ë…¸ë“œ ê³„ì¸µ êµ¬ì¡° ì¶œë ¥ (íŠ¸ë¦¬ ê°€ì§€ í‘œì‹œ í¬í•¨)
         void PrintNodeRecursive(const std::shared_ptr<FTestSceneComponent>& Node,
                                 std::ostream& os,
                                 const std::string& Prefix,
@@ -228,33 +228,33 @@ namespace TestSceneComponent
             if (!Node)
                 return;
 
-            // ÇöÀç ³ëµåÀÇ ¶óÀÎ Á¢µÎ»ç (Æ®¸® °¡Áö ¹®ÀÚ Æ÷ÇÔ)
+            // í˜„ì¬ ë…¸ë“œì˜ ë¼ì¸ ì ‘ë‘ì‚¬ (íŠ¸ë¦¬ ê°€ì§€ ë¬¸ì í¬í•¨)
             os << Prefix;
 
-            // ¸¶Áö¸· ÀÚ½ÄÀÎÁö ¾Æ´ÑÁö¿¡ µû¶ó ´Ù¸¥ °¡Áö ¹®ÀÚ »ç¿ë
-            os << (IsLast ? "¦¦¦¡¦¡ " : "¦§¦¡¦¡ ");
+            // ë§ˆì§€ë§‰ ìì‹ì¸ì§€ ì•„ë‹Œì§€ì— ë”°ë¼ ë‹¤ë¥¸ ê°€ì§€ ë¬¸ì ì‚¬ìš©
+            os << (IsLast ? "â””â”€â”€ " : "â”œâ”€â”€ ");
 
-            // ³ëµå Á¤º¸ Ãâ·Â
+            // ë…¸ë“œ ì •ë³´ ì¶œë ¥
             os << Node->ToString() << std::endl;
 
-            // ÀÚ½Ä ³ëµå¸¦ À§ÇÑ »õ Á¢µÎ»ç °è»ê
-            std::string NewPrefix = Prefix + (IsLast ? "    " : "¦¢   ");
+            // ìì‹ ë…¸ë“œë¥¼ ìœ„í•œ ìƒˆ ì ‘ë‘ì‚¬ ê³„ì‚°
+            std::string NewPrefix = Prefix + (IsLast ? "    " : "â”‚   ");
 
             auto Children = Node->GetChildren();
             for (size_t i = 0; i < Children.size(); ++i)
             {
                 auto TestChild = Engine::Cast<FTestSceneComponent>(Children[i]);
-                if (TestChild)
+                if (TestChild.lock())
                 {
-                    // ¸¶Áö¸· ÀÚ½ÄÀÎÁö ¿©ºÎ Àü´Ş
+                    // ë§ˆì§€ë§‰ ìì‹ì¸ì§€ ì—¬ë¶€ ì „ë‹¬
                     bool ChildIsLast = (i == Children.size() - 1);
-                    PrintNodeRecursive(TestChild, os, NewPrefix, ChildIsLast);
+                    PrintNodeRecursive(TestChild.lock(), os, NewPrefix, ChildIsLast);
                 }
             }
         }
     };
 
-    // Å×½ºÆ® ½ÇÇà ÇÔ¼ö
+    // í…ŒìŠ¤íŠ¸ ì‹¤í–‰ í•¨ìˆ˜
     void RunTransformTest(std::ostream& os = std::cout, int NodeCount = 10, int MaxChildrenPerNode = 3)
     {
         os << "=== Scene Component Transform Hierarchy Test ===" << std::endl;
@@ -269,7 +269,7 @@ namespace TestSceneComponent
         os << "=== Test Completed ===" << std::endl;
     }
 
-    // ¹İº¹ Å×½ºÆ® ½ÇÇà ÇÔ¼ö
+    // ë°˜ë³µ í…ŒìŠ¤íŠ¸ ì‹¤í–‰ í•¨ìˆ˜
     void RunMultipleTests(int TestCount, std::ostream& os = std::cout, int NodeCount = 10, int MaxChildrenPerNode = 3)
     {
         for (int i = 0; i < TestCount; ++i)

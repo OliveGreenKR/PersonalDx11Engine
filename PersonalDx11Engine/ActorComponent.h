@@ -67,7 +67,7 @@ protected:
 	virtual void PostInitialized();
 	virtual void PostTreeInitialized();
 
-    virtual void Tick(float DeltaTime) {}
+	virtual void Tick(float DeltaTime);
 
 protected:
 
@@ -112,7 +112,7 @@ public:
 	// 계층 구조 탐색
 	UActorComponent* GetRoot() const;
 	std::shared_ptr<UActorComponent> GetParent() const { return ParentComponent.lock(); }
-	const std::vector<std::shared_ptr<UActorComponent>>& GetChildren() const { return ChildComponents; }
+	const std::vector<std::weak_ptr<UActorComponent>>& GetChildren() const { return ChildComponents; }
 
 	template<typename T>
 	std::weak_ptr<T> FindComponentByType(const bool SelfInclude = true)
@@ -131,9 +131,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto FoundComponent = Child->FindComponentByType<T>();
+				auto FoundComponent = Child.lock()->FindComponentByType<T>();
 				if (!FoundComponent.expired())
 					return FoundComponent;
 			}
@@ -166,9 +166,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto ChildComponents = Child->FindComponentsByType<T>();
+				auto ChildComponents = Child.lock()->FindComponentsByType<T>();
 				Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
 			}
 		}
@@ -197,9 +197,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				if (auto FoundComponent = Child->FindComponentRaw<T>())
+				if (auto FoundComponent = Child.lock()->FindComponentRaw<T>())
 					return FoundComponent;
 			}
 		}
@@ -224,9 +224,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto ChildComponents = Child->FindComponentsRaw<T>();
+				auto ChildComponents = Child.lock()->FindComponentsRaw<T>();
 				Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
 			}
 		}
@@ -260,9 +260,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto FoundComponent = Child->FindComponentByType<T>();
+				auto FoundComponent = Child.lock()->FindComponentByType<T>();
 				if (!FoundComponent.expired())
 					return FoundComponent;
 			}
@@ -298,9 +298,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto ChildComponents = Child->FindComponentsByType<T>();
+				auto ChildComponents = Child.lock()->FindComponentsByType<T>();
 				Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
 			}
 		}
@@ -330,9 +330,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				if (auto FoundComponent = Child->FindComponentRaw<T>())
+				if (auto FoundComponent = Child.lock()->FindComponentRaw<T>())
 					return FoundComponent;
 			}
 		}
@@ -357,9 +357,9 @@ public:
 		// 자식 컴포넌트들 검색
 		for (const auto& Child : ChildComponents)
 		{
-			if (Child)
+			if (Child.lock())
 			{
-				auto ChildComponents = Child->FindComponentsRaw<T>();
+				auto ChildComponents = Child.lock()->FindComponentsRaw<T>();
 				Found.insert(Found.end(), ChildComponents.begin(), ChildComponents.end());
 			}
 		}
@@ -380,7 +380,7 @@ private:
     //생명주기가 종속될것이기에 일반 raw 사용
     UGameObject* OwnerObject = nullptr;
     std::weak_ptr<UActorComponent> ParentComponent;
-    std::vector<std::shared_ptr<UActorComponent>> ChildComponents;
+    std::vector<std::weak_ptr<UActorComponent>> ChildComponents;
 
 #pragma region debug
     // ActorComponent.h에 추가

@@ -60,7 +60,6 @@ public:
     virtual void Activate() override;
     virtual void DeActivate() override;
 
-
 private:
     bool bIsActive = true;
     EElasticBodyShape Shape = EElasticBodyShape::Sphere;

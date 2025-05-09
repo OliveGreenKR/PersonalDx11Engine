@@ -361,7 +361,7 @@ void USceneComponent::PropagateWorldTransformToChildren()
     auto Children = GetChildren();
     for (const auto& Child : Children)
     {
-        auto SceneChild = Engine::Cast<USceneComponent>(Child);
+        auto SceneChild = Engine::Cast<USceneComponent>(Child.lock());
 
         if (SceneChild)
         {

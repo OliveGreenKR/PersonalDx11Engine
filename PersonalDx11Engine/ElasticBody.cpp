@@ -12,6 +12,7 @@
 #include "define.h"
 #include "BoxComponent.h"
 #include "SphereComponent.h"
+#include "Debug.h"
 
 UElasticBody::UElasticBody(EElasticBodyShape Shape) : bIsActive(true)
 {
@@ -207,4 +208,7 @@ void UElasticBody::SetColor(const Vector4& InColor)
 		Primitive->SetColor(InColor);
 	}
 }
+
+
+
 
