@@ -21,7 +21,8 @@ UCollisionComponentBase::~UCollisionComponentBase()
 
 Vector3 UCollisionComponentBase::GetHalfExtent() const
 {
-	return GetLocalTransform().Scale * 0.5f;
+	//Model 1로 정규화되어 있다고 가정
+	return Vector3(0.5f, 0.5f, 0.5f);
 }
 
 Vector3 UCollisionComponentBase::GetScaledHalfExtent() const

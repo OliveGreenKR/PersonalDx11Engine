@@ -35,8 +35,8 @@ public:
     //void OnCollisionEnd(const FCollisionEventData& InCollision);
 
     // Getters  
-    const Vector3& GetVelocity() const;
-    const Vector3& GetAngularVelocity() const;
+    const Vector3 GetVelocity() const;
+    const Vector3 GetAngularVelocity() const;
     float GetSpeed() const;
     float GetMass() const;
     Vector3 GetRotationalInertia() const;

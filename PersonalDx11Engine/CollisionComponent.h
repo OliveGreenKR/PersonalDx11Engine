@@ -29,7 +29,7 @@ public:
 	Vector3 GetHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 
-	virtual Vector3 GetLocalSupportPoint(const Vector3& WorldDirection) const = 0;
+	virtual Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const = 0;
 	virtual Vector3 CalculateInertiaTensor(float Mass) const = 0;
 	virtual void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const = 0;
 

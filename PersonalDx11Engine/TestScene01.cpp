@@ -14,6 +14,8 @@
 #include <windows.h> // Sleep 함수 사용
 #include "CollisionDetector.h"
 
+using namespace DirectX;
+
 UTestScene01::UTestScene01()
 {
     InputContext = UInputContext::Create(SceneName);
@@ -78,6 +80,10 @@ void UTestScene01::Initialize()
                               Simplex))
     {
         assert(CreateInitialPolytope(Simplex, Detector, Poly));
+    }
+    else
+    {
+        LOG("TestScene01 : Failed to Detect Collison in GJK");
     }
 
     SetupInput();
@@ -293,11 +299,17 @@ bool UTestScene01::CreateInitialPolytope(const FCollisionDetector::FSimplex& InS
 	using PolytopeSOA = FCollisionDetector::PolytopeSOA;
 	using FSimplex = FCollisionDetector::FSimplex;
 
-    static int MaxEPAIterations = 30;
+    static int MaxEPAIterations = 20;
+
+    // EPA requires a starting simplex that encloses the origin (a tetrahedron)
+    if (InSimplex.Size != 4) {
+        LOG_FUNC_CALL("Error: Initial simplex size is not 4 (%d). EPA requires a tetrahedron.", InSimplex.Size);
+        Result = false; // Cannot perform EPA without a volume
+        return Result;
+    }
 
     // Initialize the polytope (convex hull) and corresponding support points
     PolytopeSOA Poly;
-
 
     // Initialize vertices from the GJK simplex
     // Reserve space to avoid reallocations during expansion
@@ -389,8 +401,6 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
     using PolytopeSOA = FCollisionDetector::PolytopeSOA;
     using FSimplex = FCollisionDetector::FSimplex;
 
-   //TODO COntact Data to Poly
-
     int ClosestFaceIndex = -1;
     XMVECTOR ClosestNormal = XMVectorZero();
     float ClosestDistance = FLT_MAX;
@@ -431,7 +441,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	if (std::fabs(NewPointDistance - ClosestDistance) < KINDA_SMALL) {
 		// Converged - the current closest face represents the penetration data
         Vector3 Normal;
-        XMStoreFloat3(&Normal, ClosestNormal);
+        DirectX::XMStoreFloat3(&Normal, ClosestNormal);
         Normal *= ClosestDistance;
         UDebugDrawManager::Get()->DrawLine(Vector3::Zero, Normal, Vector4(0, 1, 1, 1), 0.1f, true);
 

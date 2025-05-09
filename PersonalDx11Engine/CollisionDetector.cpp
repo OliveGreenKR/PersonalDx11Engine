@@ -470,7 +470,7 @@ bool FCollisionDetector::GJKCollision(
 	OutSimplex.Size = 1;
 
 	// 원점 방향으로 방향 반전
-	Direction = XMVectorNegate(Point);
+	Direction = XMVector3Normalize( XMVectorNegate(Point));
 
 	// GJK 반복
 	for (int Iteration = 0; Iteration < MaxGJKIterations; ++Iteration)
@@ -518,11 +518,11 @@ XMVECTOR FCollisionDetector::ComputeMinkowskiSupport(
 	Vector3 Dir = Vector3(Direction.m128_f32[0], Direction.m128_f32[1], Direction.m128_f32[2]);
 	
 	//ShapeA의 지원점 게산
-	Vector3 SupportA = ShapeA.GetLocalSupportPoint(NegDir);
+	Vector3 SupportA = ShapeA.GetWorldSupportPoint(NegDir);
 	OutSupportA = XMLoadFloat3(&SupportA);
 
 	// ShapeB의 지원점 계산
-	Vector3 SupportB = ShapeB.GetLocalSupportPoint(Dir);
+	Vector3 SupportB = ShapeB.GetWorldSupportPoint(Dir);
 	OutSupportB = XMLoadFloat3(&SupportB);
 
 	// Minkowski 차분 계산

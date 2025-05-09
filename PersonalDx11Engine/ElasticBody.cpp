@@ -99,7 +99,7 @@ void UElasticBody::Reset()
 }
 
 #pragma region Getter Setter
-const Vector3& UElasticBody::GetVelocity() const {
+const Vector3 UElasticBody::GetVelocity() const {
 	if (auto RigidPtr = Rigid.lock()) {
 		return RigidPtr->GetVelocity();
 	}
@@ -107,7 +107,7 @@ const Vector3& UElasticBody::GetVelocity() const {
 	return DefaultVelocity;
 }
 
-const Vector3& UElasticBody::GetAngularVelocity() const {
+const Vector3 UElasticBody::GetAngularVelocity() const {
 	if (auto RigidPtr = Rigid.lock()) {
 		return RigidPtr->GetAngularVelocity();
 	}

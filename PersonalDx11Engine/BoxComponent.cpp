@@ -2,7 +2,7 @@
 #include "DebugDrawerManager.h"
 #include "Debug.h"
 
-Vector3 UBoxComponent::GetLocalSupportPoint(const Vector3& WorldDirection) const
+Vector3 UBoxComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
 {
     // 입력 방향 확인 및 정규화
     XMVECTOR Dir = XMLoadFloat3(&WorldDirection);
@@ -23,11 +23,11 @@ Vector3 UBoxComponent::GetLocalSupportPoint(const Vector3& WorldDirection) const
     XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero());
     XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask);
 
-    //// 월드 공간으로 변환
-    //XMVECTOR WorldSupport = XMVector3TransformCoord (LocalSupport, ModelingMatrix);
+    // 월드 공간으로 변환
+    XMVECTOR WorldSupport = XMVector3TransformCoord (LocalSupport, ModelingMatrix);
 
     Vector3 Result;
-    XMStoreFloat3(&Result, LocalSupport);
+    XMStoreFloat3(&Result, WorldSupport);
     return Result;
 }
 

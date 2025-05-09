@@ -1,7 +1,7 @@
 #include "SphereComponent.h"
 #include "DebugDrawerManager.h"
 
-Vector3 USphereComponent::GetLocalSupportPoint(const Vector3& WorldDirection) const
+Vector3 USphereComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
 {
     // 입력 방향 확인 및 정규화
     XMVECTOR Dir = XMLoadFloat3(&WorldDirection);
@@ -11,26 +11,11 @@ Vector3 USphereComponent::GetLocalSupportPoint(const Vector3& WorldDirection) co
     }
     Dir = XMVector3Normalize(Dir);
 
-    // 월드 → 로컬 방향 변환
-    XMMATRIX ModelingMatrix = GetWorldTransform().GetModelingMatrix();
-    XMMATRIX InvModeling = XMMatrixInverse(nullptr, ModelingMatrix);
-    XMVECTOR LocalDir = XMVector3Transform(Dir, InvModeling);
-
-    // 0 벡터 방지
-    if (XMVector3LengthSq(LocalDir).m128_f32[0] < KINDA_SMALL)
-    {
-        LocalDir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); // 기본 Y 방향
-    }
-
-    LocalDir = XMVector3Normalize(LocalDir);
-
-    // 로컬 구의 중심은 항상 (0,0,0), 반지름은 x축 기준 반지름
     float Radius = GetScaledHalfExtent().x;
-    XMVECTOR SupportLocal = XMVectorScale(LocalDir, Radius);
-
-    Vector3 Result;
-    XMStoreFloat3(&Result, SupportLocal);
-    return Result;
+    XMVECTOR WorldRadius = Radius * Dir;
+    Vector3 RadiusVec;
+    XMStoreFloat3(&RadiusVec, WorldRadius);
+    return GetWorldPosition()+RadiusVec;
 }
 
 Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const

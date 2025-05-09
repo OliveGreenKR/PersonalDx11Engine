@@ -4,7 +4,7 @@ class USphereComponent : public UCollisionComponentBase
 {
 public:
 	// Inherited via UCollisionComponent
-	Vector3 GetLocalSupportPoint(const Vector3& WorldDirection) const override;
+	Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const override;
 	Vector3 CalculateInertiaTensor(float Mass) const override;
 	void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const override;
 
