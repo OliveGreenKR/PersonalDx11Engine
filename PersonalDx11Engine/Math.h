@@ -20,164 +20,65 @@ struct Vector3I;
 struct Vector4I;
 using Quaternion = Vector4;
 
+namespace XMVector
+{
+	static const DirectX::XMVECTOR XMUp()
+	{
+		return XMVectorSet(0, 1, 0, 1);
+	}
+
+	static const DirectX::XMVECTOR XMForward()
+	{
+		return XMVectorSet(0, 0, 1, 1);
+	}
+
+	static const DirectX::XMVECTOR XMRight()
+	{
+		return XMVectorSet(1, 0, 0, 1);
+	}
+
+	static const DirectX::XMVECTOR XMZero()
+	{
+		return XMVectorSet(0, 0, 0, 1);
+	}
+
+}
+
 namespace Math
 {
-	static float Lerp(const float min, const float max, const float alpha)
+	static constexpr float Lerp(const float min, const float max, const float alpha)
 	{
 		return min + alpha * (max - min);
 	}
 
-	static float DegreeToRad(float degree)
+	static constexpr float DegreeToRad(float degree)
 	{
 		return degree * XM_PI / 180.0f;
 	}
-	static float RadToDegree(float rad)
+
+	static constexpr float RadToDegree(float rad)
 	{
 		return rad * 180.0f / XM_PI;
 	}
-	
-	static float Clamp(float val, float min, float max)
+
+	static constexpr float Clamp(float val, float min, float max)
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
 }
 
 #pragma region Vector
-// Integer vector declarations
-struct Vector2I
-{
-	int32_t x;
-	int32_t y;
-
-	constexpr Vector2I() : x(0), y(0) {}
-	constexpr Vector2I(int32_t X, int32_t Y) : x(X), y(Y) {}
-
-	Vector2I& operator+=(const Vector2I& Other)
-	{
-		x += Other.x;
-		y += Other.y;
-		return *this;
-	}
-
-	Vector2I& operator-=(const Vector2I& Other)
-	{
-		x -= Other.x;
-		y -= Other.y;
-		return *this;
-	}
-
-	Vector2I& operator*=(int32_t Scalar)
-	{
-		x *= Scalar;
-		y *= Scalar;
-		return *this;
-	}
-
-	Vector2I operator+(const Vector2I& Other) const { return Vector2I(x + Other.x, y + Other.y); }
-	Vector2I operator-(const Vector2I& Other) const { return Vector2I(x - Other.x, y - Other.y); }
-	Vector2I operator*(int32_t Scalar) const { return Vector2I(x * Scalar, y * Scalar); }
-
-	// Float vector conversion
-	static Vector2 Create(const Vector2I& IntVec);
-};
-
-struct Vector3I
-{
-	int32_t x;
-	int32_t y;
-	int32_t z;
-
-	constexpr Vector3I() : x(0), y(0), z(0) {}
-	constexpr Vector3I(int32_t X, int32_t Y, int32_t Z) : x(X), y(Y), z(Z) {}
-
-	Vector3I& operator+=(const Vector3I& Other)
-	{
-		x += Other.x;
-		y += Other.y;
-		z += Other.z;
-		return *this;
-	}
-
-	Vector3I& operator-=(const Vector3I& Other)
-	{
-		x -= Other.x;
-		y -= Other.y;
-		z -= Other.z;
-		return *this;
-	}
-
-	Vector3I& operator*=(int32_t Scalar)
-	{
-		x *= Scalar;
-		y *= Scalar;
-		z *= Scalar;
-		return *this;
-	}
-
-	Vector3I operator+(const Vector3I& Other) const { return Vector3I(x + Other.x, y + Other.y, z + Other.z); }
-	Vector3I operator-(const Vector3I& Other) const { return Vector3I(x - Other.x, y - Other.y, z - Other.z); }
-	Vector3I operator*(int32_t Scalar) const { return Vector3I(x * Scalar, y * Scalar, z * Scalar); }
-
-	// Float vector conversion
-	static Vector3 Create(const Vector3I& IntVec);
-};
-   
-struct Vector4I
-{
-	int32_t x;
-	int32_t y;
-	int32_t z;
-	int32_t w;
-
-	constexpr Vector4I() : x(0), y(0), z(0), w(0) {}
-	constexpr Vector4I(int32_t X, int32_t Y, int32_t Z, int32_t W) : x(X), y(Y), z(Z), w(W) {}
-
-	Vector4I& operator+=(const Vector4I& Other)
-	{
-		x += Other.x;
-		y += Other.y;
-		z += Other.z;
-		w += Other.w;
-		return *this;
-	}
-
-	Vector4I& operator-=(const Vector4I& Other)
-	{
-		x -= Other.x;
-		y -= Other.y;
-		z -= Other.z;
-		w -= Other.w;
-		return *this;
-	}
-
-	Vector4I& operator*=(int32_t Scalar)
-	{
-		x *= Scalar;
-		y *= Scalar;
-		z *= Scalar;
-		w *= Scalar;
-		return *this;
-	}
-
-	Vector4I operator+(const Vector4I& Other) const { return Vector4I(x + Other.x, y + Other.y, z + Other.z, w + Other.w); }
-	Vector4I operator-(const Vector4I& Other) const { return Vector4I(x - Other.x, y - Other.y, z - Other.z, w - Other.w); }
-	Vector4I operator*(int32_t Scalar) const { return Vector4I(x * Scalar, y * Scalar, z * Scalar, w * Scalar); }
-
-	// Float vector conversion
-	static Vector4 Create(const Vector4I& IntVec);
-};
- 
 // Float vector declarations
 struct Vector4 : public DirectX::XMFLOAT4
 {
 	constexpr Vector4() noexcept : XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) {}
 	constexpr Vector4(float X, float Y, float Z, float W) noexcept : XMFLOAT4(X, Y, Z, W) {}
-	explicit Vector4(const DirectX::XMFLOAT4& V) : XMFLOAT4(V) {}
+	constexpr explicit Vector4(const DirectX::XMFLOAT4& V) : XMFLOAT4(V) {}
 
-	explicit Vector4(const Vector3& Vec);//w=1.0f
-	explicit Vector4(const Vector2& Vec);// z = 0.0f, w = 1.0f
+	constexpr explicit Vector4(const XMFLOAT3& Vec) : XMFLOAT4(Vec.x, Vec.y, Vec.z, 1.0f) {};//w=1.0f
+	constexpr explicit Vector4(const XMFLOAT2& Vec) : XMFLOAT4(Vec.x, Vec.y, 0.0f, 1.0f) {};// z = 0.0f, w = 1.0f
 
-	bool operator==(const Vector4& Other)
+	constexpr bool operator==(const Vector4& Other)
 	{
 		return x == Other.x &&
 			y == Other.y &&
@@ -185,7 +86,7 @@ struct Vector4 : public DirectX::XMFLOAT4
 			w == Other.w;
 	}
 
-	Vector4& operator+=(const Vector4& Other)
+	constexpr Vector4& operator+=(const Vector4& Other)
 	{
 		x += Other.x;
 		y += Other.y;
@@ -194,7 +95,7 @@ struct Vector4 : public DirectX::XMFLOAT4
 		return *this;
 	}
 
-	Vector4& operator-=(const Vector4& Other)
+	constexpr Vector4& operator-=(const Vector4& Other)
 	{
 		x -= Other.x;
 		y -= Other.y;
@@ -203,7 +104,7 @@ struct Vector4 : public DirectX::XMFLOAT4
 		return *this;
 	}
 
-	Vector4& operator*=(float Scalar)
+	constexpr Vector4& operator*=(float Scalar)
 	{
 		x *= Scalar;
 		y *= Scalar;
@@ -212,7 +113,7 @@ struct Vector4 : public DirectX::XMFLOAT4
 		return *this;
 	}
 
-	Vector4& operator/=(float Scalar)
+	constexpr Vector4& operator/=(float Scalar)
 	{
 		float InvScalar = 1.0f / Scalar;
 		x *= InvScalar;
@@ -222,28 +123,17 @@ struct Vector4 : public DirectX::XMFLOAT4
 		return *this;
 	}
 
-	Vector4 operator+(const Vector4& Other) const { return Vector4(x + Other.x, y + Other.y, z + Other.z, w + Other.w); }
-	Vector4 operator-(const Vector4& Other) const { return Vector4(x - Other.x, y - Other.y, z - Other.z, w - Other.w); }
-	Vector4 operator*(float Scalar) const { return Vector4(x * Scalar, y * Scalar, z * Scalar, w * Scalar); }
-	Vector4 operator/(float Scalar) const
+	constexpr Vector4 operator+(const Vector4& Other) const { return Vector4(x + Other.x, y + Other.y, z + Other.z, w + Other.w); }
+	constexpr Vector4 operator-(const Vector4& Other) const { return Vector4(x - Other.x, y - Other.y, z - Other.z, w - Other.w); }
+	constexpr Vector4 operator*(float Scalar) const { return Vector4(x * Scalar, y * Scalar, z * Scalar, w * Scalar); }
+	constexpr Vector4 operator/(float Scalar) const
 	{
 		float InvScalar = 1.0f / Scalar;
 		return Vector4(x * InvScalar, y * InvScalar, z * InvScalar, w * InvScalar);
 	}
 
-	// Integer vector conversion
-	static Vector4I CreateInt(const Vector4& Vec)
-	{
-		return Vector4I(
-			static_cast<int32_t>(Vec.x),
-			static_cast<int32_t>(Vec.y),
-			static_cast<int32_t>(Vec.z),
-			static_cast<int32_t>(Vec.w)
-		);
-	}
-
 	float Length() const { return sqrt(x * x + y * y + z * z + w * w); }
-	float LengthSquared() const { return x * x + y * y + z * z + w * w; }
+	constexpr float LengthSquared() const { return x * x + y * y + z * z + w * w; }
 
 	void Normalize()
 	{
@@ -284,32 +174,32 @@ struct Vector2 : public DirectX::XMFLOAT2
 {
 	constexpr Vector2() noexcept : XMFLOAT2(0.0f, 0.0f) {}
 	constexpr Vector2(float X, float Y) noexcept : XMFLOAT2(X, Y) {}
-	explicit Vector2(const DirectX::XMFLOAT2& V) : XMFLOAT2(V) {}
-	explicit Vector2(const Vector4& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
-	explicit Vector2(const Vector3& Vec);
+	constexpr explicit Vector2(const DirectX::XMFLOAT2& V) : XMFLOAT2(V) {}
+	constexpr explicit Vector2(const XMFLOAT4& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
+	constexpr explicit Vector2(const XMFLOAT3& Vec) : XMFLOAT2(Vec.x, Vec.y) {};
 
-	Vector2& operator+=(const Vector2& Other)
+	constexpr Vector2& operator+=(const Vector2& Other)
 	{
 		x += Other.x;
 		y += Other.y;
 		return *this;
 	}
 
-	Vector2& operator-=(const Vector2& Other)
+	constexpr Vector2& operator-=(const Vector2& Other)
 	{
 		x -= Other.x;
 		y -= Other.y;
 		return *this;
 	}
 
-	Vector2& operator*=(float Scalar)
+	constexpr Vector2& operator*=(float Scalar)
 	{
 		x *= Scalar;
 		y *= Scalar;
 		return *this;
 	}
 
-	Vector2& operator/=(float Scalar)
+	constexpr Vector2& operator/=(float Scalar)
 	{
 		float InvScalar = 1.0f / Scalar;
 		x *= InvScalar;
@@ -317,23 +207,18 @@ struct Vector2 : public DirectX::XMFLOAT2
 		return *this;
 	}
 
-	Vector2 operator+(const Vector2& Other) const { return Vector2(x + Other.x, y + Other.y); }
-	Vector2 operator-(const Vector2& Other) const { return Vector2(x - Other.x, y - Other.y); }
-	Vector2 operator*(float Scalar) const { return Vector2(x * Scalar, y * Scalar); }
-	Vector2 operator/(float Scalar) const
+	constexpr Vector2 operator+(const Vector2& Other) const { return Vector2(x + Other.x, y + Other.y); }
+	constexpr Vector2 operator-(const Vector2& Other) const { return Vector2(x - Other.x, y - Other.y); }
+	constexpr Vector2 operator*(float Scalar) const { return Vector2(x * Scalar, y * Scalar); }
+	constexpr Vector2 operator/(float Scalar) const
 	{
 		float InvScalar = 1.0f / Scalar;
 		return Vector2(x * InvScalar, y * InvScalar);
 	}
 
-	// Integer vector conversion
-	static Vector2I CreateInt(const Vector2& Vec)
-	{
-		return Vector2I(static_cast<int32_t>(Vec.x), static_cast<int32_t>(Vec.y));
-	}
 
 	float Length() const { return sqrt(x * x + y * y); }
-	float LengthSquared() const { return x * x + y * y; }
+	constexpr float LengthSquared() const { return x * x + y * y; }
 
 	void Normalize()
 	{
@@ -363,9 +248,9 @@ struct Vector3 : public DirectX::XMFLOAT3
 {
 	constexpr Vector3() noexcept : XMFLOAT3(0.0f, 0.0f, 0.0f) {}
 	constexpr Vector3(float X, float Y, float Z) noexcept : XMFLOAT3(X, Y, Z) {}
-	explicit Vector3(const DirectX::XMFLOAT3& V) : XMFLOAT3(V) {}
-	explicit Vector3(const Vector4& Vec) : XMFLOAT3(Vec.x, Vec.y, Vec.z) {}
-	explicit Vector3(const Vector2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
+	constexpr explicit Vector3(const DirectX::XMFLOAT3& V) : XMFLOAT3(V) {}
+	constexpr explicit Vector3(const XMFLOAT4& Vec) : XMFLOAT3(Vec.x, Vec.y, Vec.z) {}
+	constexpr explicit Vector3(const XMFLOAT2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
 
 
 	static constexpr Vector3 Zero()		{ return Vector3(0.0f, 0.0f, 0.0f); }
@@ -375,7 +260,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 	static constexpr Vector3 One()		{ return Vector3(1.0f, 1.0f, 1.0f); }
 
 	// Assignment operators
-	Vector3& operator=(const Vector4& Vec)
+	constexpr Vector3& operator=(const Vector4& Vec)
 	{
 		x = Vec.x;
 		y = Vec.y;
@@ -383,7 +268,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return *this;
 	}
 
-	Vector3& operator=(const Vector2& Vec)
+	constexpr Vector3& operator=(const Vector2& Vec)
 	{
 		x = Vec.x;
 		y = Vec.y;
@@ -391,7 +276,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return *this;
 	}
 
-	Vector3& operator+=(const Vector3& Other)
+	constexpr Vector3& operator+=(const Vector3& Other)
 	{
 		x += Other.x;
 		y += Other.y;
@@ -399,7 +284,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return *this;
 	}
 
-	Vector3& operator-=(const Vector3& Other)
+	constexpr Vector3& operator-=(const Vector3& Other)
 	{
 		x -= Other.x;
 		y -= Other.y;
@@ -407,7 +292,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return *this;
 	}
 
-	Vector3& operator*=(float Scalar)
+	constexpr Vector3& operator*=(float Scalar)
 	{
 		x *= Scalar;
 		y *= Scalar;
@@ -415,7 +300,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return *this;
 	}
 
-	Vector3& operator/=(float Scalar)
+	constexpr Vector3& operator/=(float Scalar)
 	{
 		float InvScalar = 1.0f / Scalar;
 		x *= InvScalar;
@@ -425,10 +310,10 @@ struct Vector3 : public DirectX::XMFLOAT3
 	}
 
 	// Arithmetic operators
-	Vector3 operator+(const Vector3& Other) const { return Vector3(x + Other.x, y + Other.y, z + Other.z); }
-	Vector3 operator-(const Vector3& Other) const { return Vector3(x - Other.x, y - Other.y, z - Other.z); }
-	Vector3 operator*(float Scalar) const { return Vector3(x * Scalar, y * Scalar, z * Scalar); }
-	Vector3 operator/(float Scalar) const
+	constexpr Vector3 operator+(const Vector3& Other) const { return Vector3(x + Other.x, y + Other.y, z + Other.z); }
+	constexpr Vector3 operator-(const Vector3& Other) const { return Vector3(x - Other.x, y - Other.y, z - Other.z); }
+	constexpr Vector3 operator*(float Scalar) const { return Vector3(x * Scalar, y * Scalar, z * Scalar); }
+	constexpr Vector3 operator/(float Scalar) const
 	{
 		float InvScalar = 1.0f / Scalar;
 		return Vector3(x * InvScalar, y * InvScalar, z * InvScalar);
@@ -448,19 +333,9 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return !(*this == Other);
 	}
 
-	// Integer vector conversion
-	static Vector3I CreateInt(const Vector3& Vec)
-	{
-		return Vector3I(
-			static_cast<int32_t>(Vec.x),
-			static_cast<int32_t>(Vec.y),
-			static_cast<int32_t>(Vec.z)
-		);
-	}
-
 	// Utility functions
 	float Length() const { return sqrt(x * x + y * y + z * z); }
-	float LengthSquared() const { return x * x + y * y + z * z; }
+	constexpr float LengthSquared() const { return x * x + y * y + z * z; }
 
 	//When Vector is too Small, be Zero
 	void Normalize()
@@ -528,7 +403,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		return Result;
 	}
 
-	static Vector3 Min(const Vector3& A, const Vector3& B)
+	static constexpr Vector3 Min(const Vector3& A, const Vector3& B)
 	{
 		return Vector3(
 			std::min<float>(A.x, B.x),
@@ -537,7 +412,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		);
 	}
 
-	static Vector3 Max(const Vector3& A, const Vector3& B)
+	static constexpr Vector3 Max(const Vector3& A, const Vector3& B)
 	{
 		return Vector3(
 			std::max<float>(A.x, B.x),
@@ -546,7 +421,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		);
 	}
 
-	static Vector3 Clamp(const Vector3& Value, const Vector3& Min, const Vector3& Max)
+	static constexpr Vector3 Clamp(const Vector3& Value, const Vector3& Min, const Vector3& Max)
 	{
 		return Vector3(
 			Math::Clamp(Value.x, Min.x, Max.x),
@@ -555,39 +430,6 @@ struct Vector3 : public DirectX::XMFLOAT3
 		);
 	}
 };
-inline Vector2::Vector2(const Vector3& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
-
-// Implementation of Create functions for integer
-inline Vector2 Vector2I::Create(const Vector2I& IntVec)
-{
-	return Vector2(
-		static_cast<float>(IntVec.x),
-		static_cast<float>(IntVec.y)
-	);
-}
-
-inline Vector3 Vector3I::Create(const Vector3I& IntVec)
-{
-	return Vector3(
-		static_cast<float>(IntVec.x),
-		static_cast<float>(IntVec.y),
-		static_cast<float>(IntVec.z)
-	);
-}
-
-inline Vector4 Vector4I::Create(const Vector4I& IntVec)
-{
-	return Vector4(
-		static_cast<float>(IntVec.x),
-		static_cast<float>(IntVec.y),
-		static_cast<float>(IntVec.z),
-		static_cast<float>(IntVec.w)
-	);
-}
-
-// Implementation of Vector4 conversion constructors
-inline Vector4::Vector4(const Vector3& Vec) : XMFLOAT4(Vec.x, Vec.y, Vec.z, 1.0f) {}
-inline Vector4::Vector4(const Vector2& Vec) : XMFLOAT4(Vec.x, Vec.y, 0.0f, 1.0f) {}
 
 inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up)
 {
@@ -648,78 +490,20 @@ inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up
 }
 
 // Global operators for scalar multiplication
-inline Vector2 operator*(float Scalar, const Vector2& Vec) { return Vec * Scalar; }
-inline Vector3 operator*(float Scalar, const Vector3& Vec) { return Vec * Scalar; }
-inline Vector4 operator*(float Scalar, const Vector4& Vec) { return Vec * Scalar; }
+constexpr Vector2 operator*(float Scalar, const Vector2& Vec) { return Vec * Scalar; }
+constexpr Vector3 operator*(float Scalar, const Vector3& Vec) { return Vec * Scalar; }
+constexpr Vector4 operator*(float Scalar, const Vector4& Vec) { return Vec * Scalar; }
 
-// Utility functions for common vector operations
-inline float Distance(const Vector2& A, const Vector2& B)
-{
-	Vector2 Diff = A - B;
-	return Diff.Length();
-}
-
-inline float Distance(const Vector3& A, const Vector3& B)
-{
-	Vector3 Diff = A - B;
-	return Diff.Length();
-}
-
-inline float Distance(const Vector4& A, const Vector4& B)
-{
-	Vector4 Diff = A - B;
-	return Diff.Length();
-}
-
-inline float DistanceSquared(const Vector2& A, const Vector2& B)
-{
-	Vector2 Diff = A - B;
-	return Diff.LengthSquared();
-}
-
-inline float DistanceSquared(const Vector3& A, const Vector3& B)
-{
-	Vector3 Diff = A - B;
-	return Diff.LengthSquared();
-}
-
-inline float DistanceSquared(const Vector4& A, const Vector4& B)
-{
-	Vector4 Diff = A - B;
-	return Diff.LengthSquared();
-}
 #pragma endregion
 
-namespace XMVector
-{
-	static const DirectX::XMVECTOR XMUp()
-	{
-		return XMVectorSet(0, 1, 0, 1);
-	}
 
-	static const DirectX::XMVECTOR XMForward()
-	{
-		return XMVectorSet(0, 0, 1, 1);
-	}
-
-	static const DirectX::XMVECTOR XMRight()
-	{
-		return XMVectorSet(1, 0, 0, 1);
-	}
-
-	static const DirectX::XMVECTOR XMZero()
-	{
-		return XMVectorSet(0, 0, 0, 1);
-	}
-
-}
 
 namespace Math
 {
-	inline static float Max(const float a, const float b) {
+	static constexpr float Max(const float a, const float b) {
 		return a > b ? a : b;
 	}
-	inline static float Min(const float a, const float b) {
+	constexpr float Min(const float a, const float b) {
 		return a > b ? b : a;
 	}
 
@@ -753,7 +537,7 @@ namespace Math
 			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),  // Z축
 			XMVectorGetZ(RadianAngles)            // 롤 각도
 		);
-		
+
 		XMVECTOR RotationVec = XMQuaternionMultiply(
 			XMQuaternionMultiply(PitchRotation, YawRotation), RollRotation);
 
@@ -813,7 +597,7 @@ namespace Math
 
 	static XMVECTOR Slerp(const XMVECTOR& Start, const XMVECTOR& End, float Factor)
 	{
-		Factor = Math::Clamp(Factor,0.0f, 1.0f);
+		Factor = Math::Clamp(Factor, 0.0f, 1.0f);
 
 		XMVECTOR Q0 = Start;
 		XMVECTOR Q1 = End;
@@ -887,7 +671,7 @@ namespace Math
 		XMVECTOR V2 = XMLoadFloat3(&dest);
 
 		XMVECTOR vRotation = GetRotationBetweenVectors(V1, V2);
-		
+
 		Quaternion result;
 		XMStoreFloat4(&result, vRotation);
 		return result;
@@ -901,7 +685,6 @@ namespace Math
 		return GetRotationBetweenVectors(V1, V2);
 	}
 }
-
 
 #pragma region Plane
 struct Plane : public Vector4

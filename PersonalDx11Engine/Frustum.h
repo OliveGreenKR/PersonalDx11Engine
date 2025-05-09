@@ -3,12 +3,12 @@
 
 struct FFrustum
 {
-    Plane Near;     // ±ÙÆò¸é
-    Plane Far;      // ¿øÆò¸é
-    Plane Left;     // ÁÂÆò¸é
-    Plane Right;    // ¿ìÆò¸é
-    Plane Top;      // »óÆò¸é
-    Plane Bottom;   // ÇÏÆò¸é
+    Plane Near;     // ê·¼í‰ë©´
+    Plane Far;      // ì›í‰ë©´
+    Plane Left;     // ì¢Œí‰ë©´
+    Plane Right;    // ìš°í‰ë©´
+    Plane Top;      // ìƒí‰ë©´
+    Plane Bottom;   // í•˜í‰ë©´
 
     void NormalizeAll()
     {

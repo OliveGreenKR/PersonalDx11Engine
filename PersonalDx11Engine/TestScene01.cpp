@@ -13,6 +13,7 @@
 #include "SphereComponent.h"
 #include <windows.h> // Sleep 함수 사용
 #include "CollisionDetector.h"
+#include "Color.h"
 
 using namespace DirectX;
 
@@ -444,8 +445,8 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
     XMStoreFloat3(&SDir, SearchDir);
     SDir *= 100.0f;
     float DrawDuration = 5.0f;
-    UDebugDrawManager::Get()->DrawSphere(SpA, 5.0f, Quaternion::Identity(), Vector4(1,1,1,1), DrawDuration, false);
-    UDebugDrawManager::Get()->DrawSphere(SpB, 5.0f, Quaternion::Identity(), Vector4(57.0f / 255.0f, 1, 20.0f / 255.0f, 1), DrawDuration, false);
+    UDebugDrawManager::Get()->DrawSphere(SpA, 5.0f, Quaternion::Identity(), Color::ColorHex(0xd964b4), DrawDuration, false);
+    UDebugDrawManager::Get()->DrawSphere(SpB, 5.0f, Quaternion::Identity(), Color::ColorHex(0x45dc3c), DrawDuration, false);
     UDebugDrawManager::Get()->DrawLine(SpA, SpA + SDir, Vector4(1, 0, 0, 1), 1.0f, DrawDuration, false);
 
 	// Calculate the distance of the new point from the origin along the search direction

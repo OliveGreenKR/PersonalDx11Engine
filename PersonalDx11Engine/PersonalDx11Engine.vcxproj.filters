@@ -38,9 +38,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Engine\Object\GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="Math.cpp">
-      <Filter>Engine\Math</Filter>
-    </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Engine\Math</Filter>
     </ClCompile>
@@ -139,9 +136,6 @@
     </ClCompile>
     <ClCompile Include="ConfigReadManager.cpp">
       <Filter>Engine\Managers\ConfigReadeer</Filter>
-    </ClCompile>
-    <ClCompile Include="Color.cpp">
-      <Filter>Engine\Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
