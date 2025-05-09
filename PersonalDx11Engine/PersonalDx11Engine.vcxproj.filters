@@ -140,6 +140,9 @@
     <ClCompile Include="ConfigReadManager.cpp">
       <Filter>Engine\Managers\ConfigReadeer</Filter>
     </ClCompile>
+    <ClCompile Include="Color.cpp">
+      <Filter>Engine\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -572,6 +575,9 @@
     </ClInclude>
     <ClInclude Include="PhysicsDefine.h">
       <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Engine\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

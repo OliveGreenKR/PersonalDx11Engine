@@ -8,8 +8,8 @@
 struct FCollisionDetectionResult
 {
 	bool bCollided = false;
-	Vector3 Normal = Vector3::Zero;      // 충돌 법선
-	Vector3 Point = Vector3::Zero;       // 충돌 지점
+	Vector3 Normal = Vector3::Zero();      // 충돌 법선
+	Vector3 Point = Vector3::Zero();       // 충돌 지점
 	float PenetrationDepth = 0.0f;       // 침투 깊이
 	float TimeOfImpact = 0.0f;           // CCD용 충돌 시점
 };
@@ -47,8 +47,8 @@ struct FAccumulatedConstraint
 
 struct FCollisionResponseResult
 {
-	Vector3 NetImpulse = Vector3::Zero; // 모든 물리적 효과를 통합한 최종 충격량
-	Vector3 ApplicationPoint = Vector3::Zero;
+	Vector3 NetImpulse = Vector3::Zero(); // 모든 물리적 효과를 통합한 최종 충격량
+	Vector3 ApplicationPoint = Vector3::Zero();
 };
 
 // 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 델리게이트 전파

@@ -66,12 +66,12 @@ void UGameplayScene02::Initialize()
 
     // 캐릭터 1 (탄성체) 설정
     Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
-    Character->SetScale(50.0f * Vector3::One);
+    Character->SetScale(50.0f * Vector3::One());
     Character->SetPosition({ -75.0f, 0, 0 });
 
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
-    Character2->SetScale(35.0f * Vector3::One);
+    Character2->SetScale(35.0f * Vector3::One());
     Character2->SetPosition({ 100.0f, 0, 0.0f });
 
     // 초기화 및 설정
@@ -127,10 +127,10 @@ void UGameplayScene02::Initialize()
         LOG("CollisionStay"); }, "OnCollisionEnter_P1");
     Colli.lock()->OnCollisionExit.BindSystem([](const FCollisionEventData& InEvent) {
         LOG("CollisionExit"); }, "OnCollisionEnter_P1");
-    Colli.lock()->SetLocalScale(Vector3::One * 1.05f);
+    Colli.lock()->SetLocalScale(Vector3::One() * 1.05f);
 
     auto Colli2 = Character2->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
-    Colli2.lock()->SetLocalScale(Vector3::One * 1.05f);
+    Colli2.lock()->SetLocalScale(Vector3::One() * 1.05f);
 }
 
 void UGameplayScene02::Load()
@@ -442,12 +442,12 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(Vector3::Forward * InForceMagnitude);
+                                     Character->ApplyForce(Vector3::Forward() * InForceMagnitude);
                                      
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(Vector3::Up * InForceMagnitude);
+                                     Character->ApplyForce(Vector3::Up() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -460,11 +460,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(-Vector3::Forward * InForceMagnitude);
+                                     Character->ApplyForce(-Vector3::Forward() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(-Vector3::Up * InForceMagnitude);
+                                     Character->ApplyForce(-Vector3::Up() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -477,11 +477,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->StartMove(Vector3::Right);
+                                     Character->StartMove(Vector3::Right());
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(Vector3::Right * InForceMagnitude);
+                                     Character->ApplyForce(Vector3::Right() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -494,11 +494,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character->StartMove(-Vector3::Right);
+                                     Character->StartMove(-Vector3::Right());
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(-Vector3::Right * InForceMagnitude);
+                                     Character->ApplyForce(-Vector3::Right() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -521,11 +521,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(Vector3::Forward * InForceMagnitude);           
+                                     Character2->ApplyForce(Vector3::Forward() * InForceMagnitude);           
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(Vector3::Up * InForceMagnitude);
+                                     Character2->ApplyForce(Vector3::Up() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -538,11 +538,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(-Vector3::Forward * InForceMagnitude);
+                                     Character2->ApplyForce(-Vector3::Forward() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(-Vector3::Up * InForceMagnitude);
+                                     Character2->ApplyForce(-Vector3::Up() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -555,11 +555,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->StartMove(Vector3::Right);
+                                     Character2->StartMove(Vector3::Right());
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(Vector3::Right * InForceMagnitude);
+                                     Character2->ApplyForce(Vector3::Right() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -572,11 +572,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->StartMove(-Vector3::Right);
+                                     Character2->StartMove(-Vector3::Right());
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(-Vector3::Right * InForceMagnitude);
+                                     Character2->ApplyForce(-Vector3::Right() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -595,7 +595,7 @@ void UGameplayScene02::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Forward);
+                                                        Camera->StartMove(Vector3::Forward());
                                                     },
                                                     "CameraMove");
 
@@ -603,7 +603,7 @@ void UGameplayScene02::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Forward);
+                                                        Camera->StartMove(-Vector3::Forward());
                                                     },
                                                     "CameraMove");
 
@@ -611,7 +611,7 @@ void UGameplayScene02::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Right);
+                                                        Camera->StartMove(Vector3::Right());
                                                     },
                                                     "CameraMove");
 
@@ -619,7 +619,7 @@ void UGameplayScene02::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Right);
+                                                        Camera->StartMove(-Vector3::Right());
                                                     },
                                                     "CameraMove");
 
@@ -646,10 +646,10 @@ void UGameplayScene02::SetupInput()
                                                               if (Character2.get())
                                                               {
                                                                   Vector3 TargetPos = Character2->GetTransform().Position;
-                                                                  TargetPos += Vector3::Right * 0.15f;
-                                                                  TargetPos += Vector3::Up * 0.15f;
+                                                                  TargetPos += Vector3::Right() * 0.15f;
+                                                                  TargetPos += Vector3::Up() * 0.15f;
                                                                   Character2->GetRootComp()->FindChildByType<URigidBodyComponent>().lock()->ApplyImpulse(
-                                                                      Vector3::Right * 1.0f,
+                                                                      Vector3::Right() * 1.0f,
                                                                       TargetPos);
                                                               }
                                                           },
@@ -669,7 +669,7 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                    if (!IsInBorder(InTransform.Position))
                                                                    {
                                                                        const Vector3 Position = InTransform.Position;
-                                                                       Vector3 Normal = Vector3::Zero;
+                                                                       Vector3 Normal = Vector3::Zero();
                                                                        Vector3 NewPosition = Position;
 
                                                                        // 충돌한 면의 법선 계산과 위치 보정
@@ -708,7 +708,7 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                     if (!IsInBorder(InTransform.Position))
                                                                     {
                                                                         const Vector3 Position = InTransform.Position;
-                                                                        Vector3 Normal = Vector3::Zero;
+                                                                        Vector3 Normal = Vector3::Zero();
                                                                         Vector3 NewPosition = Position;
 
                                                                         // 충돌한 면의 법선 계산과 위치 보정

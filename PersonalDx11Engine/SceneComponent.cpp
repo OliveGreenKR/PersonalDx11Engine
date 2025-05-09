@@ -155,7 +155,7 @@ void USceneComponent::AddLocalPosition(const Vector3& InDeltaPosition)
 void USceneComponent::AddLocalRotation(const Quaternion& InDeltaRotation)
 {
     // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
+    float Dot = Quaternion::Dot(Quaternion::Identity(), InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
     if (ChangeMagnitude > TRANSFORM_EPSILON)
@@ -253,7 +253,7 @@ void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
 void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
 {
     // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(Quaternion::Identity, InDeltaRotation);
+    float Dot = Quaternion::Dot(Quaternion::Identity(), InDeltaRotation);
     float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
 
     if (ChangeMagnitude > TRANSFORM_EPSILON)
@@ -405,8 +405,8 @@ void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
     Direction.Normalize();
 
     // 기본적으로 로컬 전방 벡터는 (0,0,1)이고, 상향 벡터는 (0,1,0)
-    Vector3 Forward = Vector3::Forward;
-    Vector3 Up = Vector3::Up;
+    Vector3 Forward = Vector3::Forward();
+    Vector3 Up = Vector3::Up();
 
     // 방향에 맞는 회전 쿼터니언 생성
     Quaternion NewRotation = Quaternion::LookRotation(Direction, Up);

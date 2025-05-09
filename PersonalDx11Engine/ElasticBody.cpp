@@ -94,8 +94,8 @@ void UElasticBody::Reset()
 	}
 
 	// 위치 및 회전 초기화 
-	SetPosition(Vector3::Zero);
-	SetRotation(Quaternion::Identity);
+	SetPosition(Vector3::Zero());
+	SetRotation(Quaternion::Identity());
 }
 
 #pragma region Getter Setter
@@ -103,7 +103,7 @@ const Vector3 UElasticBody::GetVelocity() const {
 	if (auto RigidPtr = Rigid.lock()) {
 		return RigidPtr->GetVelocity();
 	}
-	static Vector3 DefaultVelocity = Vector3::Zero;
+	static Vector3 DefaultVelocity = Vector3::Zero();
 	return DefaultVelocity;
 }
 
@@ -111,7 +111,7 @@ const Vector3 UElasticBody::GetAngularVelocity() const {
 	if (auto RigidPtr = Rigid.lock()) {
 		return RigidPtr->GetAngularVelocity();
 	}
-	static Vector3 DefaultAngularVelocity = Vector3::Zero;
+	static Vector3 DefaultAngularVelocity = Vector3::Zero();
 	return DefaultAngularVelocity;
 }
 
@@ -133,7 +133,7 @@ Vector3 UElasticBody::GetRotationalInertia() const {
 	if (auto RigidPtr = Rigid.lock()) {
 		return RigidPtr->GetRotationalInertia();
 	}
-	return Vector3::Zero;
+	return Vector3::Zero();
 }
 
 float UElasticBody::GetRestitution() const {

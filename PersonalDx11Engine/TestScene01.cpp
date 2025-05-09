@@ -55,8 +55,8 @@ void UTestScene01::Initialize()
 
     const  Vector3 Pos1 = Vector3(-35.0f, 0, 0);
     const  Vector3 Pos2 = Vector3(35.0f, 0, 0);
-    const  Vector3 Scale1 = Vector3::One * 100.0f;
-    const  Vector3 Scale2 = Vector3::One * 75.0f;
+    const  Vector3 Scale1 = Vector3::One() * 100.0f;
+    const  Vector3 Scale2 = Vector3::One() * 75.0f;
 
     Box->SetWorldPosition(Pos1);
     Box->SetWorldScale(Scale1);
@@ -121,7 +121,7 @@ void UTestScene01::Tick(float DeltaTime)
     {
         Vector3 NewPos = CalculateSphericPosition(Latitude, Longitude);
         Camera->SetPosition(NewPos);
-        Camera->LookAt(Vector3::Zero);
+        Camera->LookAt(Vector3::Zero());
         Camera->Tick(DeltaTime);
     }
     if (bDebug01)
@@ -436,8 +436,20 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	XMVECTOR NewPoint = Detector.ComputeMinkowskiSupport(
 		ShapeA, TransformA, ShapeB, TransformB, SearchDir, SupportA, SupportB);
 
+    Vector3 SpA;
+    XMStoreFloat3(&SpA, SupportA);
+    Vector3 SpB;
+    XMStoreFloat3(&SpB, SupportB);
+    Vector3 SDir;
+    XMStoreFloat3(&SDir, SearchDir);
+    SDir *= 100.0f;
+    float DrawDuration = 5.0f;
+    UDebugDrawManager::Get()->DrawSphere(SpA, 5.0f, Quaternion::Identity(), Vector4(1,1,1,1), DrawDuration, false);
+    UDebugDrawManager::Get()->DrawSphere(SpB, 5.0f, Quaternion::Identity(), Vector4(57.0f / 255.0f, 1, 20.0f / 255.0f, 1), DrawDuration, false);
+    UDebugDrawManager::Get()->DrawLine(SpA, SpA + SDir, Vector4(1, 0, 0, 1), 1.0f, DrawDuration, false);
+
 	// Calculate the distance of the new point from the origin along the search direction
-	float NewPointDistance = XMVectorGetX(XMVector3Dot(NewPoint, SearchDir));
+	float NewPointDistance = std::fabs(XMVectorGetX(XMVector3Dot(NewPoint, SearchDir)));
 
 	// Check for convergence
 	// If the new point is not significantly further along the normal than the closest face's distance,
@@ -447,7 +459,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
         Vector3 Normal;
         DirectX::XMStoreFloat3(&Normal, ClosestNormal);
         Normal *= ClosestDistance;
-        UDebugDrawManager::Get()->DrawLine(Vector3::Zero, Normal, Vector4(1, 0, 0, 1), 0.001f, 1.0f);
+        UDebugDrawManager::Get()->DrawLine(Vector3::Zero(), Normal, Vector4(1, 0, 0, 1), 0.001f, 1.0f);
 
 
 		// Calculate contact point
@@ -481,7 +493,7 @@ bool UTestScene01::EPACollision(const ICollisionShape& ShapeA,
 	// If not converged, add the new point to the polytope vertices
 	int NewPointIndex = static_cast<int>(Poly.Vertices.size());
 	Poly.Vertices.push_back(NewPoint);
-	Poly.VerticesA.push_back(SupportA); // Store corresponding support points
+	Poly.VerticesA.push_back(SupportA); // Store corresponding support point 
 	Poly.VerticesB.push_back(SupportB);
 
 	// Expand the polytope by removing faces visible from the new point

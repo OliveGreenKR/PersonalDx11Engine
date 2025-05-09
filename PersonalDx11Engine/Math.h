@@ -49,8 +49,8 @@ struct Vector2I
 	int32_t x;
 	int32_t y;
 
-	Vector2I() : x(0), y(0) {}
-	Vector2I(int32_t X, int32_t Y) : x(X), y(Y) {}
+	constexpr Vector2I() : x(0), y(0) {}
+	constexpr Vector2I(int32_t X, int32_t Y) : x(X), y(Y) {}
 
 	Vector2I& operator+=(const Vector2I& Other)
 	{
@@ -87,8 +87,8 @@ struct Vector3I
 	int32_t y;
 	int32_t z;
 
-	Vector3I() : x(0), y(0), z(0) {}
-	Vector3I(int32_t X, int32_t Y, int32_t Z) : x(X), y(Y), z(Z) {}
+	constexpr Vector3I() : x(0), y(0), z(0) {}
+	constexpr Vector3I(int32_t X, int32_t Y, int32_t Z) : x(X), y(Y), z(Z) {}
 
 	Vector3I& operator+=(const Vector3I& Other)
 	{
@@ -129,8 +129,8 @@ struct Vector4I
 	int32_t z;
 	int32_t w;
 
-	Vector4I() : x(0), y(0), z(0), w(0) {}
-	Vector4I(int32_t X, int32_t Y, int32_t Z, int32_t W) : x(X), y(Y), z(Z), w(W) {}
+	constexpr Vector4I() : x(0), y(0), z(0), w(0) {}
+	constexpr Vector4I(int32_t X, int32_t Y, int32_t Z, int32_t W) : x(X), y(Y), z(Z), w(W) {}
 
 	Vector4I& operator+=(const Vector4I& Other)
 	{
@@ -170,8 +170,8 @@ struct Vector4I
 // Float vector declarations
 struct Vector4 : public DirectX::XMFLOAT4
 {
-	Vector4() : XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) {}
-	Vector4(float X, float Y, float Z, float W) : XMFLOAT4(X, Y, Z, W) {}
+	constexpr Vector4() noexcept : XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) {}
+	constexpr Vector4(float X, float Y, float Z, float W) noexcept : XMFLOAT4(X, Y, Z, W) {}
 	explicit Vector4(const DirectX::XMFLOAT4& V) : XMFLOAT4(V) {}
 
 	explicit Vector4(const Vector3& Vec);//w=1.0f
@@ -277,13 +277,13 @@ struct Vector4 : public DirectX::XMFLOAT4
 	//Qauternion
 	static Quaternion LookRotation(const Vector3& LookAtDirection, const Vector3& Up);
 
-	const static Quaternion Identity;
+	static constexpr Quaternion Identity() { return Quaternion(0, 0, 0, 1); }
 };
 
 struct Vector2 : public DirectX::XMFLOAT2
 {
-	Vector2() : XMFLOAT2(0.0f, 0.0f) {}
-	Vector2(float X, float Y) : XMFLOAT2(X, Y) {}
+	constexpr Vector2() noexcept : XMFLOAT2(0.0f, 0.0f) {}
+	constexpr Vector2(float X, float Y) noexcept : XMFLOAT2(X, Y) {}
 	explicit Vector2(const DirectX::XMFLOAT2& V) : XMFLOAT2(V) {}
 	explicit Vector2(const Vector4& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
 	explicit Vector2(const Vector3& Vec);
@@ -361,18 +361,18 @@ struct Vector2 : public DirectX::XMFLOAT2
 
 struct Vector3 : public DirectX::XMFLOAT3
 {
-	Vector3() : XMFLOAT3(0.0f, 0.0f, 0.0f) {}
-	Vector3(float X, float Y, float Z) : XMFLOAT3(X, Y, Z) {}
+	constexpr Vector3() noexcept : XMFLOAT3(0.0f, 0.0f, 0.0f) {}
+	constexpr Vector3(float X, float Y, float Z) noexcept : XMFLOAT3(X, Y, Z) {}
 	explicit Vector3(const DirectX::XMFLOAT3& V) : XMFLOAT3(V) {}
 	explicit Vector3(const Vector4& Vec) : XMFLOAT3(Vec.x, Vec.y, Vec.z) {}
 	explicit Vector3(const Vector2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
 
-	//static
-	static const Vector3 Zero;
-	static const Vector3 Up;
-	static const Vector3 Forward;
-	static const Vector3 Right;
-	static const Vector3 One;
+
+	static constexpr Vector3 Zero()		{ return Vector3(0.0f, 0.0f, 0.0f); }
+	static constexpr Vector3 Up()		{ return Vector3(0.0f, 1.0f, 0.0f); }
+	static constexpr Vector3 Forward()	{ return Vector3(0.0f, 0.0f, 1.0f); } 
+	static constexpr Vector3 Right()	{ return Vector3(1.0f, 0.0f, 0.0f); }  
+	static constexpr Vector3 One()		{ return Vector3(1.0f, 1.0f, 1.0f); }
 
 	// Assignment operators
 	Vector3& operator=(const Vector4& Vec)
@@ -480,7 +480,7 @@ struct Vector3 : public DirectX::XMFLOAT3
 		}
 	}
 
-	void SafeNormalize(Vector3& OutVec, const Vector3& ErrVec = Vector3::Zero)
+	void SafeNormalize(Vector3& OutVec, const Vector3& ErrVec = Vector3::Zero())
 	{
 		float L = Length();
 		if (L < KINDA_SMALL)
@@ -555,7 +555,6 @@ struct Vector3 : public DirectX::XMFLOAT3
 		);
 	}
 };
-
 inline Vector2::Vector2(const Vector3& Vec) : XMFLOAT2(Vec.x, Vec.y) {}
 
 // Implementation of Create functions for integer
@@ -693,32 +692,24 @@ inline float DistanceSquared(const Vector4& A, const Vector4& B)
 
 namespace XMVector
 {
-	static const XMVECTOR XMUp()
+	static const DirectX::XMVECTOR XMUp()
 	{
-		static const XMVECTOR Up
-			= XMLoadFloat3(&Vector3::Up);
-		return Up;
+		return XMVectorSet(0, 1, 0, 1);
 	}
 
-	static const XMVECTOR XMForward()
+	static const DirectX::XMVECTOR XMForward()
 	{
-		static const XMVECTOR Forward
-			= XMLoadFloat3(&Vector3::Forward);
-		return Forward;
+		return XMVectorSet(0, 0, 1, 1);
 	}
 
-	static const XMVECTOR XMRight()
+	static const DirectX::XMVECTOR XMRight()
 	{
-		static const XMVECTOR Right
-			= XMLoadFloat3(&Vector3::Right);
-		return Right;
+		return XMVectorSet(1, 0, 0, 1);
 	}
 
-	static const XMVECTOR XMZero()
+	static const DirectX::XMVECTOR XMZero()
 	{
-		static const XMVECTOR Zero
-			= XMLoadFloat3(&Vector3::Zero);
-		return Zero;
+		return XMVectorSet(0, 0, 0, 1);
 	}
 
 }

@@ -42,7 +42,7 @@ void UDebugDrawManager::DrawSphere(const Vector3& Center, float Radius, const Qu
 	}
 
 	SetupPrimitive(Primitive, SphereModelHandle_Low,
-				   Center, Rotation, 2.0f * Radius * Vector3::One,
+				   Center, Rotation, 2.0f * Radius * Vector3::One(),
 				   Color);
 	DrawDebugPtr->bPersistent = bPersist;
 	DrawDebugPtr->RemainingTime = Duration;
@@ -190,9 +190,9 @@ void UDebugDrawManager::FDebugShape::Reset()
 	if (Primitive)
 	{
 		//초기화
-		Primitive->SetLocalPosition(Vector3::Zero);
-		Primitive->SetLocalRotation(Quaternion::Identity);
-		Primitive->SetLocalScale(Vector3::One);
+		Primitive->SetLocalPosition(Vector3::Zero());
+		Primitive->SetLocalRotation(Quaternion::Identity());
+		Primitive->SetLocalScale(Vector3::One());
 		Primitive->SetColor(Vector4(1, 1, 1, 1));
 	}
 }

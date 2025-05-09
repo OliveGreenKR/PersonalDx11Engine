@@ -10,12 +10,12 @@ URigidBodyComponent::URigidBodyComponent()
 
 void URigidBodyComponent::Reset()
 {
-	Velocity = Vector3::Zero;
-	AngularVelocity = Vector3::Zero;
-	AccumulatedForce = Vector3::Zero;
-	AccumulatedTorque = Vector3::Zero;
-	AccumulatedInstantForce = Vector3::Zero;
-	AccumulatedInstantTorque = Vector3::Zero;
+	Velocity = Vector3::Zero();
+	AngularVelocity = Vector3::Zero();
+	AccumulatedForce = Vector3::Zero();
+	AccumulatedTorque = Vector3::Zero();
+	AccumulatedInstantForce = Vector3::Zero();
+	AccumulatedInstantTorque = Vector3::Zero();
 }	
 
 void URigidBodyComponent::Tick(const float DeltaTime)
@@ -25,8 +25,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		return;
 
 	// 모든 힘을 가속도로 변환
-	Vector3 TotalAcceleration = Vector3::Zero;
-	Vector3 TotalAngularAcceleration = Vector3::Zero;
+	Vector3 TotalAcceleration = Vector3::Zero();
+	Vector3 TotalAngularAcceleration = Vector3::Zero();
 
 	float GravityFactor = GravityScale * ONE_METER;
 	// 중력 가속도 추가
@@ -44,7 +44,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityFactor)
 		{
 			// 정적 마찰력이 외력을 상쇄
-			AccumulatedForce = Vector3::Zero;
+			AccumulatedForce = Vector3::Zero();
 		}
 		else
 		{
@@ -82,8 +82,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		AccumulatedInstantTorque.z / RotationalInertia.z);
 
 	// 충격량 초기화
-	AccumulatedInstantForce = Vector3::Zero;
-	AccumulatedInstantTorque = Vector3::Zero;
+	AccumulatedInstantForce = Vector3::Zero();
+	AccumulatedInstantTorque = Vector3::Zero();
 
 	// 외부에서 적용된 힘에 의한 가속도 추가
 	TotalAcceleration += AccumulatedForce / Mass;
@@ -103,8 +103,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	UpdateTransform(DeltaTime);
 
 	// 외부 힘 초기화
-	AccumulatedForce = Vector3::Zero;
-	AccumulatedTorque = Vector3::Zero;
+	AccumulatedForce = Vector3::Zero();
+	AccumulatedTorque = Vector3::Zero();
 }
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)
@@ -171,7 +171,7 @@ void URigidBodyComponent::SetMass(float InMass)
 {
 	Mass = std::max(InMass, KINDA_SMALL);
 	// 회전 관성도 질량에 따라 갱신
-	RotationalInertia = 4.0f * Mass * Vector3::One; //근사
+	RotationalInertia = 4.0f * Mass * Vector3::One(); //근사
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
@@ -210,7 +210,7 @@ void URigidBodyComponent::ClampVelocities()
 		}
 		else if (speedSq < KINDA_SMALL)
 		{
-			Velocity = Vector3::Zero;
+			Velocity = Vector3::Zero();
 		}
 	}
 	
@@ -224,7 +224,7 @@ void URigidBodyComponent::ClampVelocities()
 		}
 		else if (angularSpeedSq < KINDA_SMALL)
 		{
-			AngularVelocity = Vector3::Zero;
+			AngularVelocity = Vector3::Zero();
 		}
 	}
 }

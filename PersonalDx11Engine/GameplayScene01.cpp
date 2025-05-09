@@ -219,7 +219,7 @@ void UGameplayScene01::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Forward);
+                                                        Camera->StartMove(Vector3::Forward());
                                                     },
                                                     "CameraMove");
 
@@ -227,7 +227,7 @@ void UGameplayScene01::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Forward);
+                                                        Camera->StartMove(-Vector3::Forward());
                                                     },
                                                     "CameraMove");
 
@@ -235,7 +235,7 @@ void UGameplayScene01::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Right);
+                                                        Camera->StartMove(Vector3::Right());
                                                     },
                                                     "CameraMove");
 
@@ -243,7 +243,7 @@ void UGameplayScene01::SetupInput()
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Right);
+                                                        Camera->StartMove(-Vector3::Right());
                                                     },
                                                     "CameraMove");
 
@@ -285,7 +285,7 @@ void UGameplayScene01::SetupBorderTriggers(UElasticBody* InBody)
                 if (!IsInBorder(InTransform.Position))
                 {
                     const Vector3 Position = InTransform.Position;
-                    Vector3 Normal = Vector3::Zero;
+                    Vector3 Normal = Vector3::Zero();
                     Vector3 NewPosition = Position;
 
                     // 충돌한 면의 법선 계산과 위치 보정
@@ -331,8 +331,8 @@ void UGameplayScene01::SpawnElasticBody()
     body->PostInitialized();
     body->PostInitializedComponents();
 
-    body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One);
-    body->SetPosition(FRandom::RandVector(Vector3::One * -1.5f, Vector3::One * 1.5f));
+    body->SetScale(FRandom::RandF(0.5f, 0.8f) * Vector3::One());
+    body->SetPosition(FRandom::RandVector(Vector3::One() * -1.5f, Vector3::One() * 1.5f));
 
     auto Rigid = body->GetComponentByType<URigidBodyComponent>();
     if (Rigid)

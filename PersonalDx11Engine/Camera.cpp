@@ -116,9 +116,9 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 	if (RotAxis.LengthSquared() < KINDA_SMALL)
 	{
 		// 완전히 반대 방향을 바라보는 경우, 임의의 회전축 사용
-		RotAxis = Vector3::Cross(CurrentForward, Vector3::Up);
+		RotAxis = Vector3::Cross(CurrentForward, Vector3::Up());
 		if (RotAxis.LengthSquared() < KINDA_SMALL)
-			RotAxis = Vector3::Cross(CurrentForward, Vector3::Right);
+			RotAxis = Vector3::Cross(CurrentForward, Vector3::Right());
 	}
 	RotAxis.Normalize();
 

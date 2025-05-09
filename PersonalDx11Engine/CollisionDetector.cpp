@@ -126,7 +126,7 @@ FCollisionDetectionResult FCollisionDetector::SphereSphere(
 	if (distance < KINDA_SMALL)
 	{
 		// 구체가 거의 같은 위치에 있는 경우
-		Result.Normal = Vector3::Up;  // 기본 방향 설정
+		Result.Normal = Vector3::Up();  // 기본 방향 설정
 		Result.PenetrationDepth = radiusSum;
 		XMStoreFloat3(&Result.Point, vPosA);
 	}
@@ -362,7 +362,7 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 		}
 
 		// 최소 침투 방향으로 법선 설정
-		Vector3 localNormal = Vector3::Zero;
+		Vector3 localNormal = Vector3::Zero();
 		switch (minIndex)
 		{
 			case 0: localNormal.x = -1.0f; break;  // -x 방향

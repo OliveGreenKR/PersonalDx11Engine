@@ -219,14 +219,14 @@ void UGameObject::ApplyImpulse(const Vector3&& InImpulse)
 Vector3 UGameObject::GetCurrentVelocity() const
 {
 	if (!IsPhysicsSimulated())
-		return Vector3::Zero;
+		return Vector3::Zero();
 
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
 		return RigidPtr->GetVelocity();
 	}
-	return Vector3::Zero;
+	return Vector3::Zero();
 }
 
 float UGameObject::GetMass() const

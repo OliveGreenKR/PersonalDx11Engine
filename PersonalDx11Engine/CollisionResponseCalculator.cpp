@@ -48,7 +48,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     Accumulation.normalLambda = NormalLambda;
 
     // 2. 접선 방향 처리 (마찰)
-    Vector3 TangentImpulse = Vector3::Zero;
+    Vector3 TangentImpulse = Vector3::Zero();
 
     // 법선 방향 성분 제거하여 접선 방향 계산
     XMVECTOR vNormalComponent = XMVectorScale(vNormal, NormalVelocity);

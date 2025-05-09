@@ -137,6 +137,7 @@
     <ClCompile Include="CollisionEventDispatcher.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="ConfigReadManager.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DContextDebugger.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="ConfigReadManager.h" />
     <ClInclude Include="ConstraintInterface.h" />
     <ClInclude Include="D3D.h" />

@@ -94,16 +94,16 @@ private:
 	ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
 	// 물리 상태 변수
-	Vector3 Velocity = Vector3::Zero;
-	Vector3 AngularVelocity = Vector3::Zero;
-	Vector3 AccumulatedForce = Vector3::Zero;
-	Vector3 AccumulatedTorque = Vector3::Zero;
-	Vector3 AccumulatedInstantForce = Vector3::Zero;
-	Vector3 AccumulatedInstantTorque = Vector3::Zero;
+	Vector3 Velocity = Vector3::Zero();
+	Vector3 AngularVelocity = Vector3::Zero();
+	Vector3 AccumulatedForce = Vector3::Zero();
+	Vector3 AccumulatedTorque = Vector3::Zero();
+	Vector3 AccumulatedInstantForce = Vector3::Zero();
+	Vector3 AccumulatedInstantTorque = Vector3::Zero();
 
 	// 물리 속성
 	float Mass = 1.0f;
-	Vector3 RotationalInertia = Vector3::One;
+	Vector3 RotationalInertia = Vector3::One();
 	float MaxSpeed = 4.0f;
 	float MaxAngularSpeed = 6.0f * PI;
 	float FrictionKinetic = 0.3f;
@@ -113,5 +113,5 @@ private:
 	float AngularDrag = 0.01f;
 
 	float GravityScale = 9.81f;
-	Vector3 GravityDirection = -Vector3::Up;
+	Vector3 GravityDirection = -Vector3::Up();
 };
