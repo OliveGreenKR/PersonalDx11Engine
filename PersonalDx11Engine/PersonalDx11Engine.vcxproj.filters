@@ -137,6 +137,9 @@
     <ClCompile Include="ConfigReadManager.cpp">
       <Filter>Engine\Managers\ConfigReadeer</Filter>
     </ClCompile>
+    <ClCompile Include="CameraOrbitControl.cpp">
+      <Filter>Contents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -572,6 +575,9 @@
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraOrbitControl.h">
+      <Filter>Contents</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

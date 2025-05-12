@@ -132,6 +132,7 @@
     <ClCompile Include="ActorComponent.cpp" />
     <ClCompile Include="BoxComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraOrbitControl.cpp" />
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
     <ClCompile Include="CollisionEventDispatcher.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="ActorComponent.h" />
     <ClInclude Include="BoxComponent.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraOrbitControl.h" />
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionDetector.h" />
     <ClInclude Include="CollisionDefines.h" />

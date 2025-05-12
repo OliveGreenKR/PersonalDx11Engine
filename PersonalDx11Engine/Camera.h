@@ -39,6 +39,7 @@ public:
 	void LookAt(const Vector3& TargetPosition);
 	void LookTo();
 
+	weak_ptr<UGameObject> GetCurrentLookAt() const { return LookAtObject; }
 public:
 	bool bIs2D = false;
 	bool bLookAtObject = false;
