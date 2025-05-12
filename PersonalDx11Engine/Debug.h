@@ -47,14 +47,22 @@ namespace Debug
 		return buffer;
 	}
 
-	static const char* ToString(const Vector3& InVector , const char* Name = "Vector")
+	static const char* ToString(const Vector3& InVector , const char* Name = "")
 	{
 		static char buffer[128];
-
-		snprintf(buffer, sizeof(buffer),
-				 "%s : %.2f  %.2f  %.2f\n",
-				 Name,
-				 InVector.x, InVector.y, InVector.z);
+		if (Name)
+		{
+			snprintf(buffer, sizeof(buffer),
+					 "%s : %.2f  %.2f  %.2f\n",
+					 Name,
+					 InVector.x, InVector.y, InVector.z);
+		}
+		else
+		{
+			snprintf(buffer, sizeof(buffer),
+					 "%.2f  %.2f  %.2f\n",
+					 InVector.x, InVector.y, InVector.z);
+		}
 
 		return buffer;
 	}

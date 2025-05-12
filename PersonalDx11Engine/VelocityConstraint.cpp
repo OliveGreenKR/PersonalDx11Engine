@@ -37,6 +37,11 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     // 유효 질량 계산
     float EffectiveMass = CalculateEffectiveMass(ParameterA, ParameterB, ContactPoint, Direction);
 
+    if (EffectiveMass < KINDA_SMALL)
+    {
+        EffectiveMass = 1.0f;  // 기본값 설정
+    }
+
     // 람다 계산
     float DeltaLambda = -(VelocityError + PositionCorrection) / EffectiveMass;
 
@@ -114,16 +119,16 @@ XMVECTOR FVelocityConstraint::CalculateRelativeVelocity(
     const XMVECTOR& ContactPoint) const
 {
     // 접촉점까지의 벡터
-    XMVECTOR vRadiusA = ContactPoint - ParameterA.Position;
-    XMVECTOR vRadiusB = ContactPoint - ParameterB.Position;
+    XMVECTOR vRadiusA = XMVectorSubtract(ContactPoint, ParameterA.Position);
+    XMVECTOR vRadiusB = XMVectorSubtract(ContactPoint, ParameterB.Position);
 
     // 회전에 의한 선속도
     XMVECTOR RotationalVelA = XMVector3Cross(ParameterA.AngularVelocity, vRadiusA);
     XMVECTOR RotationalVelB = XMVector3Cross(ParameterB.AngularVelocity, vRadiusB);
 
     // 총 속도 = 선형 속도 + 회전에 의한 속도
-    XMVECTOR TotalVelA = ParameterA.Velocity + RotationalVelA;
-    XMVECTOR TotalVelB = ParameterB.Velocity + RotationalVelB;
+    XMVECTOR TotalVelA = XMVectorAdd(ParameterA.Velocity, RotationalVelA);
+    XMVECTOR TotalVelB = XMVectorAdd(ParameterB.Velocity, RotationalVelB);
 
     // 상대 속도 = B의 속도 - A의 속도
     return TotalVelB - TotalVelA;

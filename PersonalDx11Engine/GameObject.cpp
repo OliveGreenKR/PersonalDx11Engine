@@ -146,7 +146,7 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	TargetPosition = GetTransform().Position + InDirection.GetNormalized() * MaxSpeed;
+	TargetPosition = GetTransform().Position + InDirection.GetNormalized() * MovementSpeed;
 }
 
 void UGameObject::StopMove()
@@ -178,7 +178,7 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	// 이번 프레임에서의 이동 거리 계산 (등속 운동)
 	Vector3 NewPosition;
 
-	float MoveDistance = MaxSpeed * DeltaTime;
+	float MoveDistance = MovementSpeed * DeltaTime;
 	if (MoveDistance > RemainingDistance)
 	{
 		NewPosition = TargetPosition;

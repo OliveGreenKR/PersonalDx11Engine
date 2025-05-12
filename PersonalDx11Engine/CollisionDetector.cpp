@@ -35,8 +35,9 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	if (Result.bCollided)
 	{
 		auto sNormal = Debug::ToString(Result.Normal, "");
-		LOG("[PDepth] : %.3f \n[ToImpace] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
+		LOG("[PDepth] : %.3f \n[ToImpact] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
 		LOG("[DetectNormal] : %s", sNormal);
+		LOG("[PCollision] : %s", Debug::ToString(Result.Point));
 	}
 	return Result;
 }
@@ -392,7 +393,7 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 	{
 		// 로컬 공간에서의 방향 벡터를 법선으로 사용
 		XMVECTOR vNormal = XMVector3Normalize(vDelta);
-		Result.PenetrationDepth = SphereRadius - distance;
+		Result.PenetrationDepth = std::fabs(SphereRadius - distance);
 
 		// 법선을 월드 공간으로 변환
 		Matrix BoxRotation = BoxTransform.GetRotationMatrix();

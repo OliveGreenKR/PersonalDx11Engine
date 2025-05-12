@@ -80,6 +80,11 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		AccumulatedInstantTorque.x / RotationalInertia.x,
 		AccumulatedInstantTorque.y / RotationalInertia.y,
 		AccumulatedInstantTorque.z / RotationalInertia.z);
+	//if (AccumulatedInstantTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	//{
+	//	LOG("AngularVelocity with InstantTorque : %s", Debug::ToString(AngularVelocity));
+	//	LOG("*------- InstantTorque : %s", Debug::ToString(AccumulatedInstantTorque));
+	//}
 
 	// 충격량 초기화
 	AccumulatedInstantForce = Vector3::Zero();
@@ -95,6 +100,13 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	// 통합된 가속도로 속도 업데이트
 	Velocity += TotalAcceleration * DeltaTime;
 	AngularVelocity += TotalAngularAcceleration * DeltaTime;
+
+	//if (AccumulatedTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	//{
+	//	LOG("AngularVelocity with AccumulatedTorque : %s", Debug::ToString(AngularVelocity));
+	//	LOG("*------- AccumTorque : %s", Debug::ToString(AccumulatedTorque));
+	//}
+		
 
 	// 속도 제한
 	ClampVelocities();
@@ -148,7 +160,8 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 		return;
 
 	AccumulatedForce += Force;
-	AccumulatedTorque += Vector3::Cross(Location - GetCenterOfMass(), Force);
+	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
+	AccumulatedTorque += Torque;
 }
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
@@ -157,6 +170,7 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 		return;
 
 	AccumulatedInstantForce += Impulse;
+	Vector3 COM = GetCenterOfMass();
 	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
 	AccumulatedInstantTorque += AngularImpulse;
 }

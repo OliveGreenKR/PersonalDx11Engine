@@ -1,6 +1,7 @@
 #include "CollisionResponseCalculator.h"
 #include "VelocityConstraint.h"
 #include "PhysicsStateInterface.h"
+#include "Debug.h"
 
 // CollisionResponseCalculator.cpp 수정
 FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContraints(
@@ -83,6 +84,8 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     ResponseData.NetImpulse = (NormalImpulse + TangentImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
 
+    LOG_FUNC_CALL("Tahgent Impulse : %s ", Debug::ToString(TangentImpulse));
+
     return ResponseData;
 }
 
@@ -114,8 +117,8 @@ void FCollisionResponseCalculator::ClampFriction(
         OutTangentImpulse = OutTangentImpulse * Scale;
 
         // 방향은 유지하면서 크기만 제한
-        float Sign = (OutFrictionLambda >= 0) ? 1.0f : -1.0f;
-        OutFrictionLambda = MaxFriction * Sign;
+        OutFrictionLambda = std::copysign(MaxFriction, OutFrictionLambda);
+
     }
 }
 

@@ -100,12 +100,17 @@ public:
 	void StopMove();
 	void StopMoveImmediately();
 	void UpdateMovement(const float DeltaTime);
+
+	//Use Only in ManulaMove
+	void SetMovementSpeed(const float InSpeed) { MovementSpeed = InSpeed; }
+	//Use Only in ManulaMove
+	float GetMovementSpeed() { return MovementSpeed; }
 public:
 	//movement test
 	bool bIsMoving = false;
 
 private:
-	float MaxSpeed = 5.0f;
+	float MovementSpeed = 100.0f;
 	Vector3 TargetPosition;
 #pragma endregion
 #pragma region Physics
