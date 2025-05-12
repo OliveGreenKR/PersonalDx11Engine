@@ -22,7 +22,7 @@ Vector3 USphereComponent::GetWorldSupportPoint(const Vector3& WorldDirection) co
 Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const
 {
     // For a solid sphere: I = (2/5) * m * r^2
-    float r = GetScaledHalfExtent().x / ONE_METER;
+    float r = GetScaledHalfExtent().x;
     float r2 = r * r;
     float Inertia = (2.0f / 5.0f) * Mass * r2;
 

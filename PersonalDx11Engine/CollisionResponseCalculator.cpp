@@ -80,11 +80,11 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
         Accumulation.frictionLambda = FrictionLambda;
     }
     
+    //마찰에 대한 접선방향 충격량 약화
+    constexpr float TangentCoef = 0.65f;
     // 최종 충격량 합산
-    ResponseData.NetImpulse = (NormalImpulse + TangentImpulse);
+    ResponseData.NetImpulse = (NormalImpulse + TangentCoef * TangentImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;
-
-    LOG_FUNC_CALL("Tahgent Impulse : %s ", Debug::ToString(TangentImpulse));
 
     return ResponseData;
 }

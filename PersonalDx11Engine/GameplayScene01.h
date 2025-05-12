@@ -37,6 +37,14 @@ private:
     void DeSpawnElasticBody();
 
 private:
+    //카메라 움직임
+    float LongitudeThreshold = 180 - KINDA_SMALL;
+    float LatitudeThreshold = 89.0f - KINDA_SMALL;
+    float Latitude = 0.0f;
+    float Longitude = 0.0f;
+    Vector3 CalculateSphericPosition(float Latidue, float Longitude, float radius);
+
+private:
     // 객체 및 카메라
     std::shared_ptr<UCamera> Camera;
 
@@ -55,6 +63,8 @@ private:
     const float XBorder = 300.0f;
     const float YBorder = 200.0f;
     const float ZBorder = 500.0f;
+
+    
 
     //리소스
     FResourceHandle PoleMaterialHandle;

@@ -18,6 +18,7 @@
 #include "UIManager.h" 
 
 #include "RenderDataTexture.h"
+#include <new>
 
 UGameplayScene01::UGameplayScene01()
 {
@@ -46,6 +47,8 @@ void UGameplayScene01::Initialize()
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);
     Camera->SetPosition({ 0, 0.0f, -800.0f });
+    Camera->PostInitialized();
+    Camera->PostInitializedComponents();
 
     // 입력 설정
     SetupInput();
@@ -192,76 +195,7 @@ void UGameplayScene01::HandleInput(const FKeyEventData& EventData)
 
 void UGameplayScene01::SetupInput()
 {
-    UInputAction CameraUp("CameraUp");
-    CameraUp.KeyCodes = { VK_UP };
 
-    UInputAction CameraDown("CameraDown");
-    CameraDown.KeyCodes = { VK_DOWN };
-
-    UInputAction CameraRight("CameraRight");
-    CameraRight.KeyCodes = { VK_RIGHT };
-
-    UInputAction CameraLeft("CameraLeft");
-    CameraLeft.KeyCodes = { VK_LEFT };
-
-    UInputAction CameraFollowObject("CameraFollowObject");
-    CameraFollowObject.KeyCodes = { 'V' };
-
-    UInputAction CameraLookTo("CameraLookTo");
-    CameraLookTo.KeyCodes = { VK_F2 };
-
-    UInputAction Debug1("Debug1");
-    Debug1.KeyCodes = { VK_F1 };
-
-    auto WeakCamera = std::weak_ptr(Camera);
-      // 카메라 입력 바인딩 (시스템 컨텍스트 사용)
-    UInputManager::Get()->SystemContext->BindAction(CameraUp,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Forward());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraDown,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Forward());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraRight,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Right());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraLeft,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Right());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->bLookAtObject = !Camera->bLookAtObject;
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraLookTo,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->LookTo();
-                                                    },
-                                                    "CameraMove");
 }
 
 void UGameplayScene01::SetupBorderTriggers(UElasticBody* InBody)
@@ -328,6 +262,14 @@ void UGameplayScene01::SpawnElasticBody()
     auto bodyScoped = ElasticBodyPool->AcquireForcely();
     auto body = bodyScoped.Get();
 
+    if (ElasticBodyPool->GetActiveCount() % 2 == 0)
+    {
+        new (body) UElasticBody(EElasticBodyShape::Box);
+    }
+    else
+    {
+        new (body) UElasticBody(EElasticBodyShape::Sphere);
+    }
     body->PostInitialized();
     body->PostInitializedComponents();
 
@@ -370,4 +312,18 @@ void UGameplayScene01::DeSpawnElasticBody()
         weakedBody.Release();
     }
     
+}
+
+Vector3 UGameplayScene01::CalculateSphericPosition(float Latidue, float Longitude, float radius)
+{
+    // 위도와 경도를 라디안으로 변환 (입력이 도(degree) 단위라고 가정)
+    float latRad = Math::DegreeToRad(Latidue);      // 위도
+    float lonRad = Math::DegreeToRad(Longitude);     // 경도
+
+    // x, y, z 좌표 계산
+    float x = radius * cos(latRad) * sin(lonRad);   // x 좌표
+    float y = radius * sin(latRad);                 // y 좌표 (위도에 따라 높이)
+    float z = -radius * cos(latRad) * cos(lonRad);   // z 좌표
+
+    return Vector3(x, y, z);
 }

@@ -302,6 +302,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (ImGui::Button("WireFrame")) {
 				Renderer->DefaultState = ERenderStateType::Wireframe;
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("LoadConfig")) {
+				UConfigReadManager::Get()->LoadConfigFromIni();
+			}
 			//ImGui::Checkbox("ContextDebug", &(Renderer->GetRenderContext()->bDebugValidationEnabled));
 			//ImGui::SameLine();
 			//ImGui::Checkbox("ContextDebugBreak", &(Renderer->GetRenderContext()->bDebugBreakOnError));
