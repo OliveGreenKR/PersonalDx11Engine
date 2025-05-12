@@ -26,7 +26,8 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     XMVECTOR RelativeVelocity = CalculateRelativeVelocity(ParameterA, ParameterB, ContactPoint);
 
     // 상대 속도의 해당 방향 성분 계산
-    float ProjectedSpeed = XMVectorGetX(XMVector3Dot(RelativeVelocity, Direction));
+    XMVECTOR DesiredRelativeVelocity = XMVector3Dot(RelativeVelocity, Direction);
+    float ProjectedSpeed = XMVectorGetX(DesiredRelativeVelocity);
 
     // 속도 오차 계산 (현재 속도와 목표 속도의 차이)
     float VelocityError = ProjectedSpeed - DesiredSpeed;

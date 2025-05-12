@@ -458,6 +458,7 @@ void UCollisionManager::ApplyCollisionResponseByContraints(const FCollisionPair&
 		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
 	auto RigidPtrA = ComponentA.get()->GetRigidBody();
 	auto RigidPtrB = ComponentB.get()->GetRigidBody();
+	//A->B 방향의 법선벡터이므로 반대로 적용
 	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
