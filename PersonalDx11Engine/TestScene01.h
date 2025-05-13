@@ -44,7 +44,8 @@ private:
 	FCollisionDetector Detector;
 	int CuurentIteration = 1;
 	bool bEPAConverged = false;
-
+private:
+	void RandSpawn();
 private:
 	void SetupInput();
 
@@ -53,6 +54,4 @@ private:
 	bool EPACollision(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB, FCollisionDetector::PolytopeSOA& InOutPoly, FCollisionDetector& InDetector);
 
 	void DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, const Vector4& Color, float LifeTime, bool bDrawNormals);
-
-
 };

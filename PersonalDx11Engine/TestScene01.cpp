@@ -14,6 +14,7 @@
 #include <windows.h> // Sleep 함수 사용
 #include "CollisionDetector.h"
 #include "Color.h"
+#include "Random.h"
 
 using namespace DirectX;
 
@@ -49,42 +50,20 @@ void UTestScene01::Initialize()
 
     bEPAConverged = false;
 
+    //멤버 초기화
     Box = UActorComponent::Create<UBoxComponent>();
     Sphere = UActorComponent::Create<USphereComponent>();
+    Detector = FCollisionDetector();
 
-    const  Vector3 Pos1 = Vector3(-35.0f, 0, 0);
-    const  Vector3 Pos2 = Vector3(35.0f, 0, 0);
-    const  Vector3 Scale1 = Vector3::One() * 100.0f;
-    const  Vector3 Scale2 = Vector3::One() * 75.0f;
-
-    Box->SetWorldPosition(Pos1);
-    Box->SetWorldScale(Scale1);
-
-    Sphere->SetWorldPosition(Pos2);
-    Sphere->SetWorldScale(Scale2);
+    //초기 테스트환경
+    RandSpawn(); 
 
     //원점 표시
     auto OPointWeak = ObjectPool->AcquireForcely();
     auto OPoint = OPointWeak.Get();
     OPoint->SetColor(Vector4(1, 0, 1, 1));
     OPoint->SetModel(FResourceHandle(MDL_SPHERE_Low));
-    OPoint->SetWorldScale(Scale1 * 0.05f);
-
-
-    //EPA
-    CuurentIteration = 1;
-    Detector = FCollisionDetector();
-    FCollisionDetector::FSimplex Simplex;
-    if (Detector.GJKCollision(*Box, Box->GetWorldTransform(),
-                              *Sphere, Sphere->GetWorldTransform(),
-                              Simplex))
-    {
-        assert(CreateInitialPolytope(Simplex, Detector, Poly));
-    }
-    else
-    {
-        LOG("TestScene01 : Failed to Detect Collison in GJK");
-    }
+    OPoint->SetWorldScale(Vector3::One() * 100.0f * 0.05f);
 
     SetupInput();
     
@@ -193,6 +172,10 @@ void UTestScene01::SubmitRenderUI()
         {
             CuurentIteration++;
         }
+        if (ImGui::Button("NewCase"))
+        {
+            RandSpawn();
+        }
         ImGui::End();
                                          });
 }
@@ -210,6 +193,68 @@ UCamera* UTestScene01::GetMainCamera() const
 std::string& UTestScene01::GetName()
 {
     return SceneName;
+}
+
+void UTestScene01::RandSpawn()
+{
+    if (!Box || !Sphere)
+        return;
+
+    Poly = FCollisionDetector::PolytopeSOA();
+
+    Vector3 Pos1 = FRandom::RandVector(-50.0f * Vector3::One(), 50.0f * Vector3::One());
+    Vector3 Pos2 = FRandom::RandVector(-50.0f * Vector3::One(), 50.0f * Vector3::One());
+
+    Vector3 Scale1 = Vector3::One() * 100.0f;
+    Vector3 Scale2 = Vector3::One() * 75.0f;
+
+    Quaternion Quat1 = FRandom::RandQuat();
+    Quaternion Quat2 = FRandom::RandQuat();
+
+    FTransform NewTransform1;
+    NewTransform1.Position = Pos1;
+    NewTransform1.Scale = Scale1;
+    NewTransform1.Rotation = Quat1;
+
+    Box->SetWorldTransform(NewTransform1);
+
+    FTransform NewTransform2;
+    NewTransform2.Position = Pos2;
+    NewTransform2.Scale = Scale2;
+    NewTransform2.Rotation = Quat2;
+
+    Sphere->SetWorldTransform(NewTransform2);
+
+    //EPA Init
+    CuurentIteration = 1;
+    FCollisionDetector::FSimplex Simplex;
+    if (Detector.GJKCollision(*Box, Box->GetWorldTransform(),
+                              *Sphere, Sphere->GetWorldTransform(),
+                              Simplex))
+    {
+        if(!CreateInitialPolytope(Simplex, Detector, Poly))
+        {
+            for (auto& point : Simplex.Points)
+            {
+                Vector3 pos;
+                XMStoreFloat3(&pos, point);
+                UDebugDrawManager::Get()->DrawSphere(pos, 5.0f, Quaternion::Identity(),
+                                                     Color::Red, 3.0f, false);
+            }
+        }
+    }
+    else
+    {
+        LOG("TestScene01 : Failed to Detect Collison in GJK");
+        for (auto& point : Simplex.Points)
+        {
+            Vector3 pos;
+            XMStoreFloat3(&pos, point);
+            UDebugDrawManager::Get()->DrawSphere(pos, 5.0f, Quaternion::Identity(),
+                                                 Color::Red, 3.0f, false);
+        }
+        
+    }
 }
 
 void UTestScene01::SetupInput()
