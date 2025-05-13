@@ -48,6 +48,7 @@ int SCREEN_HEIGHT = 800;
 int CONSOLE_WIDTH = 500;
 int CONSOLE_HEIGHT = 300;
 bool VSYNC = false;
+int INIT_SCENE_INDEX = 0;
 
 using namespace std;
 
@@ -119,6 +120,7 @@ void LoadSystemConfig()
 	UConfigReadManager::Get()->GetValue("ConsoleWidth", CONSOLE_WIDTH);
 	UConfigReadManager::Get()->GetValue("ConsoleHeight", CONSOLE_HEIGHT);
 	UConfigReadManager::Get()->GetValue("bVSync", VSYNC);
+	UConfigReadManager::Get()->GetValue("InitSceneIndex", INIT_SCENE_INDEX);
 }
 
 
@@ -212,7 +214,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	USceneManager::Get()->RegisterScene(TestScene01);
 
 	//Defualt Scene Load
-	USceneManager::Get()->ChangeScene(TestScene01->GetName());
+	if (!USceneManager::Get()->ChangeScene(INIT_SCENE_INDEX))
+	{
+		USceneManager::Get()->ChangeScene(GameplayScene01->GetName());
+	}
 
 #pragma region Global Camera Orbit Controll
 	//global Camera Control
@@ -276,8 +281,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														  },
 														  "GCameraMove");
 #pragma endregion
-
-
 
 #pragma region MainLoop
 	while (bIsExit == false)

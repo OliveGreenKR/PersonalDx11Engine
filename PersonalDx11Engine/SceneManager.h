@@ -8,7 +8,9 @@
 class USceneManager
 {
 private:
-    std::unordered_map<std::string, std::shared_ptr<ISceneInterface>> Scenes;
+    std::vector<std::shared_ptr<ISceneInterface>> Scenes;
+    std::unordered_map<std::string, std::uint32_t> SceneNameMap;
+
     std::shared_ptr<ISceneInterface> ActiveScene;
     std::shared_ptr<ISceneInterface> PendingScene;
     bool bIsTransitioning = false;
@@ -36,19 +38,34 @@ public:
     {
         if (Scene)
         {
-            Scenes[Scene->GetName()] = Scene;
+            SceneNameMap[Scene->GetName()] = Scenes.size();
+            Scenes.push_back(Scene);
         }
     }
 
     // 씬 전환
-    void ChangeScene(const std::string& SceneName)
+    bool ChangeScene(const std::string& SceneName)
     {
-        auto it = Scenes.find(SceneName); 
-        if (it != Scenes.end())
+        auto it = SceneNameMap.find(SceneName);
+        if (it == SceneNameMap.end())
         {
-            PendingScene = it->second;
-            bIsTransitioning = true;
+            return false;
         }
+        return ChangeScene(it->second);
+    }
+    bool ChangeScene(const uint32_t SceneIndex)
+    {
+        if (SceneIndex >= Scenes.size())
+            return false;
+
+        auto ScenePtr = Scenes[SceneIndex];
+        if (ScenePtr)
+        {
+            PendingScene = ScenePtr;
+            bIsTransitioning = true;
+        }   
+
+        return bIsTransitioning;
     }
 
     // 씬 업데이트
@@ -112,5 +129,16 @@ public:
         return ActiveScene;
     }
 
-    float GetLastTickTime() { return LastTickTime; }
+    float GetLastTickTime() const { return LastTickTime; }
+
+    std::weak_ptr<ISceneInterface> GetScene(std::uint32_t Index)
+    {
+        if (Index >= Scenes.size())
+        {
+            return std::weak_ptr<ISceneInterface>();
+        }
+
+        return Scenes[Index];
+    }
+    std::uint32_t GetRegisteredScenesNum() const { return Scenes.size(); }
 };
