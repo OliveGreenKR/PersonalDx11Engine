@@ -225,15 +225,6 @@ void UGameplayScene02::SubmitRenderUI()
 
     UUIManager::Get()->RegisterUIElement("Scene02UI", [this]() {
 
-        if (Camera)
-        {
-            ImGui::Begin("Camera", nullptr, UIWindowFlags);
-            ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-            ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-            ImGui::Text(Debug::ToString(Camera->GetTransform()));
-            ImGui::End();
-        }
-
         if (Character)
         {
             Vector3 Scale = Character->GetTransform().Scale;
@@ -599,7 +590,7 @@ void UGameplayScene02::SetupInput()
 
     auto WeakCamera = std::weak_ptr(Camera);
       // 카메라 입력 바인딩 (시스템 컨텍스트 사용)
-    UInputManager::Get()->SystemContext->BindAction(CameraUp,
+    /*UInputManager::Get()->SystemContext->BindAction(CameraUp,
                                                     EKeyEvent::Pressed,
                                                     WeakCamera,
                                                     [this](const FKeyEventData& EventData) {
@@ -629,7 +620,7 @@ void UGameplayScene02::SetupInput()
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->StartMove(-Vector3::Right());
                                                     },
-                                                    "CameraMove");
+                                                    "CameraMove");*/
 
     UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
                                                     EKeyEvent::Pressed,
@@ -637,7 +628,7 @@ void UGameplayScene02::SetupInput()
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->bLookAtObject = !Camera->bLookAtObject;
                                                     },
-                                                    "CameraMove");
+                                                    "CameraFollowObject");
 
     UInputManager::Get()->SystemContext->BindAction(CameraLookTo,
                                                     EKeyEvent::Pressed,
@@ -645,7 +636,7 @@ void UGameplayScene02::SetupInput()
                                                     [this](const FKeyEventData& EventData) {
                                                         Camera->LookTo();
                                                     },
-                                                    "CameraMove");
+                                                    "CameraLookTo");
 
       // 디버그 입력 바인딩
     UInputManager::Get()->SystemContext->BindActionSystem(Debug1,

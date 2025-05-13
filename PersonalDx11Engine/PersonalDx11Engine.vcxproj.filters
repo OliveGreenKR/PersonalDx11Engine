@@ -140,6 +140,9 @@
     <ClCompile Include="CameraOrbitControl.cpp">
       <Filter>Contents</Filter>
     </ClCompile>
+    <ClCompile Include="Math.cpp">
+      <Filter>Engine\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">

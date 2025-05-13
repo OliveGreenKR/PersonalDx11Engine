@@ -43,12 +43,10 @@ void UTestScene01::Initialize()
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);
-    Camera->SetPosition({ 0, 0.0f, -CameraDistance });
+    Camera->SetPosition({ 0, 0.0f, -800.0f });
     Camera->PostInitialized();
     Camera->PostInitializedComponents();
 
-    Latitude = 0.0f;
-    Longitude = 0.0f;
     bEPAConverged = false;
 
     Box = UActorComponent::Create<UBoxComponent>();
@@ -118,13 +116,6 @@ void UTestScene01::Tick(float DeltaTime)
 {
 
     static int PrevIteration = 0;
-    if (Camera)
-    {
-        Vector3 NewPos = CalculateSphericPosition(Latitude, Longitude);
-        Camera->SetPosition(NewPos);
-        Camera->LookAt(Vector3::Zero());
-        Camera->Tick(DeltaTime);
-    }
     if (bDebug01)
     {
         auto TransformA = Box->GetWorldTransform();
@@ -194,14 +185,6 @@ void UTestScene01::SubmitRenderUI()
     static int BodyNum = 0;
     UUIManager::Get()->RegisterUIElement("TestSceneUI", [this]() {
         ImGui::Begin("TestScene");
-        if (ImGui::InputFloat("Latidue", &Latitude, 1.0f, 10.0f))
-        {
-            Latitude = Math::Clamp(Latitude, -LatitudeThreshold, LatitudeThreshold);
-        }
-        if (ImGui::InputFloat("Longitud", &Longitude, 1.0f, 10.0f))
-        {
-            Latitude = Math::Clamp(Latitude, -LongitudeThreshold, LongitudeThreshold);
-        }
         ImGui::Checkbox("CollisionShape", &bDebug01);
         ImGui::Checkbox("PolytopeEPA", &bDebug02);
         ImGui::TextColored(ImVec4(1, 0, 1, 1), "EPAIteration %d", CuurentIteration);
@@ -231,68 +214,7 @@ std::string& UTestScene01::GetName()
 
 void UTestScene01::SetupInput()
 {
-    UInputAction CameraUp("CameraUp");
-    CameraUp.KeyCodes = { VK_UP };
-
-    UInputAction CameraDown("CameraDown");
-    CameraDown.KeyCodes = { VK_DOWN };
-
-    UInputAction CameraRight("CameraRight");
-    CameraRight.KeyCodes = { VK_RIGHT };
-
-    UInputAction CameraLeft("CameraLeft");
-    CameraLeft.KeyCodes = { VK_LEFT };
-
-	UInputManager::Get()->SystemContext->BindActionSystem(CameraUp,
-														  EKeyEvent::Repeat,
-														  [this](const FKeyEventData& EventData) {
-															  Latitude += 5;
-															  Latitude = Math::Clamp(Latitude, -LatitudeThreshold, LatitudeThreshold);
-														  },
-														  "CameraMove");
-
-	UInputManager::Get()->SystemContext->BindActionSystem(CameraDown,
-														  EKeyEvent::Repeat,
-														  [this](const FKeyEventData& EventData) {
-															  Latitude -= 5;
-															  Latitude = Math::Clamp(Latitude, -LatitudeThreshold, LatitudeThreshold);
-														  },
-														  "CameraMove");
-
-	UInputManager::Get()->SystemContext->BindActionSystem(CameraRight,
-														  EKeyEvent::Repeat,
-														  [this](const FKeyEventData& EventData) {
-															  Longitude += 2.5;
-															  Longitude = Math::Clamp(Longitude, -LongitudeThreshold, LongitudeThreshold);
-														  },
-														  "CameraMove");
-
-	UInputManager::Get()->SystemContext->BindActionSystem(CameraLeft,
-														  EKeyEvent::Repeat,
-														  [this](const FKeyEventData& EventData) {
-															  Longitude -= 2.5;
-															  Longitude = Math::Clamp(Longitude, -LongitudeThreshold, LongitudeThreshold);
-														  },
-														  "CameraMove");
 }
-
-Vector3 UTestScene01::CalculateSphericPosition(float Latitude, float Longitude)
-{
-    float radius = CameraDistance;
-
-    // 위도와 경도를 라디안으로 변환 (입력이 도(degree) 단위라고 가정)
-    float latRad = Math::DegreeToRad(Latitude);      // 위도
-    float lonRad = Math::DegreeToRad(Longitude);     // 경도
-
-    // x, y, z 좌표 계산
-    float x = radius  * cos(latRad) * sin(lonRad);   // x 좌표
-    float y = radius  * sin(latRad);                 // y 좌표 (위도에 따라 높이)
-    float z = -radius * cos(latRad) * cos(lonRad);   // z 좌표
-
-    return Vector3(x, y, z);
-}
-
-
 ///////////////
 
 bool UTestScene01::CreateInitialPolytope(const FCollisionDetector::FSimplex& InSimplex,

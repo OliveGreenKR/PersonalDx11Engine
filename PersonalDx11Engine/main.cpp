@@ -217,27 +217,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region Global Camera Orbit Controll
 	//global Camera Control
 	auto CameraOrbitController = std::make_unique<FCameraOrbit>();
+	USceneManager::Get()->OnSceneChanged.BindSystem([&CameraOrbitController]() {
+			CameraOrbitController->Initialize(USceneManager::Get()->GetActiveCamera());
+													}, "SystemSceneChanged_GOrbitCamera");
+	
 	//Register InputContext
 	auto SystemContext = UInputManager::Get()->SystemContext;
 
-	auto GetActiveCameraAndTarget = [](UCamera* OutCamera, Vector3 OutVector)
-		{
-			OutCamera = nullptr;
-			OutVector = Vector3::Zero();
-			OutCamera = USceneManager::Get()->GetActiveCamera();
-			if (OutCamera)
-			{
-				if (OutCamera->bLookAtObject && OutCamera->GetCurrentLookAt().lock())
-				{
-					OutVector = OutCamera->GetCurrentLookAt().lock()->GetTransform().Position;
-				}
-
-				return true;
-			}
-		};
-
-	constexpr float stepLongitude = 2.5f;
-	constexpr float stepLatitude = 2.5f;
+	constexpr float stepLongitude = 360.0f  * PI / 180.0f ;
+	constexpr float stepLatitude = stepLongitude * 0.5f;
 
 	UInputAction CameraUp("CameraUp");
 	CameraUp.KeyCodes = { VK_UP };
@@ -254,44 +242,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UInputManager::Get()->SystemContext->BindActionSystem(CameraUp,
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
-															  UCamera* Camera = nullptr; Vector3 Target = Vector3::Zero();
-															  if (GetActiveCameraAndTarget(Camera, Target))
-															  {
-																  CameraOrbitController->OrbitLongitude(Camera, Target, stepLongitude * USceneManager::Get()->GetLastTickTime());
-															  }
+															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
+															  CameraOrbitController->OrbitLatitude(Camera, 
+																								   stepLatitude * USceneManager::Get()->GetLastTickTime());
 														  },
 														  "GGCameraMove");
 
 	UInputManager::Get()->SystemContext->BindActionSystem(CameraDown,
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
-															  UCamera* Camera = nullptr; Vector3 Target = Vector3::Zero();
-															  if (GetActiveCameraAndTarget(Camera, Target))
-															  {
-																  CameraOrbitController->OrbitLongitude(Camera, Target, -stepLongitude * USceneManager::Get()->GetLastTickTime());
-															  }
+															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
+															  CameraOrbitController->OrbitLatitude(Camera,
+																								   -stepLatitude * USceneManager::Get()->GetLastTickTime()
+															  );
 														  },
 														  "GCameraMove");
 
 	UInputManager::Get()->SystemContext->BindActionSystem(CameraRight,
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
-															  UCamera* Camera = nullptr; Vector3 Target = Vector3::Zero();
-															  if (GetActiveCameraAndTarget(Camera, Target))
-															  {
-																  CameraOrbitController->OrbitLatitude(Camera, Target, stepLatitude * USceneManager::Get()->GetLastTickTime());
-															  }
+															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
+															  CameraOrbitController->OrbitLongitude(Camera,
+																									stepLongitude * USceneManager::Get()->GetLastTickTime());
 														  },
 														  "GCameraMove");
 
 	UInputManager::Get()->SystemContext->BindActionSystem(CameraLeft,
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
-															  UCamera* Camera = nullptr; Vector3 Target = Vector3::Zero();
-															  if (GetActiveCameraAndTarget(Camera, Target))
-															  {
-																  CameraOrbitController->OrbitLatitude(Camera, Target, -stepLatitude * USceneManager::Get()->GetLastTickTime());
-															  }
+															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
+															  CameraOrbitController->OrbitLongitude(Camera,
+																									-stepLongitude * USceneManager::Get()->GetLastTickTime());
 														  },
 														  "GCameraMove");
 #pragma endregion
@@ -394,6 +375,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//ImGui::SameLine();
 			//ImGui::Checkbox("ContextDebugBreak", &(Renderer->GetRenderContext()->bDebugBreakOnError));
 			ImGui::End();
+											 });
+
+		UUIManager::Get()->RegisterUIElement("SystemUI_ActiveCamera", []()
+											 {
+												 constexpr ImGuiWindowFlags UIWindowFlags =
+													 ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
+
+												 auto Camera = USceneManager::Get()->GetActiveCamera();
+												 if (Camera)
+												 {
+													 ImGui::Begin("Camera", nullptr, UIWindowFlags);
+													 ImGui::Checkbox("bIs2D", &Camera->bIs2D);
+													 ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
+													 ImGui::Text(Debug::ToString(Camera->GetTransform()));
+													 ImGui::End();
+												 }
 											 });
 #pragma endregion
 

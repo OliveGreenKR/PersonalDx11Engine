@@ -1,96 +1,131 @@
 #include "CameraOrbitControl.h"
 #include "Camera.h"
+#include "Debug.h"
 
-void FCameraOrbit::OrbitLatitude(UCamera* Camera, Vector3 Target, float Delta)
+
+bool FCameraOrbit::Initialize(UCamera* Camera)
 {
     if (!Camera)
-        return;
+        return false;
 
-    // 현재 구면 좌표 계산
-    float Radius, Latitude, Longitude;
-    CalculateSphericalCoordinates(Camera, Target, Radius, Latitude, Longitude);
-
-    // 위도 업데이트 (극점 제한)
-    Latitude += Delta;
-    Latitude = Math::Clamp(Latitude, -89.0f, 89.0f); // 극점에서의 짐벌락 방지
-
-    // 카메라 위치 및 방향 업데이트
-    UpdateCameraFromSpherical(Camera, Target, Radius, Latitude, Longitude);
+    Vector3 Target = GetTargetPos(Camera);
+    CalculateSphericalCoordinates(Camera, Target);
+    return true;
 }
 
-void FCameraOrbit::OrbitLongitude(UCamera* Camera, Vector3 Target, float Delta)
+void FCameraOrbit::CalculateSphericalCoordinates(UCamera* Camera, Vector3 Target)
 {
-    if (!Camera)
-        return;
-
-    // 현재 구면 좌표 계산
-    float Radius, Latitude, Longitude;
-    CalculateSphericalCoordinates(Camera, Target, Radius, Latitude, Longitude);
-
-    // 경도 업데이트 (360도 순환)
-    Longitude += Delta;
-    // 360도 범위로 정규화 (0~360)
-    Longitude = fmodf(Longitude, 360.0f);
-    if (Longitude < 0.0f)
-        Longitude += 360.0f;
-
-    // 카메라 위치 및 방향 업데이트
-    UpdateCameraFromSpherical(Camera, Target, Radius, Latitude, Longitude);
-}
-
-void FCameraOrbit::OrbitDistance(UCamera* Camera, Vector3 Target, float Delta,
-                                 float MinDistance, float MaxDistance)
-{
-    if (!Camera)
-        return;
-
-    // 현재 구면 좌표 계산
-    float Radius, Latitude, Longitude;
-    CalculateSphericalCoordinates(Camera, Target, Radius, Latitude, Longitude);
-
-    // 거리 업데이트 (min/max 제한)
-    Radius += Delta;
-    Radius = Math::Clamp(Radius, MinDistance, MaxDistance);
-
-    // 카메라 위치 및 방향 업데이트
-    UpdateCameraFromSpherical(Camera, Target, Radius, Latitude, Longitude);
-}
-
-void FCameraOrbit::CalculateSphericalCoordinates(UCamera* Camera, Vector3 Target,
-                                                 float& OutRadius, float& OutLatitude, float& OutLongitude)
-{
-    // 타겟을 중심으로 한 카메라의 상대 위치 계산
+    // Calculate camera's relative position to the target
     Vector3 CameraPosition = Camera->GetTransform().Position;
     Vector3 RelativePosition = CameraPosition - Target;
 
-    // 구면 좌표 계산
-    // 반지름(거리)
-    OutRadius = RelativePosition.Length();
+    // Calculate spherical coordinates
+    // Radius (distance from target)
+    Radius = RelativePosition.Length();
 
-    // 위도(y축 기준 각도, -90~90)
-    OutLatitude = Math::RadToDegree(asinf(RelativePosition.y / OutRadius));
+    // Handle case where camera is at the target's exact location
+    if (Radius < KINDA_SMALLER) {
+        LatitudeRad = 0.0f;
+        LongitudeRad = 0.0f;
+        // Depending on desired behavior, you might want a minimum radius here,
+        // but 0 is mathematically correct for the point.
+        Radius = 0.0f;
+    }
+    else {
+        // Latitude (angle from XZ plane, in radians). asin range is [-PI/2, PI/2].
+        // This corresponds to the angle between the relative vector and the XZ plane.
+        LatitudeRad = asinf(RelativePosition.y / Radius);
 
-    // 경도(xz평면에서의 각도, 0~360)
-    OutLongitude = Math::RadToDegree(atan2f(RelativePosition.z, RelativePosition.x));
+        // Longitude (angle in XZ plane from positive X towards positive Z, in radians).
+        // atan2f(y, x) calculates the angle for point (x, y) from positive X towards positive Y.
+        // In our XZ plane context, we use atan2f(Z, X). Range is [-PI, PI].
+        if (std::fabs(RelativePosition.x) < KINDA_SMALLER && std::fabs(RelativePosition.z) < KINDA_SMALLER) {
+            LongitudeRad = 0.0f; // Default for position directly on the Y axis
+        }
+        else {
+            LongitudeRad = atan2f(RelativePosition.z, RelativePosition.x);
+        }
+    }
 }
 
 void FCameraOrbit::UpdateCameraFromSpherical(UCamera* Camera, Vector3 Target,
-                                             float Radius, float Latitude, float Longitude)
+                                             float Radius, float LatitudeRad, float LongitudeRad)
 {
-    // 라디안 변환
-    float LatRad = Math::DegreeToRad(Latitude);
-    float LongRad = Math::DegreeToRad(Longitude);
+    // Check for invalid camera
+    if (!Camera)
+        return;
 
-    // 구면좌표를 데카르트 좌표로 변환
-    float HorizontalRadius = Radius * cosf(LatRad); // xz평면 반지름
+    // Convert spherical coordinates (radians) back to Cartesian coordinates relative to the target
+    // Assuming Y is Up, X is Right, Z is Forward
+    // Calculate the projected radius onto the XZ plane based on latitude
+    double HorizontalRadius = Radius * cos(LatitudeRad);
+
+    // Calculate the new camera position relative to the target
     Vector3 NewPosition;
-    NewPosition.x = Target.x + HorizontalRadius * cosf(LongRad);
-    NewPosition.y = Target.y + Radius * sinf(LatRad);
-    NewPosition.z = Target.z + HorizontalRadius * sinf(LongRad);
+    // Using the longitude (angle from +X towards +Z in XZ plane):
+    NewPosition.x = Target.x + HorizontalRadius * cos(LongitudeRad); // Right component
+    NewPosition.y = Target.y + Radius * sin(LatitudeRad);          // Up component
+    NewPosition.z = Target.z + HorizontalRadius * sin(LongitudeRad); // Forward component
 
-    // 카메라 위치 설정
+    // Set the camera's new world position
     Camera->SetPosition(NewPosition);
 
-    // 타겟 바라보기
+    // Make the camera look directly at the target
     Camera->LookAt(Target);
 }
+
+Vector3 FCameraOrbit::GetTargetPos(UCamera* Camera)
+{
+    Vector3 Target = Vector3::Zero();
+    if (Camera->bLookAtObject && Camera->GetCurrentLookAt().lock())
+    {
+        Target = Camera->GetCurrentLookAt().lock()->GetTransform().Position;
+    }
+    return Target;
+}
+
+void FCameraOrbit::OrbitLongitude(UCamera* Camera, float DeltaRad)
+{
+    // Check for invalid camera
+    if (!Camera)
+        return;
+
+    Vector3 Target = GetTargetPos(Camera);
+
+    // Update longitude by the delta amount (in radians)
+    LongitudeRad += DeltaRad;
+
+    //normalization to [-PI, PI]:
+    // const float PI = Math::PI; // Assuming Math::PI exists
+     LongitudeRad = fmod(LongitudeRad, 2 * PI);
+     if (LongitudeRad <= -PI) 
+         LongitudeRad += 2 * PI;
+     if (LongitudeRad > PI) 
+         LongitudeRad -= 2 * PI;
+
+    // Update camera position and orientation based on the new longitude
+    UpdateCameraFromSpherical(Camera, Target, Radius, LatitudeRad, LongitudeRad);
+}
+
+ void FCameraOrbit::OrbitLatitude(UCamera* Camera, float DeltaRad)
+ {
+     // Check for invalid camera
+     if (!Camera)
+         return;
+
+     Vector3 Target = GetTargetPos(Camera);
+
+     // Update latitude by the delta amount (in radians)
+     LatitudeRad += DeltaRad;
+
+     // Clamp latitude to avoid issues at the poles (gimbal lock / flipping).
+     // asin gives [-PI/2, PI/2]. Clamping slightly within this range is typical.
+     constexpr float PI_HALF = PI / 2.0f; 
+     LatitudeRad = std::clamp(LatitudeRad, -PI_HALF + 0.1f, PI_HALF - 0.1f);
+
+     // Log post-update values (for debugging flow)
+     LOG_FUNC_CALL("Post Latitude Rad : %.3f", LatitudeRad);
+
+     // Update camera position and orientation based on the new latitude
+     UpdateCameraFromSpherical(Camera, Target, Radius, LatitudeRad, LongitudeRad);
+ }

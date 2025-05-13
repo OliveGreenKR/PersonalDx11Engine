@@ -404,9 +404,15 @@ void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
     // 방향을 정규화
     Direction.Normalize();
 
-    // 기본적으로 로컬 전방 벡터는 (0,0,1)이고, 상향 벡터는 (0,1,0)
-    Vector3 Forward = Vector3::Forward();
     Vector3 Up = Vector3::Up();
+
+    float DotProduct = Vector3::Dot(Up, Direction);
+    //Up 과 Dircetion이 펑행
+    if ( std::fabs(1 - std::fabs(DotProduct)) < KINDA_SMALL)
+    {
+        //같은 방향이면 Up = -Forward, 아니면 반대
+        Up = DotProduct > 0.0f ? -Vector3::Forward() : Vector3::Forward();
+    }
 
     // 방향에 맞는 회전 쿼터니언 생성
     Quaternion NewRotation = Quaternion::LookRotation(Direction, Up);

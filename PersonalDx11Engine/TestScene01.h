@@ -37,10 +37,6 @@ private:
 	std::shared_ptr<class UBoxComponent> Box;
 	std::shared_ptr<class USphereComponent> Sphere;
 
-	float CameraDistance = 800.0f;
-	float Latitude = 0.0f;
-	float Longitude = 0.0f;
-
 	bool bDebug01 = true;
 	bool bDebug02 = true;
 	
@@ -49,12 +45,8 @@ private:
 	int CuurentIteration = 1;
 	bool bEPAConverged = false;
 
-	float LongitudeThreshold = 180 - KINDA_SMALL;
-	float LatitudeThreshold = 89.0f - KINDA_SMALL;
-
 private:
 	void SetupInput();
-	Vector3 CalculateSphericPosition(float Latidue, float Longitude);
 
 	bool CreateInitialPolytope(const FCollisionDetector::FSimplex& InSimplex, FCollisionDetector& InDetector, FCollisionDetector::PolytopeSOA& OutPoly);
 

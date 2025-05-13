@@ -159,6 +159,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="PixelShader.cpp" />

@@ -5,9 +5,7 @@
 
 using namespace DirectX;
 
-const float PI = XM_PI;
-
-
+constexpr float PI = XM_PI;
 constexpr float KINDA_SMALL = 1e-4f; // 보통 용도
 constexpr float KINDA_SMALLER = 1e-6f; // 정밀 계산 용도
 
@@ -22,46 +20,45 @@ using Quaternion = Vector4;
 
 namespace XMVector
 {
-	static const DirectX::XMVECTOR XMUp()
+	inline static const DirectX::XMVECTOR XMUp()
 	{
 		return XMVectorSet(0, 1, 0, 1);
 	}
 
-	static const DirectX::XMVECTOR XMForward()
+	inline static const DirectX::XMVECTOR XMForward()
 	{
 		return XMVectorSet(0, 0, 1, 1);
 	}
 
-	static const DirectX::XMVECTOR XMRight()
+	inline static const DirectX::XMVECTOR XMRight()
 	{
 		return XMVectorSet(1, 0, 0, 1);
 	}
 
-	static const DirectX::XMVECTOR XMZero()
+	inline static const DirectX::XMVECTOR XMZero()
 	{
 		return XMVectorSet(0, 0, 0, 1);
 	}
-
 }
 
 namespace Math
 {
-	static constexpr float Lerp(const float min, const float max, const float alpha)
+	inline static constexpr float Lerp(const float min, const float max, const float alpha)
 	{
 		return min + alpha * (max - min);
 	}
 
-	static constexpr float DegreeToRad(float degree)
+	inline static constexpr float DegreeToRad(float degree)
 	{
 		return degree * XM_PI / 180.0f;
 	}
 
-	static constexpr float RadToDegree(float rad)
+	inline static constexpr float RadToDegree(float rad)
 	{
 		return rad * 180.0f / XM_PI;
 	}
 
-	static constexpr float Clamp(float val, float min, float max)
+	inline static constexpr float Clamp(float val, float min, float max)
 	{
 		return val < min ? min : (val > max ? max : val);
 	}
@@ -135,37 +132,13 @@ struct Vector4 : public DirectX::XMFLOAT4
 	float Length() const { return sqrt(x * x + y * y + z * z + w * w); }
 	constexpr float LengthSquared() const { return x * x + y * y + z * z + w * w; }
 
-	void Normalize()
-	{
-		float L = Length();
-		if (L < KINDA_SMALL)
-		{
-			x = 0; y = 0; z = 0; w = 1.0f;
-			return;
-		}
-		if (L > 0)
-		{
-			float InvL = 1.0f / L;
-			x *= InvL;
-			y *= InvL;
-			z *= InvL;
-			w *= InvL;
-		}
-	}
+	void Normalize();
 
-	Vector4 GetNormalized() const
-	{
-		Vector4 Result = *this;
-		Result.Normalize();
-		return Result;
-	}
-	static float Dot(const Vector4& A, const Vector4& B)
-	{
-		return A.x * B.x + A.y * B.y + A.z * B.z + A.w * B.w;
-	}
+	Vector4 GetNormalized() const;
+	static float Dot(const Vector4& A, const Vector4& B);
 
 	//Qauternion
-	static Quaternion LookRotation(const Vector3& LookAtDirection, const Vector3& Up);
+	static Quaternion LookRotation(const Vector3 & LookAtDirection, const Vector3& Up);
 
 	static constexpr Quaternion Identity() { return Quaternion(0, 0, 0, 1); }
 };
@@ -253,11 +226,11 @@ struct Vector3 : public DirectX::XMFLOAT3
 	constexpr explicit Vector3(const XMFLOAT2& Vec) : XMFLOAT3(Vec.x, Vec.y, 0.0f) {}
 
 
-	static constexpr Vector3 Zero()		{ return Vector3(0.0f, 0.0f, 0.0f); }
-	static constexpr Vector3 Up()		{ return Vector3(0.0f, 1.0f, 0.0f); }
-	static constexpr Vector3 Forward()	{ return Vector3(0.0f, 0.0f, 1.0f); } 
-	static constexpr Vector3 Right()	{ return Vector3(1.0f, 0.0f, 0.0f); }  
-	static constexpr Vector3 One()		{ return Vector3(1.0f, 1.0f, 1.0f); }
+	static constexpr Vector3 Zero() { return Vector3(0.0f, 0.0f, 0.0f); }
+	static constexpr Vector3 Up() { return Vector3(0.0f, 1.0f, 0.0f); }
+	static constexpr Vector3 Forward() { return Vector3(0.0f, 0.0f, 1.0f); }
+	static constexpr Vector3 Right() { return Vector3(1.0f, 0.0f, 0.0f); }
+	static constexpr Vector3 One() { return Vector3(1.0f, 1.0f, 1.0f); }
 
 	// Assignment operators
 	constexpr Vector3& operator=(const Vector4& Vec)
@@ -338,161 +311,28 @@ struct Vector3 : public DirectX::XMFLOAT3
 	constexpr float LengthSquared() const { return x * x + y * y + z * z; }
 
 	//When Vector is too Small, be Zero
-	void Normalize()
-	{
-		float L = Length();
-		if (L < KINDA_SMALL)
-		{
-			x = 0; y = 0; z = 0;
-			return;
-		}
-		if (std::abs(L-1) > KINDA_SMALL)
-		{
-			float InvL = 1.0f / L;
-			x *= InvL;
-			y *= InvL;
-			z *= InvL;
-		}
-	}
+	void Normalize();
 
-	void SafeNormalize(Vector3& OutVec, const Vector3& ErrVec = Vector3::Zero())
-	{
-		float L = Length();
-		if (L < KINDA_SMALL)
-		{
-			OutVec = ErrVec;
-			return;
-		}
+	void SafeNormalize(Vector3& OutVec, const Vector3& ErrVec = Vector3::Zero());
 
-		if (std::abs(L - 1) > KINDA_SMALL)
-		{
-			float InvL = 1.0f / L;
-			OutVec.x = x * InvL;
-			OutVec.y = y * InvL;
-			OutVec.z = z * InvL;
-		}
-	}
-
-	Vector3 GetNormalized() const
-	{
-		Vector3 Result = *this;
-		Result.Normalize();
-		return Result;
-	}
+	Vector3 GetNormalized() const;
 
 	// Static utility functions
-	static float Dot(const Vector3& A, const Vector3& B)
-	{
-		XMVECTOR vA, vB;
-		vA = XMLoadFloat3(&A);
-		vB = XMLoadFloat3(&B);
+	static float Dot(const Vector3& A, const Vector3& B);
 
-		XMVECTOR vResult = XMVector3Dot(vA, vB);
-		return XMVectorGetX(vResult);
-	}
+	static Vector3 Cross(const Vector3& A, const Vector3& B);
 
-	static Vector3 Cross(const Vector3& A, const Vector3& B)
-	{
-		XMVECTOR vA, vB;
-		vA = XMLoadFloat3(&A);
-		vB = XMLoadFloat3(&B);
-		
-		XMVECTOR vResult = XMVector3Cross(vA, vB);
-		Vector3 Result;
-		XMStoreFloat3(&Result, vResult);
-		return Result;
-	}
+	static Vector3 Min(const Vector3& A, const Vector3& B);
 
-	static constexpr Vector3 Min(const Vector3& A, const Vector3& B)
-	{
-		return Vector3(
-			std::min<float>(A.x, B.x),
-			std::min<float>(A.y, B.y),
-			std::min<float>(A.z, B.z)
-		);
-	}
+	static Vector3 Max(const Vector3& A, const Vector3& B);
 
-	static constexpr Vector3 Max(const Vector3& A, const Vector3& B)
-	{
-		return Vector3(
-			std::max<float>(A.x, B.x),
-			std::max<float>(A.y, B.y),
-			std::max<float>(A.z, B.z)
-		);
-	}
-
-	static constexpr Vector3 Clamp(const Vector3& Value, const Vector3& Min, const Vector3& Max)
-	{
-		return Vector3(
-			Math::Clamp(Value.x, Min.x, Max.x),
-			Math::Clamp(Value.y, Min.y, Max.y),
-			Math::Clamp(Value.z, Min.z, Max.z)
-		);
-	}
+	static Vector3 Clamp(const Vector3& Value, const Vector3& Min, const Vector3& Max);
 };
 
-inline Quaternion Vector4::LookRotation(const Vector3& LookAt, const Vector3& Up)
-{
-	// 입력 벡터가 영벡터인 경우 체크
-	if (LookAt.LengthSquared() < KINDA_SMALL)
-	{
-		return Quaternion(0, 0, 0, 1.0f);
-	}
-	// 1. 입력 벡터들을 XMVECTOR로 변환
-	XMVECTOR vLookAt = XMVector3Normalize(XMLoadFloat3(&LookAt));
-	XMVECTOR vUp = XMVector3Normalize(XMLoadFloat3(&Up));
-
-	// 2. 직교 기저 벡터 계산
-	// Forward = 정규화된 LookAt 벡터
-	XMVECTOR vForward = vLookAt;
-
-	// Right = Up × Forward (외적)
-	XMVECTOR vRight = XMVector3Cross(vUp, vForward);
-
-	// Right가 너무 작은 경우 (LookAt과 Up이 거의 평행할 때) 처리
-	if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
-	{
-		// LookAt과 Up이 평행한 경우, 약간 다른 Up 벡터 사용
-		vUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-		vRight = XMVector3Cross(vUp, vForward);
-
-		// 여전히 너무 작으면 다른 축 시도
-		if (XMVector3LengthSq(vRight).m128_f32[0] < KINDA_SMALL)
-		{
-			vUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-			vRight = XMVector3Cross(vUp, vForward);
-		}
-	}
-
-	// Right 정규화
-	vRight = XMVector3Normalize(vRight);
-
-	// 실제 Up = Forward × Right
-	vUp = XMVector3Cross(vForward, vRight);
-	// Up은 정규화된 벡터들의 외적이므로 따로 정규화할 필요 없음
-
-	// 3. 직교 기저 벡터들로 회전 행렬 생성
-	XMMATRIX RotationMatrix(
-		vRight,
-		vUp,
-		vForward,
-		XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)
-	);
-
-	// 4. 행렬을 쿼터니온으로 변환
-	XMVECTOR quat = XMQuaternionRotationMatrix(RotationMatrix);
-
-	// 5. 결과를 Quaternion 구조체에 저장
-	Quaternion result;
-	XMStoreFloat4(&result, quat);
-
-	return result;
-}
-
 // Global operators for scalar multiplication
-constexpr Vector2 operator*(float Scalar, const Vector2& Vec) { return Vec * Scalar; }
-constexpr Vector3 operator*(float Scalar, const Vector3& Vec) { return Vec * Scalar; }
-constexpr Vector4 operator*(float Scalar, const Vector4& Vec) { return Vec * Scalar; }
+inline constexpr Vector2 operator*(float Scalar, const Vector2& Vec) { return Vec * Scalar; }
+inline constexpr Vector3 operator*(float Scalar, const Vector3& Vec) { return Vec * Scalar; }
+inline constexpr Vector4 operator*(float Scalar, const Vector4& Vec) { return Vec * Scalar; }
 
 #pragma endregion
 
@@ -500,21 +340,22 @@ constexpr Vector4 operator*(float Scalar, const Vector4& Vec) { return Vec * Sca
 
 namespace Math
 {
-	static constexpr float Max(const float a, const float b) {
+	inline static constexpr float Max(const float a, const float b) {
 		return a > b ? a : b;
 	}
-	constexpr float Min(const float a, const float b) {
+	inline constexpr float Min(const float a, const float b) {
 		return a > b ? b : a;
 	}
 
-	static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
+	inline static XMVECTOR RotateAroundAxis(XMVECTOR InAxis, float RadianAngle)
 	{
 		//회전축 정규화
 		XMVECTOR NormalizedAxis = XMVector3Normalize(InAxis);
 		return XMQuaternionRotationNormal(NormalizedAxis, RadianAngle);
 	}
 	//retrun Normalized Quat
-	static const Quaternion EulerToQuaternion(const Vector3& InEuler)
+	//retrun Normalized Quat
+	inline static const Quaternion EulerToQuaternion(const Vector3& InEuler)
 	{
 		// 각도를 라디안으로 변환
 		XMVECTOR RadianAngles = XMVectorScale(
@@ -547,11 +388,11 @@ namespace Math
 		return result;
 	}
 
-	static Vector3 QuaternionToEuler(const Quaternion& q)
+	inline static Vector3 QuaternionToEuler(const Quaternion& q)
 	{
 		Vector3 EulerAngles;
 		// 쿼터니온을 오일러 각으로 변환
-			// atan2를 사용하여 -180도에서 180도 사이의 각도를 얻음
+		// atan2를 사용하여 -180도에서 180도 사이의 각도를 얻음
 
 		// Pitch (x-axis rotation)
 		float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
@@ -579,12 +420,12 @@ namespace Math
 		return EulerAngles * (180.0f / PI);
 	}
 
-	static XMVECTOR Lerp(const XMVECTOR& Start, const XMVECTOR& End, float Alpha)
+	inline static XMVECTOR Lerp(const XMVECTOR& Start, const XMVECTOR& End, float Alpha)
 	{
 		return XMVectorLerp(Start, End, Alpha);
 	}
 
-	static Vector3 Lerp(const Vector3& Current, const Vector3& Dest, float Alpha)
+	inline static Vector3 Lerp(const Vector3& Current, const Vector3& Dest, float Alpha)
 	{
 		XMVECTOR V0 = XMLoadFloat3(&Current);
 		XMVECTOR V1 = XMLoadFloat3(&Dest);
@@ -595,7 +436,7 @@ namespace Math
 	}
 
 
-	static XMVECTOR Slerp(const XMVECTOR& Start, const XMVECTOR& End, float Factor)
+	inline static XMVECTOR Slerp(const XMVECTOR& Start, const XMVECTOR& End, float Factor)
 	{
 		Factor = Math::Clamp(Factor, 0.0f, 1.0f);
 
@@ -606,7 +447,7 @@ namespace Math
 		return Result;
 	}
 
-	static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
+	inline static Quaternion Slerp(const Quaternion& Start, const Quaternion& End, float Factor)
 	{
 		// SIMD 연산을 위해 XMVECTOR 변환
 		XMVECTOR Q0 = XMLoadFloat4(&Start);
@@ -621,7 +462,7 @@ namespace Math
 		return ResultFloat4;
 	}
 
-	static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
+	inline static XMVECTOR GetRotationBetweenVectors(const XMVECTOR& target, const XMVECTOR& dest)
 	{
 		// 상수 정의
 		static constexpr float kParallelThreshold = 1.0f - KINDA_SMALL;
@@ -665,7 +506,7 @@ namespace Math
 		return XMQuaternionRotationAxis(rotAxis, angle);
 	}
 
-	static Quaternion GetRotationBetweenVectors(const Vector3& target, const Vector3& dest)
+	inline static Quaternion GetRotationBetweenVectors(const Vector3& target, const Vector3& dest)
 	{
 		XMVECTOR V1 = XMLoadFloat3(&target);
 		XMVECTOR V2 = XMLoadFloat3(&dest);
@@ -677,7 +518,7 @@ namespace Math
 		return result;
 	}
 
-	static XMVECTOR GetRotationVBetweenVectors(const Vector3& target, const Vector3& dest)
+	inline static XMVECTOR GetRotationVBetweenVectors(const Vector3& target, const Vector3& dest)
 	{
 		XMVECTOR V1 = XMLoadFloat3(&target);
 		XMVECTOR V2 = XMLoadFloat3(&dest);
@@ -693,35 +534,12 @@ struct Plane : public Vector4
 	Plane(Vector4& plane) : Vector4(plane) {}
 	Plane(float x, float y, float z, float w) : Vector4(x, y, z, w) {};
 
-	void NormalizePlane()
-	{
-		Vector3 normal(*this);
-		float L = normal.Length();
-		if (::abs(1 - L) > KINDA_SMALL)
-		{
-			float InvL = 1.0f / L;
-			x *= InvL;
-			y *= InvL;
-			z *= InvL;
-			w *= InvL;
-		}
-	}
+	void NormalizePlane();
 
-	float GetDistance(float x, float y, float z) const
-	{
-		XMVECTOR normal = XMLoadFloat4(this);
-		XMVECTOR point = XMVectorSet(x, y, z, 1.0f);
-		return XMVectorGetX(XMVector4Dot(normal, point));
-	}
+	float GetDistance(float x, float y, float z) const;
 
-	float GetDistance(const Vector3& Point) const
-	{
-		return GetDistance(Point.x, Point.y, Point.z);
-	}
-	bool IsInFront(const Vector3& Point) const
-	{
-		return GetDistance(Point) >= 0.0f;
-	}
+	float GetDistance(const Vector3& Point) const;
+	bool IsInFront(const Vector3& Point) const;
 
 };
 #pragma endregion

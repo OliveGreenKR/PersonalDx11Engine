@@ -137,15 +137,6 @@ void UGameplayScene01::SubmitRenderUI()
 
     UUIManager::Get()->RegisterUIElement("Scene01UI", [this]() {
 
-        if (Camera)
-        {
-            ImGui::Begin("Camera", nullptr, UIWindowFlags);
-            ImGui::Checkbox("bIs2D", &Camera->bIs2D);
-            ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-            ImGui::Text(Debug::ToString(Camera->GetTransform()));
-            ImGui::End();
-        }
-
         ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);
         if (ImGui::Checkbox("bGravity", &bGravity))
