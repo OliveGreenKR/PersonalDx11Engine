@@ -217,15 +217,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma region Global Camera Orbit Controll
 	//global Camera Control
 	auto CameraOrbitController = std::make_unique<FCameraOrbit>();
-	USceneManager::Get()->OnSceneChanged.BindSystem([&CameraOrbitController]() {
-			CameraOrbitController->Initialize(USceneManager::Get()->GetActiveCamera());
-													}, "SystemSceneChanged_GOrbitCamera");
 	
 	//Register InputContext
 	auto SystemContext = UInputManager::Get()->SystemContext;
 
-	constexpr float stepLongitude = 360.0f  * PI / 180.0f ;
-	constexpr float stepLatitude = stepLongitude * 0.5f;
+	constexpr float stepRad = 180.0f * PI / 180.0f;
 
 	UInputAction CameraUp("CameraUp");
 	CameraUp.KeyCodes = { VK_UP };
@@ -243,8 +239,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
 															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
-															  CameraOrbitController->OrbitLatitude(Camera, 
-																								   stepLatitude * USceneManager::Get()->GetLastTickTime());
+															  CameraOrbitController->UpdateOrbit(Camera, 
+																								 0.0f,
+																								 stepRad * USceneManager::Get()->GetLastTickTime());
 														  },
 														  "GGCameraMove");
 
@@ -252,9 +249,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
 															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
-															  CameraOrbitController->OrbitLatitude(Camera,
-																								   -stepLatitude * USceneManager::Get()->GetLastTickTime()
-															  );
+															  CameraOrbitController->UpdateOrbit(Camera,
+																								 0.0f,
+																								 -stepRad * USceneManager::Get()->GetLastTickTime());
+															  
 														  },
 														  "GCameraMove");
 
@@ -262,8 +260,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
 															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
-															  CameraOrbitController->OrbitLongitude(Camera,
-																									stepLongitude * USceneManager::Get()->GetLastTickTime());
+															  CameraOrbitController->UpdateOrbit(Camera,
+																								 stepRad * USceneManager::Get()->GetLastTickTime(),
+																								 0.0f);
 														  },
 														  "GCameraMove");
 
@@ -271,8 +270,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 														  EKeyEvent::Repeat,
 														  [&](const FKeyEventData& EventData) {
 															  UCamera* Camera = USceneManager::Get()->GetActiveCamera();
-															  CameraOrbitController->OrbitLongitude(Camera,
-																									-stepLongitude * USceneManager::Get()->GetLastTickTime());
+															  CameraOrbitController->UpdateOrbit(Camera,
+																								 -stepRad * USceneManager::Get()->GetLastTickTime(),
+																								 0.0f);
 														  },
 														  "GCameraMove");
 #pragma endregion
