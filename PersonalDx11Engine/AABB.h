@@ -48,4 +48,39 @@ struct alignas(16) FAABB
         New.vMax = XMVectorMax(A.vMax, B.vMax); // 각 축에서 최대값 선택
         return New;
     }
+
+    static FAABB Create(const Vector3& LocalHalfExtent, const FTransform& WorldTransform)
+    {
+        FAABB New;
+
+        // 월드 행렬 가져오기
+        Matrix worldMatrix = WorldTransform.GetModelingMatrix();
+
+        // 월드 행렬의 스케일 및 회전 성분만 추출 (위치 제외)
+        // 각 축 방향의 변환된 벡터 계산
+        XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(LocalHalfExtent.x, 0, 0, 0), worldMatrix);
+        XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, LocalHalfExtent.y, 0, 0), worldMatrix);
+        XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, LocalHalfExtent.z, 0), worldMatrix);
+
+        // 각 축의 절대값 계산
+        xAxis = XMVectorAbs(xAxis);
+        yAxis = XMVectorAbs(yAxis);
+        zAxis = XMVectorAbs(zAxis);
+
+        // 세 축의 합이 AABB의 "반경" 벡터가 됨
+        XMVECTOR radius = XMVectorAdd(XMVectorAdd(xAxis, yAxis), zAxis);
+
+        // 중심점 위치
+        XMVECTOR center = XMLoadFloat3(&WorldTransform.Position);
+
+        // min, max 계산
+        XMVECTOR minV = XMVectorSubtract(center, radius);
+        XMVECTOR maxV = XMVectorAdd(center, radius);
+
+        // 결과 저장
+        New.vMin = minV;
+        New.vMax = maxV;
+
+        return New;
+    }
 };

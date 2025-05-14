@@ -55,6 +55,41 @@ public:
             XMStoreFloat3(&Max, XMVectorAdd(vMax, vMargin));
             return *this;
         }
+
+        static AABB Create(const Vector3& LocalHalfExtent, const FTransform& WorldTransform)
+        {
+            AABB New;
+
+            // 월드 행렬 가져오기
+            Matrix worldMatrix = WorldTransform.GetModelingMatrix();
+
+            // 월드 행렬의 스케일 및 회전 성분만 추출 (위치 제외)
+            // 각 축 방향의 변환된 벡터 계산
+            XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(LocalHalfExtent.x, 0, 0, 0), worldMatrix);
+            XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, LocalHalfExtent.y, 0, 0), worldMatrix);
+            XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, LocalHalfExtent.z, 0), worldMatrix);
+
+            // 각 축의 절대값 계산
+            xAxis = XMVectorAbs(xAxis);
+            yAxis = XMVectorAbs(yAxis);
+            zAxis = XMVectorAbs(zAxis);
+
+            // 세 축의 합이 AABB의 "반경" 벡터가 됨
+            XMVECTOR radius = XMVectorAdd(XMVectorAdd(xAxis, yAxis), zAxis);
+
+            // 중심점 위치
+            XMVECTOR center = XMLoadFloat3(&WorldTransform.Position);
+
+            // min, max 계산
+            XMVECTOR minV = XMVectorSubtract(center, radius);
+            XMVECTOR maxV = XMVectorAdd(center, radius);
+
+            // 결과 저장
+            XMStoreFloat3(&New.Min, minV);
+            XMStoreFloat3(&New.Max, maxV);
+
+            return New;
+        }
     };
 
     struct alignas(16) Node
@@ -80,13 +115,11 @@ public:
         int32_t Padding[3];      //총 108 + 12 
 
         bool IsLeaf() const { return Left == NULL_NODE && BoundableObject != nullptr; }
-        bool NeedsUpdate(const Vector3& CurrentPosition, const Vector3& CurrentHalfExtent) const
+        bool NeedsUpdate(const Vector3& LocalHalfExtent, const FTransform& WorldTransform) const
         {
             // 현재 상태로 AABB 생성
-            AABB CurrentBounds;
-            CurrentBounds.Min = CurrentPosition - CurrentHalfExtent;
-            CurrentBounds.Max = CurrentPosition + CurrentHalfExtent;
-
+            AABB CurrentBounds = AABB::Create(LocalHalfExtent, WorldTransform);
+           
             // 현재 상태의 AABB가 FatBounds를 벗어났는지 검사
             return !FatBounds.Contains(CurrentBounds);
         }
@@ -142,12 +175,13 @@ private:
     float ComputeCost(const AABB& Bounds) const;
     float ComputeInheritedCost(size_t NodeId) const;
 
-
-
     //트리 재생성
     void ReBuildTree();
     //트리 초기화
     void ClearTree(const size_t InitialCapacity = 1024);
+
+    //현재상태를 기반으로 AABB 재계산 및 이전 정보 저장
+    void ComputeNodeAABB(size_t NodeId, IDynamicBoundable* Object);
 
 public:
 	void PrintTreeStructure(std::ostream& os = std::cout) const;

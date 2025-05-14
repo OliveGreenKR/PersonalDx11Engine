@@ -237,6 +237,20 @@ void UCollisionManager::SimulateStep(float stepDeltaTime)
 	UpdateCollisionTransform();
 	UpdateCollisionPairs();
 	ProcessCollisions(stepDeltaTime);
+
+	/*
+	+--- Integrate (Apply forces, gravity, update velocities *predicatively*)
+    +--- Predict Transforms (Update world transforms based on predicted velocities)
+    +--- Detect Collisions (Find contact points, normal, separation. Use DCD/CCD. Generate list of Contact objects.)
+    |       (This step *collects* collision data, but does *not* apply responses yet.)
+    +--- Solve Collisions Iterative (Iterative Process: Call ApplyCollisionResponseByConstraints for each Contact multiple times)
+    |       (ApplyCollisionResponseByConstraints now *immediately* applies calculated impulse to Rigidbody velocities)
+    +--- Positional Correction Iterative (Iterative Process: Resolve residual penetration)
+    |       (Applies corrections immediately to Rigidbody positions)
+    +--- Finalize Transforms (Ensure transforms match final positions/orientations)
+    |
+    +--- Broadcast Events (Notify listeners about resolved collisions)
+	*/
 }
 
 void UCollisionManager::UpdateCollisionPairs()

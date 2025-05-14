@@ -66,7 +66,7 @@ void UGameplayScene02::Initialize()
     Camera->SetMovementSpeed(100.0f);
 
     // 캐릭터 1 (탄성체) 설정
-    Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Sphere);
+    Character = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
     Character->SetScale(40.0f * Vector3::One());
     Character->SetPosition({ -60.0f, 0, 0.0f });
 

@@ -238,8 +238,8 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 }
 
 FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
-	const Vector3& ExtentA, const FTransform& WorldTransformA,
-	const Vector3& ExtentB, const FTransform& WorldTransformB)
+	const Vector3& HalfExtentA, const FTransform& WorldTransformA,
+	const Vector3& HalfExtentB, const FTransform& WorldTransformB)
 {
 	FCollisionDetectionResult Result;
 
@@ -291,21 +291,21 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 	for (int i = 0; i < 15; i++)
 	{
 		XMVECTOR vLengthSq = XMVector3LengthSq(vSeparatingAxes[i]);
-		if (XMVectorGetX(vLengthSq) < KINDA_SMALL)
+		if (XMVectorGetX(vLengthSq) < KINDA_SMALL * KINDA_SMALL)
 			continue;
 
 		XMVECTOR vAxis = XMVector3Normalize(vSeparatingAxes[i]);
 
 		// 각 박스의 투영 반경 계산
 		float radiusA =
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[0], ExtentA.x)))) +
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[1], ExtentA.y)))) +
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[2], ExtentA.z))));
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[0], HalfExtentA.x)))) +
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[1], HalfExtentA.y)))) +
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesA[2], HalfExtentA.z))));
 
 		float radiusB =
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[0], ExtentB.x)))) +
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[1], ExtentB.y)))) +
-			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[2], ExtentB.z))));
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[0], HalfExtentB.x)))) +
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[1], HalfExtentB.y)))) +
+			abs(XMVectorGetX(XMVector3Dot(vAxis, XMVectorScale(vAxesB[2], HalfExtentB.z))));
 
 		float distance = abs(XMVectorGetX(XMVector3Dot(vDelta, vAxis)));
 		float penetration = radiusA + radiusB - distance;
@@ -327,9 +327,24 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 	Result.PenetrationDepth = minPenetration;
 
 	// 충돌 지점 계산
-	XMVECTOR vCollisionPoint = XMVectorAdd(vPosA,
-										   XMVectorMultiply(vCollisionNormal, XMVectorReplicate(minPenetration * 0.5f)));
-	XMStoreFloat3(&Result.Point, vCollisionPoint);
+	//XMVECTOR vCollisionPoint = XMVectorAdd(vPosA,
+	//									   XMVectorMultiply(vCollisionNormal, XMVectorReplicate(minPenetration * 0.5f)));
+	//XMStoreFloat3(&Result.Point, vCollisionPoint);
+
+	// --- 충돌 지점 계산 (Deepest Penetrating Vertex 근사) ---
+	// 충돌 법선 (Result.Normal) 방향으로 박스 B가 박스 A에 가장 깊이 파고든 정점으로 근사
+
+	XMVECTOR vSignX = XMVectorReplicate(XMVectorGetX(XMVector3Dot(vCollisionNormal, vAxesB[0])) >= 0 ? 1.0f : -1.0f);
+	XMVECTOR vSignY = XMVectorReplicate(XMVectorGetX(XMVector3Dot(vCollisionNormal, vAxesB[1])) >= 0 ? 1.0f : -1.0f);
+	XMVECTOR vSignZ = XMVectorReplicate(XMVectorGetX(XMVector3Dot(vCollisionNormal, vAxesB[2])) >= 0 ? 1.0f : -1.0f);
+
+	XMVECTOR vDeepestVertexB_Rel =
+		XMVectorAdd(XMVectorMultiply(vAxesB[0], XMVectorMultiply(XMVectorReplicate(HalfExtentB.x), XMVectorNegate(vSignX))),
+					XMVectorAdd(XMVectorMultiply(vAxesB[1], XMVectorMultiply(XMVectorReplicate(HalfExtentB.y), XMVectorNegate(vSignY))),
+								XMVectorMultiply(vAxesB[2], XMVectorMultiply(XMVectorReplicate(HalfExtentB.z), XMVectorNegate(vSignZ)))));
+
+	XMVECTOR vDeepestVertexB_World = XMVectorAdd(vPosB, vDeepestVertexB_Rel);
+	XMStoreFloat3(&Result.Point, vDeepestVertexB_World);
 
 	return Result;
 }

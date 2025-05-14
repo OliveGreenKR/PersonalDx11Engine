@@ -256,15 +256,17 @@ void UGameplayScene01::SpawnElasticBody()
     if (ElasticBodyPool->GetActiveCount() % 2 == 0)
     {
         new (body) UElasticBody(EElasticBodyShape::Box);
+        body->SetScale(FRandom::RandVector(Vector3::One() * 30.0f, Vector3::One() * 80.0f));
     }
     else
     {
         new (body) UElasticBody(EElasticBodyShape::Sphere);
+        body->SetScale(Vector3::One() * FRandom::RandF(30.0f,80.0f));
     }
     body->PostInitialized();
     body->PostInitializedComponents();
 
-    body->SetScale(FRandom::RandVector(Vector3::One()*30.0f , Vector3::One()*80.0f));
+    
     body->SetPosition(FRandom::RandVector(Vector3::One() * -150.0f, Vector3::One() * 150.0f));
 
     auto Rigid = body->GetComponentByType<URigidBodyComponent>();
@@ -278,6 +280,7 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
 
+    body->GetComponentByType<UCollisionComponentBase>()->SetDebugVisualize(true);
 
     auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
     if (Primitive)

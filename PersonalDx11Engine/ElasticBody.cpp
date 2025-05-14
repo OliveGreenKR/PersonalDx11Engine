@@ -40,6 +40,7 @@ UElasticBody::UElasticBody(EElasticBodyShape Shape) : bIsActive(true)
 		if (Collision)
 		{
 			Rigid.lock()->AddChild(Collision);
+			//Collision->SetLocalScale(Vector3::One());
 		}
 	}
 }

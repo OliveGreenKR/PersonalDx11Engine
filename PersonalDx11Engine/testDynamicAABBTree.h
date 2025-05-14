@@ -33,6 +33,7 @@ namespace TestDynamicAABBTree
         }
 
         // IDynamicBoundable 인터페이스 구현
+        virtual Vector3 GetHalfExtent() const override { return HalfExtent;  }
         virtual Vector3 GetScaledHalfExtent() const override { return HalfExtent; }
         virtual const FTransform& GetWorldTransform() const override { return Transform; }
         virtual bool IsStatic() const override { return bIsStatic; }

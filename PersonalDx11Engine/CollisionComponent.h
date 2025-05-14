@@ -20,12 +20,10 @@ public:
 
 	~UCollisionComponentBase();
 public:
-	// Inherited via IDynamicBoundable
+	// Inherited via Interfaces
 	Vector3 GetScaledHalfExtent() const override;
 	bool IsStatic() const override;
 	const FTransform& GetWorldTransform() const override;
-
-	// Inherited via ICollisionShape
 	Vector3 GetHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 

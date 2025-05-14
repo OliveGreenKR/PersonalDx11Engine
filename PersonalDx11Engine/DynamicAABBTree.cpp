@@ -46,24 +46,7 @@ size_t FDynamicAABBTree::Insert(const std::shared_ptr<IDynamicBoundable>& Object
     size_t NodeId = AllocateNode();
     Node& NewNode = NodePool[NodeId];
 
-    // 초기 바운드 설정
-    auto OwnerTrans = Object->GetWorldTransform();
-    const Vector3 Position = Object->GetWorldTransform().Position;
-    const Vector3 HalfExtent = Object->GetScaledHalfExtent();
-    
-    // 실제 AABB 설정
-    NewNode.Bounds.Min = Position - HalfExtent;
-    NewNode.Bounds.Max = Position + HalfExtent;
-
-    // Fat AABB 설정 (마진 추가)
-    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One() * (MIN_MARGIN);  // 매우 작은 AABB를 위한 최소 여유
-    NewNode.FatBounds.Min = Position - Margin;
-    NewNode.FatBounds.Max = Position + Margin;
-
-    // 추적을 위한 마지막 상태 저장
-    NewNode.LastPosition = Position;
-    NewNode.LastHalfExtent = HalfExtent;
-    NewNode.BoundableObject = Object.get();
+    ComputeNodeAABB(NodeId, Object.get());
     NewNode.Height = 0;
 
     InsertLeaf(NodeId);
@@ -95,10 +78,10 @@ void FDynamicAABBTree::UpdateTree()
         if (!Node.IsLeaf() || !Node.BoundableObject)
             continue;
 
-        const Vector3& CurrentPos = Node.BoundableObject->GetWorldTransform().Position;
-        const Vector3& CurrentExtent = Node.BoundableObject->GetScaledHalfExtent();
+        const FTransform& CurrentWorldTransform = Node.BoundableObject->GetWorldTransform();
+        const Vector3& CurrentLocalExtent = Node.BoundableObject->GetHalfExtent();
 
-        if (Node.NeedsUpdate(CurrentPos, CurrentExtent))
+        if (Node.NeedsUpdate(CurrentLocalExtent, CurrentWorldTransform))
         {
             NodesToUpdate.push_back(i);
         }
@@ -464,21 +447,7 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t NodeId)
     if (!UpdateNode.BoundableObject)
         return;
 
-    const Vector3& Position = UpdateNode.BoundableObject->GetWorldTransform().Position;
-    const Vector3& HalfExtent = UpdateNode.BoundableObject->GetScaledHalfExtent();
-
-    // 실제 AABB 업데이트
-    UpdateNode.Bounds.Min = Position - HalfExtent;
-    UpdateNode.Bounds.Max = Position + HalfExtent;
-
-    // Fat AABB 업데이트
-    Vector3 Margin = HalfExtent * (1.0f + AABB_Extension) + Vector3::One() * MIN_MARGIN;
-    UpdateNode.FatBounds.Min = Position - Margin;
-    UpdateNode.FatBounds.Max = Position + Margin;
-
-    // 이전 상태 저장
-    UpdateNode.LastPosition = Position;
-    UpdateNode.LastHalfExtent = HalfExtent;
+    ComputeNodeAABB(NodeId, UpdateNode.BoundableObject);
 }
 
 float FDynamicAABBTree::ComputeCost(const AABB& Bounds) const
@@ -546,6 +515,31 @@ void FDynamicAABBTree::ClearTree(const size_t InitialCapacity)
     {
         FreeNodes.insert(i);
     }
+}
+
+void FDynamicAABBTree::ComputeNodeAABB(size_t NodeId, IDynamicBoundable* Object)
+{
+    if (!Object || !IsValidId(NodeId))
+        return;
+
+    Node& OutNode = NodePool[NodeId];
+
+    const FTransform& WorldTransform = Object->GetWorldTransform();
+    const Vector3 HalfExtent = Object->GetHalfExtent();
+
+    //새로운 AABB 적용
+    OutNode.Bounds = std::move(AABB::Create(HalfExtent, WorldTransform));
+
+    // Fat AABB 설정 (마진 추가)
+    Vector3 Margin = (OutNode.Bounds.Max - OutNode.Bounds.Min) * (AABB_Extension * 0.5f) + Vector3::One() * MIN_MARGIN;
+    OutNode.FatBounds.Min = OutNode.Bounds.Min - Margin;
+    OutNode.FatBounds.Max = OutNode.Bounds.Max + Margin;
+
+    // 추적을 위한 마지막 상태 저장
+    OutNode.LastPosition = WorldTransform.Position;
+    OutNode.LastHalfExtent = HalfExtent;
+    OutNode.BoundableObject = Object;
+
 }
 
 void FDynamicAABBTree::PrintTreeStructure(std::ostream& os) const
