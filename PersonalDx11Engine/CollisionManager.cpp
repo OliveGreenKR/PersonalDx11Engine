@@ -89,39 +89,34 @@ void UCollisionManager::UnRegisterCollision(std::shared_ptr<UCollisionComponentB
 
 void UCollisionManager::Tick(const float DeltaTime)
 {
+	CleanupDestroyedComponents();
+
+
 	if (Config.bUseFixedTimestep)
 	{
-		// 누적 시간 업데이트
+		//누적 시간
 		AccumulatedTime += DeltaTime;
 
 		// 최대 처리 가능한 시간 (일정 시간 이상 누적되면 추적 포기)
 		const float maxProcessTime = Config.MaximumTimeStep * Config.MaxSubSteps;
-		if (AccumulatedTime > maxProcessTime) {
-			// 심각한 지연 발생 - 시뮬레이션 타임스케일 조정 또는 경고
-			LOG("[WARNING] Physics simulation falling behind, skipping %f seconds",
-				AccumulatedTime - maxProcessTime);
+		if (AccumulatedTime > maxProcessTime)
+		{
+			LOG("[WARNING] Physics simulation falling behind, skipping %f seconds", AccumulatedTime - maxProcessTime);
 			AccumulatedTime = maxProcessTime;
 		}
 
 		int steps = 0;
 		while (AccumulatedTime >= Config.FixedTimeStep && steps < Config.MaxSubSteps)
 		{
-			// 고정 간격 물리 업데이트
-			CleanupDestroyedComponents();
-			UpdateCollisionTransform();
-			UpdateCollisionPairs();
-			ProcessCollisions(Config.FixedTimeStep);
+			SimulateStep(Config.FixedTimeStep);
 			AccumulatedTime -= Config.FixedTimeStep;
 			steps++;
 		}
+		// 남은 AccumulatedTime은 다음 틱으로 이월
 	}
-	else
+	else // Variable Timestep
 	{
-		// 기존 가변 타임스텝 방식
-		CleanupDestroyedComponents();
-		UpdateCollisionTransform();
-		UpdateCollisionPairs();
-		ProcessCollisions(DeltaTime);
+		SimulateStep(DeltaTime);
 	}
 }
 
@@ -234,6 +229,14 @@ void UCollisionManager::CleanupDestroyedComponents()
 		// RegisteredComponents에서 제거
 		RegisteredComponents.erase(nodeId);
 	}
+}
+
+void UCollisionManager::SimulateStep(float stepDeltaTime)
+{
+	CleanupDestroyedComponents();
+	UpdateCollisionTransform();
+	UpdateCollisionPairs();
+	ProcessCollisions(stepDeltaTime);
 }
 
 void UCollisionManager::UpdateCollisionPairs()

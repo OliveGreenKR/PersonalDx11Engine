@@ -124,6 +124,8 @@ private:
     void Release();
     void CleanupDestroyedComponents();
 
+    void SimulateStep(float stepDeltaTime);
+
     // 충돌 처리 관련 함수들
     void ProcessCollisions(const float DeltaTime);
 
