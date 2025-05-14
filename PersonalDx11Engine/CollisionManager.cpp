@@ -98,13 +98,10 @@ void UCollisionManager::Tick(const float DeltaTime)
 		const float maxProcessTime = Config.MaximumTimeStep * Config.MaxSubSteps;
 		if (AccumulatedTime > maxProcessTime) {
 			// 심각한 지연 발생 - 시뮬레이션 타임스케일 조정 또는 경고
-			LOG("Physics simulation falling behind, skipping %f seconds",
+			LOG("[WARNING] Physics simulation falling behind, skipping %f seconds",
 				AccumulatedTime - maxProcessTime);
 			AccumulatedTime = maxProcessTime;
 		}
-
-		// TODO : 이전 상태 저장 (보간용)
-		//StoreComponentStates();
 
 		int steps = 0;
 		while (AccumulatedTime >= Config.FixedTimeStep && steps < Config.MaxSubSteps)
@@ -117,10 +114,6 @@ void UCollisionManager::Tick(const float DeltaTime)
 			AccumulatedTime -= Config.FixedTimeStep;
 			steps++;
 		}
-
-		// TODO : 남은 시간 비율로 현재 상태와 이전 상태 사이 보간
-		float alpha = AccumulatedTime / Config.FixedTimeStep;
-		//InterpolateComponentStates(alpha);
 	}
 	else
 	{
@@ -323,6 +316,10 @@ bool UCollisionManager::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
 
 void UCollisionManager::ProcessCollisions(const float DeltaTime)
 {
+	const float TotalDeltaTime = DeltaTime;
+	float RemainingTime = TotalDeltaTime;
+
+	
 	for (auto& ActivePair : ActiveCollisionPairs)
 	{
 		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();

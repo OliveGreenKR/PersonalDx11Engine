@@ -43,29 +43,6 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(const ICol
 	return Result;
 }
 
-//FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
-//	const ICollisionShape& ShapeA,
-//	const FTransform& PrevWorldTransformA,
-//	const FTransform& CurrentTransformA,
-//	const ICollisionShape& ShapeB,
-//	const FTransform& PrevWorldTransformB,
-//	const FTransform& CurrentWorldTransformB,
-//	const float DeltaTime)
-//{
-//	//test dcd
-//	if (bUseGJKEPA)
-//	{
-//		return DetectCollisionGJKEPA(ShapeA, CurrentTransformA,
-//									 ShapeB, CurrentWorldTransformB);
-//	}
-//
-//	//TODO CCD
-//
-//	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
-//											 ShapeB, CurrentWorldTransformB);
-//}
-
-
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	const ICollisionShape& ShapeA, const FTransform& PrevWorldTransformA, const FTransform& CurrentWorldTransformA,
 	const ICollisionShape& ShapeB, const FTransform& PrevWorldTransformB, const FTransform& CurrentWorldTransformB,
@@ -117,13 +94,6 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 
 	// After iterations, endTime will be a close approximation of ImpactTime
 	Result.TimeOfImpact = endTime;
-
-	// Optional: Refine collision details at TimeOfImpact using discrete collision detection
-	if (Result.bCollided)
-	{
-		FTransform finalTransformA = FTransform::Lerp(PrevWorldTransformA, CurrentWorldTransformA, Result.TimeOfImpact);
-		FTransform finalTransformB = FTransform::Lerp(PrevWorldTransformB, CurrentWorldTransformB, Result.TimeOfImpact);
-	}
 
 	return Result;
 }
