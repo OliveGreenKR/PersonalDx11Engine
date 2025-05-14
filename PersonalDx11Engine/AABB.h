@@ -35,21 +35,9 @@ struct alignas(16) FAABB
     //점을 포함하도록 확장
     FAABB& Include(const Vector3& InPoint)
     {
-        float& minX = vMin.m128_f32[0];
-        float& minY = vMin.m128_f32[1];
-        float& minZ = vMin.m128_f32[2];
-
-        float& maxX = vMax.m128_f32[0];
-        float& maxY = vMax.m128_f32[1];
-        float& maxZ = vMax.m128_f32[2];
-
-        minX = std::min(minX, InPoint.x);
-        minY = std::min(minY, InPoint.y);
-        minZ = std::min(minZ, InPoint.z);
-
-        maxX = std::max(maxX, InPoint.x);
-        maxY = std::max(maxY, InPoint.y);
-        maxZ = std::max(maxZ, InPoint.z);
+        XMVECTOR point = XMLoadFloat3(&InPoint);
+        vMin = XMVectorMin(vMin, point);
+        vMax = XMVectorMax(vMax, point);
         return *this;
     }
 

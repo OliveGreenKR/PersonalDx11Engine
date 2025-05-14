@@ -82,7 +82,6 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 
 	if (!SweptA.IsOverlapping(SweptB))
 	{
-		LOG_FUNC_CALL("Swept Test Cannot Detect Collision!");
 		return Result;
 	}
 		 
