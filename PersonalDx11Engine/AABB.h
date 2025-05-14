@@ -11,13 +11,14 @@ struct alignas(16) FAABB
     void SetMax(const Vector3& InVector3) { vMax = XMLoadFloat3(&InVector3); }
     void SetMin(const Vector3& InVector3) { vMin = XMLoadFloat3(&InVector3); }
 
+    //완전히 포함하는지
     bool IsContaining(const FAABB& Other) const {
         // 수치적 안정성을 위한 epsilon 사용
         XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
         return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), Other.vMin)
             && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), Other.vMax);
     }
-
+    //겹치는지 확인
     bool IsOverlapping(const FAABB& Other) const {
         XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
         return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), Other.vMax)
@@ -28,6 +29,27 @@ struct alignas(16) FAABB
         XMVECTOR vMargin = XMVectorReplicate(Margin);
         vMin = XMVectorSubtract(vMin, vMargin);
         vMax = XMVectorAdd(vMax, vMargin);
+        return *this;
+    }
+
+    //점을 포함하도록 확장
+    FAABB& Include(const Vector3& InPoint)
+    {
+        float& minX = vMin.m128_f32[0];
+        float& minY = vMin.m128_f32[1];
+        float& minZ = vMin.m128_f32[2];
+
+        float& maxX = vMax.m128_f32[0];
+        float& maxY = vMax.m128_f32[1];
+        float& maxZ = vMax.m128_f32[2];
+
+        minX = std::min(minX, InPoint.x);
+        minY = std::min(minY, InPoint.y);
+        minZ = std::min(minZ, InPoint.z);
+
+        maxX = std::max(maxX, InPoint.x);
+        maxY = std::max(maxY, InPoint.y);
+        maxZ = std::max(maxZ, InPoint.z);
         return *this;
     }
 

@@ -31,13 +31,15 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(const ICol
 												   ShapeB, WroldTransformB);
 	}
 
-	/*if (Result.bCollided)
+	if (Result.bCollided)
 	{
-		auto sNormal = Debug::ToString(Result.Normal, "");
-		LOG("[PDepth] : %.3f \n[ToImpact] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
-		LOG("[DetectNormal] : %s", sNormal);
-		LOG("[PCollision] : %s", Debug::ToString(Result.Point));
-	}*/
+		Result.TimeOfImpact = 1.0f; //Collide current Frame.
+
+		//auto sNormal = Debug::ToString(Result.Normal, "");
+		//LOG("[PDepth] : %.3f \n[ToImpact] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
+		//LOG("[DetectNormal] : %s", sNormal);
+		//LOG("[PCollision] : %s", Debug::ToString(Result.Point));
+	}
 	return Result;
 }
 
@@ -71,15 +73,19 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 {
 	FCollisionDetectionResult Result;
 	Result.bCollided = false;
-	Result.TimeOfImpact = 1.0f; // Initialize with no collision within DeltaTime
-
-	// Calculate swept volumes for broad phase (Optional but recommended for performance)
-	// Approximate SweptAABB_A and SweptAABB_B from Prev/Current Transforms
+	Result.TimeOfImpact = 0.0f; 
 
 	// Perform broad phase collision on swept volumes
 	// If SweptAABB_A and SweptAABB_B do not overlap, return no collision
-	// if (!SweptAABBOverlap(SweptAABB_A, SweptAABB_B)) return result;
+	FAABB SweptA = CalculateSweptAABB(ShapeA, PrevWorldTransformA, CurrentWorldTransformA);
+	FAABB SweptB = CalculateSweptAABB(ShapeA, PrevWorldTransformB, CurrentWorldTransformB);
 
+	if (!SweptA.IsOverlapping(SweptB))
+	{
+		LOG_FUNC_CALL("Swept Test Cannot Detect Collision!");
+		return Result;
+	}
+		 
 	float startTime = 0.0f;
 	float endTime = 1.0f; // Normalized time within DeltaTime (0 to 1)
 
@@ -101,7 +107,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 
 		if (discreteResult.bCollided)
 		{
-			Result.bCollided = true;
+			Result = std::move(discreteResult);
 			endTime = currentTime; // Collision detected, search in the first half
 		}
 		else
@@ -528,51 +534,10 @@ FAABB FCollisionDetector::CalculateWorldAABB(const ICollisionShape& InShape, con
 				XMVECTOR worldCorner = XMVector3TransformCoord(localCorner, worldMatrix);
 				Vector3 p;
 				XMStoreFloat3(&p, worldCorner);
-				//worldAABB.Include(p); // AABB를 점 p를 포함하도록 확장
+				worldAABB.Include(p); // AABB를 점 p를 포함하도록 확장
 			}
 		}
 		break; 
-		
-		{
-			//// Capsule의 World AABB 계산 (회전 고려)
-			//// Capsule은 두 반구와 그 사이의 실린더로 구성됩니다.
-			//// 두 반구의 중심점과 반지름을 사용하여 AABB를 계산하는 것이 일반적입니다.
-			//// Capsule의 로컬 공간 끝점 (축에 따라 다름, 여기서는 Y축이라고 가정)
-			//float halfHeight = capsule->GetHeight() * 0.5f; // 실린더 높이의 절반
-			//float radius = capsule->GetRadius();
-
-			//Vector3 localEnd1 = { 0.0f, halfHeight, 0.0f };
-			//Vector3 localEnd2 = { 0.0f, -halfHeight, 0.0f };
-
-			//XMMATRIX worldMatrix = InTransform.ToMatrix(); // FTransform -> XMMATRIX 변환 함수 필요
-
-			//// 끝점 변환
-			//XMVECTOR worldEnd1 = XMVector3TransformCoord(XMLoadFloat3(&localEnd1), worldMatrix);
-			//XMVECTOR worldEnd2 = XMVector3TransformCoord(XMLoadFloat3(&localEnd2), worldMatrix);
-			//Vector3 p1, p2;
-			//XMStoreFloat3(&p1, worldEnd1);
-			//XMStoreFloat3(&p2, worldEnd2);
-
-			//// 변환된 끝점과 반지름을 포함하는 AABB 계산
-			//// 각 끝점에서 반지름만큼 떨어진 6개 점을 추가하여 AABB를 확장합니다.
-			//Vector3 radialOffsets[6] = {
-			//	{radius, 0, 0}, {-radius, 0, 0},
-			//	{0, radius, 0}, {0, -radius, 0},
-			//	{0, 0, radius}, {0, 0, -radius}
-			//};
-
-			//worldAABB.Include(p1); // 첫 번째 끝점 포함
-			//worldAABB.Include(p2); // 두 번째 끝점 포함
-
-			//// 각 끝점에서 반지름만큼 떨어진 점들 포함
-			//for (int i = 0; i < 6; ++i) {
-			//	worldAABB.Include({ p1.x + radialOffsets[i].x, p1.y + radialOffsets[i].y, p1.z + radialOffsets[i].z });
-			//	worldAABB.Include({ p2.x + radialOffsets[i].x, p2.y + radialOffsets[i].y, p2.z + radialOffsets[i].z });
-			//}
-			//// 더 간단하게는, 각 끝점에서 각 축 방향으로 반지름만큼 떨어진 점들만 고려해도 됩니다.
-			//// 예: p1 + radius*world_x_axis, p1 - radius*world_x_axis 등.
-			//// 하지만 AABB를 확장하는 방식이 코드가 더 간결합니다.
-		}
 	}
 
 	return worldAABB;
