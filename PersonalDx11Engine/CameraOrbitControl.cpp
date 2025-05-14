@@ -8,7 +8,7 @@ Vector3 FCameraOrbit::GetTargetPos(UCamera* Camera)
     Vector3 Target = Vector3::Zero();
     if (Camera->bLookAtObject && Camera->GetCurrentLookAt().lock())
     {
-        Target = Camera->GetCurrentLookAt().lock()->GetTransform().Position;
+        Target = Camera->GetCurrentLookAt().lock()->GetWorldTransform().Position;
     }
     return Target;
 }
@@ -24,7 +24,7 @@ Vector3 FCameraOrbit::GetTargetPos(UCamera* Camera)
 
 
      // 현재 카메라 위치를 가져와 타겟 기준 상대 위치 벡터 계산
-     Vector3 currentPos = Camera->GetTransform().Position;
+     Vector3 currentPos = Camera->GetWorldTransform().Position;
      XMVECTOR CurrentCamPos = XMLoadFloat3(&currentPos);
 
      XMVECTOR RelativePosition = XMVectorSubtract(CurrentCamPos, TargetPos);

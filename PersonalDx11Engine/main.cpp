@@ -391,7 +391,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 													 ImGui::Begin("Camera", nullptr, UIWindowFlags);
 													 ImGui::Checkbox("bIs2D", &Camera->bIs2D);
 													 ImGui::Checkbox("bLookAtObject", &Camera->bLookAtObject);
-													 ImGui::Text(Debug::ToString(Camera->GetTransform()));
+													 ImGui::Text(Debug::ToString(Camera->GetWorldTransform()));
 													 ImGui::End();
 												 }
 											 });

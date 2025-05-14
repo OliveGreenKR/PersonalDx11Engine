@@ -64,9 +64,11 @@ public:
 	void AddRotationEuler(const Vector3& InEulerDelta);
 	void AddRotationQuaternion(const Quaternion& InQuaternionDelta);
 
-	const Vector3 GetNormalizedForwardVector() const;
+	const Vector3 GetWorldForward() const;
+	const Vector3 GetWorldUp() const;
+	const Vector3 GetWorldRight() const;
 
-	__forceinline const FTransform& GetTransform() const { return RootComponent->GetWorldTransform(); }
+	__forceinline const FTransform& GetWorldTransform() const { return RootComponent->GetWorldTransform(); }
 	Matrix GetWorldMatrix() const  { return RootComponent->GetWorldTransform().GetModelingMatrix(); }
 
 protected:
@@ -157,7 +159,7 @@ public:
 		if (!RootComponent) return {};
 		return RootComponent->FindChildrenRaw<T>();
 	}
-	std::shared_ptr<USceneComponent>& GetRootComp() { return RootComponent; }
+	const std::shared_ptr<USceneComponent>& GetRootComp() const { return RootComponent; }
 
 protected:
 

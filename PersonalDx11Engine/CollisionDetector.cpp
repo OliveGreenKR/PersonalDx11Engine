@@ -31,13 +31,13 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(const ICol
 												   ShapeB, WroldTransformB);
 	}
 
-	if (Result.bCollided)
+	/*if (Result.bCollided)
 	{
 		auto sNormal = Debug::ToString(Result.Normal, "");
 		LOG("[PDepth] : %.3f \n[ToImpact] : %.3f", Result.PenetrationDepth, Result.TimeOfImpact);
 		LOG("[DetectNormal] : %s", sNormal);
 		LOG("[PCollision] : %s", Debug::ToString(Result.Point));
-	}
+	}*/
 	return Result;
 }
 

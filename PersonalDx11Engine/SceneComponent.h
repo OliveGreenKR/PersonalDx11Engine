@@ -61,6 +61,10 @@ public:
     Quaternion GetWorldRotation() const { return GetWorldTransform().Rotation; }
     Vector3 GetWorldScale() const { return GetWorldTransform().Scale; }
 
+    const Vector3 GetWorldForward() const;
+    const Vector3 GetWorldUp() const;
+    const Vector3 GetWorldRight() const;
+
     // 특수 기능
     void LookAt(const Vector3& TargetWorldPosition);
     void RotateAroundAxis(const Vector3& Axis, float AngleDegrees);

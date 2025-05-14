@@ -89,16 +89,19 @@ void UGameObject::AddRotationQuaternion(const Quaternion& InQuaternionDelta)
 	RootComponent->AddWorldRotation(InQuaternionDelta);
 }
 
-const Vector3 UGameObject::GetNormalizedForwardVector() const
+const Vector3 UGameObject::GetWorldForward() const
 {
-	Matrix RotationMatrix = GetTransform().GetRotationMatrix();
-	XMVECTOR BaseForward = XMVector::XMForward();
-	XMVECTOR TransformedForward = XMVector3Transform(BaseForward, RotationMatrix);
-	TransformedForward = XMVector3Normalize(TransformedForward);
+	return GetRootComp()->GetWorldForward();
+}
 
-	Vector3 Result;
-	XMStoreFloat3(&Result, TransformedForward);
-	return Result;
+const Vector3 UGameObject::GetWorldUp() const
+{
+	return GetRootComp()->GetWorldUp();
+}
+
+const Vector3 UGameObject::GetWorldRight() const
+{
+	return GetRootComp()->GetWorldRight();
 }
 
 void UGameObject::UpdateComponents(const float DeltaTime)
@@ -146,7 +149,7 @@ void UGameObject::StartMove(const Vector3& InDirection)
 	if (InDirection.LengthSquared() < KINDA_SMALL)
 		return;
 	bIsMoving = true;
-	TargetPosition = GetTransform().Position + InDirection.GetNormalized() * MovementSpeed;
+	TargetPosition = GetWorldTransform().Position + InDirection.GetNormalized() * MovementSpeed;
 }
 
 void UGameObject::StopMove()
@@ -165,7 +168,7 @@ void UGameObject::UpdateMovement(const float DeltaTime)
 	if (bIsMoving == false)
 		return;
 
-	Vector3 Current = GetTransform().Position;
+	Vector3 Current = GetWorldTransform().Position;
 	Vector3 Delta = TargetPosition - Current;
 
 	//정지

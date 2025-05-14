@@ -80,7 +80,7 @@ void UCamera::LookTo()
 	auto TargetObject = LookAtObject.lock();
 	if (TargetObject)
 	{
-		LookAt(TargetObject->GetTransform().Position);
+		LookAt(TargetObject->GetWorldTransform().Position);
 	}
 }
 
@@ -91,8 +91,8 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		return;
 
 	// 1. 목표 방향 계산
-	Vector3 TargetPosition = TargetObject->GetTransform().Position;
-	Vector3 CurrentPosition = GetTransform().Position;
+	Vector3 TargetPosition = TargetObject->GetWorldTransform().Position;
+	Vector3 CurrentPosition = GetWorldTransform().Position;
 	Vector3 DesiredDirection = TargetPosition - CurrentPosition;
 
 	// 방향 벡터가 너무 작으면 계산 중단
@@ -100,7 +100,7 @@ void UCamera::UpdateToLookAtObject(float DeltaTime)
 		return;
 
 	DesiredDirection.Normalize();
-	Vector3 CurrentForward = GetNormalizedForwardVector();
+	Vector3 CurrentForward = GetWorldForward();
 
 	// 2. 현재 방향과 목표 방향 간의 각도 계산
 	float DotProduct = Vector3::Dot(CurrentForward, DesiredDirection);
@@ -171,8 +171,8 @@ void UCamera::UpdateViewMatrix() const
 	XMVECTOR vUp = XMVector::XMUp();
 
 	//현재 상태
-	XMVECTOR vRotation = XMLoadFloat4(&GetTransform().Rotation);
-	XMVECTOR vPosition = XMLoadFloat3(&GetTransform().Position);
+	XMVECTOR vRotation = XMLoadFloat4(&GetWorldTransform().Rotation);
+	XMVECTOR vPosition = XMLoadFloat3(&GetWorldTransform().Position);
 
 	XMVECTOR currentLookAt = XMVector3Rotate(vLookAt, vRotation);
 	currentLookAt = XMVectorAdd(vPosition, currentLookAt);

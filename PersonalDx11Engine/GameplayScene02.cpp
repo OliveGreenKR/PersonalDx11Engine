@@ -227,10 +227,10 @@ void UGameplayScene02::SubmitRenderUI()
 
         if (Character)
         {
-            Vector3 Scale = Character->GetTransform().Scale;
+            Vector3 Scale = Character->GetWorldTransform().Scale;
             bool bScale = false;
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
-            Vector3 CurrentPos = Character->GetTransform().Position;
+            Vector3 CurrentPos = Character->GetWorldTransform().Position;
             bool bGravity = Character->IsGravity();
             bool bPhysics = Character->IsPhysicsSimulated();
             ImGui::Begin("Charcter", nullptr, UIWindowFlags);
@@ -290,8 +290,8 @@ void UGameplayScene02::SubmitRenderUI()
 
         if (Character2)
         {
-            Vector3 CurrentPos = Character2->GetTransform().Position;
-            Quaternion CurrentRot = Character2->GetTransform().Rotation;
+            Vector3 CurrentPos = Character2->GetWorldTransform().Position;
+            Quaternion CurrentRot = Character2->GetWorldTransform().Rotation;
             Vector3 CurrentVelo = Character2->GetCurrentVelocity();
             bool bGravity2 = Character2->IsGravity();
             bool bPhysics2 = Character2->IsPhysicsSimulated();
@@ -385,8 +385,6 @@ void UGameplayScene02::SetupInput()
     UInputAction AMoveLeft_P1("AMoveLeft_P1");
     AMoveLeft_P1.KeyCodes = { 'A' };
 
-    UInputAction AMoveStop_P1("AMoveStop_P1");
-    AMoveStop_P1.KeyCodes = { 'F' };
 
     UInputAction AMoveUp_P2("AMoveUp_P2");
     AMoveUp_P2.KeyCodes = { 'I' };
@@ -400,9 +398,6 @@ void UGameplayScene02::SetupInput()
     UInputAction AMoveLeft_P2("AMoveLeft_P2");
     AMoveLeft_P2.KeyCodes = { 'J' };
 
-    UInputAction AMoveStop_P2("AMoveStop_P2");
-    AMoveStop_P2.KeyCodes = { 'H' };
-
 
     UInputAction CameraFollowObject("CameraFollowObject");
     CameraFollowObject.KeyCodes = { 'V' };
@@ -411,6 +406,9 @@ void UGameplayScene02::SetupInput()
     CameraLookTo.KeyCodes = { VK_F2 };
 
     auto WeakCharacter = std::weak_ptr(Character);
+    auto WeakCamera = std::weak_ptr(Camera);
+    auto WeakCharacter2 = std::weak_ptr(Character2);
+
     // 캐릭터 1 입력 바인딩
     InputContext->BindAction(AMoveUp_P1,
                              EKeyEvent::Pressed,
@@ -418,14 +416,18 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
 
+                                 if (!Camera)
+                                     return;
+
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(Vector3::Forward() * InForceMagnitude);
+                                     
+                                     Character->ApplyForce(Camera->GetWorldUp() * InForceMagnitude);
                                      
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(Vector3::Up() * InForceMagnitude);
+                                     Character->ApplyForce(Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -436,13 +438,18 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
 
+                                 if (!Camera)
+                                     return;
+
                                  if (EventData.bShift)
                                  {
-                                     Character->ApplyForce(-Vector3::Forward() * InForceMagnitude);
+
+                                     Character->ApplyForce(-Camera->GetWorldUp() * InForceMagnitude);
+
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(-Vector3::Up() * InForceMagnitude);
+                                     Character->ApplyForce(-Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -453,14 +460,9 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
 
-                                 if (EventData.bShift)
-                                 {
-                                     Character->StartMove(Vector3::Right());
-                                 }
-                                 else
-                                 {
-                                     Character->ApplyForce(Vector3::Right() * InForceMagnitude);
-                                 }
+                                 if (!Camera)
+                                     return;
+                                 Character->ApplyForce(Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -470,26 +472,13 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
 
-                                 if (EventData.bShift)
-                                 {
-                                     Character->StartMove(-Vector3::Right());
-                                 }
-                                 else
-                                 {
-                                     Character->ApplyForce(-Vector3::Right() * InForceMagnitude);
-                                 }
+                                 if (!Camera)
+                                     return;
+                                 Character->ApplyForce(-Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
-    InputContext->BindAction(AMoveStop_P1,
-                             EKeyEvent::Pressed,
-                             WeakCharacter,
-                             [this](const FKeyEventData& EventData) {
-                                 Character->StopMove();
-                             },
-                             "CharacterMove");
 
-    auto WeakCharacter2 = std::weak_ptr(Character2);
       // 캐릭터 2 입력 바인딩
     InputContext->BindAction(AMoveUp_P2,
                              EKeyEvent::Pressed,
@@ -497,20 +486,16 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
+                                 if (!Camera)
+                                     return;
+
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(Vector3::Forward() * InForceMagnitude);           
-                                 }
-                                 else if (EventData.bControl)
-                                 {
-                                     Vector3 Position = Character2->GetTransform().Position;
-                                     Position.x += Character->GetTransform().Scale.x * 0.25f;
-                                     Character2->GetComponentByType<URigidBodyComponent>()->ApplyForce(Vector3::Forward() * InForceMagnitude,
-                                                                                                       Position);
+                                     Character2->ApplyForce(Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(Vector3::Up() * InForceMagnitude);
+                                     Character2->ApplyForce(Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -521,13 +506,16 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
+                                 if (!Camera)
+                                     return;
+
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(-Vector3::Forward() * InForceMagnitude);
+                                     Character2->ApplyForce(-Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(-Vector3::Up() * InForceMagnitude);
+                                     Character2->ApplyForce(-Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -538,14 +526,10 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
-                                 if (EventData.bShift)
-                                 {
-                                     Character2->StartMove(Vector3::Right());
-                                 }
-                                 else
-                                 {
-                                     Character2->ApplyForce(Vector3::Right() * InForceMagnitude);
-                                 }
+                                 if (!Camera)
+                                     return;
+
+								 Character2->ApplyForce(Camera->GetWorldRight() * InForceMagnitude);                             
                              },
                              "CharacterMove");
 
@@ -555,27 +539,13 @@ void UGameplayScene02::SetupInput()
                              [this](const FKeyEventData& EventData) {
                                  float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
 
-                                 if (EventData.bShift)
-                                 {
-                                     Character2->StartMove(-Vector3::Right());
-                                 }
-                                 else
-                                 {
-                                     Character2->ApplyForce(-Vector3::Right() * InForceMagnitude);
-                                 }
+                                 if (!Camera)
+                                     return;
+
+                                 Character2->ApplyForce(-Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
-    InputContext->BindAction(AMoveStop_P2,
-                             EKeyEvent::Pressed,
-                             WeakCharacter2,
-                             [this](const FKeyEventData& EventData) {
-                                 Character2->StopMove();
-                             },
-                             "CharacterMove");
-
-    auto WeakCamera = std::weak_ptr(Camera);
-  
 
     UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
                                                     EKeyEvent::Pressed,

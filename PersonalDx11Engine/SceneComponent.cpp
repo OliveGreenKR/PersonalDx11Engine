@@ -389,6 +389,45 @@ const FTransform& USceneComponent::GetLocalTransform() const
     return LocalTransform;
 }
 
+const Vector3 USceneComponent::GetWorldForward() const
+{
+    Vector3 vLocalForward = Vector3::Forward();
+    XMVECTOR LocalFoward = XMVectorSet(vLocalForward.x, vLocalForward.y, vLocalForward.z, 1.0f);
+
+    Matrix RotMatrix = GetWorldTransform().GetRotationMatrix();
+    XMVECTOR WorldForward = XMVector3TransformNormal(LocalFoward, RotMatrix);
+
+    Vector3 Result;
+    XMStoreFloat3(&Result, WorldForward);
+    return Result;
+}
+
+const Vector3 USceneComponent::GetWorldUp() const
+{
+    Vector3 vLocalUp = Vector3::Up();
+    XMVECTOR LocalUp = XMVectorSet(vLocalUp.x, vLocalUp.y, vLocalUp.z, 1.0f);
+
+    Matrix RotMatrix = GetWorldTransform().GetRotationMatrix();
+    XMVECTOR WorldUp = XMVector3TransformNormal(LocalUp, RotMatrix);
+
+    Vector3 Result;
+    XMStoreFloat3(&Result, WorldUp);
+    return Result;
+}
+
+const Vector3 USceneComponent::GetWorldRight() const
+{
+    Vector3 vLocalRight = Vector3::Right();
+    XMVECTOR LocalRight = XMVectorSet(vLocalRight.x, vLocalRight.y, vLocalRight.z, 1.0f);
+
+    Matrix RotMatrix = GetWorldTransform().GetRotationMatrix();
+    XMVECTOR WorldRight = XMVector3TransformNormal(LocalRight, RotMatrix);
+
+    Vector3 Result;
+    XMStoreFloat3(&Result, WorldRight);
+    return Result;
+}
+
 void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
 {
    // 현재 월드 위치 가져오기
