@@ -174,6 +174,18 @@ void UGameplayScene01::SubmitRenderUI()
             }
 
         }
+        if (ImGui::InputFloat("BorderX", &XBorder, 10.0f, 50.0f, "%.02f"))
+        {
+            XBorder = Math::Clamp(XBorder, 50.0f, 400.0f);
+        }
+		if (ImGui::InputFloat("BorderY", &YBorder, 10.0f, 50.0f, "%.02f"))
+		{
+            YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+		}
+		if (ImGui::InputFloat("BorderZ", &ZBorder, 10.0f, 50.0f, "%.02f"))
+		{
+            YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+		}
         ImGui::End();
                                            });
 }
@@ -280,7 +292,7 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
 
-    body->GetComponentByType<UCollisionComponentBase>()->SetDebugVisualize(true);
+    //body->GetComponentByType<UCollisionComponentBase>()->SetDebugVisualize(true);
 
     auto Primitive = body->GetComponentByType<UPrimitiveComponent>();
     if (Primitive)

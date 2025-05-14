@@ -60,9 +60,9 @@ private:
     int BodyNum = 0;
 
     // 경계 값
-    const float XBorder = 300.0f;
-    const float YBorder = 200.0f;
-    const float ZBorder = 500.0f;
+    float XBorder = 300.0f;
+    float YBorder = 300.0f;
+    float ZBorder = 300.0f;
 
     
 
