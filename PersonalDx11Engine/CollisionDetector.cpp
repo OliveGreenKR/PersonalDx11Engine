@@ -7,6 +7,7 @@
 FCollisionDetector::FCollisionDetector()
 {
 	UConfigReadManager::Get()->GetValue("CCDTimeStep", CCDTimeStep);
+	UConfigReadManager::Get()->GetValue("MaxCCDIterations", MaxCCDIterations);
 	UConfigReadManager::Get()->GetValue("bUseGJKEPA", bUseGJKEPA);
 	UConfigReadManager::Get()->GetValue("MaxGJKIterations", MaxGJKIterations);
 	UConfigReadManager::Get()->GetValue("MaxEPAIterations", MaxEPAIterations);
@@ -62,6 +63,66 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 
 	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
 											 ShapeB, CurrentTransformB);
+}
+
+
+FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
+	const ICollisionShape& ShapeA, const FTransform& PrevTransformA, const FTransform& CurrentTransformA,
+	const ICollisionShape& ShapeB, const FTransform& PrevTransformB, const FTransform& CurrentTransformB,
+	const float DeltaTime)
+{
+	FCollisionDetectionResult Result;
+	Result.bCollided = false;
+	Result.TimeOfImpact = 1.0f; // Initialize with no collision within DeltaTime
+
+	// Calculate swept volumes for broad phase (Optional but recommended for performance)
+	// Approximate SweptAABB_A and SweptAABB_B from Prev/Current Transforms
+
+	// Perform broad phase collision on swept volumes
+	// If SweptAABB_A and SweptAABB_B do not overlap, return no collision
+	// if (!SweptAABBOverlap(SweptAABB_A, SweptAABB_B)) return result;
+
+	float startTime = 0.0f;
+	float endTime = 1.0f; // Normalized time within DeltaTime (0 to 1)
+
+	
+	float currentTime = 0.0f;
+
+	for (int i = 0; i < MaxCCDIterations; ++i)
+	{
+		currentTime = startTime + (endTime - startTime) * 0.5f; // Midpoint time
+
+		// Interpolate transforms to the current time
+		
+		FTransform interpolatedTransformA = FTransform::Lerp(PrevTransformA, CurrentTransformA, currentTime);
+		FTransform interpolatedTransformB = FTransform::Lerp(PrevTransformB, CurrentTransformB, currentTime);
+
+		// Use existing discrete collision detection at the interpolated transforms
+		FCollisionDetectionResult discreteResult = DetectCollisionShapeBasedDiscrete(
+			ShapeA, interpolatedTransformA, ShapeB, interpolatedTransformB);
+
+		if (discreteResult.bCollided)
+		{
+			Result.bCollided = true;
+			endTime = currentTime; // Collision detected, search in the first half
+		}
+		else
+		{
+			startTime = currentTime; // No collision, search in the second half
+		}
+	}
+
+	// After iterations, endTime will be a close approximation of ImpactTime
+	Result.TimeOfImpact = endTime;
+
+	// Optional: Refine collision details at TimeOfImpact using discrete collision detection
+	if (Result.bCollided)
+	{
+		FTransform finalTransformA = FTransform::Lerp(PrevTransformA, CurrentTransformA, Result.TimeOfImpact);
+		FTransform finalTransformB = FTransform::Lerp(PrevTransformB, CurrentTransformB, Result.TimeOfImpact);
+	}
+
+	return Result;
 }
 
 FCollisionDetectionResult FCollisionDetector::DetectCollisionShapeBasedDiscrete(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB)

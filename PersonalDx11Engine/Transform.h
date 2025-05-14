@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Math.h"
 #include "Delegate.h"
 
@@ -19,5 +19,5 @@ struct FTransform
 	Matrix GetRotationMatrix() const;
 	Matrix GetModelingMatrix() const;
 
-	static FTransform  InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha);
+	static FTransform  Lerp(const FTransform& Start, const FTransform& End, float Alpha);
 };

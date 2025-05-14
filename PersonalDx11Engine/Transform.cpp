@@ -28,7 +28,7 @@ void FTransform::RotateAroundAxis(const Vector3& InAxis, float AngleDegrees)
     XMStoreFloat4(&Rotation, FinalQuat);
 }
 
-FTransform FTransform::InterpolateTransform(const FTransform& Start, const FTransform& End, float Alpha)
+FTransform FTransform::Lerp(const FTransform& Start, const FTransform& End, float Alpha)
 {
     FTransform Result;
 

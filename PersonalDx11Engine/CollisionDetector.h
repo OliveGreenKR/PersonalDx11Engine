@@ -47,6 +47,8 @@ public:
         std::vector<int> Indices; // 각 면의 정점 인덱스 (3개씩 묶음)
     };
 
+
+
 public:
     FCollisionDetector();
 
@@ -109,6 +111,8 @@ public:
         XMVECTOR& OutSupportA,
         XMVECTOR& OutSupportB);
 
+#pragma region GJKEPA Helper
+public: //for test 'public'
     // Simplex 업데이트 헬퍼 함수
     bool UpdateSimplex(FSimplex& Simplex, XMVECTOR& Direction);
 
@@ -140,8 +144,9 @@ public:
     void DrawPolytope(const FCollisionDetector::PolytopeSOA& Polytope, 
                       float LifeTime, 
                       bool bDrawNormals, const Vector4 & Color);
-
+#pragma endregion
 #pragma region Shape-Based Helper
+private:
     // Box-Box 충돌 검사 (AABB)
     FCollisionDetectionResult BoxBoxAABB(
         const Vector3& ExtentA, const FTransform& TransformA,
@@ -162,12 +167,16 @@ public:
         const Vector3& BoxExtent, const FTransform& TransformA,
         float SphereRadius, const FTransform& SphereTransform);
 #pragma endregion
+#pragma region Shape_Based SweptVolume
+private:
+
+#pragma endregion
 
 public:
     float CCDTimeStep = 0.02f;         // CCD 시간 스텝
     float CASafetyFactor = 1.1f;       // CA 안전 계수
     float CAMinTimeStep = 0.001f;      // CA 최소 시간 스텝
-    int CCDMaxIterations = 10;         // CCD 최대 반복 횟수
+    int MaxCCDIterations = 10;         // CCD 최대 반복 횟수
     float DistanceThreshold = 0.001f;  // 접촉 간주 거리 임계값
     int MaxGJKIterations = 20;         // GJK 최대 반복 횟수
     int MaxEPAIterations = 20;         // EPA 최대 반복 횟수
