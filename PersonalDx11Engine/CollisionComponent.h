@@ -51,7 +51,7 @@ public:
 public:
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
-	const FTransform& GetPreviousTransform() const { return PrevWorldTransform; }
+	const FTransform& GetPreviousWorldTransform() const { return PrevWorldTransform; }
 
 private:
 	virtual void Activate() override;

@@ -337,8 +337,8 @@ void UCollisionManager::ProcessCollisions(const float DeltaTime)
 			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
 			{
 				//ccd
-				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousTransform(), CompA->GetWorldTransform(),
-															*CompB.get(), CompB->GetPreviousTransform(), CompB->GetWorldTransform(), DeltaTime);
+				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousWorldTransform(), CompA->GetWorldTransform(),
+															*CompB.get(), CompB->GetPreviousWorldTransform(), CompB->GetWorldTransform(), DeltaTime);
 			}
 			else
 			{

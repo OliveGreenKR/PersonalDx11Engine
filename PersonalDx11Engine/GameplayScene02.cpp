@@ -403,26 +403,12 @@ void UGameplayScene02::SetupInput()
     UInputAction AMoveStop_P2("AMoveStop_P2");
     AMoveStop_P2.KeyCodes = { 'H' };
 
-    UInputAction CameraUp("CameraUp");
-    CameraUp.KeyCodes = { VK_UP };
-
-    UInputAction CameraDown("CameraDown");
-    CameraDown.KeyCodes = { VK_DOWN };
-
-    UInputAction CameraRight("CameraRight");
-    CameraRight.KeyCodes = { VK_RIGHT };
-
-    UInputAction CameraLeft("CameraLeft");
-    CameraLeft.KeyCodes = { VK_LEFT };
 
     UInputAction CameraFollowObject("CameraFollowObject");
     CameraFollowObject.KeyCodes = { 'V' };
 
     UInputAction CameraLookTo("CameraLookTo");
     CameraLookTo.KeyCodes = { VK_F2 };
-
-    UInputAction Debug1("Debug1");
-    Debug1.KeyCodes = { VK_F1 };
 
     auto WeakCharacter = std::weak_ptr(Character);
     // 캐릭터 1 입력 바인딩
@@ -589,38 +575,7 @@ void UGameplayScene02::SetupInput()
                              "CharacterMove");
 
     auto WeakCamera = std::weak_ptr(Camera);
-      // 카메라 입력 바인딩 (시스템 컨텍스트 사용)
-    /*UInputManager::Get()->SystemContext->BindAction(CameraUp,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Forward());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraDown,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Forward());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraRight,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(Vector3::Right());
-                                                    },
-                                                    "CameraMove");
-
-    UInputManager::Get()->SystemContext->BindAction(CameraLeft,
-                                                    EKeyEvent::Pressed,
-                                                    WeakCamera,
-                                                    [this](const FKeyEventData& EventData) {
-                                                        Camera->StartMove(-Vector3::Right());
-                                                    },
-                                                    "CameraMove");*/
+  
 
     UInputManager::Get()->SystemContext->BindAction(CameraFollowObject,
                                                     EKeyEvent::Pressed,
@@ -637,22 +592,6 @@ void UGameplayScene02::SetupInput()
                                                         Camera->LookTo();
                                                     },
                                                     "CameraLookTo");
-
-      // 디버그 입력 바인딩
-    UInputManager::Get()->SystemContext->BindActionSystem(Debug1,
-                                                          EKeyEvent::Pressed,
-                                                          [this](const FKeyEventData& EventData) {
-                                                              if (Character2.get())
-                                                              {
-                                                                  Vector3 TargetPos = Character2->GetTransform().Position;
-                                                                  TargetPos += Vector3::Right() * 0.15f;
-                                                                  TargetPos += Vector3::Up() * 0.15f;
-                                                                  Character2->GetRootComp()->FindChildByType<URigidBodyComponent>().lock()->ApplyImpulse(
-                                                                      Vector3::Right() * 1.0f,
-                                                                      TargetPos);
-                                                              }
-                                                          },
-                                                          "DebugAction");
 }
 
 void UGameplayScene02::SetupBorderTriggers()
