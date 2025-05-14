@@ -6,6 +6,8 @@
 
 using namespace DirectX;
 
+struct FAABB;
+
 // 충돌 검사 알고리즘 모음
 class FCollisionDetector
 {
@@ -47,66 +49,61 @@ public:
         std::vector<int> Indices; // 각 면의 정점 인덱스 (3개씩 묶음)
     };
 
-
-
 public:
     FCollisionDetector();
 
 public:
     // 이산 충돌 감지 (외부 인터페이스, 시그니처 변경 불가)
-    FCollisionDetectionResult DetectCollisionDiscrete(
-        const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
-        const ICollisionShape& ShapeB,
-        const FTransform& TransformB);
+    FCollisionDetectionResult DetectCollisionDiscrete(const ICollisionShape& ShapeA, const FTransform& WorldTransformA,
+                                                      const ICollisionShape& ShapeB, const FTransform& WroldTransformB);
 
     // 연속 충돌 감지 (외부 인터페이스, 시그니처 변경 불가)
     FCollisionDetectionResult DetectCollisionCCD(
         const ICollisionShape& ShapeA,
-        const FTransform& PrevTransformA,
-        const FTransform& CurrentTransformA,
+        const FTransform& PrevWorldTransformA,
+        const FTransform& CurrentWorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& PrevTransformB,
-        const FTransform& CurrentTransformB,
+        const FTransform& PrevWorldTransformB,
+        const FTransform& CurrentWorldTransformB,
         const float DeltaTime);
 
 public:
     // 형상 기반 이산 충돌 검사 (기존 유지)
     FCollisionDetectionResult DetectCollisionShapeBasedDiscrete(
         const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
+        const FTransform& WorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& TransformB);
+        const FTransform& WorldTransformB);
 
     // GJK+EPA 통합 충돌 감지
     FCollisionDetectionResult DetectCollisionGJKEPA(
         const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
+        const FTransform& WorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& TransformB);
+        const FTransform& WorldTransformB);
 
     // GJK 알고리즘: 충돌 여부 및 Simplex 생성
     bool GJKCollision(
         const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
+        const FTransform& WorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& TransformB,
+        const FTransform& WorldTransformB,
         FSimplex& OutSimplex);
 
     // EPA 알고리즘: 침투 깊이와 충돌 정보 계산
     FCollisionDetectionResult EPACollision(
         const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
+        const FTransform& WorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& TransformB,
+        const FTransform& WorldTransformB,
         const FSimplex& Simplex);
 
     // Minkowski 차분 지원점 계산 (SIMD 최적화)
     XMVECTOR ComputeMinkowskiSupport(
         const ICollisionShape& ShapeA,
-        const FTransform& TransformA,
+        const FTransform& WorldTransformA,
         const ICollisionShape& ShapeB,
-        const FTransform& TransformB,
+        const FTransform& WorldTransformB,
         const XMVECTOR& Direction,
         XMVECTOR& OutSupportA,
         XMVECTOR& OutSupportB);
@@ -149,27 +146,29 @@ public: //for test 'public'
 private:
     // Box-Box 충돌 검사 (AABB)
     FCollisionDetectionResult BoxBoxAABB(
-        const Vector3& ExtentA, const FTransform& TransformA,
-        const Vector3& ExtentB, const FTransform& TransformB);
+        const Vector3& ExtentA, const FTransform& WorldTransformA,
+        const Vector3& ExtentB, const FTransform& WorldTransformB);
 
     // Box-Box 충돌 검사 (SAT)
     FCollisionDetectionResult BoxBoxSAT(
-        const Vector3& ExtentA, const FTransform& TransformA,
-        const Vector3& ExtentB, const FTransform& TransformB);
+        const Vector3& ExtentA, const FTransform& WorldTransformA,
+        const Vector3& ExtentB, const FTransform& WorldTransformB);
 
     // Sphere-Sphere 충돌 검사
     FCollisionDetectionResult SphereSphere(
-        float RadiusA, const FTransform& TransformA,
-        float RadiusB, const FTransform& TransformB);
+        float RadiusA, const FTransform& WorldTransformA,
+        float RadiusB, const FTransform& WorldTransformB);
 
     // Box-Sphere 충돌 검사
     FCollisionDetectionResult BoxSphereSimple(
-        const Vector3& BoxExtent, const FTransform& TransformA,
+        const Vector3& BoxExtent, const FTransform& WorldTransformA,
         float SphereRadius, const FTransform& SphereTransform);
 #pragma endregion
 #pragma region Shape_Based SweptVolume
 private:
-
+    FAABB CalculateSweptAABB(const ICollisionShape& InShape, const FTransform& PrevTransform, 
+                             const FTransform& CurrentTransform);
+    FAABB CalculateWorldAABB(const ICollisionShape& InShape, const FTransform& InWorldTransform);
 #pragma endregion
 
 public:

@@ -3,6 +3,7 @@
 #include "ConfigReadManager.h"
 #include "DebugDrawerManager.h"
 #include <unordered_set>
+#include "AABB.h"
 
 FCollisionDetector::FCollisionDetector()
 {
@@ -14,23 +15,20 @@ FCollisionDetector::FCollisionDetector()
 	UConfigReadManager::Get()->GetValue("EPATolerance", EPATolerance);
 }
 
-FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
-	const ICollisionShape& ShapeA,
-	const FTransform& TransformA,
-	const ICollisionShape& ShapeB,
-	const FTransform& TransformB)
+FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(const ICollisionShape& ShapeA, const FTransform& WorldTransformA,
+																	  const ICollisionShape& ShapeB, const FTransform& WroldTransformB)
 {
 
-	FCollisionDetectionResult Result; 
+	FCollisionDetectionResult Result;
 	if (bUseGJKEPA)
 	{
-		Result =  DetectCollisionGJKEPA(ShapeA, TransformA,
-									 ShapeB, TransformB);
+		Result =  DetectCollisionGJKEPA(ShapeA, WorldTransformA,
+									 ShapeB, WroldTransformB);
 	}
 	else
 	{
-		Result = DetectCollisionShapeBasedDiscrete(ShapeA, TransformA,
-												   ShapeB, TransformB);
+		Result = DetectCollisionShapeBasedDiscrete(ShapeA, WorldTransformA,
+												   ShapeB, WroldTransformB);
 	}
 
 	if (Result.bCollided)
@@ -43,32 +41,32 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
 	return Result;
 }
 
+//FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
+//	const ICollisionShape& ShapeA,
+//	const FTransform& PrevWorldTransformA,
+//	const FTransform& CurrentTransformA,
+//	const ICollisionShape& ShapeB,
+//	const FTransform& PrevWorldTransformB,
+//	const FTransform& CurrentWorldTransformB,
+//	const float DeltaTime)
+//{
+//	//test dcd
+//	if (bUseGJKEPA)
+//	{
+//		return DetectCollisionGJKEPA(ShapeA, CurrentTransformA,
+//									 ShapeB, CurrentWorldTransformB);
+//	}
+//
+//	//TODO CCD
+//
+//	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
+//											 ShapeB, CurrentWorldTransformB);
+//}
+
+
 FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
-	const ICollisionShape& ShapeA,
-	const FTransform& PrevTransformA,
-	const FTransform& CurrentTransformA,
-	const ICollisionShape& ShapeB,
-	const FTransform& PrevTransformB,
-	const FTransform& CurrentTransformB,
-	const float DeltaTime)
-{
-	//test dcd
-	if (bUseGJKEPA)
-	{
-		return DetectCollisionGJKEPA(ShapeA, CurrentTransformA,
-									 ShapeB, CurrentTransformB);
-	}
-
-	//TODO CCD
-
-	return DetectCollisionShapeBasedDiscrete(ShapeA, CurrentTransformA,
-											 ShapeB, CurrentTransformB);
-}
-
-
-FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
-	const ICollisionShape& ShapeA, const FTransform& PrevTransformA, const FTransform& CurrentTransformA,
-	const ICollisionShape& ShapeB, const FTransform& PrevTransformB, const FTransform& CurrentTransformB,
+	const ICollisionShape& ShapeA, const FTransform& PrevWorldTransformA, const FTransform& CurrentWorldTransformA,
+	const ICollisionShape& ShapeB, const FTransform& PrevWorldTransformB, const FTransform& CurrentWorldTransformB,
 	const float DeltaTime)
 {
 	FCollisionDetectionResult Result;
@@ -94,8 +92,8 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 
 		// Interpolate transforms to the current time
 		
-		FTransform interpolatedTransformA = FTransform::Lerp(PrevTransformA, CurrentTransformA, currentTime);
-		FTransform interpolatedTransformB = FTransform::Lerp(PrevTransformB, CurrentTransformB, currentTime);
+		FTransform interpolatedTransformA = FTransform::Lerp(PrevWorldTransformA, CurrentWorldTransformA, currentTime);
+		FTransform interpolatedTransformB = FTransform::Lerp(PrevWorldTransformB, CurrentWorldTransformB, currentTime);
 
 		// Use existing discrete collision detection at the interpolated transforms
 		FCollisionDetectionResult discreteResult = DetectCollisionShapeBasedDiscrete(
@@ -118,39 +116,40 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
 	// Optional: Refine collision details at TimeOfImpact using discrete collision detection
 	if (Result.bCollided)
 	{
-		FTransform finalTransformA = FTransform::Lerp(PrevTransformA, CurrentTransformA, Result.TimeOfImpact);
-		FTransform finalTransformB = FTransform::Lerp(PrevTransformB, CurrentTransformB, Result.TimeOfImpact);
+		FTransform finalTransformA = FTransform::Lerp(PrevWorldTransformA, CurrentWorldTransformA, Result.TimeOfImpact);
+		FTransform finalTransformB = FTransform::Lerp(PrevWorldTransformB, CurrentWorldTransformB, Result.TimeOfImpact);
 	}
 
 	return Result;
 }
 
-FCollisionDetectionResult FCollisionDetector::DetectCollisionShapeBasedDiscrete(const ICollisionShape& ShapeA, const FTransform& TransformA, const ICollisionShape& ShapeB, const FTransform& TransformB)
+FCollisionDetectionResult FCollisionDetector::DetectCollisionShapeBasedDiscrete(const ICollisionShape& ShapeA, const FTransform& WorldTransformA, 
+																				const ICollisionShape& ShapeB, const FTransform& WorldTransformB)
 {
 	// 형상 타입에 따른 적절한 충돌 검사 함수 호출
 	if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return SphereSphere(
-			ShapeA.GetScaledHalfExtent().x, TransformA,
-			ShapeB.GetScaledHalfExtent().x, TransformB);
+			ShapeA.GetScaledHalfExtent().x, WorldTransformA,
+			ShapeB.GetScaledHalfExtent().x, WorldTransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		return BoxBoxSAT(
-			ShapeA.GetScaledHalfExtent(), TransformA,
-			ShapeB.GetScaledHalfExtent(), TransformB);
+			ShapeA.GetScaledHalfExtent(), WorldTransformA,
+			ShapeB.GetScaledHalfExtent(), WorldTransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Box && ShapeB.GetType() == ECollisionShapeType::Sphere)
 	{
 		return BoxSphereSimple(
-			ShapeA.GetScaledHalfExtent(), TransformA,
-			ShapeB.GetScaledHalfExtent().x, TransformB);
+			ShapeA.GetScaledHalfExtent(), WorldTransformA,
+			ShapeB.GetScaledHalfExtent().x, WorldTransformB);
 	}
 	else if (ShapeA.GetType() == ECollisionShapeType::Sphere && ShapeB.GetType() == ECollisionShapeType::Box)
 	{
 		auto Result = BoxSphereSimple(
-			ShapeB.GetScaledHalfExtent(), TransformB,
-			ShapeA.GetScaledHalfExtent().x, TransformA);
+			ShapeB.GetScaledHalfExtent(), WorldTransformB,
+			ShapeA.GetScaledHalfExtent().x, WorldTransformA);
 		// 노멀 방향 반전
 		Result.Normal = -Result.Normal;
 		return Result;
@@ -160,14 +159,14 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionShapeBasedDiscrete(
 
 #pragma region Shape-Based
 FCollisionDetectionResult FCollisionDetector::SphereSphere(
-	float RadiusA, const FTransform& TransformA,
-	float RadiusB, const FTransform& TransformB)
+	float RadiusA, const FTransform& WorldTransformA,
+	float RadiusB, const FTransform& WorldTransformB)
 {
 	FCollisionDetectionResult Result;
 
 	// SIMD 연산을 위한 벡터 로드
-	XMVECTOR vPosA = XMLoadFloat3(&TransformA.Position);
-	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
+	XMVECTOR vPosA = XMLoadFloat3(&WorldTransformA.Position);
+	XMVECTOR vPosB = XMLoadFloat3(&WorldTransformB.Position);
 
 	// 중심점 간의 벡터 계산
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
@@ -210,16 +209,16 @@ FCollisionDetectionResult FCollisionDetector::SphereSphere(
 }
 
 FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
-	const Vector3& ExtentA, const FTransform& TransformA,
-	const Vector3& ExtentB, const FTransform& TransformB)
+	const Vector3& ExtentA, const FTransform& WorldTransformA,
+	const Vector3& ExtentB, const FTransform& WorldTransformB)
 {
 	FCollisionDetectionResult Result;
 
 	// 월드 공간에서의 박스 최소/최대점 계산
-	Vector3 MinA = TransformA.Position - ExtentA;
-	Vector3 MaxA = TransformA.Position + ExtentA;
-	Vector3 MinB = TransformB.Position - ExtentB;
-	Vector3 MaxB = TransformB.Position + ExtentB;
+	Vector3 MinA = WorldTransformA.Position - ExtentA;
+	Vector3 MaxA = WorldTransformA.Position + ExtentA;
+	Vector3 MinB = WorldTransformB.Position - ExtentB;
+	Vector3 MaxB = WorldTransformB.Position + ExtentB;
 
 	// AABB 충돌 검사
 	if (MinA.x <= MaxB.x && MaxA.x >= MinB.x &&
@@ -251,29 +250,29 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxAABB(
 		// 충돌 법선 설정
 		switch (minIndex)
 		{
-			case 0: Result.Normal.x = (TransformA.Position.x < TransformB.Position.x) ? -1.0f : 1.0f; break;
-			case 1: Result.Normal.y = (TransformA.Position.y < TransformB.Position.y) ? -1.0f : 1.0f; break;
-			case 2: Result.Normal.z = (TransformA.Position.z < TransformB.Position.z) ? -1.0f : 1.0f; break;
+			case 0: Result.Normal.x = (WorldTransformA.Position.x < WorldTransformB.Position.x) ? -1.0f : 1.0f; break;
+			case 1: Result.Normal.y = (WorldTransformA.Position.y < WorldTransformB.Position.y) ? -1.0f : 1.0f; break;
+			case 2: Result.Normal.z = (WorldTransformA.Position.z < WorldTransformB.Position.z) ? -1.0f : 1.0f; break;
 		}
 
 		// 충돌 지점은 두 박스의 중심점 사이의 중간점으로 설정
-		Result.Point = (TransformA.Position + TransformB.Position) * 0.5f;
+		Result.Point = (WorldTransformA.Position + WorldTransformB.Position) * 0.5f;
 	}
 
 	return Result;
 }
 
 FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
-	const Vector3& ExtentA, const FTransform& TransformA,
-	const Vector3& ExtentB, const FTransform& TransformB)
+	const Vector3& ExtentA, const FTransform& WorldTransformA,
+	const Vector3& ExtentB, const FTransform& WorldTransformB)
 {
 	FCollisionDetectionResult Result;
 
-	Matrix RotationA = TransformA.GetRotationMatrix();
-	Matrix RotationB = TransformB.GetRotationMatrix();
+	Matrix RotationA = WorldTransformA.GetRotationMatrix();
+	Matrix RotationB = WorldTransformB.GetRotationMatrix();
 
-	XMVECTOR vPosA = XMLoadFloat3(&TransformA.Position);
-	XMVECTOR vPosB = XMLoadFloat3(&TransformB.Position);
+	XMVECTOR vPosA = XMLoadFloat3(&WorldTransformA.Position);
+	XMVECTOR vPosB = XMLoadFloat3(&WorldTransformB.Position);
 	XMVECTOR vDelta = XMVectorSubtract(vPosB, vPosA);
 
 	// 각 박스의 축 방향 벡터 추출
@@ -361,16 +360,16 @@ FCollisionDetectionResult FCollisionDetector::BoxBoxSAT(
 }
 
 FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
-	const Vector3& BoxExtent, const FTransform& BoxTransform,
-	float SphereRadius, const FTransform& SphereTransform)
+	const Vector3& BoxExtent, const FTransform& WorldBoxTransform,
+	float SphereRadius, const FTransform& WorldSphereTransform)
 {
 	FCollisionDetectionResult Result;
 
 	// 1. 박스의 로컬 공간으로 구공간 이동
 	// 박스의 회전을 고려하기 위해 역회전 행렬 사용
-	XMVECTOR vSpherePos = XMLoadFloat3(&SphereTransform.Position);
-	XMVECTOR vBoxPos = XMLoadFloat3(&BoxTransform.Position);
-	Matrix BoxRotationInv = XMMatrixTranspose(BoxTransform.GetRotationMatrix());
+	XMVECTOR vSpherePos = XMLoadFloat3(&WorldSphereTransform.Position);
+	XMVECTOR vBoxPos = XMLoadFloat3(&WorldBoxTransform.Position);
+	Matrix BoxRotationInv = XMMatrixTranspose(WorldBoxTransform.GetRotationMatrix());
 
 	// 구의 중심점 회전
 	XMVECTOR vRelativePos = XMVectorSubtract(vSpherePos, vBoxPos);  // 상대 위치
@@ -440,7 +439,7 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 		Result.PenetrationDepth = minPenetration + SphereRadius;
 
 		// 법선을 월드 공간으로 변환
-		Matrix BoxRotation = BoxTransform.GetRotationMatrix();
+		Matrix BoxRotation = WorldBoxTransform.GetRotationMatrix();
 		vNormal = XMVector3Transform(vNormal, BoxRotation);
 		XMStoreFloat3(&Result.Normal, vNormal);
 
@@ -457,7 +456,7 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 		Result.PenetrationDepth = std::fabs(SphereRadius - distance);
 
 		// 법선을 월드 공간으로 변환
-		Matrix BoxRotation = BoxTransform.GetRotationMatrix();
+		Matrix BoxRotation = WorldBoxTransform.GetRotationMatrix();
 		vNormal = XMVector3Transform(vNormal, BoxRotation);
 		XMStoreFloat3(&Result.Normal, vNormal);
 
@@ -468,6 +467,115 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 	}
 
 	return Result;
+}
+#pragma endregion
+
+#pragma region SweptVolume
+
+FAABB FCollisionDetector::CalculateSweptAABB(const ICollisionShape& InShape, const FTransform& PrevWorldTransform, const FTransform& CurrentWorldTransform)
+{
+	// 이전 프레임 위치에서의 월드 공간 AABB 계산
+	FAABB aabbPrev = CalculateWorldAABB(InShape, PrevWorldTransform);
+
+	// 현재 프레임 위치에서의 월드 공간 AABB 계산 (회전 고려)
+	FAABB aabbCurrent = CalculateWorldAABB(InShape, CurrentWorldTransform);
+
+	// 두 AABB를 합쳐서 Swept AABB 계산
+	return FAABB::Merge(aabbPrev, aabbCurrent);
+}
+
+// 주어진 Transform에 대해 Shape의 월드 공간 AABB를 계산하는 함수
+FAABB FCollisionDetector::CalculateWorldAABB(const ICollisionShape& InShape, const FTransform& InWorldTransform)
+{
+	FAABB worldAABB; // 기본 생성자로 초기화 (Min=FLT_MAX, Max=-FLT_MAX)
+
+	// Shape 타입에 따라 분기
+	switch (InShape.GetType())
+	{
+		case ECollisionShapeType::Sphere:
+		{
+			// Sphere의 World AABB 계산
+			Vector3 Center = InWorldTransform.Position; // Transform의 Position 사용
+			float Radius = InShape.GetScaledHalfExtent().x;
+
+			worldAABB.SetMin(Center - Radius * Vector3::One());
+			worldAABB.SetMax(Center + Radius * Vector3::One());
+		}
+		break;
+		case ECollisionShapeType::Box:
+		{
+			// Box의 World AABB 계산 (회전 고려)
+			// Box의 로컬 공간 코너 8개를 Transform을 사용하여 월드 공간으로 변환하고,
+			// 이 변환된 점들을 포함하는 AABB를 찾습니다.
+			Vector3 halfExtents = InShape.GetHalfExtent();
+
+			// Box의 로컬 공간 코너 8개
+			Vector3 localCorners[8];
+			localCorners[0] = { -halfExtents.x, -halfExtents.y, -halfExtents.z };
+			localCorners[1] = { halfExtents.x, -halfExtents.y, -halfExtents.z };
+			localCorners[2] = { -halfExtents.x,  halfExtents.y, -halfExtents.z };
+			localCorners[3] = { halfExtents.x,  halfExtents.y, -halfExtents.z };
+			localCorners[4] = { -halfExtents.x, -halfExtents.y,  halfExtents.z };
+			localCorners[5] = { halfExtents.x, -halfExtents.y,  halfExtents.z };
+			localCorners[6] = { -halfExtents.x,  halfExtents.y,  halfExtents.z };
+			localCorners[7] = { halfExtents.x,  halfExtents.y,  halfExtents.z };
+
+			XMMATRIX worldMatrix = InWorldTransform.GetModelingMatrix(); 
+
+			// 각 로컬 코너를 월드 공간으로 변환하고 AABB 확장
+			for (int i = 0; i < 8; ++i) {
+				XMVECTOR localCorner = XMLoadFloat3(&localCorners[i]);
+				XMVECTOR worldCorner = XMVector3TransformCoord(localCorner, worldMatrix);
+				Vector3 p;
+				XMStoreFloat3(&p, worldCorner);
+				//worldAABB.Include(p); // AABB를 점 p를 포함하도록 확장
+			}
+		}
+		break; 
+		
+		{
+			//// Capsule의 World AABB 계산 (회전 고려)
+			//// Capsule은 두 반구와 그 사이의 실린더로 구성됩니다.
+			//// 두 반구의 중심점과 반지름을 사용하여 AABB를 계산하는 것이 일반적입니다.
+			//// Capsule의 로컬 공간 끝점 (축에 따라 다름, 여기서는 Y축이라고 가정)
+			//float halfHeight = capsule->GetHeight() * 0.5f; // 실린더 높이의 절반
+			//float radius = capsule->GetRadius();
+
+			//Vector3 localEnd1 = { 0.0f, halfHeight, 0.0f };
+			//Vector3 localEnd2 = { 0.0f, -halfHeight, 0.0f };
+
+			//XMMATRIX worldMatrix = InTransform.ToMatrix(); // FTransform -> XMMATRIX 변환 함수 필요
+
+			//// 끝점 변환
+			//XMVECTOR worldEnd1 = XMVector3TransformCoord(XMLoadFloat3(&localEnd1), worldMatrix);
+			//XMVECTOR worldEnd2 = XMVector3TransformCoord(XMLoadFloat3(&localEnd2), worldMatrix);
+			//Vector3 p1, p2;
+			//XMStoreFloat3(&p1, worldEnd1);
+			//XMStoreFloat3(&p2, worldEnd2);
+
+			//// 변환된 끝점과 반지름을 포함하는 AABB 계산
+			//// 각 끝점에서 반지름만큼 떨어진 6개 점을 추가하여 AABB를 확장합니다.
+			//Vector3 radialOffsets[6] = {
+			//	{radius, 0, 0}, {-radius, 0, 0},
+			//	{0, radius, 0}, {0, -radius, 0},
+			//	{0, 0, radius}, {0, 0, -radius}
+			//};
+
+			//worldAABB.Include(p1); // 첫 번째 끝점 포함
+			//worldAABB.Include(p2); // 두 번째 끝점 포함
+
+			//// 각 끝점에서 반지름만큼 떨어진 점들 포함
+			//for (int i = 0; i < 6; ++i) {
+			//	worldAABB.Include({ p1.x + radialOffsets[i].x, p1.y + radialOffsets[i].y, p1.z + radialOffsets[i].z });
+			//	worldAABB.Include({ p2.x + radialOffsets[i].x, p2.y + radialOffsets[i].y, p2.z + radialOffsets[i].z });
+			//}
+			//// 더 간단하게는, 각 끝점에서 각 축 방향으로 반지름만큼 떨어진 점들만 고려해도 됩니다.
+			//// 예: p1 + radius*world_x_axis, p1 - radius*world_x_axis 등.
+			//// 하지만 AABB를 확장하는 방식이 코드가 더 간결합니다.
+		}
+	}
+
+	return worldAABB;
 }
 #pragma endregion
 

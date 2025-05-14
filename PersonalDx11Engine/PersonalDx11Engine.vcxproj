@@ -181,6 +181,7 @@
     <ClCompile Include="VertexShader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="ActorComponent.h" />
     <ClInclude Include="BoxComponent.h" />
     <ClInclude Include="Camera.h" />
