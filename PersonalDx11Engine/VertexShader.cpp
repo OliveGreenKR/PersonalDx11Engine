@@ -29,6 +29,10 @@ bool UVertexShader::Load(IRenderHardware* RenderHardware, const std::wstring& Pa
     }
 
     // 쉐이더 객체 생성
+    auto Device = RenderHardware->GetDevice();
+    auto bufferPtr = VSBlob->GetBufferPointer();
+    auto bufferSize = VSBlob->GetBufferSize();
+
     hr = RenderHardware->GetDevice()->CreateVertexShader(
         VSBlob->GetBufferPointer(),
         VSBlob->GetBufferSize(),

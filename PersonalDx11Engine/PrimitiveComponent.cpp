@@ -66,15 +66,18 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
         {
             //매트릭스 버퍼
             auto WorldMatrix = GetWorldTransform().GetModelingMatrix();
-            WorldMatrix = XMMatrixTranspose(WorldMatrix);
-
+            auto WorldInverse = XMMatrixInverse(nullptr, WorldMatrix);
             auto ViewMatrix = Camera->GetViewMatrix();
-            ViewMatrix = XMMatrixTranspose(ViewMatrix);
-
             auto ProjectionMatrix = Camera->GetProjectionMatrix();
+
+
+
+            WorldMatrix = XMMatrixTranspose(WorldMatrix);
+            WorldInverse = XMMatrixTranspose(WorldInverse);
+            ViewMatrix = XMMatrixTranspose(ViewMatrix);
             ProjectionMatrix = XMMatrixTranspose(ProjectionMatrix);
 
-            AMatrix192 MatrixData = { WorldMatrix , ViewMatrix, ProjectionMatrix };
+            AMatrix256 MatrixData = { WorldMatrix , ViewMatrix, ProjectionMatrix, WorldInverse };
 
             ID3D11Buffer* Buffer = VShader->GetConstantBuffer(i);
             UINT Size = cbVS[i].Size;

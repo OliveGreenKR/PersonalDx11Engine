@@ -136,7 +136,7 @@ bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)
 {
 	HRESULT result;
 
-	D3D_FEATURE_LEVEL featurelevels[] = { D3D_FEATURE_LEVEL_11_0 };
+	D3D_FEATURE_LEVEL featurelevels[] = { D3D_FEATURE_LEVEL_11_1 };
 
 	DXGI_SWAP_CHAIN_DESC swapchaindesc = {};
 	swapchaindesc.BufferDesc.Width = 0; // 창 크기에 맞게 자동으로 설정
@@ -151,10 +151,11 @@ bool FD3D::CreateDeviceAndSwapChain(HWND Hwnd)
 	swapchaindesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; //auto selected by G-Driver
 	swapchaindesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED; ////auto selected by G-Driver
 
+	D3D_FEATURE_LEVEL selectedFeatureLevel;
 	result = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
 										   D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG,
 										   featurelevels, ARRAYSIZE(featurelevels), D3D11_SDK_VERSION,
-										   &swapchaindesc, &SwapChain, &Device, nullptr, &DeviceContext);
+										   &swapchaindesc, &SwapChain, &Device, &selectedFeatureLevel, &DeviceContext);
 
 	if (FAILED(result))
 	{
