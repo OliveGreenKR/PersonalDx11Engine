@@ -7,7 +7,7 @@ class UCollisionComponentBase;
 
 class FCollisionEventDispatcher
 {
-    friend class UCollisionManager;
+    friend class FCollisionProcessor;
 
 public:
     FCollisionEventDispatcher() = default;

@@ -309,7 +309,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region logic
 		UResourceManager::Get()->Tick(DeltaTime);
-		UCollisionManager::Get()->Tick(DeltaTime);
+		FCollisionProcessor::Get()->Tick(DeltaTime);
 		USceneManager::Get()->Tick(DeltaTime);
 	
 		UDebugDrawManager::Get()->Tick(DeltaTime);
@@ -352,7 +352,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("CollisionTree")) {
-				UCollisionManager::Get()->PrintTreeStructure();
+				FCollisionProcessor::Get()->PrintTreeStructure();
 			}
 			ImGui::SameLine();
 			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));

@@ -81,6 +81,8 @@ struct FContactPoint
 class FCollisionProcessor
 {
 private:
+    friend class UPhysicsSystem;
+
     // 복사 및 이동 방지
     FCollisionProcessor(const FCollisionProcessor&) = delete;
     FCollisionProcessor& operator=(const FCollisionProcessor&) = delete;
@@ -92,18 +94,6 @@ private:
     ~FCollisionProcessor();
 
 public:
-    static FCollisionProcessor* Get()
-    {
-        // 포인터를 static으로 선언
-        static FCollisionProcessor* instance = []() {
-            FCollisionProcessor* manager = new FCollisionProcessor();
-            manager->Initialize();
-            return manager;
-            }();
-
-        return instance;
-    }
-
     [[deprecated("Use Another signature of RegisterCollision")]]
     void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent,
                               const std::shared_ptr<URigidBodyComponent>& InRigidBody);
@@ -116,6 +106,9 @@ public:
 
     size_t GetRegisterComponentsCount() { return RegisteredComponents.size(); }
 
+    // 충돌 처리 후 정규화된 충돌시간 
+    float ProcessCollisions(const float DeltaTime);
+
 public:
     FCollisionSystemConfig Config;
 
@@ -126,8 +119,7 @@ private:
 
     void SimulateStep(float stepDeltaTime);
 
-    // 충돌 처리 관련 함수들
-    void ProcessCollisions(const float DeltaTime);
+
 
     //CCD 임계속도 비교
     bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;

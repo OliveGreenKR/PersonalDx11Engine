@@ -50,15 +50,6 @@
     <ClCompile Include="ElasticBody.cpp">
       <Filter>Contents\ElasticBody</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionDetector.cpp">
-      <Filter>Engine\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionEventDispatcher.cpp">
-      <Filter>Engine\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionResponseCalculator.cpp">
-      <Filter>Engine\Physics</Filter>
-    </ClCompile>
     <ClCompile Include="Model.cpp">
       <Filter>Engine\Resources\Model</Filter>
     </ClCompile>
@@ -108,7 +99,7 @@
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClCompile>
     <ClCompile Include="CollisionManager.cpp">
-      <Filter>Engine\Managers\CollisionManager</Filter>
+      <Filter>Engine\Managers\Physics</Filter>
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine\Managers\Resource</Filter>
@@ -142,6 +133,21 @@
     </ClCompile>
     <ClCompile Include="Math.cpp">
       <Filter>Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsSystem.cpp">
+      <Filter>Engine\Managers\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionDetector.cpp">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionEventDispatcher.cpp">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionResponseCalculator.cpp">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionProcessor.cpp">
+      <Filter>Engine\Physics\Collision</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,9 +256,6 @@
     <Filter Include="Engine\Renderer\RenderData\SimpleColor">
       <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Managers\CollisionManager">
-      <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Managers\DebugDrawer">
       <UniqueIdentifier>{072e9c25-816f-4781-88c9-0e23fe021dcb}</UniqueIdentifier>
     </Filter>
@@ -331,6 +334,15 @@
     <Filter Include="Engine\Resources\Model\Vertex">
       <UniqueIdentifier>{9ce88f28-62b5-4c33-8d44-9b50a670ef8e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Managers\Physics">
+      <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision">
+      <UniqueIdentifier>{8a275dd0-cdb9-417c-b325-bb72a0ea29c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part">
+      <UniqueIdentifier>{b905b939-6f67-4380-a8b9-12483c0a6bcf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -398,18 +410,6 @@
     </ClInclude>
     <ClInclude Include="ElasticBody.h">
       <Filter>Contents\ElasticBody</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionDetector.h">
-      <Filter>Engine\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionEventDispatcher.h">
-      <Filter>Engine\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionResponseCalculator.h">
-      <Filter>Engine\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionDefines.h">
-      <Filter>Engine\Physics</Filter>
     </ClInclude>
     <ClInclude Include="VertexFormat.h">
       <Filter>Engine\Resources\Model\Vertex</Filter>
@@ -514,7 +514,7 @@
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClInclude>
     <ClInclude Include="CollisionManager.h">
-      <Filter>Engine\Managers\CollisionManager</Filter>
+      <Filter>Engine\Managers\Physics</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
       <Filter>Engine\Managers\DebugDrawer</Filter>
@@ -581,6 +581,24 @@
     </ClInclude>
     <ClInclude Include="AABB.h">
       <Filter>Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsSystem.h">
+      <Filter>Engine\Managers\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDefines.h">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDetector.h">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionEventDispatcher.h">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionResponseCalculator.h">
+      <Filter>Engine\Physics\Collision\Part</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionProcessor.h">
+      <Filter>Engine\Physics\Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -73,17 +73,20 @@ void UActorComponent::BroadcastTick(const float DeltaTime)
 
 void UActorComponent::BroadcastTickPhysics(const float DeltaTime)
 {
+    //트리계층구조를 따라 활성화된 컴포넌트 트리로 전파는 전부 되지만,
+    // PhysicsSimulated가 아니라면 본인은 전파의 책임만 담당함
+    
     // 비활성화된 경우 전파하지 않음
-    if (!bIsActive || !bPhysicsSimulated)
+    if (!bIsActive)
         return;
 
-    // 자신의 Tick 호출
+    // 자신의 TickPhysics 호출
     TickPhysics(DeltaTime);
 
-    // 모든 활성화 물리 자식 컴포넌트에 대해 Tick 전파
+    // 모든 활성화 자식 컴포넌트에 대해 TickPhyics 전파
     for (const auto& Child : ChildComponents)
     {
-        if (Child.lock() && Child.lock()->IsActive() && Child.lock()->bPhysicsSimulated)
+        if (Child.lock() && Child.lock()->IsActive())
         {
             Child.lock()->BroadcastTickPhysics(DeltaTime);
         }
@@ -137,6 +140,9 @@ void UActorComponent::PostTreeInitialized()
 
 void UActorComponent::Tick(const float DeltaTime)
 {
+    if (!bIsActive)
+        return;
+
     bool bDirty = false;
     int RemoveCount = 0;
     for (const auto& Child : ChildComponents)
@@ -160,7 +166,7 @@ void UActorComponent::Tick(const float DeltaTime)
 
 void UActorComponent::TickPhysics(const float DeltaTime)
 {
-    if (!bPhysicsSimulated)
+    if (!bIsActive||!bPhysicsSimulated)
         return;
 }
 

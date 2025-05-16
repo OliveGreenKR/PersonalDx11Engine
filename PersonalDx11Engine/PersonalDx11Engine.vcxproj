@@ -140,6 +140,7 @@
     <ClCompile Include="CollisionDetector.cpp" />
     <ClCompile Include="CollisionEventDispatcher.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
+    <ClCompile Include="CollisionProcessor.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="ConfigReadManager.cpp" />
     <ClCompile Include="D3D.cpp" />
@@ -165,6 +166,7 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
@@ -194,6 +196,7 @@
     <ClInclude Include="CollisionDefines.h" />
     <ClInclude Include="CollisionEventDispatcher.h" />
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="CollisionProcessor.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />
     <ClInclude Include="Color.h" />
@@ -230,6 +233,7 @@
     <ClInclude Include="PhysicsStateInterface.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PrimitiveComponent.h" />
     <ClInclude Include="Random.h" />

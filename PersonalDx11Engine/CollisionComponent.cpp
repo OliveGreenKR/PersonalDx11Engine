@@ -73,7 +73,7 @@ void UCollisionComponentBase::ActivateColiision()
 	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared)
 	{
-		UCollisionManager::Get()->RegisterCollision(shared);
+		FCollisionProcessor::Get()->RegisterCollision(shared);
 	}
 }
 
@@ -82,7 +82,7 @@ void UCollisionComponentBase::DeActivateCollision()
 	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared) 
 	{
-		UCollisionManager::Get()->UnRegisterCollision(shared);
+		FCollisionProcessor::Get()->UnRegisterCollision(shared);
 	}
 }
 
