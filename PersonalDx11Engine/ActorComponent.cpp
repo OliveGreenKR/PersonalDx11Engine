@@ -52,7 +52,7 @@ void UActorComponent::BroadcastPostTreeInitialized()
     }
 }
 
-void UActorComponent::BroadcastTick(float DeltaTime)
+void UActorComponent::BroadcastTick(const float DeltaTime)
 {
     // 비활성화된 경우 전파하지 않음
     if (!bIsActive)
@@ -67,6 +67,25 @@ void UActorComponent::BroadcastTick(float DeltaTime)
         if (Child.lock() && Child.lock()->IsActive())
         {
             Child.lock()->BroadcastTick(DeltaTime);
+        }
+    }
+}
+
+void UActorComponent::BroadcastTickPhysics(const float DeltaTime)
+{
+    // 비활성화된 경우 전파하지 않음
+    if (!bIsActive || !bPhysicsSimulated)
+        return;
+
+    // 자신의 Tick 호출
+    TickPhysics(DeltaTime);
+
+    // 모든 활성화 물리 자식 컴포넌트에 대해 Tick 전파
+    for (const auto& Child : ChildComponents)
+    {
+        if (Child.lock() && Child.lock()->IsActive() && Child.lock()->bPhysicsSimulated)
+        {
+            Child.lock()->BroadcastTickPhysics(DeltaTime);
         }
     }
 }
@@ -105,6 +124,10 @@ void UActorComponent::DeActivate()
 
 void UActorComponent::PostInitialized()
 {
+    if (bPhysicsSimulated)
+    {
+        //TODO Register Physics Tick System...
+    }
 }
 
 void UActorComponent::PostTreeInitialized()
@@ -112,7 +135,7 @@ void UActorComponent::PostTreeInitialized()
    
 }
 
-void UActorComponent::Tick(float DeltaTime)
+void UActorComponent::Tick(const float DeltaTime)
 {
     bool bDirty = false;
     int RemoveCount = 0;
@@ -133,6 +156,12 @@ void UActorComponent::Tick(float DeltaTime)
                            [this](const auto& child) { return child.lock() == nullptr; }),
             children.end());
     }
+}
+
+void UActorComponent::TickPhysics(const float DeltaTime)
+{
+    if (!bPhysicsSimulated)
+        return;
 }
 
 void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)

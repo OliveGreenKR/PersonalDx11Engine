@@ -29,7 +29,7 @@ public:
 
 	void Reset();
 	virtual void Tick(const float DeltaTime) override;
-
+	virtual void TickPhysics(const float DeltaTime) override;
 	// 속도 기반 인터페이스
 	void SetVelocity(const Vector3& InVelocity) override;
 	void AddVelocity(const Vector3& InVelocityDelta) override;

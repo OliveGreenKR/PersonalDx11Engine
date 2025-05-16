@@ -9,7 +9,7 @@ UCamera::UCamera(float fov, uint32_t viewportWidth, uint32_t viewportHeight, flo
 	UpdateProjectionMatrix();
 }
 
-void UCamera::Tick(float DeltaTime)
+void UCamera::Tick(const float DeltaTime)
 {
 	UGameObject::Tick(DeltaTime);
 	if(bLookAtObject)

@@ -6,6 +6,7 @@
 
 URigidBodyComponent::URigidBodyComponent()
 {
+	bPhysicsSimulated = true;
 }
 
 void URigidBodyComponent::Reset()
@@ -117,6 +118,11 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	// 외부 힘 초기화
 	AccumulatedForce = Vector3::Zero();
 	AccumulatedTorque = Vector3::Zero();
+}
+
+void URigidBodyComponent::TickPhysics(const float DeltaTime)
+{
+	LOG_FUNC_CALL("URigidBody TickPhysics with [%.3f] seconds", DeltaTime);
 }
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)

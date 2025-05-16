@@ -20,7 +20,7 @@ public:
 	};
 
 public:
-    UActorComponent() : bIsActive(true) {}
+    UActorComponent() : bIsActive(true), bPhysicsSimulated(false) {}
     virtual ~UActorComponent();
 
 	// 토큰이 있어야만 호출 가능한 메서드(외부 설정을 위함)
@@ -53,7 +53,8 @@ public:
     void BroadcastPostTreeInitialized();
 
     // Tick 전파
-    void BroadcastTick(float DeltaTime);
+    void BroadcastTick(const float DeltaTime);
+	void BroadcastTickPhysics(const float DeltaTime);
 
     // 컴포넌트 활성화 상태
 	void SetActive(bool bNewActive);
@@ -67,7 +68,8 @@ protected:
 	virtual void PostInitialized();
 	virtual void PostTreeInitialized();
 
-	virtual void Tick(float DeltaTime);
+	virtual void Tick(const float DeltaTime);
+	virtual void TickPhysics(const float DeltaTime);
 
 protected:
 
@@ -374,6 +376,11 @@ public:
 		return FindComponentsRaw<T>(false);
 	}
 #pragma endregion
+
+protected:
+	//물리 엔진 로직처리 가능 플래그
+	bool bPhysicsSimulated : 1;
+
 private:
     bool bIsActive : 1;
 
