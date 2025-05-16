@@ -90,14 +90,11 @@ void CreateConsole(int consoleWidth, int consoleHeight, int xPos, int yPos)
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-	{
-		return true;
-	}
+	ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam);
 
 	if (UInputManager::Get()->ProcessWindowsMessage(message, wParam, lParam))
 	{
-		return 0;
+		return true;
 	}
 
 	switch (message)
@@ -247,6 +244,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 															  CameraOrbitController->UpdateOrbit(Camera, 
 																								 0.0f,
 																								 stepRad * USceneManager::Get()->GetLastTickTime());
+															  //LOG("SYSINPUT - CameraUP");
 														  },
 														  "GGCameraMove");
 
@@ -268,6 +266,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 															  CameraOrbitController->UpdateOrbit(Camera,
 																								 stepRad * USceneManager::Get()->GetLastTickTime(),
 																								 0.0f);
+															  //LOG("SYSINPUT - CameraRight");
 														  },
 														  "GCameraMove");
 

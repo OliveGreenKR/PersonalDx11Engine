@@ -8,6 +8,8 @@
 #include "InputDefines.h"
 #include "InputContext.h"
 
+#include "Debug.h"
+
 class UInputManager
 {
 private:
@@ -128,6 +130,7 @@ public:
                 const bool bWasPressed = KeyStates[WParam];
                 KeyStates[WParam] = true;
 
+                //LOG("%c was pressed", WParam);
                 FKeyEventData EventData;
                 EventData.KeyCode = WParam;
                 EventData.bAlt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
@@ -152,6 +155,7 @@ public:
                 else if (bIsRepeat)
                 {
                     EventData.EventType = EKeyEvent::Repeat;
+                    
 
                     // 정렬된 컨텍스트 순회
                     for (const auto& Context : SortedContexts)
