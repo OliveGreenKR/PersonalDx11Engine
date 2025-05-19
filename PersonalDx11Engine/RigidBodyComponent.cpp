@@ -3,10 +3,38 @@
 #include "GameObject.h"
 #include "Debug.h"
 #include "PhysicsDefine.h"
+#include "PhysicsSystem.h"
+#include "TypeCast.h"
+
 
 URigidBodyComponent::URigidBodyComponent()
 {
-	bPhysicsSimulated = true;
+   bPhysicsSimulated = true;
+}
+
+URigidBodyComponent::~URigidBodyComponent()
+{
+}
+
+void URigidBodyComponent::PostInitialized()
+{
+	USceneComponent::PostInitialized();
+}
+
+void URigidBodyComponent::Activate()
+{
+	USceneComponent::Activate();
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+	UPhysicsSystem::Get()->RegisterPhysicsObject(myShared);
+}
+
+void URigidBodyComponent::DeActivate()
+{
+	USceneComponent::DeActivate();
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
 }
 
 void URigidBodyComponent::Reset()

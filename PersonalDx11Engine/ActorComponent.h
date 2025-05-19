@@ -20,7 +20,7 @@ public:
 	};
 
 public:
-    UActorComponent() : bIsActive(true), bPhysicsSimulated(false) {}
+    UActorComponent() : bIsActive(false), bPhysicsSimulated(false) {}
     virtual ~UActorComponent();
 
 	// 토큰이 있어야만 호출 가능한 메서드(외부 설정을 위함)

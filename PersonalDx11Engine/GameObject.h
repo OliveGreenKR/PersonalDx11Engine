@@ -89,7 +89,7 @@ protected:
 	virtual void DeActivate();
 
 private:
-	bool bIsActive = true;
+	bool bIsActive = false;
 
 #pragma region EventTriggered
 	virtual void OnCollisionBegin(const struct FCollisionEventData& InCollision);

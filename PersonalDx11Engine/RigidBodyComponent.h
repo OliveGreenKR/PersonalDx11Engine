@@ -27,9 +27,17 @@ public:
 
 public:
 	URigidBodyComponent();
+	~URigidBodyComponent();
+
+	virtual void PostInitialized() override;
+
+	virtual void Activate() override;
+	virtual void DeActivate() override;
 
 	void Reset();
 	virtual void Tick(const float DeltaTime) override;
+
+	//IPhysicsObject
 	virtual void TickPhysics(const float DeltaTime) override;
 	// 속도 기반 인터페이스
 	void SetVelocity(const Vector3& InVelocity) override;

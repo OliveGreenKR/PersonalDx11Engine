@@ -114,7 +114,7 @@ void UActorComponent::PostInitialized()
 
 void UActorComponent::PostTreeInitialized()
 {
-   
+    SetActive(true); //최조 활성화
 }
 
 void UActorComponent::Tick(const float DeltaTime)

@@ -21,6 +21,39 @@ UPhysicsSystem::~UPhysicsSystem()
     }
 }
 
+void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
+{
+    if (!InObject)
+        return;
+
+    auto It = std::find_if(RegisteredObjects.begin(), RegisteredObjects.end(), [&InObject](const std::weak_ptr<IPhysicsObejct>& Object)
+                 {
+                     return Object.lock() == InObject;
+                 });
+    //이미 등록된 객체
+    if (It != RegisteredObjects.end())
+        return;
+    
+    RegisteredObjects.push_back(InObject);
+}
+
+void UPhysicsSystem::UnregisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
+{
+    if (!InObject)
+        return;
+
+    RegisteredObjects.erase(
+        std::remove_if(
+            RegisteredObjects.begin(), RegisteredObjects.end(),
+            [&InObject](const std::weak_ptr<IPhysicsObejct>& Object) {
+                return Object.lock() == InObject;
+            }
+        ),
+        RegisteredObjects.end()
+    );
+
+}
+
 // 메인 물리 업데이트 (게임 루프에서 호출)
 void UPhysicsSystem::TickPhysics(const float DeltaTime)
 {

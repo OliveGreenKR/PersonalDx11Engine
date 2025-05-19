@@ -40,7 +40,6 @@
 #include "testDynamicAABBTree.h"
 #include "testSceneComponent.h"
 
-
 #include "CameraOrbitControl.h"
 
 //System Configs
