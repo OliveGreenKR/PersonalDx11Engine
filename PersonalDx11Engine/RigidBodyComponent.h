@@ -72,6 +72,10 @@ public:
 	inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
 	inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
 
+	inline void SetWorldPosition(const Vector3& InWorldPosition) override {
+		USceneComponent::SetWorldPosition(InWorldPosition);
+	}
+
 	inline void SetRigidType(ERigidBodyType&& InType) { RigidType = InType; }
 
 	//토큰소유자만 접근 가능

@@ -4,7 +4,7 @@
 #include "RigidBodyComponent.h"
 #include "CollisionManager.h"
 #include "TypeCast.h"
-
+#include "PhysicsStateInterface.h"
 
 //UCollisionComponentBase::UCollisionComponentBase(const Vector3& InHalfExtents) 
 //	: UCollisionComponentBase()
@@ -54,6 +54,11 @@ void UCollisionComponentBase::BindRigidBody(const std::shared_ptr<URigidBodyComp
 void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)
 {
 	SetLocalScale(InHalfExtent * 2.0f);
+}
+
+IPhysicsState* UCollisionComponentBase::GetPhysicsState() const
+{
+	return Engine::Cast<IPhysicsState>(RigidBody.lock().get());
 }
 
 void UCollisionComponentBase::Activate()

@@ -1,5 +1,4 @@
 #include "CollisionProcessor.h"
-#include "RigidBodyComponent.h"
 #include "Transform.h"
 #include <algorithm>
 #include "DynamicAABBTree.h"
@@ -9,23 +8,11 @@
 #include "CollisionEventDispatcher.h"
 #include "Debug.h"
 #include "ConfigReadManager.h"
+#include "PhysicsStateInterface.h"
 
 FCollisionProcessorT::~FCollisionProcessorT()
 {
 	Release();
-}
-
-void FCollisionProcessorT::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent, const std::shared_ptr<URigidBodyComponent>& InRigidBody)
-{
-	if (!InRigidBody)
-	{
-		return;
-	}
-
-	InRigidBody->AddChild(NewComponent);
-
-	RegisterCollision(NewComponent);
-
 }
 
 void FCollisionProcessorT::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent)
@@ -286,11 +273,12 @@ void FCollisionProcessorT::UpdateCollisionPairs()
 			// 새 충돌 쌍 생성
 			FCollisionPair NewPair(treeNodeId, otherNodeId);
 
-			// 기존 충돌 쌍에서 상태 복사
+			// 새 쌍 상태 
 			auto ExistingPair = ActiveCollisionPairs.find(NewPair);
 			if (ExistingPair != ActiveCollisionPairs.end()) {
 				NewPair.bPrevCollided = ExistingPair->bPrevCollided;
 				NewPair.PrevConstraints = ExistingPair->PrevConstraints;
+				NewPair.bStepSimulateFinished = false; //시뮬대상
 			}
 
 			NewCollisionPairs.insert(std::move(NewPair));});
@@ -324,11 +312,11 @@ void FCollisionProcessorT::UpdateCollisionTransform()
 	CollisionTree->UpdateTree();
 }
 
-bool FCollisionProcessorT::ShouldUseCCD(const URigidBodyComponent* RigidBody) const
+bool FCollisionProcessorT::ShouldUseCCD(const IPhysicsState* PhysicsState) const
 {
-	if (!RigidBody)
+	if (!PhysicsState)
 		return false;
-	return RigidBody->GetVelocity().Length() > Config.CCDVelocityThreshold;
+	return PhysicsState->GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
 float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
@@ -338,6 +326,12 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 	
 	for (auto& ActivePair : ActiveCollisionPairs)
 	{
+		//시뮬레이션 완료 대상은 건너띄기
+		if (ActivePair.bStepSimulateFinished)
+		{
+			continue;
+		}
+
 		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();
 		auto CompB = RegisteredComponents[ActivePair.TreeIdB].lock();
 
@@ -347,7 +341,7 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 		FCollisionDetectionResult DetectResult;
 		if (CompA && CompB)
 		{
-			if (ShouldUseCCD(CompA->GetRigidBody()) || ShouldUseCCD(CompB->GetRigidBody()))
+			if (ShouldUseCCD(CompA->GetPhysicsState()) || ShouldUseCCD(CompB->GetPhysicsState()))
 			{
 				//ccd
 				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousWorldTransform(), CompA->GetWorldTransform(),
@@ -360,51 +354,76 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 																 *CompB.get(), CompB->GetWorldTransform());
 			}
 		}
+		//충돌 시 최저 ToI 갱신
 		if (DetectResult.bCollided)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
+
+			if (DetectResult.TimeOfImpact > 1.0f - KINDA_SMALL)
+			{
+				//즉시 적용
+				//response
+				ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+				//position correction
+				ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
+				//dispatch event
+				BroadcastCollisionEvents(ActivePair, DetectResult);
+				//충돌 정보 저장
+				ActivePair.bPrevCollided = DetectResult.bCollided;
+				//스텝 시뮬레이션 종료
+				ActivePair.bStepSimulateFinished = true;
+			}
+			else
+			{
+				//추가계산필요 쌍(ToI 1.0미만)
+			}
 		}
 
-		//response
-		ApplyCollisionResponseByContraints(ActivePair, DetectResult);
-		//position correction
-		ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
-		//dispatch event
-		BroadcastCollisionEvents(ActivePair, DetectResult);
+		
 
-		//충돌정보 저장
-		ActivePair.bPrevCollided = DetectResult.bCollided;
+		
+		////response
+		//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+		////position correction
+		//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
+		////dispatch event
+		//BroadcastCollisionEvents(ActivePair, DetectResult);
+
+		////충돌정보 저장
+		//ActivePair.bPrevCollided = DetectResult.bCollided;
+		
 	}
 
 	return minCollideTime;
 }
 
-void FCollisionProcessorT::GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& ResponseResult ) const
+void FCollisionProcessorT::GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& OutParams ) const
 {
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
 		return;
-	auto RigidPtr = CompPtr->GetRigidBody();
-	if (!RigidPtr)
+	auto PhysicsState = CompPtr->GetPhysicsState();
+	if (!PhysicsState)
 		return;
 
-	ResponseResult.Mass = RigidPtr->GetMass();
+	OutParams.Mass = PhysicsState->GetMass();
 
-	Vector3 RotInerteria = RigidPtr->GetRotationalInertia();
-    ResponseResult.RotationalInertia = XMLoadFloat3(&RotInerteria);  
+	Vector3 RotInerteria = PhysicsState->GetRotationalInertia();
+    OutParams.RotationalInertia = XMLoadFloat3(&RotInerteria);  
 
-    Vector3 Position = RigidPtr->GetWorldTransform().Position;  
-    ResponseResult.Position = XMLoadFloat3(&Position);  
+    Vector3 Position = PhysicsState->GetWorldPosition();  
+    OutParams.Position = XMLoadFloat3(&Position);  
 
-    Vector3 Velocity = RigidPtr->GetVelocity();  
-    ResponseResult.Velocity = XMLoadFloat3(&Velocity);
-	Vector3 AngularVelocity = RigidPtr->GetAngularVelocity();
-	ResponseResult.AngularVelocity = XMLoadFloat3(&(AngularVelocity));
+    Vector3 Velocity = PhysicsState->GetVelocity();  
+    OutParams.Velocity = XMLoadFloat3(&Velocity);
+	Vector3 AngularVelocity = PhysicsState->GetAngularVelocity();
+	OutParams.AngularVelocity = XMLoadFloat3(&(AngularVelocity));
 
-	ResponseResult.Restitution = RigidPtr->GetRestitution();
-	ResponseResult.FrictionKinetic = RigidPtr->GetFrictionKinetic();
-	ResponseResult.FrictionStatic = RigidPtr->GetFrictionStatic();
-	ResponseResult.Rotation = XMLoadFloat4(&(RigidPtr->GetWorldTransform().Rotation));
+	OutParams.Restitution = PhysicsState->GetRestitution();
+	OutParams.FrictionKinetic = PhysicsState->GetFrictionKinetic();
+	OutParams.FrictionStatic = PhysicsState->GetFrictionStatic();
+	Quaternion Rotation = PhysicsState->GetWorldRotation();
+	OutParams.Rotation = XMLoadFloat4(&Rotation);
 	return;
 }
 
@@ -414,8 +433,8 @@ void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollis
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
 		return;
 
-	auto RigidA = CompA->GetRigidBody();
-	auto RigidB = CompB->GetRigidBody();
+	auto RigidA = CompA->GetPhysicsState();
+	auto RigidB = CompB->GetPhysicsState();
 
 	if (!RigidA || !RigidB)
 		return;
@@ -434,15 +453,13 @@ void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollis
 		// 각 물체를 반대 방향으로 밀어냄
 		if (!RigidA->IsStatic())
 		{
-			auto TransA = RigidA->GetWorldTransform();
-			Vector3 newPos = TransA.Position - correction * ratioA;
+			Vector3 newPos = RigidA->GetWorldPosition() - correction * ratioA;
 			RigidA->SetWorldPosition(newPos);
 		}
 
 		if (!RigidB->IsStatic())
 		{
-			auto TransB = RigidB->GetWorldTransform();
-			Vector3 newPos = TransB.Position + correction * ratioB;
+			Vector3 newPos = RigidB->GetWorldPosition() + correction * ratioB;
 			RigidB->SetWorldPosition(newPos);
 		}
 	}
@@ -454,8 +471,8 @@ void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPa
 	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
 	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
 
-	if (!ComponentA || !ComponentA->GetRigidBody() ||
-		!ComponentB || !ComponentB->GetRigidBody() ||
+	if (!ComponentA || !ComponentA->GetPhysicsState() ||
+		!ComponentB || !ComponentB->GetPhysicsState() ||
 		!DetectResult.bCollided)
 		return;
 
@@ -474,8 +491,8 @@ void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPa
 
 	FCollisionResponseResult collisionResponse =
 		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
-	auto RigidPtrA = ComponentA.get()->GetRigidBody();
-	auto RigidPtrB = ComponentB.get()->GetRigidBody();
+	auto RigidPtrA = ComponentA.get()->GetPhysicsState();
+	auto RigidPtrB = ComponentB.get()->GetPhysicsState();
 	//A->B 방향의 법선벡터이므로 반대로 적용
 	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);

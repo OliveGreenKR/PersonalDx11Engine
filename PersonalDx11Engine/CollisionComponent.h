@@ -10,6 +10,7 @@
 
 class URigidBodyComponent;
 class UGameObject;
+class IPhysicsState;
 
 // 충돌 응답에 필요한 속성을 관리하는 최상위 충돌체 클래스, 직접 사용하지 마시오
 class UCollisionComponentBase : public USceneComponent, public IDynamicBoundable, public ICollisionShape
@@ -49,6 +50,7 @@ public:
 public:
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
+	IPhysicsState* GetPhysicsState() const;
 	const FTransform& GetPreviousWorldTransform() const { return PrevWorldTransform; }
 
 private:
@@ -79,6 +81,7 @@ public:
 
 private:
 	std::weak_ptr<URigidBodyComponent> RigidBody;
+
 	// CCD를 위한 이전 프레임 월드 트랜스폼
 	FTransform PrevWorldTransform = FTransform();
 

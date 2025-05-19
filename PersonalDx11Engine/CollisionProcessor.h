@@ -7,9 +7,8 @@
 #include "CollisionDefines.h"
 
 class FDynamicAABBTree;
-class URigidBodyComponent;
 struct FTransform;
-
+class IPhysicsState;
 
 #pragma region CollisionPair
 struct FCollisionPair
@@ -18,6 +17,7 @@ struct FCollisionPair
         : TreeIdA(InIdA < InIdB ? InIdA : InIdB)
         , TreeIdB(InIdA < InIdB ? InIdB : InIdA)
         , bPrevCollided(false)
+        , bStepSimulateFinished(false)
     {
     }
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
@@ -27,6 +27,7 @@ struct FCollisionPair
 
     mutable FAccumulatedConstraint PrevConstraints;
     mutable bool bPrevCollided : 1;
+    mutable bool bStepSimulateFinished : 1;
       
     bool operator==(const FCollisionPair& Other) const
     {
@@ -94,10 +95,6 @@ private:
     ~FCollisionProcessorT();
 
 public:
-    [[deprecated("Use Another signature of RegisterCollision")]]
-    void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent,
-                              const std::shared_ptr<URigidBodyComponent>& InRigidBody);
-
     void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
     void UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
 
@@ -119,10 +116,8 @@ private:
 
     void SimulateStep(float stepDeltaTime);
 
-
-
     //CCD 임계속도 비교
-    bool ShouldUseCCD(const URigidBodyComponent* RigidBody) const;
+    bool ShouldUseCCD(const IPhysicsState* RigidBody) const;
 
     //새로운 충돌쌍 업데이트
     void UpdateCollisionPairs();

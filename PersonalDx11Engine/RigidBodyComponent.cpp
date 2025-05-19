@@ -206,9 +206,8 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 
 void URigidBodyComponent::SynchronizeState()
 {
-	if (IsDirty())
+	if (!IsDirty())
 	{
-		LOG_FUNC_CALL("[Error] Invalid Trial for Synchronization of Physics States.");
 		return;
 	}
 	CurrentState = CachedState;
