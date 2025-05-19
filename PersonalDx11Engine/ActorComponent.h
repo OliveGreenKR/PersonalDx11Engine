@@ -54,7 +54,6 @@ public:
 
     // Tick 전파
     void BroadcastTick(const float DeltaTime);
-	void BroadcastTickPhysics(const float DeltaTime);
 
     // 컴포넌트 활성화 상태
 	void SetActive(bool bNewActive);
@@ -69,7 +68,6 @@ protected:
 	virtual void PostTreeInitialized();
 
 	virtual void Tick(const float DeltaTime);
-	virtual void TickPhysics(const float DeltaTime);
 
 protected:
 

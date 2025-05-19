@@ -1,9 +1,8 @@
 #pragma once
 // 물리 시스템 클래스 (개념적 설계)
 #include <vector>
-#include "PhysicsStateInterface.h"
+#include "PhysicsObjectInterface.h"
 #include <memory>
-
 
 class FCollisionProcessorT;
 
@@ -11,7 +10,7 @@ class PhysicsSystem
 {
 private:
     // 등록된 물리 객체들
-    std::vector<std::weak_ptr<IPhysicsState>> RegisteredObjects;
+    std::vector<std::weak_ptr<IPhysicsObejct>> RegisteredObjects;
 
     // 충돌 관리자
     FCollisionProcessorT* CollisionProcessor;
@@ -26,8 +25,8 @@ private:
 
 public:
     // 물리 객체 등록/해제
-    void RegisterPhysicsObject(std::shared_ptr<IPhysicsState>& Object);
-    void UnregisterPhysicsObject(std::shared_ptr<IPhysicsState>& Object);
+    void RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& Object);
+    void UnregisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& Object);
 
     // 메인 물리 업데이트 (게임 루프에서 호출)
     void TickPhysics(const float DeltaTime);
@@ -43,5 +42,5 @@ private:
     bool SimulateSubstep(const float TimeStep);
 
     // 시뮬레이션 완료 후 최종 상태 적용
-    void FinalizeState();
+    void FinalizeSimulation();
 };

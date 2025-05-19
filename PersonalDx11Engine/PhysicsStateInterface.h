@@ -4,20 +4,11 @@
 class IPhysicsState
 {
 public:
-
-    virtual void TickPhysics(const float DeltaTime) = 0;
-
-    virtual void SynchronizeState() = 0;
-    virtual void CaptureState() const = 0;
-    virtual bool IsActive() const = 0;
-    virtual bool IsDirty() const = 0;
-    virtual bool IsStatic() const = 0;
-
+    virtual Vector3 GetWorldPosition() const = 0;
     virtual void SetWorldPosition(const Vector3& InPosition) = 0;
 
 	virtual float GetMass() const = 0;
     virtual Vector3 GetRotationalInertia() const = 0;
-    virtual Vector3 GetWorldPosition() const = 0;
     virtual Vector3 GetVelocity() const = 0;
     virtual Vector3 GetAngularVelocity() const = 0;
     virtual Quaternion GetWorldRotation() const = 0;

@@ -433,30 +433,13 @@ void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollis
 	if (!RigidA || !RigidB)
 		return;
 
-	// 정적/동적 상태에 따른 보정 비율 결정
-	float ratioA = RigidA->IsStatic() ? 0.0f : 1.0f;
-	float ratioB = RigidB->IsStatic() ? 0.0f : 1.0f;
+	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
+	// 각 물체를 반대 방향으로 밀어냄
+	Vector3 newPosA = RigidA->GetWorldPosition() - correction * 0.5f;
+	RigidA->SetWorldPosition(newPosA);
 
-	if (ratioA + ratioB > 0.0f)
-	{
-		if (ratioA > 0.0f) ratioA /= (ratioA + ratioB);
-		if (ratioB > 0.0f) ratioB /= (ratioA + ratioB);
-
-		Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
-
-		// 각 물체를 반대 방향으로 밀어냄
-		if (!RigidA->IsStatic())
-		{
-			Vector3 newPos = RigidA->GetWorldPosition() - correction * ratioA;
-			RigidA->SetWorldPosition(newPos);
-		}
-
-		if (!RigidB->IsStatic())
-		{
-			Vector3 newPos = RigidB->GetWorldPosition() + correction * ratioB;
-			RigidB->SetWorldPosition(newPos);
-		}
-	}
+	Vector3 newPosB = RigidB->GetWorldPosition() + correction * 0.5f;
+	RigidB->SetWorldPosition(newPosB);
 }
 
 void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)

@@ -600,6 +600,9 @@
     <ClInclude Include="CollisionProcessor.h">
       <Filter>Engine\Physics\Collision</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsObjectInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

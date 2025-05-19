@@ -4,6 +4,7 @@
 #include "ActorComponent.h"
 #include "SceneComponent.h"
 #include "PhysicsStateInterface.h"
+#include "PhysicsObjectInterface.h"
 
 class UGameObject;
 
@@ -13,7 +14,7 @@ enum class ERigidBodyType
 	Static
 };
 
-class URigidBodyComponent : public USceneComponent , public IPhysicsState
+class URigidBodyComponent : public USceneComponent , public IPhysicsState, public IPhysicsObejct
 {
 public:
 	// 회전관성 접근제어 토근

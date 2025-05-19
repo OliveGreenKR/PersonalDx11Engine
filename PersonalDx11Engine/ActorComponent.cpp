@@ -71,27 +71,6 @@ void UActorComponent::BroadcastTick(const float DeltaTime)
     }
 }
 
-void UActorComponent::BroadcastTickPhysics(const float DeltaTime)
-{
-    //트리계층구조를 따라 활성화된 컴포넌트 트리로 전파는 전부 되지만,
-    // PhysicsSimulated가 아니라면 본인은 전파의 책임만 담당함
-    
-    // 비활성화된 경우 전파하지 않음
-    if (!bIsActive)
-        return;
-
-    // 자신의 TickPhysics 호출
-    TickPhysics(DeltaTime);
-
-    // 모든 활성화 자식 컴포넌트에 대해 TickPhyics 전파
-    for (const auto& Child : ChildComponents)
-    {
-        if (Child.lock() && Child.lock()->IsActive())
-        {
-            Child.lock()->BroadcastTickPhysics(DeltaTime);
-        }
-    }
-}
 
 void UActorComponent::SetActive(bool bNewActive)
 {
@@ -162,12 +141,6 @@ void UActorComponent::Tick(const float DeltaTime)
                            [this](const auto& child) { return child.lock() == nullptr; }),
             children.end());
     }
-}
-
-void UActorComponent::TickPhysics(const float DeltaTime)
-{
-    if (!bIsActive||!bPhysicsSimulated)
-        return;
 }
 
 void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, bool bShouldCallEvent)

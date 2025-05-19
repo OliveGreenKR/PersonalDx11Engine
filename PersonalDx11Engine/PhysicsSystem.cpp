@@ -24,7 +24,7 @@ void PhysicsSystem::TickPhysics(const float DeltaTime)
     }
 
     // 시뮬레이션 결과 적용
-    FinalizeState();
+    FinalizeSimulation();
 }
 
 // 필요한 서브스텝 수 계산
@@ -44,7 +44,7 @@ void PhysicsSystem::PrepareSimulation()
         std::remove_if(
             RegisteredObjects.begin(),
             RegisteredObjects.end(),
-            [](const std::weak_ptr<IPhysicsState>& objWeak) {
+            [](const std::weak_ptr<IPhysicsObejct>& objWeak) {
                 return objWeak.expired();
             }
         ),
@@ -92,10 +92,18 @@ bool PhysicsSystem::SimulateSubstep(const float StepTime)
     const float SimualtedTime = StepTime * ReamainingTimeRatio;
     AccumulatedTime -= SimualtedTime;
 
+    // 물리시스템 관리 객체 Tick
     for (auto& PhysicsObject : RegisteredObjects)
     {
-        
+        //PhysicsTick 
+        auto PhysicsObjectPtr = PhysicsObject.lock();
+        if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
+        {
+            PhysicsObjectPtr->TickPhysics(SimualtedTime);
+        }
+       
     }
+
     if (ReamainingTimeRatio < KINDA_SMALL)
     {
         return true;
@@ -110,7 +118,7 @@ bool PhysicsSystem::SimulateSubstep(const float StepTime)
 
 
 // 시뮬레이션 완료 후 상태 적용
-void PhysicsSystem::FinalizeState()
+void PhysicsSystem::FinalizeSimulation()
 {
     bIsSimulating = false;
 
