@@ -2,14 +2,11 @@
 #include <memory>
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
-#include "CollisionManager.h"
+#include"PhysicsSystem.h"
 #include "TypeCast.h"
 #include "PhysicsStateInterface.h"
+#include "CollisionManager.h"
 
-//UCollisionComponentBase::UCollisionComponentBase(const Vector3& InHalfExtents) 
-//	: UCollisionComponentBase()
-//{
-//}
 
 UCollisionComponentBase::UCollisionComponentBase() 
 {

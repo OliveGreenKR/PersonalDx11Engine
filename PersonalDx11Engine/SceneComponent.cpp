@@ -373,6 +373,7 @@ void USceneComponent::PropagateWorldTransformToChildren()
 
 void USceneComponent::OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent)
 {
+    UActorComponent::OnParentChanged(NewParent);
     if (auto ParentScene = Engine::Cast<USceneComponent>(NewParent))
     {
         OnParentSceneChanged(ParentScene);

@@ -112,10 +112,10 @@ void UPhysicsSystem::PrepareSimulation()
             continue;
         }
    
-        // 상태 저장 최적화 (변경된 객체만)
-        if (Object->IsActive() && (Object->IsDirty()))
+        // 외부에서 변경된 상태 반영
+        if (Object->IsActive() && (Object->IsDirtyPhysicsState()))
         {
-            Object->CaptureState();
+            Object->SynchronizeState();
         }
     }
 
@@ -133,8 +133,9 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
     float ReamainingTimeRatio = 1.0f;
     float ConsumimgTimeRatio = 1.0f;
 
-    // 충돌 처리
-    //이때 CollisonManager는 캡처된 상태값을 이용하고 캡처된 상태값만 수정할수 있도록 함
+    // 점진적 물리 시뮬레이션 및 소요 시간 파악
+    
+    // 1. 충돌 
     float CollideTimeRatio = CollisionProcessor->ProcessCollisions(StepTime);
     ConsumimgTimeRatio = std::min(ConsumimgTimeRatio, CollideTimeRatio);
     ReamainingTimeRatio -= ConsumimgTimeRatio;
@@ -143,7 +144,7 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
     const float SimualtedTime = StepTime * ReamainingTimeRatio;
     AccumulatedTime -= SimualtedTime;
 
-    // 물리시스템 관리 객체 Tick
+    // 물리 Tick
     for (auto& PhysicsObject : RegisteredObjects)
     {
         //PhysicsTick 
@@ -185,7 +186,8 @@ void UPhysicsSystem::FinalizeSimulation()
 
         if (Object->IsActive())
         {
-            Object->SynchronizeState();
+            //시뮬레이션 결과 외부에 반영
+            Object->CaptureState();
         }
     }
 }

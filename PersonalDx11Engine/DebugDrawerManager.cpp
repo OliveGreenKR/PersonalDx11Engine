@@ -128,6 +128,7 @@ void UDebugDrawManager::Render(URenderer* InRenderer)
 		FRenderJob RenderJob = InRenderer->AllocateRenderJob<FRenderDataSimpleColor>();
 		RenderJob.RenderState = ERenderStateType::Wireframe;
 		auto Primitive = Draw->Primitive.get();
+		Primitive->SetActive(true);
 		auto Camera = USceneManager::Get()->GetActiveCamera();
 		if (Primitive && Camera)
 		{
@@ -162,6 +163,7 @@ void UDebugDrawManager::Tick(const float DeltaTime)
 		if (Draw->RemainingTime < 0.0f)
 		{
 			Draw->Reset();
+			Draw->Primitive->SetActive(false);
 			ToReleased.push_back(drawObject);
 		}
 	}

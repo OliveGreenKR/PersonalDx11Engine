@@ -20,7 +20,9 @@ private:
 private:
     // 등록된 물리 객체들
     std::vector<std::weak_ptr<IPhysicsObejct>> RegisteredObjects;
-    // 충돌 관리자
+
+    // 하부시스템
+        //충돌
     FCollisionProcessorT* CollisionProcessor;
 
 public:
@@ -40,8 +42,10 @@ public:
     // 메인 물리 업데이트 (게임 루프에서 호출)
     void TickPhysics(const float DeltaTime);
 
-    void PrintDebugInfo();
 
+#pragma region Debug
+    void PrintDebugInfo();
+#pragma endregion
 private:
     // 필요한 서브스텝 수 계산
     int CalculateRequiredSubsteps();

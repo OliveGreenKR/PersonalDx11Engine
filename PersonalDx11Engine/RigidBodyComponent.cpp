@@ -24,17 +24,13 @@ void URigidBodyComponent::PostInitialized()
 void URigidBodyComponent::Activate()
 {
 	USceneComponent::Activate();
-	auto myShared = Engine::Cast<IPhysicsObejct>(
-		Engine::Cast<URigidBodyComponent>(shared_from_this()));
-	UPhysicsSystem::Get()->RegisterPhysicsObject(myShared);
+	RegisterPhysicsSystem();
 }
 
 void URigidBodyComponent::DeActivate()
 {
 	USceneComponent::DeActivate();
-	auto myShared = Engine::Cast<IPhysicsObejct>(
-		Engine::Cast<URigidBodyComponent>(shared_from_this()));
-	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
+	UnRegisterPhysicsSystem();
 }
 
 void URigidBodyComponent::Reset()
@@ -48,7 +44,13 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	USceneComponent::Tick(DeltaTime);
 	if (!IsActive())
 		return;
-	SynchronizeState();
+}
+
+void URigidBodyComponent::TickPhysics(const float DeltaTime)
+{
+	if (!IsActive())
+		return;
+	//SynchronizeState();
 
 	// 물리 상태
 	Vector3 Velocity = CurrentState.Velocity;
@@ -140,7 +142,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	//	LOG("AngularVelocity with AccumulatedTorque : %s", Debug::ToString(AngularVelocity));
 	//	LOG("*------- AccumTorque : %s", Debug::ToString(AccumulatedTorque));
 	//}
-		
+
 
 	// 속도 제한
 	ClampVelocities(Velocity, AngularVelocity);
@@ -153,19 +155,31 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	AccumulatedTorque = Vector3::Zero();
 
 	// 물리 상태 업데이트
-    CurrentState.Velocity = Velocity;
-    CurrentState.AngularVelocity = AngularVelocity;
-    CurrentState.AccumulatedForce = AccumulatedForce;
-    CurrentState.AccumulatedTorque = AccumulatedTorque;
-    CurrentState.AccumulatedInstantForce = AccumulatedInstantForce;
-    CurrentState.AccumulatedInstantTorque = AccumulatedInstantTorque;
+	CurrentState.Velocity = Velocity;
+	CurrentState.AngularVelocity = AngularVelocity;
+	CurrentState.AccumulatedForce = AccumulatedForce;
+	CurrentState.AccumulatedTorque = AccumulatedTorque;
+	CurrentState.AccumulatedInstantForce = AccumulatedInstantForce;
+	CurrentState.AccumulatedInstantTorque = AccumulatedInstantTorque;
 
-	CaptureState();
+	//CaptureState();
 }
 
-void URigidBodyComponent::TickPhysics(const float DeltaTime)
+void URigidBodyComponent::RegisterPhysicsSystem()
 {
-	LOG_FUNC_CALL("URigidBody TickPhysics with [%.3f] seconds", DeltaTime);
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+
+	assert(myShared, "[Error] InValidPhysicsObejct");
+	UPhysicsSystem::Get()->RegisterPhysicsObject(myShared);
+}
+
+void URigidBodyComponent::UnRegisterPhysicsSystem()
+{
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+	assert(myShared, "[Error] InValidPhysicsObejct");
+	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
 }
 
 void URigidBodyComponent::UpdateTransform(const float DeltaTime)
@@ -234,7 +248,7 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 
 void URigidBodyComponent::SynchronizeState()
 {
-	if (!IsDirty())
+	if (!IsDirtyPhysicsState())
 	{
 		return;
 	}
@@ -247,7 +261,7 @@ void URigidBodyComponent::CaptureState() const
 	CachedState = CurrentState;
 }
 
-bool URigidBodyComponent::IsDirty() const
+bool URigidBodyComponent::IsDirtyPhysicsState() const
 {
 	return bStateDirty;
 }

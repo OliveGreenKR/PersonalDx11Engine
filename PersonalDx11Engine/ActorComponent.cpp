@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <iostream>
+#include "Debug.h"
 
 UActorComponent::~UActorComponent()
 {
@@ -106,10 +107,6 @@ void UActorComponent::DeActivate()
 
 void UActorComponent::PostInitialized()
 {
-    if (bPhysicsSimulated)
-    {
-        //TODO Register Physics Tick System...
-    }
 }
 
 void UActorComponent::PostTreeInitialized()
@@ -208,6 +205,12 @@ void UActorComponent::SetParentInternal(const std::shared_ptr<UActorComponent>& 
 void UActorComponent::SetParent(const std::shared_ptr<UActorComponent>& InParent)
 {
     SetParentInternal(InParent, true); // 이벤트 호출 포함
+}
+
+void UActorComponent::OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent)
+{
+    //if(NewParent)
+    //    LOG("[%s] has a new Parent[%s]", GetComponentClassName(), NewParent->GetComponentClassName());
 }
 
 bool UActorComponent::AddChild(const std::shared_ptr<UActorComponent>& Child)

@@ -308,12 +308,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
-		UPhysicsSystem::Get()->TickPhysics(DeltaTime);
+		//리소스
 		UResourceManager::Get()->Tick(DeltaTime);
-		FCollisionProcessor::Get()->Tick(DeltaTime);
+		//일반 로직
 		USceneManager::Get()->Tick(DeltaTime);
-	
 		UDebugDrawManager::Get()->Tick(DeltaTime);
+		//물리
+		UPhysicsSystem::Get()->TickPhysics(DeltaTime);
+		FCollisionProcessor::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
 #pragma region Rendering

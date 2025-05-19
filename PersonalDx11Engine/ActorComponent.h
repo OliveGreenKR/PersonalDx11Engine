@@ -76,7 +76,7 @@ protected:
 	// 계층 구조 설정 내부 함수
     void SetParent(const std::shared_ptr<UActorComponent>& InParent);
 	// 부모 변경 시 호출되는 가상 함수
-	virtual void OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent){}
+	virtual void OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent);
 private:
 	// 계층 구조 내부 헬퍼
 	void SetParentInternal(const std::shared_ptr<UActorComponent>& InParent, const bool ShouldCallEvent );

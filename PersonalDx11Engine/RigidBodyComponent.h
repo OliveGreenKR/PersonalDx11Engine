@@ -14,7 +14,8 @@ enum class ERigidBodyType
 	Static
 };
 
-class URigidBodyComponent : public USceneComponent , public IPhysicsState, public IPhysicsObejct
+class URigidBodyComponent : public USceneComponent ,
+	public IPhysicsState, public IPhysicsObejct
 {
 public:
 	// 회전관성 접근제어 토근
@@ -39,6 +40,8 @@ public:
 
 	//IPhysicsObject
 	virtual void TickPhysics(const float DeltaTime) override;
+#pragma region IPhysicsState
+public:
 	// 속도 기반 인터페이스
 	void SetVelocity(const Vector3& InVelocity) override;
 	void AddVelocity(const Vector3& InVelocityDelta) override;
@@ -66,11 +69,20 @@ public:
 	// Inherited via IPhysicsState
 	Vector3 GetWorldPosition() const override { return USceneComponent::GetWorldPosition(); }
 	Quaternion GetWorldRotation() const override { return USceneComponent::GetWorldRotation(); }
+
+	inline void SetWorldPosition(const Vector3& InWorldPosition) override {
+		USceneComponent::SetWorldPosition(InWorldPosition);
+	}
+#pragma endregion
+#pragma region IPhysicsObject
 	// Inherited via IPhysicsState
+	//현재 상태를 외부상태로 변경(외부 상태 변화 반영)
 	void SynchronizeState()  override;
+	//외부 상태를 현재상태로 변경(현재 상태 변화 반영)
 	void CaptureState() const override;
-	bool IsDirty() const override;
+	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
+#pragma endregion
 
 	// 물리 속성 설정
 	void SetMass(float InMass);
@@ -80,10 +92,6 @@ public:
 	inline void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
 	inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
 	inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
-
-	inline void SetWorldPosition(const Vector3& InWorldPosition) override {
-		USceneComponent::SetWorldPosition(InWorldPosition);
-	}
 
 	inline void SetRigidType(ERigidBodyType&& InType) { RigidType = InType; }
 
@@ -99,6 +107,9 @@ public:
 	bool IsStatic() const { return RigidType == ERigidBodyType::Static; }
 
 private:
+	void RegisterPhysicsSystem() override;
+	void UnRegisterPhysicsSystem() override;
+
 	//속도에 따른 트랜스폼 변화
 	void UpdateTransform(float DeltaTime);
 	void ClampVelocities(Vector3& OutVelocity, Vector3& OutAngularVelocity);
