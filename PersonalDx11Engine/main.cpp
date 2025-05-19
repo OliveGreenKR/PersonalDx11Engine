@@ -22,6 +22,7 @@
 
 
 #include "define.h"
+#include "PhysicsSystem.h"
 #include "CollisionManager.h"
 
 #include "SceneManager.h"
@@ -308,6 +309,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #pragma endregion
 
 #pragma region logic
+		UPhysicsSystem::Get()->TickPhysics(DeltaTime);
 		UResourceManager::Get()->Tick(DeltaTime);
 		FCollisionProcessor::Get()->Tick(DeltaTime);
 		USceneManager::Get()->Tick(DeltaTime);
@@ -328,7 +330,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #pragma region SystemUI
 		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer, &TestScene01]() {
-			ImGui::SetNextWindowSize(ImVec2(400, 60));
+			ImGui::SetNextWindowSize(ImVec2(400, 100));
 			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 410, 0));
 			ImGui::Begin("SystemUI", nullptr,
 						 ImGuiWindowFlags_NoTitleBar |
@@ -357,6 +359,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::SameLine();
 			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));
 			
+			if (ImGui::Button("PhysicsSystem")) {
+				UPhysicsSystem::Get()->PrintDebugInfo();
+			}
 
 			if (ImGui::Button("RenderContext")) {
 				Renderer->GetRenderContext()->PrintCurrentBindins();

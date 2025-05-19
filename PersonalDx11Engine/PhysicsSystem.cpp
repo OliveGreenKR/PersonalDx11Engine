@@ -3,8 +3,26 @@
 #include <algorithm>
 #include "Debug.h"
 
+UPhysicsSystem::UPhysicsSystem()
+{
+    CollisionProcessor = new FCollisionProcessorT();
+    assert(CollisionProcessor, "Allocate Failed");
+
+}
+
+UPhysicsSystem::~UPhysicsSystem()
+{
+
+    RegisteredObjects.clear();
+
+    if (CollisionProcessor)
+    {
+        delete CollisionProcessor;
+    }
+}
+
 // 메인 물리 업데이트 (게임 루프에서 호출)
-void PhysicsSystem::TickPhysics(const float DeltaTime)
+void UPhysicsSystem::TickPhysics(const float DeltaTime)
 {
     // 시간 누적 및 서브스텝 계산
     AccumulatedTime += DeltaTime;
@@ -28,14 +46,14 @@ void PhysicsSystem::TickPhysics(const float DeltaTime)
 }
 
 // 필요한 서브스텝 수 계산
-int PhysicsSystem::CalculateRequiredSubsteps()
+int UPhysicsSystem::CalculateRequiredSubsteps()
 {
     int steps = static_cast<int>(AccumulatedTime / FixedTimeStep);
     return std::min(steps, MaxSubsteps);
 }
 
 // 시뮬레이션 시작 전 준비
-void PhysicsSystem::PrepareSimulation()
+void UPhysicsSystem::PrepareSimulation()
 {
     bIsSimulating = true;
 
@@ -71,7 +89,7 @@ void PhysicsSystem::PrepareSimulation()
 }
 
 // 단일 서브스텝 시뮬레이션
-bool PhysicsSystem::SimulateSubstep(const float StepTime)
+bool UPhysicsSystem::SimulateSubstep(const float StepTime)
 {
 	// 이미 충돌로 인해 전체 시간이 소진된 경우 검사
 	if (AccumulatedTime < KINDA_SMALL)
@@ -118,7 +136,7 @@ bool PhysicsSystem::SimulateSubstep(const float StepTime)
 
 
 // 시뮬레이션 완료 후 상태 적용
-void PhysicsSystem::FinalizeSimulation()
+void UPhysicsSystem::FinalizeSimulation()
 {
     bIsSimulating = false;
 
@@ -137,4 +155,16 @@ void PhysicsSystem::FinalizeSimulation()
             Object->SynchronizeState();
         }
     }
+}
+
+
+
+
+///////////////////////////////////////////////////////////
+
+void UPhysicsSystem::PrintDebugInfo()
+{
+#ifdef _DEBUG
+    LOG("Current Active PhysicsObejct : [%03u]", RegisteredObjects.size());
+#endif
 }
