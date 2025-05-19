@@ -112,10 +112,10 @@ void UPhysicsSystem::PrepareSimulation()
             continue;
         }
    
-        // 외부에서 변경된 상태 반영
+        // 외부상태 현재 상태로 캡처
         if (Object->IsActive() && (Object->IsDirtyPhysicsState()))
         {
-            Object->SynchronizeState();
+            Object->UpdateCurrentFromCached();
         }
     }
 
@@ -187,7 +187,7 @@ void UPhysicsSystem::FinalizeSimulation()
         if (Object->IsActive())
         {
             //시뮬레이션 결과 외부에 반영
-            Object->CaptureState();
+            Object->UpdateCachedFromCurrent();
         }
     }
 }

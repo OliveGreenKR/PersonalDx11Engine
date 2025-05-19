@@ -76,10 +76,11 @@ public:
 #pragma endregion
 #pragma region IPhysicsObject
 	// Inherited via IPhysicsState
-	//현재 상태를 외부상태로 변경(외부 상태 변화 반영)
-	void SynchronizeState()  override;
-	//외부 상태를 현재상태로 변경(현재 상태 변화 반영)
-	void CaptureState() const override;
+
+	// 현재 상태를 외부 상태로 저장
+	void UpdateCachedFromCurrent()  override;
+	// 외부 상태를 현재 상태로 저장
+	void UpdateCurrentFromCached() const override;
 	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
 #pragma endregion
@@ -135,10 +136,10 @@ private:
 	};
 
 	mutable bool bStateDirty = false;
-	//저장된 물리 상태값, 외부에 제공되고 수정될 수 있음.
-	mutable FRigidPhysicsState CachedState;
-	//실제 물리 상태값. Rigidbody는 해당 상태값에 따른 로직을 수행함.
-	FRigidPhysicsState CurrentState;
+	//저장된 물리 상태값, 외부에 읽기전용으로 제공될것
+	FRigidPhysicsState CachedState;
+	//실제 물리 상태값. 
+	mutable FRigidPhysicsState CurrentState;
 
 
 	// 물리 속성

@@ -246,19 +246,15 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return GetWorldTransform().Position;
 }
 
-void URigidBodyComponent::SynchronizeState()
+void URigidBodyComponent::UpdateCachedFromCurrent()
 {
-	if (!IsDirtyPhysicsState())
-	{
-		return;
-	}
-	CurrentState = CachedState;
+	CachedState = CurrentState;
 	bStateDirty = false;
 }
 
-void URigidBodyComponent::CaptureState() const
+void URigidBodyComponent::UpdateCurrentFromCached() const
 {
-	CachedState = CurrentState;
+	CurrentState = CachedState;
 }
 
 bool URigidBodyComponent::IsDirtyPhysicsState() const
