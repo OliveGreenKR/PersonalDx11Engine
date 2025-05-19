@@ -359,27 +359,25 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
 
+			//response
+			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+			//position correction
+
+			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 			if (DetectResult.TimeOfImpact > 1.0f - KINDA_SMALL)
 			{
-				//즉시 적용
-				//response
-				ApplyCollisionResponseByContraints(ActivePair, DetectResult);
-				//position correction
-				ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
-				//dispatch event
-				BroadcastCollisionEvents(ActivePair, DetectResult);
-				//충돌 정보 저장
-				ActivePair.bPrevCollided = DetectResult.bCollided;
 				//스텝 시뮬레이션 종료
 				ActivePair.bStepSimulateFinished = true;
+				//dispatch event
+				BroadcastCollisionEvents(ActivePair, DetectResult);
 			}
 			else
 			{
-				//추가계산필요 쌍(ToI 1.0미만)
+				ActivePair.bStepSimulateFinished = false;
 			}
 		}
-
-		
+		//충돌 정보 저장
+		ActivePair.bPrevCollided = DetectResult.bCollided;
 
 		
 		////response
@@ -388,10 +386,6 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 		//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 		////dispatch event
 		//BroadcastCollisionEvents(ActivePair, DetectResult);
-
-		////충돌정보 저장
-		//ActivePair.bPrevCollided = DetectResult.bCollided;
-		
 	}
 
 	return minCollideTime;

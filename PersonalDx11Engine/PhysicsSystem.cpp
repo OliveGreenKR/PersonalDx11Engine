@@ -71,7 +71,7 @@ void PhysicsSystem::PrepareSimulation()
 }
 
 // 단일 서브스텝 시뮬레이션
-bool PhysicsSystem::SimulateSubstep(const float TimeStep)
+bool PhysicsSystem::SimulateSubstep(const float StepTime)
 {
 	// 이미 충돌로 인해 전체 시간이 소진된 경우 검사
 	if (AccumulatedTime < KINDA_SMALL)
@@ -80,16 +80,22 @@ bool PhysicsSystem::SimulateSubstep(const float TimeStep)
 
 	}
     float ReamainingTimeRatio = 1.0f;
+    float ConsumimgTimeRatio = 1.0f;
 
     // 충돌 처리
-            //이때 CollisonManager는 캡처된 상태값을 이용하고 캡처된 상태값만 수정할수 있도록 함
-    float CollideTimeRatio = CollisionProcessor->ProcessCollisions(TimeStep);
-    ReamainingTimeRatio -= CollideTimeRatio;
-
-
+    //이때 CollisonManager는 캡처된 상태값을 이용하고 캡처된 상태값만 수정할수 있도록 함
+    float CollideTimeRatio = CollisionProcessor->ProcessCollisions(StepTime);
+    ConsumimgTimeRatio = std::min(ConsumimgTimeRatio, CollideTimeRatio);
+    ReamainingTimeRatio -= ConsumimgTimeRatio;
 
     // 시간 업데이트
-    AccumulatedTime -= TimeStep * ReamainingTimeRatio;
+    const float SimualtedTime = StepTime * ReamainingTimeRatio;
+    AccumulatedTime -= SimualtedTime;
+
+    for (auto& PhysicsObject : RegisteredObjects)
+    {
+        
+    }
     if (ReamainingTimeRatio < KINDA_SMALL)
     {
         return true;
@@ -97,6 +103,7 @@ bool PhysicsSystem::SimulateSubstep(const float TimeStep)
     }
     else
     {
+        LOG_FUNC_CALL("CollideSubSteps for %.3f", CollideTimeRatio);
         return false;
     }
 }

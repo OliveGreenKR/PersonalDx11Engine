@@ -4,6 +4,9 @@
 class IPhysicsState
 {
 public:
+
+    virtual void TickPhysics(const float DeltaTime) = 0;
+
     virtual void SynchronizeState() = 0;
     virtual void CaptureState() const = 0;
     virtual bool IsActive() const = 0;
