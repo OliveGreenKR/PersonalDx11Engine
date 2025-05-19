@@ -180,6 +180,8 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 	if (!IsActive())
 		return;
 
+	bStateDirty = true;
+
 	CachedState.AccumulatedForce += Force;
 	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
 	CachedState.AccumulatedTorque += Torque;
@@ -189,6 +191,7 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 {
 	if (!IsActive())
 		return;
+	bStateDirty = true;
 
 	CachedState.AccumulatedInstantForce += Impulse;
 	Vector3 COM = GetCenterOfMass();
@@ -236,24 +239,28 @@ void URigidBodyComponent::SetMass(float InMass)
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 {
+	bStateDirty = true;
 	CachedState.Velocity = InVelocity;
 	ClampLinearVelocity(CachedState.Velocity);
 }
 
 void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
 {
+	bStateDirty = true;
 	CachedState.Velocity += InVelocityDelta;
 	ClampLinearVelocity(CachedState.Velocity);
 }
 
 void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
 {
+	bStateDirty = true;
 	CachedState.AngularVelocity = InAngularVelocity;
 	ClampAngularVelocity(CachedState.AngularVelocity);
 }
 
 void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDelta)
 {
+	bStateDirty = true;
 	CachedState.AngularVelocity += InAngularVelocityDelta;
 	ClampAngularVelocity(CachedState.AngularVelocity);
 }

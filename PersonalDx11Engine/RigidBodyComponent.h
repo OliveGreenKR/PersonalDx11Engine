@@ -43,9 +43,9 @@ public:
 	void ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;
 
 	// Getters
-	inline Vector3 GetVelocity() const override { return CachedState.Velocity;
-	}
+	inline Vector3 GetVelocity() const override { return CachedState.Velocity;}
 	inline Vector3 GetAngularVelocity() const override { return CachedState.AngularVelocity; }
+
 	inline float GetMass() const override { return IsStatic() ? 1 / KINDA_SMALL : Mass; }
 	inline Vector3 GetRotationalInertia() const override { return RotationalInertia; }
 	inline float GetRestitution() const override { return Restitution; }
