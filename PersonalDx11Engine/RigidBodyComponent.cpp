@@ -30,15 +30,6 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	Vector3 AccumulatedInstantForce = CurrentState.AccumulatedInstantForce;
 	Vector3 AccumulatedInstantTorque = CurrentState.AccumulatedInstantTorque;
 
-	// 물리 속성
-	float Mass = CurrentState.Mass;
-	Vector3 RotationalInertia = CurrentState.RotationalInertia;
-	float FrictionKinetic = CurrentState.FrictionKinetic;
-	float FrictionStatic = CurrentState.FrictionStatic;
-	float Restitution = CurrentState.Restitution;
-	float LinearDrag = CurrentState.LinearDrag;
-	float AngularDrag = CurrentState.AngularDrag;
-
 	// 모든 힘을 가속도로 변환
 	Vector3 TotalAcceleration = Vector3::Zero();
 	Vector3 TotalAngularAcceleration = Vector3::Zero();
@@ -133,22 +124,13 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 	AccumulatedForce = Vector3::Zero();
 	AccumulatedTorque = Vector3::Zero();
 
-	// 상태 업데이트
+	// 물리 상태 업데이트
     CurrentState.Velocity = Velocity;
     CurrentState.AngularVelocity = AngularVelocity;
     CurrentState.AccumulatedForce = AccumulatedForce;
     CurrentState.AccumulatedTorque = AccumulatedTorque;
     CurrentState.AccumulatedInstantForce = AccumulatedInstantForce;
     CurrentState.AccumulatedInstantTorque = AccumulatedInstantTorque;
-
-    // 물리 속성
-    CurrentState.Mass = Mass;
-    CurrentState.RotationalInertia = RotationalInertia;
-    CurrentState.FrictionKinetic = FrictionKinetic;
-    CurrentState.FrictionStatic = FrictionStatic;
-    CurrentState.Restitution = Restitution;
-    CurrentState.LinearDrag = LinearDrag;
-    CurrentState.AngularDrag = AngularDrag;
 
 	CaptureState();
 }
@@ -219,7 +201,6 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return GetWorldTransform().Position;
 }
 
-
 void URigidBodyComponent::SynchronizeState()
 {
 	if (IsDirty())
@@ -246,12 +227,11 @@ bool URigidBodyComponent::IsActive() const
 	return USceneComponent::IsActive();
 }
 
-
 void URigidBodyComponent::SetMass(float InMass)
 {
-	CachedState.Mass = std::max(InMass, KINDA_SMALL);
+	Mass = std::max(InMass, KINDA_SMALL);
 	// 회전 관성도 질량에 따라 갱신
-	CachedState.RotationalInertia = 4.0f * CachedState.Mass * Vector3::One(); //근사
+	RotationalInertia = 4.0f * Mass * Vector3::One(); //근사
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)

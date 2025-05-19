@@ -46,11 +46,11 @@ public:
 	inline Vector3 GetVelocity() const override { return CachedState.Velocity;
 	}
 	inline Vector3 GetAngularVelocity() const override { return CachedState.AngularVelocity; }
-	inline float GetMass() const override { return IsStatic() ? 1 / KINDA_SMALL : CachedState.Mass; }
-	inline Vector3 GetRotationalInertia() const override { return CachedState.RotationalInertia; }
-	inline float GetRestitution() const override { return CachedState.Restitution; }
-	inline float GetFrictionKinetic() const override { return CachedState.FrictionKinetic; }
-	inline float GetFrictionStatic() const override { return CachedState.FrictionStatic; }
+	inline float GetMass() const override { return IsStatic() ? 1 / KINDA_SMALL : Mass; }
+	inline Vector3 GetRotationalInertia() const override { return RotationalInertia; }
+	inline float GetRestitution() const override { return Restitution; }
+	inline float GetFrictionKinetic() const override { return FrictionKinetic; }
+	inline float GetFrictionStatic() const override { return FrictionStatic; }
 
 	inline float GetSpeed() const { return CachedState.Velocity.Length(); }
 
@@ -68,14 +68,14 @@ public:
 	inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
 	inline void SetMaxAngularSpeed(float InSpeed) { MaxAngularSpeed = InSpeed; }
 	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
-	inline void SetFrictionKinetic(float InFriction) { CachedState.FrictionKinetic = InFriction; }
-	inline void SetFrictionStatic(float InFriction) { CachedState.FrictionStatic = InFriction; }
-	inline void SetRestitution(float InRestitution) { CachedState.Restitution = InRestitution; }
+	inline void SetFrictionKinetic(float InFriction) { FrictionKinetic = InFriction; }
+	inline void SetFrictionStatic(float InFriction) { FrictionStatic = InFriction; }
+	inline void SetRestitution(float InRestitution) { Restitution = InRestitution; }
 
 	inline void SetRigidType(ERigidBodyType&& InType) { RigidType = InType; }
 
 	//토큰소유자만 접근 가능
-	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { CachedState.RotationalInertia = Value; }
+	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { RotationalInertia = Value; }
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
 
@@ -108,15 +108,6 @@ private:
 		Vector3 AccumulatedTorque = Vector3::Zero();
 		Vector3 AccumulatedInstantForce = Vector3::Zero();
 		Vector3 AccumulatedInstantTorque = Vector3::Zero();
-
-		// 물리 속성
-		float Mass = 1.0f;
-		Vector3 RotationalInertia = Vector3::One();
-		float FrictionKinetic = 0.3f;
-		float FrictionStatic = 0.5f;
-		float Restitution = 0.5f;
-		float LinearDrag = 0.01f;
-		float AngularDrag = 0.01f;
 	};
 
 	mutable bool bStateDirty = false;
@@ -126,27 +117,20 @@ private:
 	FRigidPhysicsState CurrentState;
 
 
+	// 물리 속성
+	float Mass = 1.0f;
+	Vector3 RotationalInertia = Vector3::One();
+	float FrictionKinetic = 0.3f;
+	float FrictionStatic = 0.5f;
+	float Restitution = 0.5f;
+	float LinearDrag = 0.01f;
+	float AngularDrag = 0.01f;
+
 	// 물리 객체 상태
 	ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
-	//// 물리 상태 변수
-	//Vector3 Velocity = Vector3::Zero();
-	//Vector3 AngularVelocity = Vector3::Zero();
-	//Vector3 AccumulatedForce = Vector3::Zero();
-	//Vector3 AccumulatedTorque = Vector3::Zero();
-	//Vector3 AccumulatedInstantForce = Vector3::Zero();
-	//Vector3 AccumulatedInstantTorque = Vector3::Zero();
-
-	//// 물리 속성
-	//float Mass = 1.0f;
-	//Vector3 RotationalInertia = Vector3::One();
 	float MaxSpeed = 400.0f;
 	float MaxAngularSpeed = 6.0f * PI;
-	//float FrictionKinetic = 0.3f;
-	//float FrictionStatic = 0.5f;
-	//float Restitution = 0.5f;
-	//float LinearDrag = 0.01f;
-	//float AngularDrag = 0.01f;
 
 	float GravityScale = 9.81f;
 	Vector3 GravityDirection = -Vector3::Up();
