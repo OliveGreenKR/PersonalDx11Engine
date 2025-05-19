@@ -8,7 +8,6 @@ public:
     virtual void CaptureState() const = 0;
     virtual bool IsActive() const = 0;
     virtual bool IsDirty() const = 0;
-    virtual bool HasCapturedState() const = 0;
 
 	virtual float GetMass() const = 0;
     virtual Vector3 GetRotationalInertia() const = 0;

@@ -5,7 +5,7 @@
 #include <memory>
 
 
-class FCollisionProcessor;
+class FCollisionProcessorT;
 
 class PhysicsSystem
 {
@@ -14,7 +14,7 @@ private:
     std::vector<std::weak_ptr<IPhysicsState>> RegisteredObjects;
 
     // 충돌 관리자
-    FCollisionProcessor* CollisionProcessor;
+    FCollisionProcessorT* CollisionProcessor;
 
     // 물리 시뮬레이션 설정
     float FixedTimeStep = 0.016f;  // 60Hz

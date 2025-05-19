@@ -78,20 +78,20 @@ struct FContactPoint
 /// DynamicAABBTree를 이용해 객체의 충돌쌍을 관리하고
 /// 충돌 테스트 및 충돌 반응등을 수행함
 /// </summary>
-class FCollisionProcessor
+class FCollisionProcessorT
 {
 private:
     friend class UPhysicsSystem;
 
     // 복사 및 이동 방지
-    FCollisionProcessor(const FCollisionProcessor&) = delete;
-    FCollisionProcessor& operator=(const FCollisionProcessor&) = delete;
-    FCollisionProcessor(FCollisionProcessor&&) = delete;
-    FCollisionProcessor& operator=(FCollisionProcessor&&) = delete;
+    FCollisionProcessorT(const FCollisionProcessorT&) = delete;
+    FCollisionProcessorT& operator=(const FCollisionProcessorT&) = delete;
+    FCollisionProcessorT(FCollisionProcessorT&&) = delete;
+    FCollisionProcessorT& operator=(FCollisionProcessorT&&) = delete;
 
     // 생성자/소멸자
-    FCollisionProcessor() = default;
-    ~FCollisionProcessor();
+    FCollisionProcessorT() = default;
+    ~FCollisionProcessorT();
 
 public:
     [[deprecated("Use Another signature of RegisterCollision")]]

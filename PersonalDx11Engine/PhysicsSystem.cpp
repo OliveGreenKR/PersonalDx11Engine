@@ -62,7 +62,7 @@ void PhysicsSystem::PrepareSimulation()
         }
    
         // 상태 저장 최적화 (변경된 객체만)
-        if (Object->IsActive() && (Object->IsDirty() || !Object->HasCapturedState()))
+        if (Object->IsActive() && (Object->IsDirty()))
         {
             Object->CaptureState();
         }
