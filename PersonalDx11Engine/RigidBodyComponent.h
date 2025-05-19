@@ -70,9 +70,7 @@ public:
 	Vector3 GetWorldPosition() const override { return USceneComponent::GetWorldPosition(); }
 	Quaternion GetWorldRotation() const override { return USceneComponent::GetWorldRotation(); }
 
-	inline void SetWorldPosition(const Vector3& InWorldPosition) override {
-		USceneComponent::SetWorldPosition(InWorldPosition);
-	}
+	inline void SetWorldPosition(const Vector3& InWorldPosition) override;
 #pragma endregion
 #pragma region IPhysicsObject
 	// Inherited via IPhysicsState
@@ -138,7 +136,7 @@ private:
 	mutable bool bStateDirty = false;
 	//저장된 물리 상태값, 외부에 읽기전용으로 제공될것
 	FRigidPhysicsState CachedState;
-	//실제 물리 상태값. 
+	//물리시스템 내부 연산용 물리 상태값. 
 	mutable FRigidPhysicsState CurrentState;
 
 

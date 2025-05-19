@@ -246,6 +246,11 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return GetWorldTransform().Position;
 }
 
+inline void URigidBodyComponent::SetWorldPosition(const Vector3& InWorldPosition)
+{
+	USceneComponent::SetWorldPosition(InWorldPosition);
+}
+
 void URigidBodyComponent::UpdateCachedFromCurrent()
 {
 	CachedState = CurrentState;

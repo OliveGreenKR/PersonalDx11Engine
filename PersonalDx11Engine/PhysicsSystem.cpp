@@ -200,6 +200,6 @@ void UPhysicsSystem::FinalizeSimulation()
 void UPhysicsSystem::PrintDebugInfo()
 {
 #ifdef _DEBUG
-    LOG("Current Active PhysicsObejct : [%03u]", RegisteredObjects.size());
+    LOG("Current Active PhysicsObejct : [%03d]", RegisteredObjects.size());
 #endif
 }
