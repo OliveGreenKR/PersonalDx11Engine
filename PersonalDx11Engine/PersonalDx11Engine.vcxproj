@@ -212,6 +212,7 @@
     <ClInclude Include="BindableInterface.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
+    <ClInclude Include="DynamicCircularQueue.h" />
     <ClInclude Include="ElasticBody.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>

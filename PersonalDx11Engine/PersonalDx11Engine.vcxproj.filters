@@ -343,6 +343,9 @@
     <Filter Include="Engine\Physics\Collision\Part">
       <UniqueIdentifier>{b905b939-6f67-4380-a8b9-12483c0a6bcf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\DataStructure\DynamicCircularQueue">
+      <UniqueIdentifier>{892330bf-c239-4077-a5d7-fa8c4df76270}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -602,6 +605,9 @@
     </ClInclude>
     <ClInclude Include="PhysicsObjectInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicCircularQueue.h">
+      <Filter>Engine\DataStructure\DynamicCircularQueue</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
