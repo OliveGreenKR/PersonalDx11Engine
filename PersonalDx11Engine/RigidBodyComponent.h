@@ -5,6 +5,7 @@
 #include "SceneComponent.h"
 #include "PhysicsStateInterface.h"
 #include "PhysicsObjectInterface.h"
+#include "DynamicCircularQueue.h"
 
 class UGameObject;
 
@@ -159,6 +160,9 @@ private:
 	Vector3 GravityDirection = -Vector3::Up();
 
 #pragma region PhysicsRequest Queue
-	
+	//private:
+
+	//private:
+	//	TCircularQueue
 #pragma endregion
 };
