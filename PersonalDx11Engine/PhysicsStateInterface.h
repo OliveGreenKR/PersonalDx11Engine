@@ -16,8 +16,6 @@ public:
     virtual Quaternion GetWorldRotation() const = 0;
     virtual Vector3 GetWorldPosition() const = 0;
 
-    virtual void SetWorldPosition(const Vector3& InPosition) = 0;
-
     virtual void ApplyForce(const Vector3& Force) = 0;
     virtual void ApplyImpulse(const Vector3& Impulse) = 0;
     virtual void ApplyForce(const Vector3& Force, const Vector3& Location) = 0;

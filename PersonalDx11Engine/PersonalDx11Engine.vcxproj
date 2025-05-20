@@ -232,6 +232,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="PhysicsDefine.h" />
     <ClInclude Include="PhysicsObjectInterface.h" />
+    <ClInclude Include="PhysicsStateInternalInterface.h" />
     <ClInclude Include="PhysicsStateInterface.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>

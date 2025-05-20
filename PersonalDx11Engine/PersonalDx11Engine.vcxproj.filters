@@ -609,6 +609,9 @@
     <ClInclude Include="DynamicCircularQueue.h">
       <Filter>Engine\DataStructure\DynamicCircularQueue</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsStateInternalInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">
