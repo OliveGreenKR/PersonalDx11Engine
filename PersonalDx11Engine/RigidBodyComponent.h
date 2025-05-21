@@ -167,8 +167,7 @@ private:
 		// 물리 객체 상태
 		ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
-		FTransform CachedWorldTransform = FTransform();
-		FTransform CachedLocalTransform = FTransform();
+		FTransform WorldTransfrorm;
 	};
 
 	mutable bool bStateDirty = false;

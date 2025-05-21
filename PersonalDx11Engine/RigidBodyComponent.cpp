@@ -19,6 +19,9 @@ URigidBodyComponent::~URigidBodyComponent()
 void URigidBodyComponent::PostInitialized()
 {
 	USceneComponent::PostInitialized();
+
+	CachedState.WorldTransfrorm = GetWorldTransform();
+	SimulatedState = CachedState;
 }
 
 void URigidBodyComponent::Activate()
@@ -166,8 +169,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	SimulatedState.AccumulatedTorque = AccumulatedTorque;
 	SimulatedState.AccumulatedInstantForce = AccumulatedInstantForce;
 	SimulatedState.AccumulatedInstantTorque = AccumulatedInstantTorque;
-
-	//CaptureState();
 }
 
 void URigidBodyComponent::RegisterPhysicsSystem()
@@ -220,6 +221,7 @@ void URigidBodyComponent::UpdateTransform(const float DeltaTime)
 		);
 	}
 	SetWorldTransform(TargetTransform);
+
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
