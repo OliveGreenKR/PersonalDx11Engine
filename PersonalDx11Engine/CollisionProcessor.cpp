@@ -235,7 +235,8 @@ void FCollisionProcessorT::UpdateCollisionPairs()
 				NewPair.bStepSimulateFinished = false; //시뮬대상
 			}
 
-			NewCollisionPairs.insert(std::move(NewPair));});
+			NewCollisionPairs.insert(std::move(NewPair));
+									});
 	}
 
 	// Exit 상황이 확실한 쌍을 찾음
@@ -314,20 +315,19 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 			//response
 			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 			//position correction
-
 			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
 			if (DetectResult.TimeOfImpact > 1.0f - KINDA_SMALL)
 			{
 				//스텝 시뮬레이션 종료
 				ActivePair.bStepSimulateFinished = true;
-				//dispatch event
-				BroadcastCollisionEvents(ActivePair, DetectResult);
 			}
 			else
 			{
 				ActivePair.bStepSimulateFinished = false;
 			}
 		}
+		//dispatch event
+		BroadcastCollisionEvents(ActivePair, DetectResult);
 		//충돌 정보 저장
 		ActivePair.bPrevCollided = DetectResult.bCollided;
 
