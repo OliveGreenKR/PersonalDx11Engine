@@ -13,8 +13,6 @@ public:
 
     virtual Vector3 GetVelocity() const = 0;
     virtual Vector3 GetAngularVelocity() const = 0;
-    virtual Quaternion GetWorldRotation() const = 0;
-    virtual Vector3 GetWorldPosition() const = 0;
 
     virtual void ApplyForce(const Vector3& Force) = 0;
     virtual void ApplyImpulse(const Vector3& Impulse) = 0;
