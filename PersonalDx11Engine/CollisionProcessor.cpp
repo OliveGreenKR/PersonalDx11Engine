@@ -476,12 +476,7 @@ void FCollisionProcessorT::BroadcastCollisionEvents(const FCollisionPair& InPair
 void FCollisionProcessorT::LoadConfigFromIni()
 {
 	UConfigReadManager::Get()->GetValue("bPhysicsSimulated", Config.bPhysicsSimulated);
-	UConfigReadManager::Get()->GetValue("MinimumTimeStep", Config.MinimumTimeStep);
-	UConfigReadManager::Get()->GetValue("MaximumTimeStep", Config.MaximumTimeStep);
 	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", Config.CCDVelocityThreshold);
-	UConfigReadManager::Get()->GetValue("bUseFixedTimestep", Config.bUseFixedTimestep);
-	UConfigReadManager::Get()->GetValue("FixedTimeStep", Config.FixedTimeStep);
-	UConfigReadManager::Get()->GetValue("MaxSubSteps", Config.MaxSubSteps);
 	UConfigReadManager::Get()->GetValue("InitialCapacity", Config.InitialCapacity);
 	UConfigReadManager::Get()->GetValue("AABBMargin", Config.AABBMargin);
 }

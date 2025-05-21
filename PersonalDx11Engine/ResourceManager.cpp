@@ -65,7 +65,16 @@ void UResourceManager::UnloadUnusedResources(float TimeSinceLastUseSeconds)
         if (CurrentTick - rscIt->second.LastAccessTick > TimeThreshold)
         {
             rscIt = ResourceCache.erase(rscIt);
-            LOG("Rsc deleted in ResourceManager");
+            LOG_FUNC_CALL("Rsc[%d] deleted in ResourceManager",rscIt->second.Resource->GetType());
+            
+            /*enum class EResourceType
+            {
+                Shader,
+                Texture,
+                Material,
+                Model,
+                Max,
+            };*/
         }
         else
         {

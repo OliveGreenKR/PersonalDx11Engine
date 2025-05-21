@@ -62,6 +62,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     {
         if (SimulateSubstep(FixedTimeStep))
         {
+            // 시간 전부 사용- 서브  스텝 종료
             break;
         }
     }
@@ -122,19 +123,19 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
 		return true; // 더 이상 시뮬레이션 불필요
 
 	}
-    float ReamainingTimeRatio = 1.0f;
-    float ConsumimgTimeRatio = 1.0f;
-
-    // 점진적 물리 시뮬레이션 및 소요 시간 파악(가장 적은 ComusimgTime)
+    //가장 적은 시뮬시간
+    float MinSimulatedTimeRatio = 1.0f;
     
     // 1. 충돌 
     float CollideTimeRatio = GetCollisionSubsystem()->SimulateCollision(StepTime);
-    ConsumimgTimeRatio = std::min(ConsumimgTimeRatio, CollideTimeRatio);
-    ReamainingTimeRatio -= ConsumimgTimeRatio;
+    MinSimulatedTimeRatio = std::min(MinSimulatedTimeRatio, CollideTimeRatio);
 
     // 시뮬레이션 시간 업데이트
-    const float SimualtedTime = StepTime * ConsumimgTimeRatio;
+    // Tick 시간 클램핑 ( 로직 처리에 안정성을 주기위한 최소 틱시간 결정)
+    float RemainingTime = StepTime;
+    float SimualtedTime = std::max(MinSubStepTickTime, StepTime * MinSimulatedTimeRatio);
     AccumulatedTime -= SimualtedTime;
+    RemainingTime -= SimualtedTime;
 
     // 물리 Tick
     for (auto& PhysicsObject : RegisteredObjects)
@@ -143,19 +144,25 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
         auto PhysicsObjectPtr = PhysicsObject.lock();
         if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
         {
+            //if (SimualtedTime < StepTime)
+            //{
+            //    static int LINENUM = 0;
+            //    LOG_FUNC_CALL("%d:Physics SubSteps[% .5f] seconds.", LINENUM++, SimualtedTime);
+            //}
             PhysicsObjectPtr->TickPhysics(SimualtedTime);
         }
        
     }
 
-    if (ReamainingTimeRatio < KINDA_SMALL)
+    if (RemainingTime < KINDA_SMALL)
     {
+        //시간 전부 사용
         return true;
 
     }
     else
     {
-        LOG_FUNC_CALL("CollideSubSteps for %.3f", CollideTimeRatio);
+        //시간 남음
         return false;
     }
 }

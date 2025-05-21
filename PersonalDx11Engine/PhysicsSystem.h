@@ -69,10 +69,21 @@ private:
     float FixedTimeStep = 0.016f;  // 60Hz
     float AccumulatedTime = 0.0f;
     int MaxSubsteps = 3;
+    float MinSubStepTickTime = 0.004f; // 15Hz
 
     // 시뮬레이션 상태
     bool bIsSimulating = false;
 
+    //fixedTimeStep
+    float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
+    float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
+    bool bUseFixedTimestep = true;       // 고정 타임스텝 사용 여부
+    int MaxSubSteps = 5;                 // 최대 서브스텝 수
 
 
+    //UConfigReadManager::Get()->GetValue("MinimumTimeStep", Config.MinimumTimeStep);
+    //UConfigReadManager::Get()->GetValue("MaximumTimeStep", Config.MaximumTimeStep);
+    //UConfigReadManager::Get()->GetValue("bUseFixedTimestep", Config.bUseFixedTimestep);
+    //UConfigReadManager::Get()->GetValue("FixedTimeStep", Config.FixedTimeStep);
+    //UConfigReadManager::Get()->GetValue("MaxSubSteps", Config.MaxSubSteps);
 };
