@@ -3,9 +3,10 @@
 #include "GameObject.h"
 #include "RigidBodyComponent.h"
 #include"PhysicsSystem.h"
+#include "CollisionProcessor.h"
 #include "TypeCast.h"
-#include "PhysicsStateInterface.h"
-#include "CollisionManager.h"
+#include "PhysicsStateInternalInterface.h"
+
 
 
 UCollisionComponentBase::UCollisionComponentBase() 
@@ -53,9 +54,9 @@ void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)
 	SetLocalScale(InHalfExtent * 2.0f);
 }
 
-IPhysicsState* UCollisionComponentBase::GetPhysicsState() const
+IPhysicsStateInternal* UCollisionComponentBase::GetPhysicsStateInternal() const
 {
-	return Engine::Cast<IPhysicsState>(RigidBody.lock().get());
+	return Engine::Cast<IPhysicsStateInternal>(RigidBody.lock().get());
 }
 
 void UCollisionComponentBase::Activate()
@@ -75,7 +76,7 @@ void UCollisionComponentBase::ActivateColiision()
 	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared)
 	{
-		FCollisionProcessor::Get()->RegisterCollision(shared);
+		UPhysicsSystem::GetCollisionSubsystem()->RegisterCollision(shared);
 	}
 }
 
@@ -84,7 +85,7 @@ void UCollisionComponentBase::DeActivateCollision()
 	auto shared = Engine::Cast<UCollisionComponentBase>(shared_from_this());
 	if (shared) 
 	{
-		FCollisionProcessor::Get()->UnRegisterCollision(shared);
+		UPhysicsSystem::GetCollisionSubsystem()->UnRegisterCollision(shared);
 	}
 }
 

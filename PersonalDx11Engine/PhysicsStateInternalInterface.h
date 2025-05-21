@@ -15,19 +15,29 @@ public:
     virtual Vector3 P_GetVelocity() const = 0;
     virtual Vector3 P_GetAngularVelocity() const = 0;
 
+    virtual void P_SetVelocity(const Vector3& InVelocity) = 0;
+    virtual void P_AddVelocity(const Vector3& InVelocityDelta) = 0;
+
+    virtual void P_SetAngularVelocity(const Vector3& InAngularVelocity) = 0;
+    virtual void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) = 0;
+
     virtual const FTransform& P_GetWorldTransform() const = 0;
-    virtual void P_SetWorldTransform(const FTransform& InTransform) = 0;
+    const Vector3 P_GetWorldPosition() const { return P_GetWorldTransform().Position; }
+    const Quaternion P_GetWorldRotation() const { return P_GetWorldTransform().Rotation; }
+
     virtual void P_SetWorldPosition(const Vector3& InPoisiton) = 0;
     virtual void P_SetWorldRotation(const Quaternion& InQuat) = 0;
     virtual void P_SetWorldScale(const Vector3& InScale) = 0;
-
+    void P_SetWorldTransform(const FTransform& InTransform)
+    {
+        P_SetWorldPosition(InTransform.Position);
+        P_SetWorldRotation(InTransform.Rotation);
+        P_SetWorldScale(InTransform.Scale);
+    }
+    
     virtual void P_ApplyForce(const Vector3& Force) = 0;
     virtual void P_ApplyImpulse(const Vector3& Impulse) = 0;
     virtual void P_ApplyForce(const Vector3& Force, const Vector3& Location) = 0;
     virtual void P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location) = 0;
 
-    virtual void P_SetVelocity(const Vector3& InVelocity) = 0;
-    virtual void P_AddVelocity(const Vector3& InVelocityDelta) = 0;
-    virtual void P_SetAngularVelocity(const Vector3& InAngularVelocity) = 0;
-    virtual void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) = 0;
 };

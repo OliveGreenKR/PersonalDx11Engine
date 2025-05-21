@@ -5,20 +5,12 @@
 
 UPhysicsSystem::UPhysicsSystem()
 {
-    CollisionProcessor = new FCollisionProcessorT();
-    assert(CollisionProcessor, "Allocate Failed");
-
+    RegisteredObjects.reserve(512);
 }
 
 UPhysicsSystem::~UPhysicsSystem()
 {
-
     RegisteredObjects.clear();
-
-    if (CollisionProcessor)
-    {
-        delete CollisionProcessor;
-    }
 }
 
 void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
@@ -115,7 +107,7 @@ void UPhysicsSystem::PrepareSimulation()
         // 외부상태 현재 상태로 캡처
         if (Object->IsActive() && (Object->IsDirtyPhysicsState()))
         {
-            Object->UpdateCurrentFromCached();
+            Object->UpdateSimulatedStateFromCached();
         }
     }
 
@@ -133,15 +125,15 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
     float ReamainingTimeRatio = 1.0f;
     float ConsumimgTimeRatio = 1.0f;
 
-    // 점진적 물리 시뮬레이션 및 소요 시간 파악
+    // 점진적 물리 시뮬레이션 및 소요 시간 파악(가장 적은 ComusimgTime)
     
     // 1. 충돌 
-    float CollideTimeRatio = CollisionProcessor->ProcessCollisions(StepTime);
+    float CollideTimeRatio = GetCollisionSubsystem()->SimulateCollision(StepTime);
     ConsumimgTimeRatio = std::min(ConsumimgTimeRatio, CollideTimeRatio);
     ReamainingTimeRatio -= ConsumimgTimeRatio;
 
-    // 시간 업데이트
-    const float SimualtedTime = StepTime * ReamainingTimeRatio;
+    // 시뮬레이션 시간 업데이트
+    const float SimualtedTime = StepTime * ConsumimgTimeRatio;
     AccumulatedTime -= SimualtedTime;
 
     // 물리 Tick
@@ -187,7 +179,7 @@ void UPhysicsSystem::FinalizeSimulation()
         if (Object->IsActive())
         {
             //시뮬레이션 결과 외부에 반영
-            Object->UpdateCachedFromCurrent();
+            Object->SynchronizeCachedStateFromSimulated();
         }
     }
 }

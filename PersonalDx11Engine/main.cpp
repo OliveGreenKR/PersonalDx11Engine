@@ -23,7 +23,7 @@
 
 #include "define.h"
 #include "PhysicsSystem.h"
-#include "CollisionManager.h"
+#include "CollisionProcessor.h"
 
 #include "SceneManager.h"
 #include "GameplayScene01.h"
@@ -315,7 +315,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		UDebugDrawManager::Get()->Tick(DeltaTime);
 		//물리
 		UPhysicsSystem::Get()->TickPhysics(DeltaTime);
-		FCollisionProcessor::Get()->Tick(DeltaTime);
 #pragma endregion 
 		
 #pragma region Rendering
@@ -355,7 +354,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("CollisionTree")) {
-				FCollisionProcessor::Get()->PrintTreeStructure();
+				UPhysicsSystem::GetCollisionSubsystem()->PrintTreeStructure();
 			}
 			ImGui::SameLine();
 			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));

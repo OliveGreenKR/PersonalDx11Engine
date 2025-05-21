@@ -98,9 +98,6 @@
     <ClCompile Include="RenderDataSimpleColor.cpp">
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
-      <Filter>Engine\Managers\Physics</Filter>
-    </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine\Managers\Resource</Filter>
     </ClCompile>
@@ -515,9 +512,6 @@
     </ClInclude>
     <ClInclude Include="RenderDataSimpleColor.h">
       <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>Engine\Managers\Physics</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
       <Filter>Engine\Managers\DebugDrawer</Filter>

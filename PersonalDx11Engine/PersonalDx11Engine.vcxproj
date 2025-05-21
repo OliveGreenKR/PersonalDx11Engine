@@ -139,7 +139,6 @@
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
     <ClCompile Include="CollisionEventDispatcher.cpp" />
-    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CollisionProcessor.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="ConfigReadManager.cpp" />
@@ -195,7 +194,6 @@
     <ClInclude Include="CollisionDetector.h" />
     <ClInclude Include="CollisionDefines.h" />
     <ClInclude Include="CollisionEventDispatcher.h" />
-    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="CollisionProcessor.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />

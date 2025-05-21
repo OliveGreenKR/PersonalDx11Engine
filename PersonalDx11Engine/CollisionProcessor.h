@@ -8,7 +8,7 @@
 
 class FDynamicAABBTree;
 struct FTransform;
-class IPhysicsState;
+class IPhysicsStateInternal;
 
 #pragma region CollisionPair
 struct FCollisionPair
@@ -98,14 +98,11 @@ public:
     void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
     void UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
 
-    void Tick(const float DeltaTime);
+    // 정규화된 시뮬레이션 소모시간
+    float SimulateCollision(const float DeltaTime);
     void UnRegisterAll();
 
     size_t GetRegisterComponentsCount() { return RegisteredComponents.size(); }
-
-    // 충돌 처리 후 정규화된 충돌시간 
-    float ProcessCollisions(const float DeltaTime);
-
 public:
     FCollisionSystemConfig Config;
 
@@ -114,10 +111,10 @@ private:
     void Release();
     void CleanupDestroyedComponents();
 
-    void SimulateStep(float stepDeltaTime);
+    float ProcessCollisions(const float DeltaTime);
 
     //CCD 임계속도 비교
-    bool ShouldUseCCD(const IPhysicsState* RigidBody) const;
+    bool ShouldUseCCD(const IPhysicsStateInternal * PhysicsStateInternal) const;
 
     //새로운 충돌쌍 업데이트
     void UpdateCollisionPairs();
@@ -144,7 +141,7 @@ private:
     //Config Load from ini
     void LoadConfigFromIni();
 public:
-    void PrintTreeStructure();
+    void PrintTreeStructure() const;
 
 private:
     // 하부 시스템 클래스들

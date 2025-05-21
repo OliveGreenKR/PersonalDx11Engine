@@ -10,7 +10,7 @@
 
 class URigidBodyComponent;
 class UGameObject;
-class IPhysicsState;
+class IPhysicsStateInternal;
 
 // 충돌 응답에 필요한 속성을 관리하는 최상위 충돌체 클래스, 직접 사용하지 마시오
 class UCollisionComponentBase : public USceneComponent, public IDynamicBoundable, public ICollisionShape
@@ -50,7 +50,7 @@ public:
 public:
 	//Getter
 	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
-	IPhysicsState* GetPhysicsState() const;
+	IPhysicsStateInternal* GetPhysicsStateInternal() const;
 	const FTransform& GetPreviousWorldTransform() const { return PrevWorldTransform; }
 
 private:

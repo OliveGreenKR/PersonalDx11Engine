@@ -8,7 +8,7 @@
 #include "CollisionEventDispatcher.h"
 #include "Debug.h"
 #include "ConfigReadManager.h"
-#include "PhysicsStateInterface.h"
+#include "PhysicsStateInternalInterface.h"
 
 FCollisionProcessorT::~FCollisionProcessorT()
 {
@@ -74,37 +74,13 @@ void FCollisionProcessorT::UnRegisterCollision(std::shared_ptr<UCollisionCompone
 	}
 }
 
-void FCollisionProcessorT::Tick(const float DeltaTime)
+float FCollisionProcessorT::SimulateCollision(const float DeltaTime)
 {
 	CleanupDestroyedComponents();
-
-
-	if (Config.bUseFixedTimestep)
-	{
-		//누적 시간
-		AccumulatedTime += DeltaTime;
-
-		// 최대 처리 가능한 시간 (일정 시간 이상 누적되면 추적 포기)
-		const float maxProcessTime = Config.MaximumTimeStep * Config.MaxSubSteps;
-		if (AccumulatedTime > maxProcessTime)
-		{
-			LOG("[WARNING] Physics simulation falling behind, skipping %f seconds", AccumulatedTime - maxProcessTime);
-			AccumulatedTime = maxProcessTime;
-		}
-
-		int steps = 0;
-		while (AccumulatedTime >= Config.FixedTimeStep && steps < Config.MaxSubSteps)
-		{
-			SimulateStep(Config.FixedTimeStep);
-			AccumulatedTime -= Config.FixedTimeStep;
-			steps++;
-		}
-		// 남은 AccumulatedTime은 다음 틱으로 이월
-	}
-	else // Variable Timestep
-	{
-		SimulateStep(DeltaTime);
-	}
+	UpdateCollisionTransform();
+	UpdateCollisionPairs();
+	float minSimulTime = ProcessCollisions(DeltaTime);
+	return minSimulTime;
 }
 
 void FCollisionProcessorT::UnRegisterAll()
@@ -218,28 +194,6 @@ void FCollisionProcessorT::CleanupDestroyedComponents()
 	}
 }
 
-void FCollisionProcessorT::SimulateStep(float stepDeltaTime)
-{
-	CleanupDestroyedComponents();
-	UpdateCollisionTransform();
-	UpdateCollisionPairs();
-	ProcessCollisions(stepDeltaTime);
-
-	/*
-	+--- Integrate (Apply forces, gravity, update velocities *predicatively*)
-    +--- Predict Transforms (Update world transforms based on predicted velocities)
-    +--- Detect Collisions (Find contact points, normal, separation. Use DCD/CCD. Generate list of Contact objects.)
-    |       (This step *collects* collision data, but does *not* apply responses yet.)
-    +--- Solve Collisions Iterative (Iterative Process: Call ApplyCollisionResponseByConstraints for each Contact multiple times)
-    |       (ApplyCollisionResponseByConstraints now *immediately* applies calculated impulse to Rigidbody velocities)
-    +--- Positional Correction Iterative (Iterative Process: Resolve residual penetration)
-    |       (Applies corrections immediately to Rigidbody positions)
-    +--- Finalize Transforms (Ensure transforms match final positions/orientations)
-    |
-    +--- Broadcast Events (Notify listeners about resolved collisions)
-	*/
-}
-
 void FCollisionProcessorT::UpdateCollisionPairs()
 {
 	if (!CollisionTree || RegisteredComponents.empty())
@@ -312,11 +266,11 @@ void FCollisionProcessorT::UpdateCollisionTransform()
 	CollisionTree->UpdateTree();
 }
 
-bool FCollisionProcessorT::ShouldUseCCD(const IPhysicsState* PhysicsState) const
+bool FCollisionProcessorT::ShouldUseCCD(const IPhysicsStateInternal* PhysicsState) const
 {
 	if (!PhysicsState)
 		return false;
-	return PhysicsState->GetVelocity().Length() > Config.CCDVelocityThreshold;
+	return PhysicsState->P_GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
 float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
@@ -335,13 +289,11 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();
 		auto CompB = RegisteredComponents[ActivePair.TreeIdB].lock();
 
-		const float PersistentThreshold = 0.1f;
-
 		//Collision detection
 		FCollisionDetectionResult DetectResult;
 		if (CompA && CompB)
 		{
-			if (ShouldUseCCD(CompA->GetPhysicsState()) || ShouldUseCCD(CompB->GetPhysicsState()))
+			if (ShouldUseCCD(CompA->GetPhysicsStateInternal()) || ShouldUseCCD(CompB->GetPhysicsStateInternal()))
 			{
 				//ccd
 				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousWorldTransform(), CompA->GetWorldTransform(),
@@ -396,27 +348,27 @@ void FCollisionProcessorT::GetPhysicsParams(const std::shared_ptr<UCollisionComp
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
 		return;
-	auto PhysicsState = CompPtr->GetPhysicsState();
+	auto PhysicsState = CompPtr->GetPhysicsStateInternal();
 	if (!PhysicsState)
 		return;
 
-	OutParams.Mass = PhysicsState->GetMass();
+	OutParams.Mass = PhysicsState->P_GetMass();
 
-	Vector3 RotInerteria = PhysicsState->GetRotationalInertia();
+	Vector3 RotInerteria = PhysicsState->P_GetRotationalInertia();
     OutParams.RotationalInertia = XMLoadFloat3(&RotInerteria);  
 
-    Vector3 Position = PhysicsState->GetWorldPosition();  
+    Vector3 Position = PhysicsState->P_GetWorldPosition();  
     OutParams.Position = XMLoadFloat3(&Position);  
 
-    Vector3 Velocity = PhysicsState->GetVelocity();  
+    Vector3 Velocity = PhysicsState->P_GetVelocity();  
     OutParams.Velocity = XMLoadFloat3(&Velocity);
-	Vector3 AngularVelocity = PhysicsState->GetAngularVelocity();
+	Vector3 AngularVelocity = PhysicsState->P_GetAngularVelocity();
 	OutParams.AngularVelocity = XMLoadFloat3(&(AngularVelocity));
 
-	OutParams.Restitution = PhysicsState->GetRestitution();
-	OutParams.FrictionKinetic = PhysicsState->GetFrictionKinetic();
-	OutParams.FrictionStatic = PhysicsState->GetFrictionStatic();
-	Quaternion Rotation = PhysicsState->GetWorldRotation();
+	OutParams.Restitution = PhysicsState->P_GetRestitution();
+	OutParams.FrictionKinetic = PhysicsState->P_GetFrictionKinetic();
+	OutParams.FrictionStatic = PhysicsState->P_GetFrictionStatic();
+	Quaternion Rotation = PhysicsState->P_GetWorldRotation();
 	OutParams.Rotation = XMLoadFloat4(&Rotation);
 	return;
 }
@@ -427,19 +379,19 @@ void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollis
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
 		return;
 
-	auto RigidA = CompA->GetPhysicsState();
-	auto RigidB = CompB->GetPhysicsState();
+	auto RigidA = CompA->GetPhysicsStateInternal();
+	auto RigidB = CompB->GetPhysicsStateInternal();
 
 	if (!RigidA || !RigidB)
 		return;
 
 	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
 	// 각 물체를 반대 방향으로 밀어냄
-	Vector3 newPosA = RigidA->GetWorldPosition() - correction * 0.5f;
-	RigidA->SetWorldPosition(newPosA);
+	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * 0.5f;
+	RigidA->P_SetWorldPosition(newPosA);
 
-	Vector3 newPosB = RigidB->GetWorldPosition() + correction * 0.5f;
-	RigidB->SetWorldPosition(newPosB);
+	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * 0.5f;
+	RigidB->P_SetWorldPosition(newPosB);
 }
 
 void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
@@ -448,8 +400,8 @@ void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPa
 	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
 	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
 
-	if (!ComponentA || !ComponentA->GetPhysicsState() ||
-		!ComponentB || !ComponentB->GetPhysicsState() ||
+	if (!ComponentA || !ComponentA->GetPhysicsStateInternal() ||
+		!ComponentB || !ComponentB->GetPhysicsStateInternal() ||
 		!DetectResult.bCollided)
 		return;
 
@@ -468,11 +420,11 @@ void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPa
 
 	FCollisionResponseResult collisionResponse =
 		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
-	auto RigidPtrA = ComponentA.get()->GetPhysicsState();
-	auto RigidPtrB = ComponentB.get()->GetPhysicsState();
+	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
+	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
 	//A->B 방향의 법선벡터이므로 반대로 적용
-	RigidPtrA->ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-	RigidPtrB->ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrA->P_ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	RigidPtrB->P_ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
 	//반응 결과 저장
 	CollisionPair.PrevConstraints = Accumulation;
@@ -534,7 +486,7 @@ void FCollisionProcessorT::LoadConfigFromIni()
 	UConfigReadManager::Get()->GetValue("AABBMargin", Config.AABBMargin);
 }
 
-void FCollisionProcessorT::PrintTreeStructure()
+void FCollisionProcessorT::PrintTreeStructure() const
 {
 #if defined(_DEBUG) || defined(DEBUG)
 //test
