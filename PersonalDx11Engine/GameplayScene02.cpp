@@ -413,7 +413,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
@@ -421,12 +421,12 @@ void UGameplayScene02::SetupInput()
                                  if (EventData.bShift)
                                  {
                                      
-                                     Character->ApplyForce(Camera->GetWorldUp() * InForceMagnitude);
+                                     Character->ApplyForce(1e3 * Camera->GetWorldUp() * InForceMagnitude);
                                      
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(Camera->GetWorldForward() * InForceMagnitude);
+                                     Character->ApplyForce(1e3 * Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -435,7 +435,7 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
@@ -443,12 +443,12 @@ void UGameplayScene02::SetupInput()
                                  if (EventData.bShift)
                                  {
 
-                                     Character->ApplyForce(-Camera->GetWorldUp() * InForceMagnitude);
+                                     Character->ApplyForce(1e3 * -Camera->GetWorldUp() * InForceMagnitude);
 
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(-Camera->GetWorldForward() * InForceMagnitude);
+                                     Character->ApplyForce(1e3 * -Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -457,11 +457,11 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
-                                 Character->ApplyForce(Camera->GetWorldRight() * InForceMagnitude);
+                                 Character->ApplyForce(1e3 * Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -469,11 +469,11 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = CharacterMass * PowerMagnitude * 1e3;
+                                 float InForceMagnitude = CharacterMass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
-                                 Character->ApplyForce(-Camera->GetWorldRight() * InForceMagnitude);
+                                 Character->ApplyForce(1e3 * -Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -483,18 +483,18 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(Camera->GetWorldUp() * InForceMagnitude);
+                                     Character2->ApplyForce(1e3 * Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(Camera->GetWorldForward() * InForceMagnitude);
+                                     Character2->ApplyForce(1e3 * Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -503,18 +503,18 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(-Camera->GetWorldUp() * InForceMagnitude);
+                                     Character2->ApplyForce(1e3 * -Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(-Camera->GetWorldForward() * InForceMagnitude);
+                                     Character2->ApplyForce(1e3 * -Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -523,12 +523,12 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
 
-								 Character2->ApplyForce(Camera->GetWorldRight() * InForceMagnitude);                             
+								 Character2->ApplyForce(1e3 * Camera->GetWorldRight() * InForceMagnitude);                             
                              },
                              "CharacterMove");
 
@@ -536,12 +536,12 @@ void UGameplayScene02::SetupInput()
                              EKeyEvent::Pressed,
                              WeakCharacter2,
                              [this](const FKeyEventData& EventData) {
-                                 float InForceMagnitude = Character2Mass * PowerMagnitude * 1e3f;
+                                 float InForceMagnitude = Character2Mass * PowerMagnitude;
 
                                  if (!Camera)
                                      return;
 
-                                 Character2->ApplyForce(-Camera->GetWorldRight() * InForceMagnitude);
+                                 Character2->ApplyForce(1e3 * -Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -603,6 +603,13 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                        const Vector3 CurrentVelo = Character->GetCurrentVelocity();
                                                                        const float Restitution = 1.0f;
                                                                        const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+
+                                                                       // 물체가 표면에서 멀어지는 중이면 충격량 없음
+                                                                       if (VelocityAlongNormal >= 0.0f)
+                                                                       {
+                                                                           return;
+                                                                       }
+
                                                                        Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character->GetMass();
 
                                                                        Character->ApplyImpulse(std::move(NewImpulse));
@@ -642,6 +649,13 @@ void UGameplayScene02::SetupBorderTriggers()
                                                                         const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
                                                                         const float Restitution = 1.0f;
                                                                         const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+                                                                        
+                                                                        // 물체가 표면에서 멀어지는 중이면 충격량 없음
+                                                                        if (VelocityAlongNormal >= 0.0f)
+                                                                        {
+                                                                            return;
+                                                                        }
+
                                                                         Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
                                                                         Character2->ApplyImpulse(std::move(NewImpulse));
                                                                     }

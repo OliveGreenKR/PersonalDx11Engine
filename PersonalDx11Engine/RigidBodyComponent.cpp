@@ -20,7 +20,13 @@ void URigidBodyComponent::PostInitialized()
 {
 	USceneComponent::PostInitialized();
 
-	CachedState.WorldTransfrorm = GetWorldTransform();
+	OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform&)
+										 { 
+											 this->bStateDirty = true;
+										 }, "RigidBody_OnWorldTransformChagned");
+	
+	//초기 상태 저장
+	CachedState.WorldTransform = GetWorldTransform();
 	SimulatedState = CachedState;
 }
 
@@ -55,18 +61,18 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 		return;
 
 	// 물리 상태 - TODO : for test, Directly CachedState
-	Vector3 Velocity = CachedState.Velocity;
-	Vector3 AngularVelocity = CachedState.AngularVelocity;
-	Vector3 AccumulatedForce = CachedState.AccumulatedForce;
-	Vector3 AccumulatedTorque = CachedState.AccumulatedTorque;
-	Vector3 AccumulatedInstantForce = CachedState.AccumulatedInstantForce;
-	Vector3 AccumulatedInstantTorque = CachedState.AccumulatedInstantTorque;
+	Vector3& Velocity = SimulatedState.Velocity;
+	Vector3& AngularVelocity = SimulatedState.AngularVelocity;
+ 	Vector3& AccumulatedForce = SimulatedState.AccumulatedForce;
+	Vector3& AccumulatedTorque = SimulatedState.AccumulatedTorque;
+	Vector3& AccumulatedInstantForce = SimulatedState.AccumulatedInstantForce;
+	Vector3& AccumulatedInstantTorque = SimulatedState.AccumulatedInstantTorque;
 
-	float Mass = CachedState.Mass;
-	Vector3 RotationalInertia = CachedState.RotationalInertia;
-	float FrictionKinetic = CachedState.FrictionKinetic;
-	float FrictionStatic = CachedState.FrictionStatic;
-	float Restitution = CachedState.Restitution;
+	float& Mass = SimulatedState.Mass;
+	Vector3& RotationalInertia = SimulatedState.RotationalInertia;
+	float& FrictionKinetic = SimulatedState.FrictionKinetic;
+	float& FrictionStatic = SimulatedState.FrictionStatic;
+	float& Restitution = SimulatedState.Restitution;
 
 	// 모든 힘을 가속도로 변환
 	Vector3 TotalAcceleration = Vector3::Zero();
@@ -80,6 +86,7 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	}
 
 	//마찰력
+	Vector3 frictionAccel = Vector3::Zero();
 	if (Velocity.LengthSquared() > KINDA_SMALL)
 	{
 
@@ -89,12 +96,28 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 		{
 			// 정적 마찰력이 외력을 상쇄
 			AccumulatedForce = Vector3::Zero();
+			Velocity = Vector3::Zero();
 		}
 		else
 		{
-			// 운동 마찰력 적용
-			Vector3 frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityFactor;
+			// 운동 마찰력 계산
+			frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityFactor;
+		}
+	}
+	//마찰 제한 적용 -  운동마찰은 객체의 속도를 0까지만 만들 수 있음
+	if (frictionAccel.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	{
+		Vector3 NewVelocity = Velocity;
+		NewVelocity += frictionAccel * DeltaTime;
+	
+		//적용 후에도 속도의 방향이 바뀌지 않음
+		if (Vector3::Dot(NewVelocity, Velocity) > KINDA_SMALL)
+		{
 			TotalAcceleration += frictionAccel;
+		}
+		else
+		{
+			Velocity = Vector3::Zero();
 		}
 	}
 
@@ -142,33 +165,31 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 		AccumulatedTorque.z / RotationalInertia.z);
 
 	// 통합된 가속도로 속도 업데이트
-	Velocity += TotalAcceleration * DeltaTime;
-	AngularVelocity += TotalAngularAcceleration * DeltaTime;
-
+	if (TotalAcceleration.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	{
+		Velocity += TotalAcceleration * DeltaTime;
+	}
+	
+	if (TotalAngularAcceleration.LengthSquared() > KINDA_SMALLER * KINDA_SMALLER)
+	{
+		AngularVelocity += TotalAngularAcceleration * DeltaTime;
+	}
+	
 	//if (AccumulatedTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
 	//{
 	//	LOG("AngularVelocity with AccumulatedTorque : %s", Debug::ToString(AngularVelocity));
 	//	LOG("*------- AccumTorque : %s", Debug::ToString(AccumulatedTorque));
 	//}
 
-
 	// 속도 제한
 	ClampVelocities(Velocity, AngularVelocity);
 
 	// 위치 업데이트
-	UpdateTransform(DeltaTime);
+	P_UpdateTransform(DeltaTime);
 
 	// 외부 힘 초기화
 	AccumulatedForce = Vector3::Zero();
 	AccumulatedTorque = Vector3::Zero();
-
-	// 물리 상태 업데이트
-	SimulatedState.Velocity = Velocity;
-	SimulatedState.AngularVelocity = AngularVelocity;
-	SimulatedState.AccumulatedForce = AccumulatedForce;
-	SimulatedState.AccumulatedTorque = AccumulatedTorque;
-	SimulatedState.AccumulatedInstantForce = AccumulatedInstantForce;
-	SimulatedState.AccumulatedInstantTorque = AccumulatedInstantTorque;
 }
 
 void URigidBodyComponent::RegisterPhysicsSystem()
@@ -186,42 +207,6 @@ void URigidBodyComponent::UnRegisterPhysicsSystem()
 		Engine::Cast<URigidBodyComponent>(shared_from_this()));
 	assert(myShared, "[Error] InValidPhysicsObejct");
 	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
-}
-
-void URigidBodyComponent::UpdateTransform(const float DeltaTime)
-{
-	if (IsStatic())
-	{
-		return;
-	}
-	FTransform TargetTransform = GetWorldTransform();
-
-	if (SimulatedState.Velocity.Length() > KINDA_SMALLER)
-	{
-		// 위치 업데이트
-		Vector3 NewPosition = TargetTransform.Position + SimulatedState.Velocity * DeltaTime;
-		TargetTransform.Position = NewPosition;
-	}
-	
-	// 회전 업데이트
-	Matrix WorldRotation = TargetTransform.GetRotationMatrix();
-	XMVECTOR WorldAngularVel = XMLoadFloat3(&SimulatedState.AngularVelocity);
-	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
-	if (AngularSpeed > KINDA_SMALL)
-	{
-		XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
-		float Angle = AngularSpeed * DeltaTime;
-		TargetTransform.RotateAroundAxis(
-			Vector3(
-				XMVectorGetX(RotationAxis),
-				XMVectorGetY(RotationAxis),
-				XMVectorGetZ(RotationAxis)
-			),
-			Math::RadToDegree(Angle)
-		);
-	}
-	SetWorldTransform(TargetTransform);
-
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -252,15 +237,128 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
 	return GetWorldTransform().Position;
 }
+
+#pragma region P_Regions
+void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
+{
+	if (SimulatedState.RigidType == ERigidBodyType::Static)
+	{
+		return;
+	}
+	FTransform TargetTransform = SimulatedState.WorldTransform;
+
+	if (SimulatedState.Velocity.Length() > KINDA_SMALLER)
+	{
+		// 위치 업데이트
+		Vector3 NewPosition = TargetTransform.Position + SimulatedState.Velocity * DeltaTime;
+		TargetTransform.Position = NewPosition;
+	}
+
+	// 회전 업데이트
+	Matrix WorldRotation = TargetTransform.GetRotationMatrix();
+	XMVECTOR WorldAngularVel = XMLoadFloat3(&SimulatedState.AngularVelocity);
+	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
+	if (AngularSpeed > KINDA_SMALL)
+	{
+		XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
+		float Angle = AngularSpeed * DeltaTime;
+		TargetTransform.RotateAroundAxis(
+			Vector3(
+				XMVectorGetX(RotationAxis),
+				XMVectorGetY(RotationAxis),
+				XMVectorGetZ(RotationAxis)
+			),
+			Math::RadToDegree(Angle)
+		);
+	}
+	P_SetWorldTransform(TargetTransform);
+}
+
+void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
+{
+	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
+
+	if ((SimulatedState.WorldTransform.Position - InPoisiton).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
+	{
+		SimulatedState.WorldTransform.Position = InPoisiton;
+	}
+}
+void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
+{
+	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
+
+	// 변화량이 의미 있는지 확인
+	float Dot = Quaternion::Dot(SimulatedState.WorldTransform.Rotation, InQuat);
+	float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+	if (ChangeMagnitude > TRANSFORM_EPSILON)
+	{
+		SimulatedState.WorldTransform.Rotation = InQuat;
+	}
+
+}
+void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
+{
+	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
+
+	if ((SimulatedState.WorldTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
+	{
+		SimulatedState.WorldTransform.Scale = InScale;
+	}
+}
+void URigidBodyComponent::P_ApplyForce(const Vector3& Force, const Vector3& Location)
+{
+	if (!IsActive())
+		return;
+
+	SimulatedState.AccumulatedForce += Force;
+	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
+	SimulatedState.AccumulatedTorque += Torque;
+}
+void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
+{
+	if (!IsActive())
+		return;
+
+	SimulatedState.AccumulatedInstantForce += Impulse;
+	Vector3 COM = GetCenterOfMass();
+	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
+	SimulatedState.AccumulatedInstantTorque += AngularImpulse;
+}
+void URigidBodyComponent::P_SetVelocity(const Vector3& InVelocity) 
+{
+	SimulatedState.Velocity = InVelocity;
+	ClampLinearVelocity(SimulatedState.Velocity);
+}
+void URigidBodyComponent::P_AddVelocity(const Vector3& InVelocityDelta) 
+{
+	SimulatedState.Velocity += InVelocityDelta;
+	ClampLinearVelocity(SimulatedState.Velocity);
+}
+void URigidBodyComponent::P_SetAngularVelocity(const Vector3& InAngularVelocity) 
+{
+	SimulatedState.AngularVelocity = InAngularVelocity;
+	ClampAngularVelocity(SimulatedState.AngularVelocity);
+}
+void URigidBodyComponent::P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) 
+{
+	SimulatedState.AngularVelocity += InAngularVelocityDelta;
+	ClampAngularVelocity(CachedState.AngularVelocity);
+}
+#pragma endregion
 // 내부 연산 결과를 외부용에 반영(동기화)
 void URigidBodyComponent::SynchronizeCachedStateFromSimulated()
 {
 	CachedState = SimulatedState;
-	bStateDirty = false;
+	SetWorldTransform(CachedState.WorldTransform);
+	
 }
 //연산 전 외부 상태 동기화
-void URigidBodyComponent::UpdateSimulatedStateFromCached() const
+void URigidBodyComponent::UpdateSimulatedStateFromCached()
 {
+	bStateDirty = false;
+	FTransform CurrentWorldTransform = GetWorldTransform();
+	CachedState.WorldTransform = CurrentWorldTransform;
 	SimulatedState = CachedState;
 }
 
@@ -274,11 +372,45 @@ bool URigidBodyComponent::IsActive() const
 	return USceneComponent::IsActive();
 }
 
+
+// 물리 속성 설정
 void URigidBodyComponent::SetMass(float InMass)
 {
+	bStateDirty = true;
 	CachedState.Mass = std::max(InMass, KINDA_SMALL);
 	// 회전 관성도 질량에 따라 갱신
 	CachedState.RotationalInertia = 4.0f * CachedState.Mass * Vector3::One(); //근사
+}
+
+void URigidBodyComponent::SetFrictionKinetic(float InFriction)
+{
+	bStateDirty = true;
+	CachedState.FrictionKinetic = InFriction; 
+}
+
+void URigidBodyComponent::SetFrictionStatic(float InFriction) 
+{
+	bStateDirty = true;
+	CachedState.FrictionStatic = InFriction;
+}
+
+void URigidBodyComponent::SetRestitution(float InRestitution) 
+{
+	bStateDirty = true;
+	CachedState.Restitution = InRestitution; 
+}
+
+void URigidBodyComponent::SetRigidType(ERigidBodyType&& InType) 
+{ 
+	bStateDirty = true;
+	CachedState.RigidType = InType;
+}
+
+//토큰소유자만 접근 가능
+void URigidBodyComponent::SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) 
+{ 
+	bStateDirty = true;
+	CachedState.RotationalInertia = Value;
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)

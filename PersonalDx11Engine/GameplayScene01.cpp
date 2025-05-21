@@ -249,6 +249,13 @@ void UGameplayScene01::SetupBorderTriggers(UElasticBody* InBody)
                     const Vector3 CurrentVelo = Body->GetCurrentVelocity();
                     const float Restitution = 0.8f;
                     const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+
+                    // 물체가 표면에서 멀어지는 중이면 충격량 없음
+                    if (VelocityAlongNormal >= 0.0f)
+                    {
+                        return;
+                    }
+
                     Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Body->GetMass();
                     Body->ApplyImpulse(std::move(NewImpulse));
                 }

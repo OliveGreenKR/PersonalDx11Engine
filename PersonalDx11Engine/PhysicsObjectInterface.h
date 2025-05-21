@@ -11,7 +11,7 @@ public:
     // 내부 연산 결과를 외부용으로 복사
     virtual void SynchronizeCachedStateFromSimulated() = 0;
     //연산 전 외부 상태 연산용으로 복사
-    virtual void UpdateSimulatedStateFromCached() const = 0;
+    virtual void UpdateSimulatedStateFromCached() = 0;
 
     //플래그 확인
     virtual bool IsDirtyPhysicsState() const = 0;

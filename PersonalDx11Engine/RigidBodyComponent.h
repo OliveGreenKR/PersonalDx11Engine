@@ -71,59 +71,59 @@ public:
 #pragma endregion
 #pragma region IPhyscisStateInternal
 	//TODO : for test, simple redirection
-	float P_GetMass() const override { return GetMass();}
-	Vector3 P_GetRotationalInertia() const override { return GetRotationalInertia(); }
+	float P_GetMass() const override { return SimulatedState.Mass;}
+	Vector3 P_GetRotationalInertia() const override { return SimulatedState.RotationalInertia; }
 
-	float P_GetRestitution() const override { return GetRestitution(); }
-    float P_GetFrictionStatic() const override { return GetFrictionStatic(); }
-    float P_GetFrictionKinetic() const override { return GetFrictionKinetic(); }
+    float P_GetRestitution() const override { return SimulatedState.Restitution; }
+    float P_GetFrictionStatic() const override { return SimulatedState.FrictionStatic; }
+    float P_GetFrictionKinetic() const override { return SimulatedState.FrictionKinetic; }
 
-    Vector3 P_GetVelocity() const override { return GetVelocity(); }
-    Vector3 P_GetAngularVelocity() const override { return GetAngularVelocity(); }
+    Vector3 P_GetVelocity() const override { return SimulatedState.Velocity; }
+    Vector3 P_GetAngularVelocity() const override { return SimulatedState.AngularVelocity; }
 
-    const FTransform& P_GetWorldTransform() const override { return GetWorldTransform(); }
+    const FTransform& P_GetWorldTransform() const override { return SimulatedState.WorldTransform; }
+	Vector3 P_GetCenterOfMass() const { return SimulatedState.WorldTransform.Position; }
 
-    void P_SetWorldPosition(const Vector3& InPoisiton) override { SetWorldPosition(InPoisiton); }
-    void P_SetWorldRotation(const Quaternion& InQuat) override { SetWorldRotation(InQuat); }
-    void P_SetWorldScale(const Vector3& InScale) override { SetWorldScale(InScale); }
+	void P_SetWorldPosition(const Vector3& InPoisiton) override;
+	void P_SetWorldRotation(const Quaternion& InQuat) override;
+	void P_SetWorldScale(const Vector3& InScale) override;
 
-    void P_ApplyForce(const Vector3& Force) override { ApplyForce(Force); }
-    void P_ApplyImpulse(const Vector3& Impulse) override { ApplyImpulse(Impulse); }
+	void P_ApplyForce(const Vector3& Force) override { P_ApplyForce(Force, P_GetCenterOfMass()); }
+	void P_ApplyImpulse(const Vector3& Impulse) override{ P_ApplyImpulse(Impulse, P_GetCenterOfMass()); }
 
-    void P_ApplyForce(const Vector3& Force, const Vector3& Location) override { ApplyForce(Force, Location); }
-    void P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override { ApplyImpulse(Impulse, Location); }
+	void P_ApplyForce(const Vector3& Force, const Vector3& Location) override;
+    void P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;
 
-    void P_SetVelocity(const Vector3& InVelocity) override { SetVelocity(InVelocity); }
-    void P_AddVelocity(const Vector3& InVelocityDelta) override { AddVelocity(InVelocityDelta); }
+    void P_SetVelocity(const Vector3& InVelocity) override;
+    void P_AddVelocity(const Vector3& InVelocityDelta) override;
 
-    void P_SetAngularVelocity(const Vector3& InAngularVelocity) override { SetAngularVelocity(InAngularVelocity); }
-    void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) override { AddAngularVelocity(InAngularVelocityDelta); }
+    void P_SetAngularVelocity(const Vector3& InAngularVelocity) override;
+    void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
 #pragma region
 #pragma region IPhysicsObject
 	// 현재 상태를 외부 상태로 저장
 	void SynchronizeCachedStateFromSimulated()  override;
 	// 외부 상태를 현재 상태로 저장
-	void UpdateSimulatedStateFromCached() const override;
+	void UpdateSimulatedStateFromCached() override;
 	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
 #pragma endregion
 
 	// 물리 속성 설정
 	void SetMass(float InMass);
-	inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
-	inline void SetMaxAngularSpeed(float InSpeed) { MaxAngularSpeed = InSpeed; }
-	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
-	inline void SetFrictionKinetic(float InFriction) { CachedState.FrictionKinetic = InFriction; }
-	inline void SetFrictionStatic(float InFriction) { CachedState.FrictionStatic = InFriction; }
-	inline void SetRestitution(float InRestitution) { CachedState.Restitution = InRestitution; }
-
-	inline void SetRigidType(ERigidBodyType&& InType) { CachedState.RigidType = InType; }
+	void SetFrictionKinetic(float InFriction);
+	void SetFrictionStatic(float InFriction);
+	void SetRestitution(float InRestitution);
+	void SetRigidType(ERigidBodyType&& InType);
 
 	//토큰소유자만 접근 가능
-	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) { CachedState.RotationalInertia = Value; }
+	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&);
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
 
+	inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
+	inline void SetMaxAngularSpeed(float InSpeed) { MaxAngularSpeed = InSpeed; }
+	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
 public:
 	// 시뮬레이션 플래그
 	bool bGravity  =  false;
@@ -135,7 +135,7 @@ private:
 	void UnRegisterPhysicsSystem() override;
 
 	//속도에 따른 트랜스폼 변화
-	void UpdateTransform(float DeltaTime);
+	void P_UpdateTransform(float DeltaTime);
 	void ClampVelocities(Vector3& OutVelocity, Vector3& OutAngularVelocity);
 	void ClampLinearVelocity(Vector3& OutVelocity);
 	void ClampAngularVelocity(Vector3& OutAngularVelocity);
@@ -144,7 +144,6 @@ private:
 
 	__forceinline bool IsSpeedRestricted() { return !(MaxSpeed < 0.0f); }
 	__forceinline bool IsAngularSpeedRestricted() { return !(MaxAngularSpeed < 0.0f); }
-
 private:
 
 	struct FRigidPhysicsState
@@ -167,7 +166,7 @@ private:
 		// 물리 객체 상태
 		ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
-		FTransform WorldTransfrorm;
+		FTransform WorldTransform;
 	};
 
 	mutable bool bStateDirty = false;
