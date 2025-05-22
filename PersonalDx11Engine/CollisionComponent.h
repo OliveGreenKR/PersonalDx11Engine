@@ -19,7 +19,7 @@ class UCollisionComponentBase : public USceneComponent, public IDynamicBoundable
 public:
 	UCollisionComponentBase();
 
-	~UCollisionComponentBase();
+	virtual ~UCollisionComponentBase();
 public:
 	// Inherited via Interfaces
 	Vector3 GetScaledHalfExtent() const override;

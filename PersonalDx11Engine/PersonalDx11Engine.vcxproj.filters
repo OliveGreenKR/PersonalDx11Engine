@@ -346,6 +346,9 @@
     <Filter Include="Contents\Scenes\01">
       <UniqueIdentifier>{e0bf360d-5a48-4602-810a-1359c1ac8e8e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Object\Components\ActorComponent\Scene\RigidBody\Commands">
+      <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -608,6 +611,9 @@
     </ClInclude>
     <ClInclude Include="Contents\Scenes\TestScene01.h">
       <Filter>Contents\Scenes\testScene</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsStateCommandsInterface.h">
+      <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody\Commands</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

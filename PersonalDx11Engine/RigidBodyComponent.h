@@ -178,11 +178,4 @@ private:
 
 	float GravityScale = 9.81f;
 	Vector3 GravityDirection = -Vector3::Up();
-
-#pragma region PhysicsRequest Queue
-	//private:
-
-	//private:
-	//	TCircularQueue
-#pragma endregion
 };

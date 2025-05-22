@@ -55,190 +55,12 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 		return;
 }
 
-void URigidBodyComponent::TickPhysics(const float DeltaTime)
-{
-	if (!IsActive())
-		return;
-
-	// 물리 상태 - TODO : for test, Directly CachedState
-	Vector3& Velocity = SimulatedState.Velocity;
-	Vector3& AngularVelocity = SimulatedState.AngularVelocity;
- 	Vector3& AccumulatedForce = SimulatedState.AccumulatedForce;
-	Vector3& AccumulatedTorque = SimulatedState.AccumulatedTorque;
-	Vector3& AccumulatedInstantForce = SimulatedState.AccumulatedInstantForce;
-	Vector3& AccumulatedInstantTorque = SimulatedState.AccumulatedInstantTorque;
-
-	float& Mass = SimulatedState.Mass;
-	Vector3& RotationalInertia = SimulatedState.RotationalInertia;
-	float& FrictionKinetic = SimulatedState.FrictionKinetic;
-	float& FrictionStatic = SimulatedState.FrictionStatic;
-	float& Restitution = SimulatedState.Restitution;
-
-	// 모든 힘을 가속도로 변환
-	Vector3 TotalAcceleration = Vector3::Zero();
-	Vector3 TotalAngularAcceleration = Vector3::Zero();
-
-	float GravityFactor = GravityScale * ONE_METER;
-	// 중력 가속도 추가
-	if (bGravity)
-	{
-		TotalAcceleration += GravityDirection * GravityFactor;
-	}
-
-	//마찰력
-	Vector3 frictionAccel = Vector3::Zero();
-	if (Velocity.LengthSquared() > KINDA_SMALL)
-	{
-
-		// 정적 마찰력 영역에서 운동 마찰력 영역으로의 전환 확인
-		if (Velocity.Length() < KINDA_SMALL &&
-			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityFactor)
-		{
-			// 정적 마찰력이 외력을 상쇄
-			AccumulatedForce = Vector3::Zero();
-			Velocity = Vector3::Zero();
-		}
-		else
-		{
-			// 운동 마찰력 계산
-			frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityFactor;
-		}
-	}
-	//마찰 제한 적용 -  운동마찰은 객체의 속도를 0까지만 만들 수 있음
-	if (frictionAccel.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
-	{
-		Vector3 NewVelocity = Velocity;
-		NewVelocity += frictionAccel * DeltaTime;
-	
-		//적용 후에도 속도의 방향이 바뀌지 않음
-		if (Vector3::Dot(NewVelocity, Velocity) > KINDA_SMALL)
-		{
-			TotalAcceleration += frictionAccel;
-		}
-		else
-		{
-			Velocity = Vector3::Zero();
-		}
-	}
-
-	// 각운동 마찰력 처리
-	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
-	{
-		//각 축별로 정적 마찰 검사
-		bool bStaticFrictionX = std::abs(AngularVelocity.x) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.x) <= FrictionStatic * RotationalInertia.x;
-		bool bStaticFrictionY = std::abs(AngularVelocity.y) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.y) <= FrictionStatic * RotationalInertia.y;
-		bool bStaticFrictionZ = std::abs(AngularVelocity.z) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.z) <= FrictionStatic * RotationalInertia.z;
-
-		// 축별로 정적/운동 마찰 적용
-		Vector3 frictionAccel;
-		frictionAccel.x = bStaticFrictionX ? -AccumulatedTorque.x : -AngularVelocity.x * FrictionKinetic;
-		frictionAccel.y = bStaticFrictionY ? -AccumulatedTorque.y : -AngularVelocity.y * FrictionKinetic;
-		frictionAccel.z = bStaticFrictionZ ? -AccumulatedTorque.z : -AngularVelocity.z * FrictionKinetic;
-
-		TotalAngularAcceleration += frictionAccel;
-	}
-
-	// 저장된 충격량 처리 (순간적인 속도 변화)
-	Velocity += AccumulatedInstantForce / Mass;
-	AngularVelocity += Vector3(
-		AccumulatedInstantTorque.x / RotationalInertia.x,
-		AccumulatedInstantTorque.y / RotationalInertia.y,
-		AccumulatedInstantTorque.z / RotationalInertia.z);
-	//if (AccumulatedInstantTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
-	//{
-	//	LOG("AngularVelocity with InstantTorque : %s", Debug::ToString(AngularVelocity));
-	//	LOG("*------- InstantTorque : %s", Debug::ToString(AccumulatedInstantTorque));
-	//}
-
-	// 충격량 초기화
-	AccumulatedInstantForce = Vector3::Zero();
-	AccumulatedInstantTorque = Vector3::Zero();
-
-	// 외부에서 적용된 힘에 의한 가속도 추가
-	TotalAcceleration += AccumulatedForce / Mass;
-	TotalAngularAcceleration += Vector3(
-		AccumulatedTorque.x / RotationalInertia.x,
-		AccumulatedTorque.y / RotationalInertia.y,
-		AccumulatedTorque.z / RotationalInertia.z);
-
-	// 통합된 가속도로 속도 업데이트
-	if (TotalAcceleration.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
-	{
-		Velocity += TotalAcceleration * DeltaTime;
-	}
-	
-	if (TotalAngularAcceleration.LengthSquared() > KINDA_SMALLER * KINDA_SMALLER)
-	{
-		AngularVelocity += TotalAngularAcceleration * DeltaTime;
-	}
-	
-	//if (AccumulatedTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
-	//{
-	//	LOG("AngularVelocity with AccumulatedTorque : %s", Debug::ToString(AngularVelocity));
-	//	LOG("*------- AccumTorque : %s", Debug::ToString(AccumulatedTorque));
-	//}
-
-	// 속도 제한
-	ClampVelocities(Velocity, AngularVelocity);
-
-	// 위치 업데이트
-	P_UpdateTransform(DeltaTime);
-
-	// 외부 힘 초기화
-	AccumulatedForce = Vector3::Zero();
-	AccumulatedTorque = Vector3::Zero();
-}
-
-void URigidBodyComponent::RegisterPhysicsSystem()
-{
-	auto myShared = Engine::Cast<IPhysicsObejct>(
-		Engine::Cast<URigidBodyComponent>(shared_from_this()));
-
-	assert(myShared, "[Error] InValidPhysicsObejct");
-	UPhysicsSystem::Get()->RegisterPhysicsObject(myShared);
-}
-
-void URigidBodyComponent::UnRegisterPhysicsSystem()
-{
-	auto myShared = Engine::Cast<IPhysicsObejct>(
-		Engine::Cast<URigidBodyComponent>(shared_from_this()));
-	assert(myShared, "[Error] InValidPhysicsObejct");
-	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
-}
-
-void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
-{
-	if (!IsActive())
-		return;
-
-	bStateDirty = true;
-
-	CachedState.AccumulatedForce += Force;
-	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
-	CachedState.AccumulatedTorque += Torque;
-}
-
-void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
-{
-	if (!IsActive())
-		return;
-	bStateDirty = true;
-
-	CachedState.AccumulatedInstantForce += Impulse;
-	Vector3 COM = GetCenterOfMass();
-	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
-	CachedState.AccumulatedInstantTorque += AngularImpulse;
-}
-
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
 	return GetWorldTransform().Position;
 }
 
-#pragma region P_Regions
+#pragma region Internal Interface for PhysicsState
 void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
 {
 	if (SimulatedState.RigidType == ERigidBodyType::Static)
@@ -346,6 +168,162 @@ void URigidBodyComponent::P_AddAngularVelocity(const Vector3& InAngularVelocityD
 	ClampAngularVelocity(CachedState.AngularVelocity);
 }
 #pragma endregion
+
+#pragma region PhysicsObject Life Cycle
+void URigidBodyComponent::TickPhysics(const float DeltaTime)
+{
+	if (!IsActive())
+		return;
+
+	// 물리 상태 - TODO : for test, Directly CachedState
+	Vector3& Velocity = SimulatedState.Velocity;
+	Vector3& AngularVelocity = SimulatedState.AngularVelocity;
+	Vector3& AccumulatedForce = SimulatedState.AccumulatedForce;
+	Vector3& AccumulatedTorque = SimulatedState.AccumulatedTorque;
+	Vector3& AccumulatedInstantForce = SimulatedState.AccumulatedInstantForce;
+	Vector3& AccumulatedInstantTorque = SimulatedState.AccumulatedInstantTorque;
+
+	float& Mass = SimulatedState.Mass;
+	Vector3& RotationalInertia = SimulatedState.RotationalInertia;
+	float& FrictionKinetic = SimulatedState.FrictionKinetic;
+	float& FrictionStatic = SimulatedState.FrictionStatic;
+	float& Restitution = SimulatedState.Restitution;
+
+	// 모든 힘을 가속도로 변환
+	Vector3 TotalAcceleration = Vector3::Zero();
+	Vector3 TotalAngularAcceleration = Vector3::Zero();
+
+	float GravityFactor = GravityScale * ONE_METER;
+	// 중력 가속도 추가
+	if (bGravity)
+	{
+		TotalAcceleration += GravityDirection * GravityFactor;
+	}
+
+	//마찰력
+	Vector3 frictionAccel = Vector3::Zero();
+	if (Velocity.LengthSquared() > KINDA_SMALL)
+	{
+
+		// 정적 마찰력 영역에서 운동 마찰력 영역으로의 전환 확인
+		if (Velocity.Length() < KINDA_SMALL &&
+			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityFactor)
+		{
+			// 정적 마찰력이 외력을 상쇄
+			AccumulatedForce = Vector3::Zero();
+			Velocity = Vector3::Zero();
+		}
+		else
+		{
+			// 운동 마찰력 계산
+			frictionAccel = -Velocity.GetNormalized() * FrictionKinetic * GravityFactor;
+		}
+	}
+	//마찰 제한 적용 -  운동마찰은 객체의 속도를 0까지만 만들 수 있음
+	if (frictionAccel.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	{
+		Vector3 NewVelocity = Velocity;
+		NewVelocity += frictionAccel * DeltaTime;
+
+		//적용 후에도 속도의 방향이 바뀌지 않음
+		if (Vector3::Dot(NewVelocity, Velocity) > KINDA_SMALL)
+		{
+			TotalAcceleration += frictionAccel;
+		}
+		else
+		{
+			Velocity = Vector3::Zero();
+		}
+	}
+
+	// 각운동 마찰력 처리
+	if (AngularVelocity.LengthSquared() > KINDA_SMALL)
+	{
+		//각 축별로 정적 마찰 검사
+		bool bStaticFrictionX = std::abs(AngularVelocity.x) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.x) <= FrictionStatic * RotationalInertia.x;
+		bool bStaticFrictionY = std::abs(AngularVelocity.y) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.y) <= FrictionStatic * RotationalInertia.y;
+		bool bStaticFrictionZ = std::abs(AngularVelocity.z) < KINDA_SMALL &&
+			std::abs(AccumulatedTorque.z) <= FrictionStatic * RotationalInertia.z;
+
+		// 축별로 정적/운동 마찰 적용
+		Vector3 frictionAccel;
+		frictionAccel.x = bStaticFrictionX ? -AccumulatedTorque.x : -AngularVelocity.x * FrictionKinetic;
+		frictionAccel.y = bStaticFrictionY ? -AccumulatedTorque.y : -AngularVelocity.y * FrictionKinetic;
+		frictionAccel.z = bStaticFrictionZ ? -AccumulatedTorque.z : -AngularVelocity.z * FrictionKinetic;
+
+		TotalAngularAcceleration += frictionAccel;
+	}
+
+	// 저장된 충격량 처리 (순간적인 속도 변화)
+	Velocity += AccumulatedInstantForce / Mass;
+	AngularVelocity += Vector3(
+		AccumulatedInstantTorque.x / RotationalInertia.x,
+		AccumulatedInstantTorque.y / RotationalInertia.y,
+		AccumulatedInstantTorque.z / RotationalInertia.z);
+	//if (AccumulatedInstantTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	//{
+	//	LOG("AngularVelocity with InstantTorque : %s", Debug::ToString(AngularVelocity));
+	//	LOG("*------- InstantTorque : %s", Debug::ToString(AccumulatedInstantTorque));
+	//}
+
+	// 충격량 초기화
+	AccumulatedInstantForce = Vector3::Zero();
+	AccumulatedInstantTorque = Vector3::Zero();
+
+	// 외부에서 적용된 힘에 의한 가속도 추가
+	TotalAcceleration += AccumulatedForce / Mass;
+	TotalAngularAcceleration += Vector3(
+		AccumulatedTorque.x / RotationalInertia.x,
+		AccumulatedTorque.y / RotationalInertia.y,
+		AccumulatedTorque.z / RotationalInertia.z);
+
+	// 통합된 가속도로 속도 업데이트
+	if (TotalAcceleration.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	{
+		Velocity += TotalAcceleration * DeltaTime;
+	}
+
+	if (TotalAngularAcceleration.LengthSquared() > KINDA_SMALLER * KINDA_SMALLER)
+	{
+		AngularVelocity += TotalAngularAcceleration * DeltaTime;
+	}
+
+	//if (AccumulatedTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+	//{
+	//	LOG("AngularVelocity with AccumulatedTorque : %s", Debug::ToString(AngularVelocity));
+	//	LOG("*------- AccumTorque : %s", Debug::ToString(AccumulatedTorque));
+	//}
+
+	// 속도 제한
+	ClampVelocities(Velocity, AngularVelocity);
+
+	// 위치 업데이트
+	P_UpdateTransform(DeltaTime);
+
+	// 외부 힘 초기화
+	AccumulatedForce = Vector3::Zero();
+	AccumulatedTorque = Vector3::Zero();
+}
+
+void URigidBodyComponent::RegisterPhysicsSystem()
+{
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+
+	assert(myShared, "[Error] InValidPhysicsObejct");
+	UPhysicsSystem::Get()->RegisterPhysicsObject(myShared);
+}
+
+void URigidBodyComponent::UnRegisterPhysicsSystem()
+{
+	auto myShared = Engine::Cast<IPhysicsObejct>(
+		Engine::Cast<URigidBodyComponent>(shared_from_this()));
+	assert(myShared, "[Error] InValidPhysicsObejct");
+	UPhysicsSystem::Get()->UnregisterPhysicsObject(myShared);
+}
+
 // 내부 연산 결과를 외부용에 반영(동기화)
 void URigidBodyComponent::SynchronizeCachedStateFromSimulated()
 {
@@ -366,12 +344,38 @@ bool URigidBodyComponent::IsDirtyPhysicsState() const
 {
 	return bStateDirty;
 }
+#pragma endregion
 
 bool URigidBodyComponent::IsActive() const
 {
 	return USceneComponent::IsActive();
 }
 
+#pragma region External Interface for PhysicsState
+
+void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
+{
+	if (!IsActive())
+		return;
+
+	bStateDirty = true;
+
+	CachedState.AccumulatedForce += Force;
+	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
+	CachedState.AccumulatedTorque += Torque;
+}
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
+{
+	if (!IsActive())
+		return;
+	bStateDirty = true;
+
+	CachedState.AccumulatedInstantForce += Impulse;
+	Vector3 COM = GetCenterOfMass();
+	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
+	CachedState.AccumulatedInstantTorque += AngularImpulse;
+}
 
 // 물리 속성 설정
 void URigidBodyComponent::SetMass(float InMass)
@@ -440,6 +444,7 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 	CachedState.AngularVelocity += InAngularVelocityDelta;
 	ClampAngularVelocity(CachedState.AngularVelocity);
 }
+#pragma endregion
 
 void URigidBodyComponent::ClampVelocities(Vector3& OutVelocity, Vector3& OutAngularVelocity)
 {
