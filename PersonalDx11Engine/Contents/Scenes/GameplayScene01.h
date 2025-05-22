@@ -35,6 +35,7 @@ private:
     void SetupBorderTriggers(UElasticBody* InBody);
     void SpawnElasticBody();
     void DeSpawnElasticBody();
+    void LoadConfigFromIni();
 
 private:
     //카메라 움직임

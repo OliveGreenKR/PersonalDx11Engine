@@ -37,11 +37,20 @@ UGameplayScene01::~UGameplayScene01()
     }
 }
 
+void UGameplayScene01::LoadConfigFromIni()
+{
+    UConfigReadManager::Get()->GetValue("Scene01BorderX", XBorder);
+    UConfigReadManager::Get()->GetValue("Scene01BorderY", YBorder);
+    UConfigReadManager::Get()->GetValue("Scene01BorderZ", ZBorder);
+}
+
 void UGameplayScene01::Initialize()  
 { 
     int VIEW_WIDTH, VIEW_HEIGHT;
     UConfigReadManager::Get()->GetValue("ScreenWidth", VIEW_WIDTH);
     UConfigReadManager::Get()->GetValue("ScreenHeight", VIEW_HEIGHT);
+
+    LoadConfigFromIni();
 
     // 카메라 설정
     Camera = UCamera::Create(PI / 4.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.1f, 5000.0f);

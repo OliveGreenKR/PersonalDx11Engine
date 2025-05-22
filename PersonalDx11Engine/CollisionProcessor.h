@@ -17,7 +17,6 @@ struct FCollisionPair
         : TreeIdA(InIdA < InIdB ? InIdA : InIdB)
         , TreeIdB(InIdA < InIdB ? InIdB : InIdA)
         , bPrevCollided(false)
-        , bStepSimulateFinished(false)
     {
     }
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
@@ -27,7 +26,7 @@ struct FCollisionPair
 
     mutable FAccumulatedConstraint PrevConstraints;
     mutable bool bPrevCollided : 1;
-    mutable bool bStepSimulateFinished : 1;
+    //mutable bool bStepSimulateFinished : 1;
       
     bool operator==(const FCollisionPair& Other) const
     {
@@ -115,11 +114,10 @@ private:
 
     void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
 
-    void ApplyPositionCorrection(
-        const std::shared_ptr<UCollisionComponentBase>& ComponentA,
+    void ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& ComponentA,
         const std::shared_ptr<UCollisionComponentBase>& ComponentB,
         const FCollisionDetectionResult& DetectResult,
-        const float DeltaTime);
+        const float DeltaTime, const float CorrectionRatio);
 
     //제약조건 기반 반복적 해결
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,

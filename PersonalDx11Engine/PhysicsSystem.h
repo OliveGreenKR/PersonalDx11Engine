@@ -77,6 +77,7 @@ private:
     float FixedTimeStep = 0.016f;  // 60Hz
     float MinSubStepTickTime = 0.004f; // 15Hz
     int MaxSubSteps = 5;                 // 최대 서브스텝 수
+    int MinSubSteps = 3;                 // 최소 서브스텝 수 - 연속적인 충돌을 처리하기 위함
 
     //누적 tickTime 상태값
     float AccumulatedTime = 0.0f;

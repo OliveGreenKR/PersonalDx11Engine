@@ -20,6 +20,7 @@ void UPhysicsSystem::LoadConfigFromIni()
     UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
     UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
     UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
+    UConfigReadManager::Get()->GetValue("MinSubSteps", MinSubSteps);
 }
 
 void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
@@ -69,7 +70,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     // 서브스텝 시뮬레이션
     for (int i = 0; i < MaxSubSteps; i++)
     {
-        if (SimulateSubstep(FixedTimeStep))
+        if (SimulateSubstep(FixedTimeStep) && i > MinSubSteps)
         {
             // 시간 전부 사용- 서브  스텝 종료
             break;
@@ -172,11 +173,6 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
         auto PhysicsObjectPtr = PhysicsObject.lock();
         if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
         {
-            //if (SimualtedTime < StepTime)
-            //{
-            //    static int LINENUM = 0;
-            //    LOG_FUNC_CALL("%d:Physics SubSteps[% .5f] seconds.", LINENUM++, SimualtedTime);
-            //}
             PhysicsObjectPtr->TickPhysics(SimualtedTime);
         }
        

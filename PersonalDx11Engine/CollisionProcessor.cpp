@@ -240,7 +240,6 @@ void FCollisionProcessor::UpdateCollisionPairs()
 			if (ExistingPair != ActiveCollisionPairs.end()) {
 				NewPair.bPrevCollided = ExistingPair->bPrevCollided;
 				NewPair.PrevConstraints = ExistingPair->PrevConstraints;
-				NewPair.bStepSimulateFinished = false; //시뮬대상
 			}
 
 			NewCollisionPairs.insert(std::move(NewPair));
@@ -289,11 +288,6 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 	
 	for (auto& ActivePair : ActiveCollisionPairs)
 	{
-		//시뮬레이션 완료 대상은 건너띄기
-		if (ActivePair.bStepSimulateFinished)
-		{
-			continue;
-		}
 
 		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();
 		auto CompB = RegisteredComponents[ActivePair.TreeIdB].lock();
@@ -322,17 +316,10 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 
 			//response
 			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+			
+			float CorrectionRatio = ActivePair.bPrevCollided ? 1.001f : 0.5f;
 			//position correction
-			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
-			if (DetectResult.TimeOfImpact > 1.0f - KINDA_SMALL)
-			{
-				//스텝 시뮬레이션 종료
-				ActivePair.bStepSimulateFinished = true;
-			}
-			else
-			{
-				ActivePair.bStepSimulateFinished = false;
-			}
+			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
 		}
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
@@ -373,8 +360,8 @@ void FCollisionProcessor::GetPhysicsParams(const std::shared_ptr<UCollisionCompo
 	return;
 }
 
-void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB, 
-												const FCollisionDetectionResult& DetectResult, const float DeltaTime)
+void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB,
+												  const FCollisionDetectionResult& DetectResult, const float DeltaTime, const float CorrectionRatio)
 {
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
 		return;
@@ -387,10 +374,10 @@ void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisi
 
 	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
 	// 각 물체를 반대 방향으로 밀어냄
-	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * 0.5f;
+	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * CorrectionRatio;
 	RigidA->P_SetWorldPosition(newPosA);
 
-	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * 0.5f;
+	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * CorrectionRatio;
 	RigidB->P_SetWorldPosition(newPosB);
 }
 
