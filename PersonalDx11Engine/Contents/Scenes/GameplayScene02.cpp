@@ -114,10 +114,6 @@ void UGameplayScene02::Initialize()
     // 입력 설정
     SetupInput();
 
-    // 초기 비활성화
-    Character->SetActive(true);
-    Character2->SetActive(true);
-
     Character->SetGravity(false);
     Character2->SetGravity(false);
 

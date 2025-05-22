@@ -612,9 +612,6 @@
     <ClInclude Include="Contents\Scenes\TestScene01.h">
       <Filter>Contents\Scenes\testScene</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsStateCommandsInterface.h">
-      <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody\Commands</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

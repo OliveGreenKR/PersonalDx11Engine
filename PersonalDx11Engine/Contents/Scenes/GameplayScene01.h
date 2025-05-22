@@ -38,16 +38,9 @@ private:
     void LoadConfigFromIni();
 
 private:
-    //카메라 움직임
-    float LongitudeThreshold = 180 - KINDA_SMALL;
-    float LatitudeThreshold = 89.0f - KINDA_SMALL;
-    float Latitude = 0.0f;
-    float Longitude = 0.0f;
-    Vector3 CalculateSphericPosition(float Latidue, float Longitude, float radius);
-
-private:
     // 객체 및 카메라
     std::shared_ptr<UCamera> Camera;
+    std::shared_ptr<UElasticBody> Floor;
 
     // 씬 이름
     std::string SceneName = "GameplayScene01";

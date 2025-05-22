@@ -58,6 +58,19 @@ void UGameplayScene01::Initialize()
     Camera->PostInitialized();
     Camera->PostInitializedComponents();
 
+    Floor = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
+    Floor->PostInitialized();
+    Floor->PostInitializedComponents();
+    Floor->SetRestitution(0.2f);
+    Floor->SetMass(10000.0f);
+    //Floor->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
+    Floor->SetColor(Vector4(1,1,1,1) * 0.33f);
+    auto Primitive = Floor->GetComponentByType<UPrimitiveComponent>();
+    if (Primitive)
+    {
+        Primitive->SetMaterial(PoleMaterialHandle);
+    }
+
     // 입력 설정
     SetupInput();
 
@@ -76,6 +89,13 @@ void UGameplayScene01::Load()
     //DefaultMaterialHandle = UResourceManager::Get()->LoadResource<UMaterial>(MAT_DEFAULT);
 
     ElasticBodyPool = std::make_unique< TFixedObjectPool<UElasticBody, 512>>(EElasticBodyShape::Sphere);
+
+    if (Floor)
+    {
+        Floor->SetScale(Vector3(150.0f, 150.0f, 150.0f));
+        Floor->SetPosition(Vector3(0, -YBorder, 0));
+    }
+
 }
 
 void UGameplayScene01::Unload()
@@ -92,6 +112,7 @@ void UGameplayScene01::Unload()
    
     // 주요 객체 해제
     Camera = nullptr;
+    Floor = nullptr;
 }
 
 void UGameplayScene01::Tick(float DeltaTime)
@@ -135,6 +156,19 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
             }
         }
     }
+
+    {
+        FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
+        auto Primitive = Floor->GetComponentByType<UPrimitiveComponent>();
+        if (Primitive)
+        {
+            if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
+            {
+                Renderer->SubmitJob(RenderJob);
+            }
+        }
+    }
+   
 }
 
 void UGameplayScene01::SubmitRenderUI()
@@ -185,14 +219,20 @@ void UGameplayScene01::SubmitRenderUI()
         if (ImGui::InputFloat("BorderX", &XBorder, 10.0f, 50.0f, "%.02f"))
         {
             XBorder = Math::Clamp(XBorder, 50.0f, 400.0f);
+            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
+            Floor->SetPosition(Vector3(0, -YBorder, 0));
         }
 		if (ImGui::InputFloat("BorderY", &YBorder, 10.0f, 50.0f, "%.02f"))
 		{
             YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
+            Floor->SetPosition(Vector3(0, -YBorder, 0));
 		}
 		if (ImGui::InputFloat("BorderZ", &ZBorder, 10.0f, 50.0f, "%.02f"))
 		{
             YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
+            Floor->SetPosition(Vector3(0, -YBorder, 0));
 		}
         ImGui::End();
                                            });
@@ -283,12 +323,12 @@ void UGameplayScene01::SpawnElasticBody()
     if (ElasticBodyPool->GetActiveCount() % 2 == 0)
     {
         new (body) UElasticBody(EElasticBodyShape::Box);
-        body->SetScale(FRandom::RandVector(Vector3::One() * 30.0f, Vector3::One() * 80.0f));
+        body->SetScale(FRandom::RandVector(Vector3::One() * 20.0f, Vector3::One() * 80.0f));
     }
     else
     {
         new (body) UElasticBody(EElasticBodyShape::Sphere);
-        body->SetScale(Vector3::One() * FRandom::RandF(30.0f,80.0f));
+        body->SetScale(Vector3::One() * FRandom::RandF(20.0f,80.0f));
     }
     body->PostInitialized();
     body->PostInitializedComponents();
@@ -333,18 +373,4 @@ void UGameplayScene01::DeSpawnElasticBody()
         weakedBody.Release();
     }
     
-}
-
-Vector3 UGameplayScene01::CalculateSphericPosition(float Latidue, float Longitude, float radius)
-{
-    // 위도와 경도를 라디안으로 변환 (입력이 도(degree) 단위라고 가정)
-    float latRad = Math::DegreeToRad(Latidue);      // 위도
-    float lonRad = Math::DegreeToRad(Longitude);     // 경도
-
-    // x, y, z 좌표 계산
-    float x = radius * cos(latRad) * sin(lonRad);   // x 좌표
-    float y = radius * sin(latRad);                 // y 좌표 (위도에 따라 높이)
-    float z = -radius * cos(latRad) * cos(lonRad);   // z 좌표
-
-    return Vector3(x, y, z);
 }

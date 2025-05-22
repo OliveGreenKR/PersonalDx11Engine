@@ -120,8 +120,7 @@ void UPhysicsSystem::PrepareSimulation()
             [](const std::weak_ptr<IPhysicsObejct>& objWeak) {
                 return objWeak.expired();
             }
-        ),
-        RegisteredObjects.end()
+        ),        RegisteredObjects.end()
     );
 
     // 모든 물리 객체의 현재 상태 캡처
