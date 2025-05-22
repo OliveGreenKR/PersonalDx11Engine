@@ -1,6 +1,6 @@
 #pragma once
-#include "GameObject.h"
-#include "Model.h"
+#include "../GameObject.h"
+#include "../Model.h"
 #include <random>
 
 enum class EElasticBodyShape

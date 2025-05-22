@@ -47,23 +47,14 @@
     <ClCompile Include="ActorComponent.cpp">
       <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClCompile>
-    <ClCompile Include="ElasticBody.cpp">
-      <Filter>Contents\ElasticBody</Filter>
-    </ClCompile>
     <ClCompile Include="Model.cpp">
       <Filter>Engine\Resources\Model</Filter>
     </ClCompile>
     <ClCompile Include="DynamicAABBTree.cpp">
       <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
     </ClCompile>
-    <ClCompile Include="GameplayScene01.cpp">
-      <Filter>Contents\Scenes\Scene1</Filter>
-    </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Engine\Resources\Texture</Filter>
-    </ClCompile>
-    <ClCompile Include="GameplayScene02.cpp">
-      <Filter>Contents\Scenes\Scene2</Filter>
     </ClCompile>
     <ClCompile Include="PrimitiveComponent.cpp">
       <Filter>Engine\Object\Components\ActorComponent\Scene\Primitive</Filter>
@@ -119,9 +110,6 @@
     <ClCompile Include="VelocityConstraint.cpp">
       <Filter>Engine\Physics\Constraints\Velocity</Filter>
     </ClCompile>
-    <ClCompile Include="TestScene01.cpp">
-      <Filter>Contents\Scenes\testScene</Filter>
-    </ClCompile>
     <ClCompile Include="ConfigReadManager.cpp">
       <Filter>Engine\Managers\ConfigReadeer</Filter>
     </ClCompile>
@@ -145,6 +133,18 @@
     </ClCompile>
     <ClCompile Include="CollisionProcessor.cpp">
       <Filter>Engine\Physics\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="Contents\GameObject\ElasticBody.cpp">
+      <Filter>Contents\GameObjects\ElasticBody</Filter>
+    </ClCompile>
+    <ClCompile Include="Contents\Scenes\TestScene01.cpp">
+      <Filter>Contents\Scenes\testScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Contents\Scenes\GameplayScene01.cpp">
+      <Filter>Contents\Scenes\01</Filter>
+    </ClCompile>
+    <ClCompile Include="Contents\Scenes\GameplayScene02.cpp">
+      <Filter>Contents\Scenes\02</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -187,9 +187,6 @@
     <Filter Include="Contents">
       <UniqueIdentifier>{59fe685c-6920-4443-bf8d-3ab9ea70edbc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Contents\ElasticBody">
-      <UniqueIdentifier>{888872cb-8e27-40c9-9d75-e730af1aa8b8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Physics">
       <UniqueIdentifier>{54ddae73-1854-40a2-8f83-9ad503b0471a}</UniqueIdentifier>
     </Filter>
@@ -202,12 +199,6 @@
     <Filter Include="Engine\Scene">
       <UniqueIdentifier>{d953a0f8-c3fb-43b3-8c82-891be96f0c1b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Contents\Scenes">
-      <UniqueIdentifier>{81ed0914-7efe-452a-8fe9-18306d76e905}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Contents\Scenes\Scene1">
-      <UniqueIdentifier>{ddb70e12-28df-483d-8c50-e5b46dc1bf8d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Resources">
       <UniqueIdentifier>{a86807fb-7457-4cfd-ae18-567c2022eada}</UniqueIdentifier>
     </Filter>
@@ -216,9 +207,6 @@
     </Filter>
     <Filter Include="Engine\Resources\Texture">
       <UniqueIdentifier>{5748ce1d-105a-40ce-b7a9-d258531e7723}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Contents\Scenes\Scene2">
-      <UniqueIdentifier>{e9b29a5b-ecca-4913-93ab-6f047d3670ed}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Core">
       <UniqueIdentifier>{9706677a-0640-455f-b237-cc37c18e125a}</UniqueIdentifier>
@@ -322,9 +310,6 @@
     <Filter Include="Engine\Physics\Constraints\Velocity">
       <UniqueIdentifier>{e066b9a0-2ae3-4e1d-9fb0-d6e252638dee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Contents\Scenes\testScene">
-      <UniqueIdentifier>{5a45f421-6bbd-4f48-b831-51df6cdcc615}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Resources\Model">
       <UniqueIdentifier>{2685c678-d646-4cc5-9971-fbb49f8021ce}</UniqueIdentifier>
     </Filter>
@@ -342,6 +327,24 @@
     </Filter>
     <Filter Include="Engine\DataStructure\DynamicCircularQueue">
       <UniqueIdentifier>{892330bf-c239-4077-a5d7-fa8c4df76270}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Scenes">
+      <UniqueIdentifier>{32b7dc97-a144-4aba-a4bf-11403f511434}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\GameObjects">
+      <UniqueIdentifier>{7351cd16-b27f-4d92-a029-2e34d893e3c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\GameObjects\ElasticBody">
+      <UniqueIdentifier>{888872cb-8e27-40c9-9d75-e730af1aa8b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Scenes\testScene">
+      <UniqueIdentifier>{98bf8f30-7307-4caa-91e9-44e816d66e9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Scenes\02">
+      <UniqueIdentifier>{665f721d-1499-49fa-837d-c2b4cbafd61a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contents\Scenes\01">
+      <UniqueIdentifier>{e0bf360d-5a48-4602-810a-1359c1ac8e8e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -408,9 +411,6 @@
     <ClInclude Include="ActorComponent.h">
       <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClInclude>
-    <ClInclude Include="ElasticBody.h">
-      <Filter>Contents\ElasticBody</Filter>
-    </ClInclude>
     <ClInclude Include="VertexFormat.h">
       <Filter>Engine\Resources\Model\Vertex</Filter>
     </ClInclude>
@@ -438,9 +438,6 @@
     <ClInclude Include="SceneInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="GameplayScene01.h">
-      <Filter>Contents\Scenes\Scene1</Filter>
-    </ClInclude>
     <ClInclude Include="RenderHardwareInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
@@ -449,9 +446,6 @@
     </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Engine\Resources\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="GameplayScene02.h">
-      <Filter>Contents\Scenes\Scene2</Filter>
     </ClInclude>
     <ClInclude Include="PrimitiveComponent.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene\Primitive</Filter>
@@ -561,9 +555,6 @@
     <ClInclude Include="VelocityConstraint.h">
       <Filter>Engine\Physics\Constraints\Velocity</Filter>
     </ClInclude>
-    <ClInclude Include="TestScene01.h">
-      <Filter>Contents\Scenes\testScene</Filter>
-    </ClInclude>
     <ClInclude Include="PhysicsStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
@@ -605,6 +596,18 @@
     </ClInclude>
     <ClInclude Include="PhysicsStateInternalInterface.h">
       <Filter>Engine\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Contents\GameObject\ElasticBody.h">
+      <Filter>Contents\GameObjects\ElasticBody</Filter>
+    </ClInclude>
+    <ClInclude Include="Contents\Scenes\GameplayScene01.h">
+      <Filter>Contents\Scenes\01</Filter>
+    </ClInclude>
+    <ClInclude Include="Contents\Scenes\GameplayScene02.h">
+      <Filter>Contents\Scenes\02</Filter>
+    </ClInclude>
+    <ClInclude Include="Contents\Scenes\TestScene01.h">
+      <Filter>Contents\Scenes\testScene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

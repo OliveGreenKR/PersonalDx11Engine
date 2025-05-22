@@ -1,12 +1,12 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include "SceneInterface.h"
-#include "InputContext.h"
-#include "ResourceHandle.h"
-#include "FixedObjectPool.h"
-#include "PrimitiveComponent.h"
-#include "CollisionDetector.h"
+#include "../SceneInterface.h"
+#include "../InputContext.h"
+#include "../ResourceHandle.h"
+#include "../FixedObjectPool.h"
+#include "../PrimitiveComponent.h"
+#include "../CollisionDetector.h"
 
 
 class UTestScene01 : public ISceneInterface

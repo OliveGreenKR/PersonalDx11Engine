@@ -106,6 +106,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\test;.\ImGui;.\Contents\Scenes;.\Contents\GameObject;$(MSBuildProjectDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,16 +143,15 @@
     <ClCompile Include="CollisionProcessor.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="ConfigReadManager.cpp" />
+    <ClCompile Include="Contents\GameObject\ElasticBody.cpp" />
+    <ClCompile Include="Contents\Scenes\GameplayScene01.cpp" />
+    <ClCompile Include="Contents\Scenes\GameplayScene02.cpp" />
+    <ClCompile Include="Contents\Scenes\TestScene01.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DContextDebugger.cpp" />
     <ClCompile Include="D3DShader.cpp" />
     <ClCompile Include="DebugDrawerManager.cpp" />
     <ClCompile Include="DynamicAABBTree.cpp" />
-    <ClCompile Include="ElasticBody.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="GameplayScene01.cpp" />
-    <ClCompile Include="GameplayScene02.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
@@ -178,7 +178,6 @@
     <ClCompile Include="RigidBodyComponent.cpp" />
     <ClCompile Include="SceneComponent.cpp" />
     <ClCompile Include="SphereComponent.cpp" />
-    <ClCompile Include="TestScene01.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VelocityConstraint.cpp" />
@@ -200,6 +199,10 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="ConfigReadManager.h" />
     <ClInclude Include="ConstraintInterface.h" />
+    <ClInclude Include="Contents\GameObject\ElasticBody.h" />
+    <ClInclude Include="Contents\Scenes\GameplayScene01.h" />
+    <ClInclude Include="Contents\Scenes\GameplayScene02.h" />
+    <ClInclude Include="Contents\Scenes\TestScene01.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
@@ -211,14 +214,9 @@
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="DynamicCircularQueue.h" />
-    <ClInclude Include="ElasticBody.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="ArenaMemoryPool.h" />
     <ClInclude Include="FramePoolManager.h" />
     <ClInclude Include="Frustum.h" />
-    <ClInclude Include="GameplayScene01.h" />
-    <ClInclude Include="GameplayScene02.h" />
     <ClInclude Include="InputContext.h" />
     <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
@@ -266,7 +264,6 @@
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="testDynamicAABBTree.h" />
-    <ClInclude Include="TestScene01.h" />
     <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
