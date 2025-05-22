@@ -2,15 +2,24 @@
 #include "CollisionProcessor.h"
 #include <algorithm>
 #include "Debug.h"
+#include "ConfigReadManager.h"
 
 UPhysicsSystem::UPhysicsSystem()
 {
-    RegisteredObjects.reserve(512);
 }
 
 UPhysicsSystem::~UPhysicsSystem()
 {
-    RegisteredObjects.clear();
+    Release();
+}
+
+
+void UPhysicsSystem::LoadConfigFromIni()
+{
+    UConfigReadManager::Get()->GetValue("InitialPhysicsObjectCapacity", InitialPhysicsObjectCapacity);
+    UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
+    UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
+    UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
 }
 
 void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
@@ -46,19 +55,19 @@ void UPhysicsSystem::UnregisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& In
 
 }
 
-// 메인 물리 업데이트 (게임 루프에서 호출)
+// 메인 물리 업데이트 (메인 루프에서 호출)
 void UPhysicsSystem::TickPhysics(const float DeltaTime)
 {
     // 시간 누적 및 서브스텝 계산
     AccumulatedTime += DeltaTime;
     int NumSubsteps = CalculateRequiredSubsteps();
-    NumSubsteps = Math::Clamp(NumSubsteps, 0, MaxSubsteps);
+    NumSubsteps = Math::Clamp(NumSubsteps, 0, MaxSubSteps);
 
     // 물리 시뮬레이션 준비
     PrepareSimulation();
 
     // 서브스텝 시뮬레이션
-    for (int i = 0; i < MaxSubsteps; i++)
+    for (int i = 0; i < MaxSubSteps; i++)
     {
         if (SimulateSubstep(FixedTimeStep))
         {
@@ -71,11 +80,30 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     FinalizeSimulation();
 }
 
+void UPhysicsSystem::Initialzie()
+{
+    try
+    {
+        LoadConfigFromIni();
+        RegisteredObjects.reserve(InitialPhysicsObjectCapacity);
+    }
+    catch (...)
+    {
+        Release();
+        exit(1);
+    }
+}
+
+void UPhysicsSystem::Release()
+{
+    RegisteredObjects.clear();
+}
+
 // 필요한 서브스텝 수 계산
 int UPhysicsSystem::CalculateRequiredSubsteps()
 {
     int steps = static_cast<int>(AccumulatedTime / FixedTimeStep);
-    return std::min(steps, MaxSubsteps);
+    return std::min(steps, MaxSubSteps);
 }
 
 // 시뮬레이션 시작 전 준비
@@ -190,8 +218,6 @@ void UPhysicsSystem::FinalizeSimulation()
         }
     }
 }
-
-
 
 
 ///////////////////////////////////////////////////////////

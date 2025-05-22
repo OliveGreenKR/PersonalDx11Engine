@@ -51,11 +51,9 @@ namespace std
 
 struct FCollisionSystemConfig
 {
-    bool bPhysicsSimulated = true;
     float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
-    // AABB Tree 관련 설정
-    size_t InitialCapacity = 512;       // 초기 컴포넌트 및 트리 용량
-    float AABBMargin = 0.1f;             // AABB 여유 공간
+    size_t InitialCollisonCapacity = 512;       // 초기 컴포넌트 및 트리 용량
+    float FatBoundsExtentRatio = 0.1f;             // AABB 여유 공간
 };
 
 struct FContactPoint
@@ -72,20 +70,20 @@ struct FContactPoint
 /// DynamicAABBTree를 이용해 객체의 충돌쌍을 관리하고
 /// 충돌 테스트 및 충돌 반응등을 수행함
 /// </summary>
-class FCollisionProcessorT
+class FCollisionProcessor
 {
 private:
     friend class UPhysicsSystem;
 
     // 복사 및 이동 방지
-    FCollisionProcessorT(const FCollisionProcessorT&) = delete;
-    FCollisionProcessorT& operator=(const FCollisionProcessorT&) = delete;
-    FCollisionProcessorT(FCollisionProcessorT&&) = delete;
-    FCollisionProcessorT& operator=(FCollisionProcessorT&&) = delete;
+    FCollisionProcessor(const FCollisionProcessor&) = delete;
+    FCollisionProcessor& operator=(const FCollisionProcessor&) = delete;
+    FCollisionProcessor(FCollisionProcessor&&) = delete;
+    FCollisionProcessor& operator=(FCollisionProcessor&&) = delete;
 
     // 생성자/소멸자
-    FCollisionProcessorT() = default;
-    ~FCollisionProcessorT();
+    FCollisionProcessor() = default;
+    ~FCollisionProcessor();
 
 public:
     void RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent);
@@ -141,9 +139,6 @@ private:
     class FCollisionDetector* Detector = nullptr;
     class FCollisionResponseCalculator* ResponseCalculator = nullptr;
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
-
-    // 고정 타임스텝 관련 변수
-    float AccumulatedTime = 0.0f;
 
     // 컴포넌트 관리
     //std::vector<FComponentData> RegisteredComponents; 

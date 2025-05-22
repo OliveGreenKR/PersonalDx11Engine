@@ -25,16 +25,17 @@ public:
     {
         static UPhysicsSystem* manager = [](){
             UPhysicsSystem* instance = new UPhysicsSystem();
+            instance->Initialzie();
             return instance;
         }();
 
         return manager;
     }
     //하부시스템 - 충돌
-    static FCollisionProcessorT* GetCollisionSubsystem()
+    static FCollisionProcessor* GetCollisionSubsystem()
     {
-        static FCollisionProcessorT* instance = []() {
-            FCollisionProcessorT* collision = new FCollisionProcessorT();
+        static FCollisionProcessor* instance = []() {
+            FCollisionProcessor* collision = new FCollisionProcessor();
             collision->Initialize();
             return collision;
             }();
@@ -52,6 +53,12 @@ public:
 #pragma endregion
 
 private:
+    void Initialzie();
+
+    void Release();
+
+    void LoadConfigFromIni();
+
     // 필요한 서브스텝 수 계산
     int CalculateRequiredSubsteps();
 
@@ -66,24 +73,14 @@ private:
 
 private:
     // 물리 시뮬레이션 설정
+    int InitialPhysicsObjectCapacity = 512; //최초 관리 객체 메모리 크기
     float FixedTimeStep = 0.016f;  // 60Hz
-    float AccumulatedTime = 0.0f;
-    int MaxSubsteps = 3;
     float MinSubStepTickTime = 0.004f; // 15Hz
+    int MaxSubSteps = 5;                 // 최대 서브스텝 수
+
+    //누적 tickTime 상태값
+    float AccumulatedTime = 0.0f;
 
     // 시뮬레이션 상태
     bool bIsSimulating = false;
-
-    //fixedTimeStep
-    float MinimumTimeStep = 0.0016f;     // 최소 시간 간격 (약 600fps)
-    float MaximumTimeStep = 0.0166f;     // 최대 시간 간격 (약 60fps)
-    bool bUseFixedTimestep = true;       // 고정 타임스텝 사용 여부
-    int MaxSubSteps = 5;                 // 최대 서브스텝 수
-
-
-    //UConfigReadManager::Get()->GetValue("MinimumTimeStep", Config.MinimumTimeStep);
-    //UConfigReadManager::Get()->GetValue("MaximumTimeStep", Config.MaximumTimeStep);
-    //UConfigReadManager::Get()->GetValue("bUseFixedTimestep", Config.bUseFixedTimestep);
-    //UConfigReadManager::Get()->GetValue("FixedTimeStep", Config.FixedTimeStep);
-    //UConfigReadManager::Get()->GetValue("MaxSubSteps", Config.MaxSubSteps);
 };

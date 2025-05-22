@@ -10,12 +10,19 @@
 #include "ConfigReadManager.h"
 #include "PhysicsStateInternalInterface.h"
 
-FCollisionProcessorT::~FCollisionProcessorT()
+void FCollisionProcessor::LoadConfigFromIni()
+{
+	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", Config.CCDVelocityThreshold);
+	UConfigReadManager::Get()->GetValue("InitialCollisionCapacity", Config.InitialCollisonCapacity);
+	UConfigReadManager::Get()->GetValue("FatBoundsExtentRatio", Config.FatBoundsExtentRatio);
+}
+
+FCollisionProcessor::~FCollisionProcessor()
 {
 	Release();
 }
 
-void FCollisionProcessorT::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent)
+void FCollisionProcessor::RegisterCollision(std::shared_ptr<UCollisionComponentBase>& NewComponent)
 {
 	if (!CollisionTree || !NewComponent )
 		return;
@@ -29,7 +36,7 @@ void FCollisionProcessorT::RegisterCollision(std::shared_ptr<UCollisionComponent
 	RegisteredComponents[TreeNodeId] = NewComponent; 
 }
 
-void FCollisionProcessorT::UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& InComponent)
+void FCollisionProcessor::UnRegisterCollision(std::shared_ptr<UCollisionComponentBase>& InComponent)
 {
 	if (!InComponent || !CollisionTree)
 		return;
@@ -74,7 +81,7 @@ void FCollisionProcessorT::UnRegisterCollision(std::shared_ptr<UCollisionCompone
 	}
 }
 
-float FCollisionProcessorT::SimulateCollision(const float DeltaTime)
+float FCollisionProcessor::SimulateCollision(const float DeltaTime)
 {
 	CleanupDestroyedComponents();
 	UpdateCollisionTransform();
@@ -83,7 +90,7 @@ float FCollisionProcessorT::SimulateCollision(const float DeltaTime)
 	return minSimulTime;
 }
 
-void FCollisionProcessorT::UnRegisterAll()
+void FCollisionProcessor::UnRegisterAll()
 {
 	if (!CollisionTree)
 		return;
@@ -96,7 +103,7 @@ void FCollisionProcessorT::UnRegisterAll()
 	RegisteredComponents.clear();
 }
 
-void FCollisionProcessorT::Initialize()
+void FCollisionProcessor::Initialize()
 {
 	try
 	{
@@ -110,10 +117,11 @@ void FCollisionProcessorT::Initialize()
 		Detector = new FCollisionDetector();
 		ResponseCalculator = new FCollisionResponseCalculator();
 		EventDispatcher = new FCollisionEventDispatcher();
-		CollisionTree = new FDynamicAABBTree(Config.InitialCapacity);
+		CollisionTree = new FDynamicAABBTree(Config.InitialCollisonCapacity);
+		CollisionTree->AABB_Extension = std::max(0.1f,Config.FatBoundsExtentRatio); //기본은 0.1f
 
-		RegisteredComponents.reserve(Config.InitialCapacity);
-		ActiveCollisionPairs.reserve(Config.InitialCapacity);
+		RegisteredComponents.reserve(Config.InitialCollisonCapacity);
+		ActiveCollisionPairs.reserve(Config.InitialCollisonCapacity);
 	}
 	catch (...)
 	{
@@ -121,7 +129,7 @@ void FCollisionProcessorT::Initialize()
 	}
 }
 
-void FCollisionProcessorT::Release()
+void FCollisionProcessor::Release()
 {
 	UnRegisterAll();
 
@@ -149,7 +157,7 @@ void FCollisionProcessorT::Release()
 	RegisteredComponents.clear();
 }
 
-void FCollisionProcessorT::CleanupDestroyedComponents()
+void FCollisionProcessor::CleanupDestroyedComponents()
 {
 	if (RegisteredComponents.empty() || !CollisionTree)
 		return;
@@ -194,7 +202,7 @@ void FCollisionProcessorT::CleanupDestroyedComponents()
 	}
 }
 
-void FCollisionProcessorT::UpdateCollisionPairs()
+void FCollisionProcessor::UpdateCollisionPairs()
 {
 	if (!CollisionTree || RegisteredComponents.empty())
 	{
@@ -262,19 +270,19 @@ void FCollisionProcessorT::UpdateCollisionPairs()
 	ActiveCollisionPairs = std::move(NewCollisionPairs);
 }
 
-void FCollisionProcessorT::UpdateCollisionTransform()
+void FCollisionProcessor::UpdateCollisionTransform()
 {
 	CollisionTree->UpdateTree();
 }
 
-bool FCollisionProcessorT::ShouldUseCCD(const IPhysicsStateInternal* PhysicsState) const
+bool FCollisionProcessor::ShouldUseCCD(const IPhysicsStateInternal* PhysicsState) const
 {
 	if (!PhysicsState)
 		return false;
 	return PhysicsState->P_GetVelocity().Length() > Config.CCDVelocityThreshold;
 }
 
-float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
+float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 {
 	const float TotalDeltaTime = DeltaTime;
 	float minCollideTime = 1.0f;
@@ -330,20 +338,12 @@ float FCollisionProcessorT::ProcessCollisions(const float DeltaTime)
 		BroadcastCollisionEvents(ActivePair, DetectResult);
 		//충돌 정보 저장
 		ActivePair.bPrevCollided = DetectResult.bCollided;
-
-		
-		////response
-		//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
-		////position correction
-		//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime);
-		////dispatch event
-		//BroadcastCollisionEvents(ActivePair, DetectResult);
 	}
 
 	return minCollideTime;
 }
 
-void FCollisionProcessorT::GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& OutParams ) const
+void FCollisionProcessor::GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& OutParams ) const
 {
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
@@ -373,7 +373,7 @@ void FCollisionProcessorT::GetPhysicsParams(const std::shared_ptr<UCollisionComp
 	return;
 }
 
-void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB, 
+void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB, 
 												const FCollisionDetectionResult& DetectResult, const float DeltaTime)
 {
 	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
@@ -394,7 +394,7 @@ void FCollisionProcessorT::ApplyPositionCorrection(const std::shared_ptr<UCollis
 	RigidB->P_SetWorldPosition(newPosB);
 }
 
-void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
+void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
 
 	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
@@ -430,7 +430,7 @@ void FCollisionProcessorT::ApplyCollisionResponseByContraints(const FCollisionPa
 	CollisionPair.PrevConstraints = Accumulation;
 }
 
-void FCollisionProcessorT::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
+void FCollisionProcessor::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
 {
 	auto CompA = RegisteredComponents[InPair.TreeIdA].lock();
 	auto CompB = RegisteredComponents[InPair.TreeIdB].lock();
@@ -473,15 +473,7 @@ void FCollisionProcessorT::BroadcastCollisionEvents(const FCollisionPair& InPair
 	EventDispatcher->DispatchCollisionEvents(CompB, EventData, NowState);
 }
 
-void FCollisionProcessorT::LoadConfigFromIni()
-{
-	UConfigReadManager::Get()->GetValue("bPhysicsSimulated", Config.bPhysicsSimulated);
-	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", Config.CCDVelocityThreshold);
-	UConfigReadManager::Get()->GetValue("InitialCapacity", Config.InitialCapacity);
-	UConfigReadManager::Get()->GetValue("AABBMargin", Config.AABBMargin);
-}
-
-void FCollisionProcessorT::PrintTreeStructure() const
+void FCollisionProcessor::PrintTreeStructure() const
 {
 #if defined(_DEBUG) || defined(DEBUG)
 //test
