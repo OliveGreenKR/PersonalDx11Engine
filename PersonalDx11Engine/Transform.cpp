@@ -44,6 +44,35 @@ FTransform FTransform::Lerp(const FTransform& Start, const FTransform& End, floa
     return Result;
 }
 
+bool FTransform::IsEqual(const FTransform& WorldTransform , const FTransform& InWorldTransform, const float Epsilon)
+{
+    bool bIsSame = (
+        (WorldTransform.Position - InWorldTransform.Position).LengthSquared() < TRANSFORM_EPSILON * TRANSFORM_EPSILON) &&
+        ((std::abs(1.0f - std::abs(Quaternion::Dot(WorldTransform.Rotation, InWorldTransform.Rotation)))) < TRANSFORM_EPSILON) &&
+        ((WorldTransform.Scale - InWorldTransform.Scale).LengthSquared() < TRANSFORM_EPSILON * TRANSFORM_EPSILON);
+    
+    return bIsSame;
+}
+
+bool FTransform::IsValidPosition(const Vector3& InVector)
+{
+    return InVector.LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON;
+}
+
+bool FTransform::IsValidScale(const Vector3& InVector)
+{
+    return InVector.LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON;
+}
+
+bool FTransform::IsValidRotation(const Quaternion & QuatA, const Quaternion & QuatB)
+{
+    // 변화량이 의미 있는지 확인
+    float Dot = Quaternion::Dot(QuatA, QuatB);
+    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+
+    return ChangeMagnitude > TRANSFORM_EPSILON;
+}
+
 Matrix FTransform::GetTranslationMatrix() const
 {
     return DirectX::XMMatrixTranslation(Position.x, Position.y, Position.z);

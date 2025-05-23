@@ -70,6 +70,7 @@ public:
 
 #pragma endregion
 #pragma region IPhyscisStateInternal
+public:
 	//TODO : for test, simple redirection
 	float P_GetMass() const override { return SimulatedState.Mass;}
 	Vector3 P_GetRotationalInertia() const override { return SimulatedState.RotationalInertia; }
@@ -99,16 +100,18 @@ public:
 
     void P_SetAngularVelocity(const Vector3& InAngularVelocity) override;
     void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
-#pragma region
+#pragma endregion
 #pragma region IPhysicsObject
+public:
 	// 현재 상태를 외부 상태로 저장
 	void SynchronizeCachedStateFromSimulated()  override;
 	// 외부 상태를 현재 상태로 저장
 	void UpdateSimulatedStateFromCached() override;
 	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
+	bool IsSleep() const override;
 #pragma endregion
-
+public:
 	// 물리 속성 설정
 	void SetMass(float InMass);
 	void SetFrictionKinetic(float InFriction);
@@ -126,9 +129,8 @@ public:
 	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
 public:
 	// 시뮬레이션 플래그
-	void SetGravity(const bool InBool) { bGravity = InBool; }
+	void SetGravity(const bool InBool);
 	bool IsGravity() const { return bGravity; }
-
 	bool IsStatic() const { return CachedState.RigidType == ERigidBodyType::Static; }
 
 private:
@@ -136,7 +138,7 @@ private:
 	void UnRegisterPhysicsSystem() override;
 
 	//속도에 따른 트랜스폼 변화
-	void P_UpdateTransform(float DeltaTime);
+	void P_UpdateTransformByVelocity(float DeltaTime);
 	void ClampVelocities(Vector3& OutVelocity, Vector3& OutAngularVelocity);
 	void ClampLinearVelocity(Vector3& OutVelocity);
 	void ClampAngularVelocity(Vector3& OutAngularVelocity);
@@ -145,8 +147,15 @@ private:
 
 	__forceinline bool IsSpeedRestricted() { return !(MaxSpeed < 0.0f); }
 	__forceinline bool IsAngularSpeedRestricted() { return !(MaxAngularSpeed < 0.0f); }
-private:
 
+	bool ShouldSleep() const;
+
+	//물리 상태값 적분 안정화를 위한 헬퍼함수
+	static bool IsValidForce(const Vector3& InForce);
+	static bool IsValidTorque(const Vector3& InTorque);
+	static bool IsValidVelocity(const Vector3& InVelocity);
+	static bool IsValidAngularVelocity(const Vector3& InAngularVelocity);
+private:
 	struct FRigidPhysicsState
 	{
 		// 물리 상태 변수
@@ -168,6 +177,16 @@ private:
 		ERigidBodyType RigidType = ERigidBodyType::Dynamic;
 
 		FTransform WorldTransform;
+
+		void Reset()
+		{
+			Velocity = Vector3::Zero();
+			AngularVelocity = Vector3::Zero();
+			AccumulatedForce = Vector3::Zero();
+			AccumulatedTorque = Vector3::Zero();
+			AccumulatedInstantForce = Vector3::Zero();
+			AccumulatedInstantTorque = Vector3::Zero();
+		}
 	};
 
 	mutable bool bStateDirty = false;
@@ -178,7 +197,8 @@ private:
 	float MaxAngularSpeed = 6.0f * PI;
 
 	bool bGravity = false;
-
 	float GravityScale = 9.81f;
 	Vector3 GravityDirection = -Vector3::Up();
+
+	bool bSleep = false;
 };

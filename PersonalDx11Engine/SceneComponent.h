@@ -92,6 +92,4 @@ protected:
 
 private:
     void OnParentChanged(const std::shared_ptr<UActorComponent>& NewParent) override;
-
-    static constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 };

@@ -17,5 +17,4 @@ public:
 
 private:
     Vector3 GetTargetPos(UCamera* Camera);
-
 };

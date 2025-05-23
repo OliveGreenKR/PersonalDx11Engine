@@ -6,6 +6,7 @@
 #include "PhysicsSystem.h"
 #include "TypeCast.h"
 
+#include "PrimitiveComponent.h"
 
 URigidBodyComponent::URigidBodyComponent()
 {
@@ -23,6 +24,13 @@ void URigidBodyComponent::PostInitialized()
 	OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform&)
 										 { 
 											 this->bStateDirty = true;
+											 this->bSleep = false;
+											 //ForDebug
+											 auto Primitive = GetOwner()->GetComponentByType<UPrimitiveComponent>();
+											 if (Primitive)
+											 {
+												 Primitive->SetColor(Vector4(0, 1, 0, 1));
+											 }
 										 }, "RigidBody_OnWorldTransformChagned");
 	
 	//초기 상태 저장
@@ -60,8 +68,41 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 	return GetWorldTransform().Position;
 }
 
-#pragma region Internal Interface for PhysicsState
-void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
+bool URigidBodyComponent::ShouldSleep() const
+{
+	//에너지레벨이 충분히 낮으면 sleep
+	bool bShouldSleep = false;
+
+	bShouldSleep = 
+		FTransform::IsEqual(CachedState.WorldTransform, SimulatedState.WorldTransform, KINDA_SMALLER);
+
+ 	return bShouldSleep;
+}
+
+#pragma region Helper For Numerical Stability
+bool URigidBodyComponent::IsValidForce(const Vector3& InForce)
+{
+	return InForce.LengthSquared() > KINDA_SMALL * KINDA_SMALL;
+}
+
+bool URigidBodyComponent::IsValidTorque(const Vector3& InTorque)
+{
+	return InTorque.LengthSquared() > KINDA_SMALL * KINDA_SMALL;
+}
+
+bool URigidBodyComponent::IsValidVelocity(const Vector3& InVelocity)
+{
+	return InVelocity.LengthSquared() > KINDA_SMALL * KINDA_SMALL;
+}
+
+bool URigidBodyComponent::IsValidAngularVelocity(const Vector3& InAngularVelocity)
+{
+	return InAngularVelocity.LengthSquared() > KINDA_SMALL * KINDA_SMALL;
+}
+#pragma endregion
+
+#pragma region Internal PhysicsState
+void URigidBodyComponent::P_UpdateTransformByVelocity(const float DeltaTime)
 {
 	if (IsStatic())
 	{
@@ -69,130 +110,136 @@ void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
 	}
 	FTransform TargetTransform = SimulatedState.WorldTransform;
 
-	if (SimulatedState.Velocity.Length() > KINDA_SMALLER)
+	bool bNeedUpdate = false;
+
+	if (IsValidVelocity(SimulatedState.Velocity))
 	{
+		bNeedUpdate = true;
 		// 위치 업데이트
 		Vector3 NewPosition = TargetTransform.Position + SimulatedState.Velocity * DeltaTime;
 		TargetTransform.Position = NewPosition;
 	}
 
-	// 회전 업데이트
-	Matrix WorldRotation = TargetTransform.GetRotationMatrix();
-	XMVECTOR WorldAngularVel = XMLoadFloat3(&SimulatedState.AngularVelocity);
-	float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
-	if (AngularSpeed > KINDA_SMALL)
+	if (IsValidAngularVelocity(SimulatedState.AngularVelocity))
 	{
-		XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
-		float Angle = AngularSpeed * DeltaTime;
-		TargetTransform.RotateAroundAxis(
-			Vector3(
-				XMVectorGetX(RotationAxis),
-				XMVectorGetY(RotationAxis),
-				XMVectorGetZ(RotationAxis)
-			),
-			Math::RadToDegree(Angle)
-		);
+		bNeedUpdate = true;
+		// 회전 업데이트
+		Matrix WorldRotation = TargetTransform.GetRotationMatrix();
+		XMVECTOR WorldAngularVel = XMLoadFloat3(&SimulatedState.AngularVelocity);
+		float AngularSpeed = XMVectorGetX(XMVector3Length(WorldAngularVel));
+		if (AngularSpeed > KINDA_SMALL)
+		{
+			XMVECTOR RotationAxis = XMVector3Normalize(WorldAngularVel);
+			float Angle = AngularSpeed * DeltaTime;
+			TargetTransform.RotateAroundAxis(
+				Vector3(
+					XMVectorGetX(RotationAxis),
+					XMVectorGetY(RotationAxis),
+					XMVectorGetZ(RotationAxis)
+				),
+				Math::RadToDegree(Angle)
+			);
+		}
 	}
-	P_SetWorldTransform(TargetTransform);
+	if (bNeedUpdate)
+	{
+		P_SetWorldTransform(TargetTransform);
+	}
 }
 
 void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
 {
-	if (IsStatic())
+	if (IsStatic() || !FTransform::IsValidPosition(SimulatedState.WorldTransform.Position - InPoisiton))
 	{
 		return;
 	}
-	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
-
-	if ((SimulatedState.WorldTransform.Position - InPoisiton).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
-	{
-		SimulatedState.WorldTransform.Position = InPoisiton;
-	}
+	SimulatedState.WorldTransform.Position = InPoisiton;
 }
 void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
 {
-	if (IsStatic())
+	if (IsStatic() || !FTransform::IsValidRotation(SimulatedState.WorldTransform.Rotation, InQuat))
 	{
 		return;
 	}
-	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
-
-	// 변화량이 의미 있는지 확인
-	float Dot = Quaternion::Dot(SimulatedState.WorldTransform.Rotation, InQuat);
-	float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-	if (ChangeMagnitude > TRANSFORM_EPSILON)
-	{
-		SimulatedState.WorldTransform.Rotation = InQuat;
-	}
-
+	SimulatedState.WorldTransform.Rotation = InQuat;
 }
+
+
+
 void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
 {
-	if (IsStatic())
+	if (IsStatic() || !FTransform::IsValidScale(SimulatedState.WorldTransform.Scale - InScale))
 	{
 		return;
 	}
-	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
-
-	if ((SimulatedState.WorldTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
-	{
-		SimulatedState.WorldTransform.Scale = InScale;
-	}
+	SimulatedState.WorldTransform.Scale = InScale;
 }
+
+
+
 void URigidBodyComponent::P_ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!IsActive() || IsStatic())
+	if (!IsActive() || IsStatic() || !IsValidForce(Force))
 		return;
 
 	SimulatedState.AccumulatedForce += Force;
 	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
-	SimulatedState.AccumulatedTorque += Torque;
+	if (IsValidTorque(Torque))
+	{
+		SimulatedState.AccumulatedTorque += Torque;
+	}
 }
+
 void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!IsActive() || IsStatic())
+	if (!IsActive() || IsStatic() || !IsValidForce(Impulse))
 		return;
 
 	SimulatedState.AccumulatedInstantForce += Impulse;
-	Vector3 COM = GetCenterOfMass();
 	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
-	SimulatedState.AccumulatedInstantTorque += AngularImpulse;
+	if (IsValidTorque(AngularImpulse))
+	{
+		SimulatedState.AccumulatedInstantTorque += AngularImpulse;
+	}
 }
+
 void URigidBodyComponent::P_SetVelocity(const Vector3& InVelocity) 
 {
-	if (IsStatic())
+	if (IsStatic() || !IsValidVelocity(SimulatedState.Velocity - InVelocity))
 		return;
 	SimulatedState.Velocity = InVelocity;
 	ClampLinearVelocity(SimulatedState.Velocity);
 }
+
 void URigidBodyComponent::P_AddVelocity(const Vector3& InVelocityDelta) 
 {
-	if (IsStatic())
+	if (IsStatic() || !IsValidVelocity(InVelocityDelta))
 		return;
 	SimulatedState.Velocity += InVelocityDelta;
 	ClampLinearVelocity(SimulatedState.Velocity);
 }
+
 void URigidBodyComponent::P_SetAngularVelocity(const Vector3& InAngularVelocity) 
 {
-	if (IsStatic())
+	if (IsStatic() || !IsValidAngularVelocity(SimulatedState.AngularVelocity - InAngularVelocity))
 		return;
 	SimulatedState.AngularVelocity = InAngularVelocity;
 	ClampAngularVelocity(SimulatedState.AngularVelocity);
 }
+
 void URigidBodyComponent::P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) 
 {
-	if (IsStatic())
+	if (IsStatic() || !IsValidAngularVelocity(InAngularVelocityDelta))
 		return;
 	SimulatedState.AngularVelocity += InAngularVelocityDelta;
-	ClampAngularVelocity(CachedState.AngularVelocity);
+	ClampAngularVelocity(SimulatedState.AngularVelocity);
 }
 #pragma endregion
 
 #pragma region PhysicsObject Life Cycle
 void URigidBodyComponent::TickPhysics(const float DeltaTime)
 {
-	if (!IsActive() || IsStatic())
+	if (!IsActive() || IsStatic() || IsSleep())
 		return;
 
     //물리 상태
@@ -338,11 +385,37 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	ClampVelocities(Velocity, AngularVelocity);
 
 	// 위치 업데이트
-	P_UpdateTransform(DeltaTime);
+	P_UpdateTransformByVelocity(DeltaTime);
 
 	// 외부 힘 초기화
 	AccumulatedForce = Vector3::Zero();
 	AccumulatedTorque = Vector3::Zero();
+
+	if (ShouldSleep())
+	{
+		bSleep = true;
+		SimulatedState.Reset();
+		{
+			//ForDebug
+			auto Primitive = GetOwner()->GetComponentByType<UPrimitiveComponent>();
+			if (Primitive)
+			{
+				Primitive->SetColor(Vector4(1, 0, 0, 1));
+			}
+		}
+		return;
+	}
+}
+
+
+// 시뮬레이션 플래그
+void URigidBodyComponent::SetGravity(const bool InBool) 
+{
+	bGravity = InBool; 
+	if (bGravity)
+	{
+		bSleep = false;
+	}
 }
 
 void URigidBodyComponent::RegisterPhysicsSystem()
@@ -367,11 +440,16 @@ void URigidBodyComponent::SynchronizeCachedStateFromSimulated()
 {
 	CachedState = SimulatedState;
 	SetWorldTransform(CachedState.WorldTransform);
-	
+	bStateDirty = false;
 }
 //연산 전 외부 상태 동기화
 void URigidBodyComponent::UpdateSimulatedStateFromCached()
 {
+	if (!bStateDirty)
+	{
+		return;
+	}
+	bSleep = false;
 	bStateDirty = false;
 	FTransform CurrentWorldTransform = GetWorldTransform();
 	CachedState.WorldTransform = CurrentWorldTransform;
@@ -389,30 +467,42 @@ bool URigidBodyComponent::IsActive() const
 	return USceneComponent::IsActive();
 }
 
-#pragma region External Interface for PhysicsState
+bool URigidBodyComponent::IsSleep() const
+{
+	return bSleep;
+}
+
+#pragma region External PhysicsState
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!IsActive() || IsStatic())
+	if (!IsActive() || IsStatic() || !IsValidForce(Force))
 		return;
 
 	bStateDirty = true;
 
 	CachedState.AccumulatedForce += Force;
 	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
-	CachedState.AccumulatedTorque += Torque;
+	if (IsValidTorque(Torque))
+	{
+		CachedState.AccumulatedTorque += Torque;
+	}
 }
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!IsActive() || IsStatic())
+	if (!IsActive() || IsStatic() || !IsValidForce(Impulse))
 		return;
+
 	bStateDirty = true;
 
 	CachedState.AccumulatedInstantForce += Impulse;
 	Vector3 COM = GetCenterOfMass();
 	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
-	CachedState.AccumulatedInstantTorque += AngularImpulse;
+	if (IsValidTorque(AngularImpulse))
+	{
+		CachedState.AccumulatedInstantTorque += AngularImpulse;
+	}
 }
 
 // 물리 속성 설정
@@ -457,6 +547,11 @@ void URigidBodyComponent::SetRotationalInertia(const Vector3& Value, const Rotat
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 {
+	Vector3 Delta = (CachedState.Velocity - InVelocity);
+	if (!IsValidVelocity(Delta))
+	{
+		return;
+	}
 	bStateDirty = true;
 	CachedState.Velocity = InVelocity;
 	ClampLinearVelocity(CachedState.Velocity);
@@ -464,6 +559,11 @@ void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 
 void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
 {
+	if (!IsValidVelocity(InVelocityDelta))
+	{
+		return;
+	}
+
 	bStateDirty = true;
 	CachedState.Velocity += InVelocityDelta;
 	ClampLinearVelocity(CachedState.Velocity);
@@ -471,6 +571,12 @@ void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
 
 void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
 {
+	Vector3 Delta = (CachedState.AngularVelocity - InAngularVelocity);
+	if (!IsValidAngularVelocity(Delta))
+	{
+		return;
+	}
+
 	bStateDirty = true;
 	CachedState.AngularVelocity = InAngularVelocity;
 	ClampAngularVelocity(CachedState.AngularVelocity);
@@ -478,6 +584,11 @@ void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
 
 void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDelta)
 {
+	if (!IsValidAngularVelocity(InAngularVelocityDelta))
+	{
+		return;
+	}
+
 	bStateDirty = true;
 	CachedState.AngularVelocity += InAngularVelocityDelta;
 	ClampAngularVelocity(CachedState.AngularVelocity);

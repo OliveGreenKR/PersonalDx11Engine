@@ -1,5 +1,6 @@
 #include "SceneComponent.h"
 #include "Debug.h"
+
 // 로컬 트랜스폼 변경 시 호출되는 함수
 void USceneComponent::OnLocalTransformChanged()
 {
@@ -75,20 +76,19 @@ void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 {
     bool bChanged = false;
 
-    if ((LocalTransform.Position - InTransform.Position).LengthSquared() > TRANSFORM_EPSILON)
+    if (FTransform::IsValidPosition(LocalTransform.Position - InTransform.Position))
     {
         LocalTransform.Position = InTransform.Position;
         bChanged = true;
     }
 
-    float RotDot = Quaternion::Dot(LocalTransform.Rotation, InTransform.Rotation);
-    if (std::abs(1.0f - std::abs(RotDot)) > TRANSFORM_EPSILON)
+    if (FTransform::IsValidRotation(LocalTransform.Rotation, InTransform.Rotation))
     {
         LocalTransform.Rotation = InTransform.Rotation;
         bChanged = true;
     }
 
-    if ((LocalTransform.Scale - InTransform.Scale).LengthSquared() > TRANSFORM_EPSILON)
+    if (FTransform::IsValidScale(LocalTransform.Scale - InTransform.Scale))
     {
         LocalTransform.Scale = InTransform.Scale;
         bChanged = true;
@@ -102,29 +102,27 @@ void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 
 void USceneComponent::SetLocalPosition(const Vector3& InPosition)
 {
-    if ((LocalTransform.Position - InPosition).LengthSquared() > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidPosition(LocalTransform.Position - InPosition))
     {
-        LocalTransform.Position = InPosition;
-        OnLocalTransformChanged();
+        return;
     }
+    LocalTransform.Position = InPosition;
+    OnLocalTransformChanged();
 }
 
 void USceneComponent::SetLocalRotation(const Quaternion& InRotation)
 {
-     // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(LocalTransform.Rotation, InRotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidRotation((LocalTransform.Rotation, InRotation)))
     {
-         // 정규화 및 저장
-        XMVECTOR RotQuat = XMLoadFloat4(&InRotation);
-        XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
-        XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
-
-        // 변경 플래그 설정 및 전파
-        OnLocalTransformChanged();
+        return;
     }
+    // 정규화 및 저장
+    XMVECTOR RotQuat = XMLoadFloat4(&InRotation);
+    XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
+    XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
+
+    // 변경 플래그 설정 및 전파
+    OnLocalTransformChanged();
 }
 
 void USceneComponent::SetLocalRotationEuler(const Vector3& InEuler)
@@ -135,45 +133,45 @@ void USceneComponent::SetLocalRotationEuler(const Vector3& InEuler)
 
 void USceneComponent::SetLocalScale(const Vector3& InScale)
 {
-    if ((LocalTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidScale(LocalTransform.Scale - InScale))
     {
-        LocalTransform.Scale = InScale;
-        OnLocalTransformChanged();
+        return;
     }
+    LocalTransform.Scale = InScale;
+    OnLocalTransformChanged();
 }
 
 void USceneComponent::AddLocalPosition(const Vector3& InDeltaPosition)
 {
-    if (InDeltaPosition.LengthSquared() > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidPosition(InDeltaPosition))
     {
-        Vector3 New = GetLocalPosition() + InDeltaPosition;
-        SetLocalPosition(New);
+        return;
     }
-    
+    Vector3 New = LocalTransform.Position + InDeltaPosition;
+    SetLocalPosition(New);
 }
 
 void USceneComponent::AddLocalRotation(const Quaternion& InDeltaRotation)
 {
     // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(Quaternion::Identity(), InDeltaRotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidRotation(InDeltaRotation))
     {
-        // 현재 회전에 새 회전을 합성
-        XMVECTOR CurrentQuat = XMLoadFloat4(&LocalTransform.Rotation);
-        XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
-
-        // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
-        XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
-
-        // 정규화 및 저장
-        ResultQuat = XMQuaternionNormalize(ResultQuat);
-        XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
-
-        // 변경 플래그 설정 및 전파
-        OnLocalTransformChanged();
+        return;
     }
+
+    // 현재 회전에 새 회전을 합성
+    XMVECTOR CurrentQuat = XMLoadFloat4(&LocalTransform.Rotation);
+    XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
+
+    // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
+    XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
+
+    // 정규화 및 저장
+    ResultQuat = XMQuaternionNormalize(ResultQuat);
+    XMStoreFloat4(&LocalTransform.Rotation, ResultQuat);
+
+    // 변경 플래그 설정 및 전파
+    OnLocalTransformChanged();
 }
 
 void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
@@ -187,9 +185,10 @@ void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
     bool bIsUpdate = false;
 
-    bIsUpdate = ((WorldTransform.Position - InWorldTransform.Position).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON) ||
-        ((std::abs(1.0f - std::abs(Quaternion::Dot(WorldTransform.Rotation, InWorldTransform.Rotation)))) > TRANSFORM_EPSILON) ||
-        ((WorldTransform.Scale - InWorldTransform.Scale).LengthSquared() > TRANSFORM_EPSILON* TRANSFORM_EPSILON);
+    bIsUpdate =
+        FTransform::IsValidPosition(WorldTransform.Position - InWorldTransform.Position) ||
+        FTransform::IsValidScale(WorldTransform.Scale - InWorldTransform.Scale) ||
+        FTransform::IsValidRotation(WorldTransform.Rotation, InWorldTransform.Rotation);
 
     if (bIsUpdate)
     {
@@ -200,32 +199,30 @@ void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 
 void USceneComponent::SetWorldPosition(const Vector3& InWorldPosition)
 {
-    if ((WorldTransform.Position - InWorldPosition).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
+    if (!FTransform::IsValidPosition(WorldTransform.Position - InWorldPosition))
     {
-        FTransform NewWorldTransform = WorldTransform;
-        NewWorldTransform.Position = InWorldPosition;
-
-        SetWorldTransform(NewWorldTransform);
+        return;
     }
+
+    FTransform NewWorldTransform = WorldTransform;
+    NewWorldTransform.Position = InWorldPosition;
+    SetWorldTransform(NewWorldTransform);
 }
 
 void USceneComponent::SetWorldRotation(const Quaternion& InWorldRotation)
 {
-     // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(WorldTransform.Rotation, InWorldRotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
-
-    if (ChangeMagnitude > TRANSFORM_EPSILON)
+    if (!FTransform::IsValidRotation(WorldTransform.Rotation,InWorldRotation))
     {
-        FTransform NewWorldTransform = WorldTransform;
+        return;
 
-         // 정규화 및 저장
-        XMVECTOR RotQuat = XMLoadFloat4(&InWorldRotation);
-        XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
-        XMStoreFloat4(&NewWorldTransform.Rotation, ResultQuat);
-
-        SetWorldTransform(NewWorldTransform);
     }
+    FTransform NewWorldTransform = WorldTransform;
+
+    // 정규화 및 저장
+    XMVECTOR RotQuat = XMLoadFloat4(&InWorldRotation);
+    XMVECTOR ResultQuat = XMQuaternionNormalize(RotQuat);
+    XMStoreFloat4(&NewWorldTransform.Rotation, ResultQuat);
+    SetWorldTransform(NewWorldTransform);
 }
 
 void USceneComponent::SetWorldRotationEuler(const Vector3& InWorldEuler)
@@ -236,12 +233,13 @@ void USceneComponent::SetWorldRotationEuler(const Vector3& InWorldEuler)
 
 void USceneComponent::SetWorldScale(const Vector3& InWorldScale)
 {
-    if ((WorldTransform.Scale - InWorldScale).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
+    if (!FTransform::IsValidScale(WorldTransform.Scale - InWorldScale))
     {
-        FTransform NewWorldTransform = WorldTransform;
-        NewWorldTransform.Scale = InWorldScale;
-        SetWorldTransform(NewWorldTransform);
+        return;
     }
+    FTransform NewWorldTransform = WorldTransform;
+    NewWorldTransform.Scale = InWorldScale;
+    SetWorldTransform(NewWorldTransform);
 }
 
 void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
@@ -252,27 +250,23 @@ void USceneComponent::AddWorldPosition(const Vector3& InDeltaPosition)
 
 void USceneComponent::AddWorldRotation(const Quaternion& InDeltaRotation)
 {
-    // 변화량이 의미 있는지 확인
-    float Dot = Quaternion::Dot(Quaternion::Identity(), InDeltaRotation);
-    float ChangeMagnitude = std::abs(1.0f - std::abs(Dot));
+    if (!FTransform::IsValidRotation(InDeltaRotation))
+        return;
 
-    if (ChangeMagnitude > TRANSFORM_EPSILON)
-    {
-        FTransform NewTransform = WorldTransform;
+    FTransform NewTransform = WorldTransform;
 
-        // 현재 회전에 새 회전을 합성
-        XMVECTOR CurrentQuat = XMLoadFloat4(&NewTransform.Rotation);
-        XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
+    // 현재 회전에 새 회전을 합성
+    XMVECTOR CurrentQuat = XMLoadFloat4(&NewTransform.Rotation);
+    XMVECTOR DeltaQuat = XMLoadFloat4(&InDeltaRotation);
 
-        // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
-        XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
+    // 쿼터니언 곱으로 회전 결합 (순서 중요: 델타 * 현재)
+    XMVECTOR ResultQuat = XMQuaternionMultiply(DeltaQuat, CurrentQuat);
 
-        // 정규화 및 저장
-        ResultQuat = XMQuaternionNormalize(ResultQuat);
-        XMStoreFloat4(&NewTransform.Rotation, ResultQuat);
+    // 정규화 및 저장
+    ResultQuat = XMQuaternionNormalize(ResultQuat);
+    XMStoreFloat4(&NewTransform.Rotation, ResultQuat);
 
-        SetWorldTransform(NewTransform);
-    }
+    SetWorldTransform(NewTransform);
 
 }
 
@@ -438,7 +432,7 @@ void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
     Vector3 Direction = TargetWorldPosition - WorldPos;
 
     // 방향 벡터가 너무 작으면 회전하지 않음
-    if (Direction.LengthSquared() < TRANSFORM_EPSILON)
+    if (Direction.LengthSquared() < FTransform::TRANSFORM_EPSILON)
         return;
 
     // 방향을 정규화
@@ -464,7 +458,7 @@ void USceneComponent::LookAt(const Vector3& TargetWorldPosition)
 void USceneComponent::RotateAroundAxis(const Vector3& Axis, float AngleDegrees)
 {
    // 각도가 너무 작거나 축이 너무 작으면 회전하지 않음
-    if (std::abs(AngleDegrees) < TRANSFORM_EPSILON || Axis.LengthSquared() < TRANSFORM_EPSILON)
+    if (std::abs(AngleDegrees) < FTransform::TRANSFORM_EPSILON || Axis.LengthSquared() < FTransform::TRANSFORM_EPSILON)
         return;
 
     // 현재 월드 회전 가져오기

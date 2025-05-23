@@ -18,4 +18,5 @@ public:
 
     virtual bool IsStatic() const = 0;
     virtual bool IsActive() const = 0;
+    virtual bool IsSleep() const = 0;
 };

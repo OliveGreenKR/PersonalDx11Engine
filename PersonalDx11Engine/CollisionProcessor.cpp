@@ -317,7 +317,7 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 			//response
 			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 			
-			float CorrectionRatio = ActivePair.bPrevCollided ? 1.001f : 0.5f;
+			float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
 			//position correction
 			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
 		}
