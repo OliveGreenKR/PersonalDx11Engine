@@ -61,6 +61,8 @@ void UTestScene01::Initialize()
     //원점 표시
     auto OPointWeak = ObjectPool->AcquireForcely();
     auto OPoint = OPointWeak.Get();
+    OPoint->BroadcastPostInitialized();
+    OPoint->BroadcastPostTreeInitialized();
     OPoint->SetColor(Vector4(1, 0, 1, 1));
     OPoint->SetModel(FResourceHandle(MDL_SPHERE_Low));
     OPoint->SetWorldScale(Vector3::One() * 100.0f * 0.05f);
@@ -145,6 +147,8 @@ void UTestScene01::SubmitRender(URenderer* Renderer)
         auto Primitive = body.Get();
         if (Primitive)
         {
+            Primitive->BroadcastPostInitialized();
+            Primitive->BroadcastPostTreeInitialized();
             if (Primitive->FillRenderData(GetMainCamera(), RenderJob.RenderData))
             {
                 Renderer->SubmitJob(RenderJob);
