@@ -252,7 +252,7 @@ bool UGameObject::IsGravity() const
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
-		return RigidPtr->bGravity;
+		return RigidPtr->IsGravity();
 	}
 	return false;
 }
@@ -274,7 +274,7 @@ void UGameObject::SetGravity(const bool InBool)
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
-		RigidPtr->bGravity = InBool;
+		RigidPtr->SetGravity(InBool);
 		return;
 	}
 }

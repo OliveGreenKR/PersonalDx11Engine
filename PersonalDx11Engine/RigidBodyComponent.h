@@ -126,7 +126,8 @@ public:
 	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
 public:
 	// 시뮬레이션 플래그
-	bool bGravity  =  false;
+	void SetGravity(const bool InBool) { bGravity = InBool; }
+	bool IsGravity() const { return bGravity; }
 
 	bool IsStatic() const { return CachedState.RigidType == ERigidBodyType::Static; }
 
@@ -175,6 +176,8 @@ private:
 
 	float MaxSpeed = 400.0f;
 	float MaxAngularSpeed = 6.0f * PI;
+
+	bool bGravity = false;
 
 	float GravityScale = 9.81f;
 	Vector3 GravityDirection = -Vector3::Up();
