@@ -59,12 +59,16 @@ void UGameplayScene01::Initialize()
     Camera->PostInitializedComponents();
 
     Floor = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
-    Floor->PostInitialized();
-    Floor->PostInitializedComponents();
-    Floor->SetRestitution(0.2f);
-    Floor->SetMass(10000.0f);
-    //Floor->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
-    Floor->SetColor(Vector4(1,1,1,1) * 0.33f);
+    if (Floor)
+    {
+        Floor->PostInitialized();
+        Floor->PostInitializedComponents();
+        Floor->SetRestitution(0.0f);
+        Floor->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
+		Floor->SetColor(Vector4(1, 1, 1, 1) * 0.33f);
+		ScalingFloor();
+		Floor->SetPosition(Vector3(0, -YBorder, 0));
+    }
     auto Primitive = Floor->GetComponentByType<UPrimitiveComponent>();
     if (Primitive)
     {
@@ -90,12 +94,6 @@ void UGameplayScene01::Load()
 
     ElasticBodyPool = std::make_unique< TFixedObjectPool<UElasticBody, 512>>(EElasticBodyShape::Sphere);
 
-    if (Floor)
-    {
-        Floor->SetScale(Vector3(150.0f, 150.0f, 150.0f));
-        Floor->SetPosition(Vector3(0, -YBorder, 0));
-    }
-
 }
 
 void UGameplayScene01::Unload()
@@ -109,7 +107,7 @@ void UGameplayScene01::Unload()
     {
         ElasticBodyPool.reset();
     }
-   
+
     // 주요 객체 해제
     Camera = nullptr;
     Floor = nullptr;
@@ -121,7 +119,10 @@ void UGameplayScene01::Tick(float DeltaTime)
     {
         Camera->Tick(DeltaTime);
     }
-
+    if (Floor)
+    {
+        Floor->Tick(DeltaTime);
+    }
     // 탄성체 스폰 로직
     AccumTime += DeltaTime;
     if (AccumTime > SPAWN_FREQUENCY)
@@ -168,7 +169,7 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
             }
         }
     }
-   
+
 }
 
 void UGameplayScene01::SubmitRenderUI()
@@ -188,7 +189,7 @@ void UGameplayScene01::SubmitRenderUI()
                 body.Get()->SetGravity(bGravity);
             }
         }
-        if(ImGui::Button("Spawn"))
+        if (ImGui::Button("Spawn"))
         {
             SpawnElasticBody();
         }
@@ -219,20 +220,20 @@ void UGameplayScene01::SubmitRenderUI()
         if (ImGui::InputFloat("BorderX", &XBorder, 10.0f, 50.0f, "%.02f"))
         {
             XBorder = Math::Clamp(XBorder, 50.0f, 400.0f);
-            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
+            ScalingFloor();
             Floor->SetPosition(Vector3(0, -YBorder, 0));
         }
-		if (ImGui::InputFloat("BorderY", &YBorder, 10.0f, 50.0f, "%.02f"))
-		{
-            YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
-            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
-            Floor->SetPosition(Vector3(0, -YBorder, 0));
+        if (ImGui::InputFloat("BorderY", &YBorder, 10.0f, 50.0f, "%.02f"))
+        {
+			YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+			ScalingFloor();
+			Floor->SetPosition(Vector3(0, -YBorder, 0));
 		}
 		if (ImGui::InputFloat("BorderZ", &ZBorder, 10.0f, 50.0f, "%.02f"))
 		{
-            YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
-            Floor->SetScale(Vector3(XBorder, 50.0f, ZBorder));
-            Floor->SetPosition(Vector3(0, -YBorder, 0));
+			YBorder = Math::Clamp(YBorder, 50.0f, 400.0f);
+			ScalingFloor();
+			Floor->SetPosition(Vector3(0, -YBorder, 0));
 		}
         ImGui::End();
                                            });
@@ -343,6 +344,7 @@ void UGameplayScene01::SpawnElasticBody()
         Rigid->Reset();
     }
     body->SetMass(FRandom::RandF(1.0f, 20.0f));
+    body->SetRestitution(0.5f);
     body->SetGravity(bGravity);
     body->SetColor(Vector4(FRandom::RandColor()));
     body->SetActive(true);
@@ -373,4 +375,16 @@ void UGameplayScene01::DeSpawnElasticBody()
         weakedBody.Release();
     }
     
+}
+
+void UGameplayScene01::ScalingFloor()
+{
+    if (!Floor)
+    {
+        return;
+    }
+    constexpr float Thickness = 50.0f;
+    constexpr float Margin = 60.0f;
+
+    Floor->SetScale(Vector3(2.0f * XBorder + Margin, 50.0f, 2.0f * ZBorder + Margin));
 }

@@ -63,7 +63,7 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 #pragma region Internal Interface for PhysicsState
 void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
 {
-	if (SimulatedState.RigidType == ERigidBodyType::Static)
+	if (IsStatic())
 	{
 		return;
 	}
@@ -98,6 +98,10 @@ void URigidBodyComponent::P_UpdateTransform(const float DeltaTime)
 
 void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
 {
+	if (IsStatic())
+	{
+		return;
+	}
 	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 
 	if ((SimulatedState.WorldTransform.Position - InPoisiton).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
@@ -107,6 +111,10 @@ void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
 }
 void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
 {
+	if (IsStatic())
+	{
+		return;
+	}
 	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 
 	// 변화량이 의미 있는지 확인
@@ -121,6 +129,10 @@ void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
 }
 void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
 {
+	if (IsStatic())
+	{
+		return;
+	}
 	constexpr float TRANSFORM_EPSILON = KINDA_SMALLER;
 
 	if ((SimulatedState.WorldTransform.Scale - InScale).LengthSquared() > TRANSFORM_EPSILON * TRANSFORM_EPSILON)
@@ -130,7 +142,7 @@ void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
 }
 void URigidBodyComponent::P_ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!IsActive())
+	if (!IsActive() || IsStatic())
 		return;
 
 	SimulatedState.AccumulatedForce += Force;
@@ -139,7 +151,7 @@ void URigidBodyComponent::P_ApplyForce(const Vector3& Force, const Vector3& Loca
 }
 void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!IsActive())
+	if (!IsActive() || IsStatic())
 		return;
 
 	SimulatedState.AccumulatedInstantForce += Impulse;
@@ -149,21 +161,29 @@ void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& 
 }
 void URigidBodyComponent::P_SetVelocity(const Vector3& InVelocity) 
 {
+	if (IsStatic())
+		return;
 	SimulatedState.Velocity = InVelocity;
 	ClampLinearVelocity(SimulatedState.Velocity);
 }
 void URigidBodyComponent::P_AddVelocity(const Vector3& InVelocityDelta) 
 {
+	if (IsStatic())
+		return;
 	SimulatedState.Velocity += InVelocityDelta;
 	ClampLinearVelocity(SimulatedState.Velocity);
 }
 void URigidBodyComponent::P_SetAngularVelocity(const Vector3& InAngularVelocity) 
 {
+	if (IsStatic())
+		return;
 	SimulatedState.AngularVelocity = InAngularVelocity;
 	ClampAngularVelocity(SimulatedState.AngularVelocity);
 }
 void URigidBodyComponent::P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) 
 {
+	if (IsStatic())
+		return;
 	SimulatedState.AngularVelocity += InAngularVelocityDelta;
 	ClampAngularVelocity(CachedState.AngularVelocity);
 }
@@ -172,10 +192,10 @@ void URigidBodyComponent::P_AddAngularVelocity(const Vector3& InAngularVelocityD
 #pragma region PhysicsObject Life Cycle
 void URigidBodyComponent::TickPhysics(const float DeltaTime)
 {
-	if (!IsActive())
+	if (!IsActive() || IsStatic())
 		return;
 
-	// 물리 상태 - TODO : for test, Directly CachedState
+    //물리 상태
 	Vector3& Velocity = SimulatedState.Velocity;
 	Vector3& AngularVelocity = SimulatedState.AngularVelocity;
 	Vector3& AccumulatedForce = SimulatedState.AccumulatedForce;
@@ -192,6 +212,24 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	// 모든 힘을 가속도로 변환
 	Vector3 TotalAcceleration = Vector3::Zero();
 	Vector3 TotalAngularAcceleration = Vector3::Zero();
+
+	constexpr float DragCoefficient = 0.01f;
+	constexpr float RotationalDragCoefficient = 0.1f;
+	//공기 저항
+	Vector3 DragForce = -Velocity.GetNormalized() * Velocity.LengthSquared() * DragCoefficient;
+	Vector3 DragAcceleration = DragForce / Mass;
+	TotalAcceleration += DragAcceleration;
+	
+	//공기저항 각속도
+	Vector3 AngularDragTorque = -AngularVelocity.GetNormalized() *
+		AngularVelocity.LengthSquared() *
+		RotationalDragCoefficient;
+	Vector3 AngularDragAcceleration = Vector3(
+		AngularDragTorque.x / RotationalInertia.x,
+		AngularDragTorque.y / RotationalInertia.y,
+		AngularDragTorque.z / RotationalInertia.z
+	);
+	TotalAngularAcceleration += AngularDragAcceleration;
 
 	float GravityFactor = GravityScale * ONE_METER;
 	// 중력 가속도 추가
@@ -355,7 +393,7 @@ bool URigidBodyComponent::IsActive() const
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
 {
-	if (!IsActive())
+	if (!IsActive() || IsStatic())
 		return;
 
 	bStateDirty = true;
@@ -367,7 +405,7 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
 {
-	if (!IsActive())
+	if (!IsActive() || IsStatic())
 		return;
 	bStateDirty = true;
 

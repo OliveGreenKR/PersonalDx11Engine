@@ -223,6 +223,7 @@ void UGameplayScene02::SubmitRenderUI()
         if (Character)
         {
             Vector3 Scale = Character->GetWorldTransform().Scale;
+            float Restitution = Character->GetRestitution();
             bool bScale = false;
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
             Vector3 CurrentPos = Character->GetWorldTransform().Position;
@@ -280,6 +281,10 @@ void UGameplayScene02::SubmitRenderUI()
                 Character->SetScale(Scale);
             }
             ImGui::PopItemWidth();
+            if (ImGui::DragFloat("Restitution", &Restitution, 0.1f, 0.0001f, 1.5f, "%.2f"))
+            {
+                Character->SetRestitution(Restitution);
+            }
             ImGui::End();
         }
 
@@ -291,6 +296,7 @@ void UGameplayScene02::SubmitRenderUI()
             bool bGravity2 = Character2->IsGravity();
             bool bPhysics2 = Character2->IsPhysicsSimulated();
             bool bIsActive2 = Character2->IsActive();
+            float Restitution = Character2->GetRestitution();
             ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
             ImGui::Checkbox("bPhysicsBased", &bPhysics2);
@@ -309,6 +315,10 @@ void UGameplayScene02::SubmitRenderUI()
                         CurrentRot.w);
             ImGui::Text("[LocalTransform] \n %s",
                         Debug::ToString(Character2->GetRootComp()->GetLocalTransform()));
+            if (ImGui::DragFloat("Restitution", &Restitution, 0.1f, 0.0001f, 1.5f, "%.2f"))
+            {
+                Character2->SetRestitution(Restitution);
+            }
             ImGui::End();
         }
 

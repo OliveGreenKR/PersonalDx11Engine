@@ -369,7 +369,7 @@ void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisi
 	auto RigidA = CompA->GetPhysicsStateInternal();
 	auto RigidB = CompB->GetPhysicsStateInternal();
 
-	if (!RigidA || !RigidB)
+	if (!RigidA || !RigidB )
 		return;
 
 	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
