@@ -72,7 +72,7 @@ void UGameplayScene02::Initialize()
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
     Character2->SetScale(50.0f * Vector3::One());
-    Character2->SetPosition({ 60.0f, 0, 0.0f });
+    Character2->SetPosition({ -60.0f, -30.0f, 0.0f });
 
     // 초기화 및 설정
     Camera->PostInitialized();
@@ -80,7 +80,7 @@ void UGameplayScene02::Initialize()
     Character2->PostInitialized();
 
     Camera->SetLookAtObject(Character.get());
-    Camera->LookAt({ 0.0f, 0.0f, 0.0f }); //.정중앙
+    Camera->LookAt({ 0.0f, 0.0f, 0.0f }); //정중앙
     Camera->bLookAtObject = false;
 
     Character->PostInitializedComponents();
@@ -116,6 +116,7 @@ void UGameplayScene02::Initialize()
 
     Character->SetGravity(false);
     Character2->SetGravity(false);
+    Character2->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
 
     auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
     Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEventData& InEvent) {

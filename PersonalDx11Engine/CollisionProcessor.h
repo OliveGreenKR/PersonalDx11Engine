@@ -123,6 +123,10 @@ private:
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
                                             const FCollisionDetectionResult& DetectResult);
 
+    //쌍의 접촉 상황 판단
+    bool IsPersistentContact(const FCollisionPair& CollisionPair,
+                             const FCollisionDetectionResult& DetectResult) ;
+
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,
         const FCollisionDetectionResult& DetectResult);

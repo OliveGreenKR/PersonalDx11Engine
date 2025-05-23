@@ -26,7 +26,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 
     // 반발 계수 적용 (두 물체의 평균)
     float RestitutionCoef = std::min(0.9999f,(ParameterA.Restitution + ParameterB.Restitution) * 0.5f);
-    float BiasFactor = 0.05f;  // 위치 보정 계수
+    float BiasFactor = 0.5f;  // 위치 보정 계수
 
     // 상대 속도가 임계값 이하일 때는 반발 계수를 0으로 설정 (마찰과 함께 정지 상태 유지)
     XMVECTOR vRelativeVel = NormalConstraint.CalculateRelativeVelocity(
@@ -81,7 +81,7 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
     }
     
     //마찰에 대한 접선방향 충격량 약화
-    constexpr float TangentCoef = 0.65f;
+    constexpr float TangentCoef = 1.0f;
     // 최종 충격량 합산
     ResponseData.NetImpulse = (NormalImpulse + TangentCoef * TangentImpulse);
     ResponseData.ApplicationPoint = DetectionResult.Point;

@@ -314,12 +314,20 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
 
-			//response
-			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+			if (!IsPersistentContact(ActivePair, DetectResult))
+			{
+				//response
+				ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+
+				float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
+				//position correction
+				ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
+			}
+			else
+			{
+				LOG_FUNC_CALL("Persistent");
+			}
 			
-			float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
-			//position correction
-			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
 		}
 		//dispatch event
 		BroadcastCollisionEvents(ActivePair, DetectResult);
@@ -415,6 +423,34 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 
 	//반응 결과 저장
 	CollisionPair.PrevConstraints = Accumulation;
+}
+
+bool FCollisionProcessor::IsPersistentContact(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
+{
+	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
+	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
+
+	if (!ComponentA || !ComponentA->GetPhysicsStateInternal() ||
+		!ComponentB || !ComponentB->GetPhysicsStateInternal() ||
+		!DetectResult.bCollided)
+		return false;
+
+	//여러 프레임간 충돌중 + 상대 속도가 일정 수준 이하면 -> 접촉상황
+
+	auto RigidA = ComponentA->GetPhysicsStateInternal();
+	auto RigidB = ComponentB->GetPhysicsStateInternal();
+
+	auto VeloA = RigidA->P_GetVelocity();
+	auto VeloB = RigidB->P_GetVelocity();
+
+	auto VeloAB = VeloB - VeloA;
+
+	if (VeloAB.LengthSquared() < KINDA_SMALL && std::fabs(DetectResult.PenetrationDepth) < 1.0f)
+	{
+		return true;
+	}
+
+	return  false;
 }
 
 void FCollisionProcessor::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)

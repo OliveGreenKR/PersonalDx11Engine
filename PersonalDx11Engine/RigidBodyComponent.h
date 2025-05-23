@@ -155,6 +155,8 @@ private:
 	static bool IsValidTorque(const Vector3& InTorque);
 	static bool IsValidVelocity(const Vector3& InVelocity);
 	static bool IsValidAngularVelocity(const Vector3& InAngularVelocity);
+	static bool IsValidAcceleration(const Vector3& InAccel);
+	static bool IsValidAngularAcceleration(const Vector3& InAngularAccel);
 private:
 	struct FRigidPhysicsState
 	{
