@@ -17,6 +17,7 @@ UPhysicsSystem::~UPhysicsSystem()
 void UPhysicsSystem::LoadConfigFromIni()
 {
     UConfigReadManager::Get()->GetValue("InitialPhysicsObjectCapacity", InitialPhysicsObjectCapacity);
+    UConfigReadManager::Get()->GetValue("InitialPhysicsJobPoolSizeMB", InitialPhysicsJobPoolSizeMB);
     UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
     UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
     UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
@@ -87,6 +88,7 @@ void UPhysicsSystem::Initialzie()
     {
         LoadConfigFromIni();
         RegisteredObjects.reserve(InitialPhysicsObjectCapacity);
+        PhysicsJobPool.Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
     }
     catch (...)
     {
@@ -98,6 +100,7 @@ void UPhysicsSystem::Initialzie()
 void UPhysicsSystem::Release()
 {
     RegisteredObjects.clear();
+    PhysicsJobPool.Reset();
 }
 
 // 필요한 서브스텝 수 계산

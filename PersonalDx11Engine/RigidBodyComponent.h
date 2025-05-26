@@ -6,6 +6,9 @@
 #include "PhysicsStateInterface.h"
 #include "PhysicsStateInternalInterface.h"
 #include "PhysicsObjectInterface.h"
+#include "PhysicsJob.h"
+#include "DynamicCircularQueue.h"
+
 class UGameObject;
 
 enum class ERigidBodyType
@@ -203,8 +206,5 @@ private:
 	Vector3 GravityDirection = -Vector3::Up();
 
 	bool bSleep = false;
-	
-
-	private:
 
 };

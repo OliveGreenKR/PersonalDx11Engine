@@ -53,6 +53,21 @@ public:
     FArenaMemoryPool(FArenaMemoryPool&&) = delete;
     FArenaMemoryPool& operator=(FArenaMemoryPool&&) = delete;
 
+    void Initialize(size_t byteBufferSize)
+    {
+        //기존 버퍼 클리어 및 삭제
+        if (Buffer)
+        {
+            Reset();
+            delete[] Buffer;
+        }
+
+        BufferSize = byteBufferSize;
+        UsedBytes = 0;
+        Buffer = new byte[BufferSize];
+        std::memset(Buffer, 0, BufferSize); // 초기화
+    }
+
     template<typename T = byte>
     void* AllocateVoid(size_t size = sizeof(T)) {
         // 정렬 요구사항 처리

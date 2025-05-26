@@ -35,7 +35,7 @@ public:
 	virtual void Execute(IPhysicsStateInternal* PhysicsObj) = 0;
 };
 
-struct FJobApplyForce : public FPhysicsJob
+struct alignas(16) FJobApplyForce : public FPhysicsJob
 {
 private:
 	Vector3 Force;
@@ -43,13 +43,13 @@ private:
 	bool bToCOM : 1;
 
 public:
-	
-	explicit  FJobApplyForce(Vector3 InForece, Vector3 InWorldPosition) : 
+
+	explicit  FJobApplyForce(Vector3 InForece, Vector3 InWorldPosition) :
 		Force(InForece), WorldPosition(WorldPosition), bToCOM(false)
 	{
 		Set(EPhysicsJob::APPLY_FORCE);
 	};
-	explicit  FJobApplyForce(Vector3 InForece) : 
+	explicit  FJobApplyForce(Vector3 InForece) :
 		Force(InForece), WorldPosition(Vector3::Zero()), bToCOM(true)
 	{
 		Set(EPhysicsJob::APPLY_FORCE);
@@ -65,11 +65,11 @@ public:
 		{
 			PhysicsObj->P_ApplyForce(Force, WorldPosition);
 		}
-		
+
 	}
 };
 
-struct FJobApplyImpulse : public FPhysicsJob
+struct alignas(16) FJobApplyImpulse : public FPhysicsJob
 {
 private:
 	Vector3 Force;
@@ -103,13 +103,13 @@ public:
 	}
 };
 
-struct FJobSetVelocity : public FPhysicsJob
+struct alignas(16) FJobSetVelocity : public FPhysicsJob
 {
 private:
 	Vector3 Velocity;
 
 public:
-	explicit  FJobSetVelocity(Vector3 InVelocity) 
+	explicit  FJobSetVelocity(Vector3 InVelocity)
 	{
 		Set(EPhysicsJob::SET_VELOCITY);
 	};
@@ -120,7 +120,7 @@ public:
 	}
 };
 
-struct FJobAddVelocity : public FPhysicsJob
+struct alignas(16) FJobAddVelocity : public FPhysicsJob
 {
 private:
 	Vector3 Velocity;
@@ -137,7 +137,7 @@ public:
 	}
 };
 
-struct FJobSetAngularVelocity : public FPhysicsJob
+struct alignas(16) FJobSetAngularVelocity : public FPhysicsJob
 {
 private:
 	Vector3 AngularVelocity;
@@ -154,7 +154,7 @@ public:
 	}
 };
 
-struct FJobAddAngularVelocity : public FPhysicsJob
+struct alignas(16) FJobAddAngularVelocity : public FPhysicsJob
 {
 private:
 	Vector3 AngularVelocity;
