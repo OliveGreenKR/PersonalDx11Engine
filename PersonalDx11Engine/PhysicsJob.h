@@ -45,7 +45,7 @@ private:
 public:
 
 	explicit  FJobApplyForce(Vector3 InForece, Vector3 InWorldPosition) :
-		Force(InForece), WorldPosition(WorldPosition), bToCOM(false)
+		Force(InForece), WorldPosition(InWorldPosition), bToCOM(false)
 	{
 		Set(EPhysicsJob::APPLY_FORCE);
 	};
@@ -79,7 +79,7 @@ private:
 public:
 
 	explicit  FJobApplyImpulse(Vector3 InForece, Vector3 InWorldPosition) :
-		Force(InForece), WorldPosition(WorldPosition), bToCOM(false)
+		Force(InForece), WorldPosition(InWorldPosition), bToCOM(false)
 	{
 		Set(EPhysicsJob::APPLY_IMPULSE);
 	};

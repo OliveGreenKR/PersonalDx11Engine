@@ -24,6 +24,16 @@ void UPhysicsSystem::LoadConfigFromIni()
     UConfigReadManager::Get()->GetValue("MinSubSteps", MinSubSteps);
 }
 
+void UPhysicsSystem::RequestPhysicsJob(const FPhysicsJobRequest& RequestedJob)
+{
+    if (!RequestedJob.IsValid())
+    {
+        LOG_FUNC_CALL("[WARNING] Invalid Job Requested!");
+        return;
+    }
+    JobQueue.Push(RequestedJob);
+}
+
 void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
 {
     if (!InObject)
@@ -143,6 +153,17 @@ void UPhysicsSystem::PrepareSimulation()
         }
     }
 
+    // 작업 큐 차례대로 실행
+    for (auto& RequestedJob : JobQueue)
+    {
+        if (!RequestedJob.IsValid())
+            continue;
+        RequestedJob.PhysicsJob->Execute(RequestedJob.TargetWeak.lock().get());
+    }
+    //JobQeueu 클리어
+    JobQueue.Clear();
+    //JobPool 클리어
+    PhysicsJobPool.Reset();
 }
 
 // 단일 서브스텝 시뮬레이션

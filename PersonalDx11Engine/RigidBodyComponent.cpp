@@ -499,12 +499,16 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
 
 	bStateDirty = true;
 
-	CachedState.AccumulatedForce += Force;
-	Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
-	if (IsValidTorque(Torque))
-	{
-		CachedState.AccumulatedTorque += Torque;
-	}
+	//CachedState.AccumulatedForce += Force;
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobApplyForce>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																 Force,Location);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+	//Vector3 Torque = Vector3::Cross(Location - GetCenterOfMass(), Force);
+	//if (IsValidTorque(Torque))
+	//{
+	//	CachedState.AccumulatedTorque += Torque;
+	//}
 }
 
 void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
@@ -514,13 +518,16 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 
 	bStateDirty = true;
 
-	CachedState.AccumulatedInstantForce += Impulse;
-	Vector3 COM = GetCenterOfMass();
-	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
-	if (IsValidTorque(AngularImpulse))
-	{
-		CachedState.AccumulatedInstantTorque += AngularImpulse;
-	}
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobApplyImpulse>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																									 Impulse, Location);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+	//CachedState.AccumulatedInstantForce += Impulse;
+	//Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
+	//if (IsValidTorque(AngularImpulse))
+	//{
+	//	CachedState.AccumulatedInstantTorque += AngularImpulse;
+	//}
 }
 
 // 물리 속성 설정
@@ -571,8 +578,13 @@ void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 		return;
 	}
 	bStateDirty = true;
-	CachedState.Velocity = InVelocity;
-	ClampLinearVelocity(CachedState.Velocity);
+
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobSetVelocity>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																  InVelocity);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+	//CachedState.Velocity = InVelocity;
+	//ClampLinearVelocity(CachedState.Velocity);
 }
 
 void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
@@ -581,10 +593,14 @@ void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
 	{
 		return;
 	}
-
 	bStateDirty = true;
-	CachedState.Velocity += InVelocityDelta;
-	ClampLinearVelocity(CachedState.Velocity);
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobAddVelocity>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																  InVelocityDelta);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+
+	//CachedState.Velocity += InVelocityDelta;
+	//ClampLinearVelocity(CachedState.Velocity);
 }
 
 void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
@@ -596,8 +612,12 @@ void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
 	}
 
 	bStateDirty = true;
-	CachedState.AngularVelocity = InAngularVelocity;
-	ClampAngularVelocity(CachedState.AngularVelocity);
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobSetAngularVelocity>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																  InAngularVelocity);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+	//CachedState.AngularVelocity = InAngularVelocity;
+	//ClampAngularVelocity(CachedState.AngularVelocity);
 }
 
 void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDelta)
@@ -606,10 +626,13 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 	{
 		return;
 	}
-
 	bStateDirty = true;
-	CachedState.AngularVelocity += InAngularVelocityDelta;
-	ClampAngularVelocity(CachedState.AngularVelocity);
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobAddAngularVelocity>(Engine::Cast<URigidBodyComponent>(shared_from_this()),
+																		 InAngularVelocityDelta);
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
+
+	//CachedState.AngularVelocity += InAngularVelocityDelta;
+	//ClampAngularVelocity(CachedState.AngularVelocity);
 }
 #pragma endregion
 

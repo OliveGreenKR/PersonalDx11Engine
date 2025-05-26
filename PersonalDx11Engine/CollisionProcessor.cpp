@@ -314,19 +314,16 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
 
-			if (!IsPersistentContact(ActivePair, DetectResult))
+			if (IsPersistentContact(ActivePair, DetectResult))
 			{
-				//response
-				ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+				LOG_FUNC_CALL("Persist collision");
+			}
+			//response
+			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 
-				float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
-				//position correction
-				ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
-			}
-			else
-			{
-				LOG_FUNC_CALL("Persistent");
-			}
+			float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
+			//position correction
+			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
 			
 		}
 		//dispatch event
@@ -445,7 +442,7 @@ bool FCollisionProcessor::IsPersistentContact(const FCollisionPair& CollisionPai
 
 	auto VeloAB = VeloB - VeloA;
 
-	if (VeloAB.LengthSquared() < KINDA_SMALL && std::fabs(DetectResult.PenetrationDepth) < 1.0f)
+	if (VeloAB.LengthSquared() < 1.0f && std::fabs(DetectResult.PenetrationDepth) < 1.0f)
 	{
 		return true;
 	}

@@ -7,6 +7,8 @@
 #include "PhysicsJob.h"
 #include "ArenaMemoryPool.h"
 #include "DynamicCircularQueue.h"
+#include <type_traits>
+#include "Debug.h"
 
 class UPhysicsSystem
 {
@@ -20,18 +22,56 @@ private:
     UPhysicsSystem(UPhysicsSystem&&) = delete;
     UPhysicsSystem& operator=(UPhysicsSystem&&) = delete;
 
+private:
     struct alignas(16) FPhysicsJobRequest
     {
-        std::weak_ptr<IPhysicsStateInternal> TargetWeak;
-        FPhysicsJob& PhysicsJob;
+        std::weak_ptr<IPhysicsStateInternal> TargetWeak = std::weak_ptr<IPhysicsStateInternal>();
+        FPhysicsJob* PhysicsJob = nullptr;
+
+        bool IsValid() const
+        {
+            return !TargetWeak.expired() && PhysicsJob != nullptr;
+        }
     };
+    //물리 작업 풀
+    FArenaMemoryPool PhysicsJobPool;
+
+    //물리 잡업 큐
+    TCircularQueue<FPhysicsJobRequest> JobQueue;
+
+public:
+    template<typename T, typename ...Args,
+        typename = std::enable_if_t<
+        std::conjunction_v<
+            std::is_base_of<FPhysicsJob, T>,
+            std::is_constructible<T, Args...>>
+            >
+        >
+        FPhysicsJobRequest AcquireJob(const std::shared_ptr<IPhysicsStateInternal>& Target, Args ...args)
+    {
+        FPhysicsJobRequest newJobRequest;
+        if (!Target)
+        {
+            return newJobRequest;
+        }
+
+        newJobRequest.PhysicsJob = PhysicsJobPool.Allocate<T>(std::forward<Args>(args)...);
+        if (!newJobRequest.PhysicsJob)
+        {
+            LOG_FUNC_CALL("[Eror] Too Many Physics Job Requested! Pool is Full");
+            return newJobRequest;
+        }
+        newJobRequest.TargetWeak = Target;
+
+        return newJobRequest;
+    }
+
+    void RequestPhysicsJob(const FPhysicsJobRequest& RequestedJob);
 
 private:
     // 등록된 물리 객체들
     std::vector<std::weak_ptr<IPhysicsObejct>> RegisteredObjects;
-    //물리 작업 풀
-    FArenaMemoryPool PhysicsJobPool;
-    TCircularQueue< FPhysicsJobRequest> JobQueue;
+   
 
 public:
     static UPhysicsSystem* Get()

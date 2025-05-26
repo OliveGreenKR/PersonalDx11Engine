@@ -7,7 +7,6 @@
 #include "PhysicsStateInternalInterface.h"
 #include "PhysicsObjectInterface.h"
 #include "PhysicsJob.h"
-#include "DynamicCircularQueue.h"
 
 class UGameObject;
 
@@ -28,8 +27,6 @@ public:
 	private:
 		RotationalInertiaToken() = default;
 	};
-
-	friend class FPhysicsJob;
 
 public:
 	URigidBodyComponent();
@@ -54,7 +51,7 @@ public:
 	void AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
 
 	// 힘 기반 인터페이스 (내부적으로 가속도로 변환)
-	inline void ApplyForce(const Vector3& Force) override  { ApplyForce(Force, GetCenterOfMass()); }
+ 	inline void ApplyForce(const Vector3& Force) override  { ApplyForce(Force, GetCenterOfMass()); }
 	void ApplyForce(const Vector3& Force, const Vector3& Location) override ;
 	inline void ApplyImpulse(const Vector3& Impulse) { ApplyImpulse(Impulse, GetCenterOfMass()); }
 	void ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;

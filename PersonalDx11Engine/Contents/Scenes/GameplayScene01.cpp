@@ -158,6 +158,7 @@ void UGameplayScene01::SubmitRender(URenderer* Renderer)
         }
     }
 
+    if(Floor)
     {
         FRenderJob RenderJob = Renderer->AllocateRenderJob<FRenderDataTexture>();
         auto Primitive = Floor->GetComponentByType<UPrimitiveComponent>();
@@ -216,6 +217,15 @@ void UGameplayScene01::SubmitRenderUI()
                 }
             }
 
+        }
+        static bool bFloor = false;
+        if(Floor)
+        {
+            bFloor = Floor->IsActive();
+        }
+        if (ImGui::Checkbox("Floor", &bFloor))
+        {
+            Floor->SetActive(bFloor);
         }
         if (ImGui::InputFloat("BorderX", &XBorder, 10.0f, 50.0f, "%.02f"))
         {

@@ -17,7 +17,6 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
 {
     if (!IsActive())
     {
-        LOG("Try FillRender to Invalid UPrimitiveComp");
         return false;
     }
 
