@@ -245,6 +245,7 @@
     <ClInclude Include="RenderStateInterface.h" />
     <ClInclude Include="RenderStates.h" />
     <ClInclude Include="ResourceHandle.h" />
+    <ClInclude Include="PhysicsJob.h" />
     <ClInclude Include="SphereComponent.h" />
     <ClInclude Include="StringHash.h" />
     <ClInclude Include="ResourceInterface.h" />

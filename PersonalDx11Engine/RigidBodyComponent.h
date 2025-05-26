@@ -6,8 +6,6 @@
 #include "PhysicsStateInterface.h"
 #include "PhysicsStateInternalInterface.h"
 #include "PhysicsObjectInterface.h"
-#include "DynamicCircularQueue.h"
-
 class UGameObject;
 
 enum class ERigidBodyType
@@ -27,6 +25,8 @@ public:
 	private:
 		RotationalInertiaToken() = default;
 	};
+
+	friend class FPhysicsJob;
 
 public:
 	URigidBodyComponent();
@@ -203,4 +203,8 @@ private:
 	Vector3 GravityDirection = -Vector3::Up();
 
 	bool bSleep = false;
+	
+
+	private:
+
 };
