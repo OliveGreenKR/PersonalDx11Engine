@@ -314,10 +314,6 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
 
-			if (IsPersistentContact(ActivePair, DetectResult))
-			{
-				LOG_FUNC_CALL("Persist collision");
-			}
 			//response
 			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
 

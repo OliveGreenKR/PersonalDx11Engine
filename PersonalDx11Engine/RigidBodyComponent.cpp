@@ -198,12 +198,18 @@ void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& 
 	if (!IsActive() || IsStatic() || !IsValidForce(Impulse))
 		return;
 
-	SimulatedState.AccumulatedInstantForce += Impulse;
+	// 저장된 충격량 처리 (순간적인 속도 변화)
+	SimulatedState.Velocity += Impulse / SimulatedState.Mass;
+
 	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
 	if (IsValidTorque(AngularImpulse))
 	{
-		SimulatedState.AccumulatedInstantTorque += AngularImpulse;
+		SimulatedState.AngularVelocity += Vector3(
+			AngularImpulse.x / SimulatedState.RotationalInertia.x,
+			AngularImpulse.y / SimulatedState.RotationalInertia.y,
+			AngularImpulse.z / SimulatedState.RotationalInertia.z);
 	}
+
 }
 
 void URigidBodyComponent::P_SetVelocity(const Vector3& InVelocity) 
@@ -250,8 +256,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	Vector3 AngularVelocity = SimulatedState.AngularVelocity;
 	Vector3 AccumulatedForce = SimulatedState.AccumulatedForce;
 	Vector3 AccumulatedTorque = SimulatedState.AccumulatedTorque;
-	Vector3 AccumulatedInstantForce = SimulatedState.AccumulatedInstantForce;
-	Vector3 AccumulatedInstantTorque = SimulatedState.AccumulatedInstantTorque;
 
 	const float Mass = SimulatedState.Mass;
 	const Vector3 RotationalInertia = SimulatedState.RotationalInertia;
@@ -342,23 +346,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 		TotalAngularAcceleration += frictionAccel;
 	}
 
-	// 저장된 충격량 처리 (순간적인 속도 변화)
-	if (IsValidForce(AccumulatedInstantForce))
-	{
-		Velocity += AccumulatedInstantForce / Mass;
-	}
-	if (IsValidTorque(AccumulatedInstantTorque))
-	{
-		AngularVelocity += Vector3(
-			AccumulatedInstantTorque.x / RotationalInertia.x,
-			AccumulatedInstantTorque.y / RotationalInertia.y,
-			AccumulatedInstantTorque.z / RotationalInertia.z);
-	}
-
-	// 충격량 초기화
-	AccumulatedInstantForce = Vector3::Zero();
-	AccumulatedInstantTorque = Vector3::Zero();
-
 	// 외부에서 적용된 힘에 의한 가속도 추가
 	if (IsValidForce(AccumulatedForce))
 	{
@@ -402,9 +389,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	//외부힘은 제로로 초기화
 	SimulatedState.AccumulatedForce = AccumulatedForce;
 	SimulatedState.AccumulatedTorque = AccumulatedTorque;
-	SimulatedState.AccumulatedInstantForce = AccumulatedInstantForce;
-	SimulatedState.AccumulatedInstantTorque = AccumulatedInstantTorque;
-
 
 	//  저장된 상태값에 따른 위치 업데이트
 	P_UpdateTransformByVelocity(DeltaTime);

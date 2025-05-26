@@ -165,8 +165,6 @@ private:
 		Vector3 AngularVelocity = Vector3::Zero();
 		Vector3 AccumulatedForce = Vector3::Zero();
 		Vector3 AccumulatedTorque = Vector3::Zero();
-		Vector3 AccumulatedInstantForce = Vector3::Zero();
-		Vector3 AccumulatedInstantTorque = Vector3::Zero();
 
 		// 물리 속성
 		float Mass = 1.0f;
@@ -186,8 +184,6 @@ private:
 			AngularVelocity = Vector3::Zero();
 			AccumulatedForce = Vector3::Zero();
 			AccumulatedTorque = Vector3::Zero();
-			AccumulatedInstantForce = Vector3::Zero();
-			AccumulatedInstantTorque = Vector3::Zero();
 		}
 	};
 

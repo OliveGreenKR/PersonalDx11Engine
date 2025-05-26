@@ -349,6 +349,9 @@
     <Filter Include="Engine\Object\Components\ActorComponent\Scene\RigidBody\PhysicsJob">
       <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Physics\Constraints\Position">
+      <UniqueIdentifier>{a54e645e-f3d2-4002-b516-623ab5209b3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
