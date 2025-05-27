@@ -35,10 +35,10 @@ public:
     // 목표 속도 설정
     void SetDesiredSpeed(float InDesiredSpeed) { DesiredSpeed = InDesiredSpeed; }
 
-    float CalculateEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
-                                 const XMVECTOR& Point, const XMVECTOR& Dir) const;
+    static float CalculateEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
+                                 const XMVECTOR& Point, const XMVECTOR& Dir);
 
-    XMVECTOR CalculateRelativeVelocity (const FPhysicsParameters& BodyA, const FPhysicsParameters& BodyB,
-                                       const XMVECTOR& ContactPoint) const;
+    static XMVECTOR CalculateRelativeVelocity (const FPhysicsParameters& BodyA, const FPhysicsParameters& BodyB,
+                                       const XMVECTOR& ContactPoint);
 };
 

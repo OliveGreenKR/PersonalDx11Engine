@@ -69,7 +69,7 @@ float FVelocityConstraint::CalculateEffectiveMass(
     const FPhysicsParameters& ParameterA,
     const FPhysicsParameters& ParameterB,
     const XMVECTOR& Point,
-    const XMVECTOR& Dir) const
+    const XMVECTOR& Dir)
 {
 
     // 질량 역수
@@ -117,7 +117,7 @@ float FVelocityConstraint::CalculateEffectiveMass(
 XMVECTOR FVelocityConstraint::CalculateRelativeVelocity(
     const FPhysicsParameters& ParameterA,
     const FPhysicsParameters& ParameterB,
-    const XMVECTOR& ContactPoint) const
+    const XMVECTOR& ContactPoint)
 {
     // 접촉점까지의 벡터
     XMVECTOR vRadiusA = XMVectorSubtract(ContactPoint, ParameterA.Position);

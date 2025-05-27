@@ -354,11 +354,9 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
 			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
 
-			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult);
-			float CorrectionRatio = CurrentPair.bPrevCollided ? 0.8f : 0.5f;
-			ApplyPositionCorrection(CompA, CompB, CurrentResult, DeltaTime, CorrectionRatio);
-
-			LOG("[%d] Apply Impulse : %.6f", i, CurrentPair.PrevConstraints.normalLambda);
+			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult, DeltaTime);
+			//float CorrectionRatio = CurrentPair.bPrevCollided ? 0.8f : 0.5f;
+			//ApplyPositionCorrection(CompA, CompB, CurrentResult, DeltaTime, CorrectionRatio);
 		}
 	}
 
@@ -430,7 +428,8 @@ void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisi
 	RigidB->P_SetWorldPosition(newPosB);
 }
 
-void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
+void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult, 
+															 const float DeltaTime)
 {
 	if (CollisionPair.bConverged)
 	{
@@ -459,7 +458,7 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	}
 
 	FCollisionResponseResult collisionResponse =
-		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
+		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation, DeltaTime);
 	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
 	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
 

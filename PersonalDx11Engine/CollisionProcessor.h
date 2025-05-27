@@ -123,7 +123,7 @@ private:
 
     //제약조건 기반 반복적 해결
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
-                                            const FCollisionDetectionResult& DetectResult);
+                                            const FCollisionDetectionResult& DetectResult, const float DeltaTime);
 
     //쌍의 접촉 상황 판단
     bool IsPersistentContact(const FCollisionPair& CollisionPair,
