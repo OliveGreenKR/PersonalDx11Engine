@@ -49,14 +49,6 @@ namespace std
     };
 }
 #pragma endregion
-
-struct FCollisionSystemConfig
-{
-    float CCDVelocityThreshold = 3.0f;     // CCD 활성화 속도 임계값
-    size_t InitialCollisonCapacity = 512;       // 초기 컴포넌트 및 트리 용량
-    float FatBoundsExtentRatio = 0.1f;             // AABB 여유 공간
-};
-
 struct FContactPoint
 {
     Vector3 Position;        // 접촉점 위치
@@ -95,9 +87,6 @@ public:
     void UnRegisterAll();
 
     size_t GetRegisterComponentsCount() { return RegisteredComponents.size(); }
-public:
-    FCollisionSystemConfig Config;
-
 private:
     void Initialize();
     void Release();
@@ -115,11 +104,6 @@ private:
     void UpdateCollisionTransform();
 
     void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
-
-    void ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& ComponentA,
-        const std::shared_ptr<UCollisionComponentBase>& ComponentB,
-        const FCollisionDetectionResult& DetectResult,
-        const float DeltaTime, const float CorrectionRatio);
 
     //제약조건 기반 반복적 해결
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
@@ -149,4 +133,10 @@ private:
     std::unordered_map<size_t, std::weak_ptr<UCollisionComponentBase>> RegisteredComponents;
     FDynamicAABBTree* CollisionTree = nullptr;
     std::unordered_set<FCollisionPair> ActiveCollisionPairs;
+
+private:
+    float CCDVelocityThreshold = 3.0f;              // CCD 활성화 속도 임계값
+    size_t InitialCollisonCapacity = 512;           // 초기 컴포넌트 및 트리 용량/
+    uint8_t MaxConstraintIterations = 10;              // 제약조건 해결 최대 반복수
+    float FatBoundsExtentRatio = 0.1f;             // AABB 여유 공간
 };

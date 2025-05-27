@@ -13,9 +13,10 @@
 
 void FCollisionProcessor::LoadConfigFromIni()
 {
-	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", Config.CCDVelocityThreshold);
-	UConfigReadManager::Get()->GetValue("InitialCollisionCapacity", Config.InitialCollisonCapacity);
-	UConfigReadManager::Get()->GetValue("FatBoundsExtentRatio", Config.FatBoundsExtentRatio);
+	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", CCDVelocityThreshold);
+	UConfigReadManager::Get()->GetValue("InitialCollisionCapacity", InitialCollisonCapacity);
+	UConfigReadManager::Get()->GetValue("MaxConstraintIterations", MaxConstraintIterations);
+	UConfigReadManager::Get()->GetValue("FatBoundsExtentRatio", FatBoundsExtentRatio);
 }
 
 FCollisionProcessor::~FCollisionProcessor()
@@ -118,11 +119,11 @@ void FCollisionProcessor::Initialize()
 		Detector = new FCollisionDetector();
 		ResponseCalculator = new FCollisionResponseCalculator();
 		EventDispatcher = new FCollisionEventDispatcher();
-		CollisionTree = new FDynamicAABBTree(Config.InitialCollisonCapacity);
-		CollisionTree->AABB_Extension = std::max(0.1f,Config.FatBoundsExtentRatio); //기본은 0.1f
+		CollisionTree = new FDynamicAABBTree(InitialCollisonCapacity);
+		CollisionTree->AABB_Extension = std::max(0.1f,FatBoundsExtentRatio); //기본은 0.1f
 
-		RegisteredComponents.reserve(Config.InitialCollisonCapacity);
-		ActiveCollisionPairs.reserve(Config.InitialCollisonCapacity);
+		RegisteredComponents.reserve(InitialCollisonCapacity);
+		ActiveCollisionPairs.reserve(InitialCollisonCapacity);
 	}
 	catch (...)
 	{
@@ -281,7 +282,7 @@ bool FCollisionProcessor::ShouldUseCCD(const IPhysicsStateInternal* PhysicsState
 {
 	if (!PhysicsState)
 		return false;
-	return PhysicsState->P_GetVelocity().Length() > Config.CCDVelocityThreshold;
+	return PhysicsState->P_GetVelocity().Length() > CCDVelocityThreshold;
 }
 
 float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
@@ -402,30 +403,6 @@ void FCollisionProcessor::GetPhysicsParams(const std::shared_ptr<UCollisionCompo
 	Quaternion Rotation = PhysicsState->P_GetWorldRotation();
 	OutParams.Rotation = XMLoadFloat4(&Rotation);
 	return;
-}
-
-void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisionComponentBase>& CompA, const std::shared_ptr<UCollisionComponentBase>& CompB,
-												  const FCollisionDetectionResult& DetectResult, const float DeltaTime, const float CorrectionRatio)
-{
-	if (!CompA || !CompB || DetectResult.PenetrationDepth <= KINDA_SMALL)
-		return;
-
-	auto RigidA = CompA->GetPhysicsStateInternal();
-	auto RigidB = CompB->GetPhysicsStateInternal();
-
-	if (!RigidA || !RigidB )
-		return;
-
-	float MassA = Math::Clamp(RigidA->P_GetMass(), 1.0f, FLT_MAX/2);
-	float MassB = Math::Clamp(RigidB->P_GetMass(), 1.0f, FLT_MAX/2);
-
-	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
-	// 각 물체를 반대 방향으로 밀어냄
-	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * CorrectionRatio *  MassB / (MassA+MassB);
-	RigidA->P_SetWorldPosition(newPosA);
-
-	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * CorrectionRatio * MassA / (MassA + MassB);;
-	RigidB->P_SetWorldPosition(newPosB);
 }
 
 void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult, 
