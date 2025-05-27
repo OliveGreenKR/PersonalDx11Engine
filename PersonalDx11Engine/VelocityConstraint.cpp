@@ -102,7 +102,7 @@ float FVelocityConstraint::CalculateInvEffectiveMass(
 
     // 유효 질량이 0이면 무한대로 처리 (강체)
     if (InvEffectiveMass < KINDA_SMALL)
-        return KINDA_LARGE;
+        return 0.0f;
 
     return InvEffectiveMass;
 }

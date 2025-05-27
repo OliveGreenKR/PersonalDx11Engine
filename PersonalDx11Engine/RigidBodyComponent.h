@@ -93,7 +93,7 @@ public:
 	float P_GetMass() const override 
 	{
 		float invMass = P_GetInvMass();
-		return invMass > 0.0f ? 1.0f / invMass : KINDA_LARGE;
+		return invMass > KINDA_SMALL ? 1.0f / invMass : KINDA_LARGE;
 	}
 	float P_GetInvMass() const override { return IsStatic() ? 0.0f : SimulatedState.InvMass;}
 	inline Vector3 P_GetRotationalInertia() const override
