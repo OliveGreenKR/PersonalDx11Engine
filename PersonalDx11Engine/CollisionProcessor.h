@@ -17,6 +17,7 @@ struct FCollisionPair
         : TreeIdA(InIdA < InIdB ? InIdA : InIdB)
         , TreeIdB(InIdA < InIdB ? InIdB : InIdA)
         , bPrevCollided(false)
+        , bConverged(false)
     {
     }
     FCollisionPair& operator=(const FCollisionPair& Other) = default;
@@ -26,6 +27,7 @@ struct FCollisionPair
 
     mutable FAccumulatedConstraint PrevConstraints;
     mutable bool bPrevCollided : 1;
+    mutable bool bConverged : 1;
     //mutable bool bStepSimulateFinished : 1;
       
     bool operator==(const FCollisionPair& Other) const

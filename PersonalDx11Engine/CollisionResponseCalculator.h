@@ -17,6 +17,13 @@ public:
         FAccumulatedConstraint& Accumulation
     );
     
+    FCollisionResponseResult CalculateResponseByContraints(
+        const FCollisionDetectionResult& DetectionResult,
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB,
+        FAccumulatedConstraint& Accumulation,
+        float DeltaTime);
+
 private:
 
     void ClampFriction(

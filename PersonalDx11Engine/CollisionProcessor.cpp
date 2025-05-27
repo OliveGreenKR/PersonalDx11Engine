@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "ConfigReadManager.h"
 #include "PhysicsStateInternalInterface.h"
+#include "PhysicsDefine.h"
 
 void FCollisionProcessor::LoadConfigFromIni()
 {
@@ -238,8 +239,10 @@ void FCollisionProcessor::UpdateCollisionPairs()
 			// 새 쌍 상태 
 			auto ExistingPair = ActiveCollisionPairs.find(NewPair);
 			if (ExistingPair != ActiveCollisionPairs.end()) {
-				NewPair.bPrevCollided = ExistingPair->bPrevCollided;
-				NewPair.PrevConstraints = ExistingPair->PrevConstraints;
+				NewPair = *ExistingPair;
+				//NewPair.bPrevCollided = ExistingPair->bPrevCollided;
+				//NewPair.PrevConstraints = ExistingPair->PrevConstraints;
+				//NewPair.bConverged = ExistingPair->bConverged;
 			}
 
 			NewCollisionPairs.insert(std::move(NewPair));
@@ -286,8 +289,17 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 	const float TotalDeltaTime = DeltaTime;
 	float minCollideTime = 1.0f;
 	
-	for (auto& ActivePair : ActiveCollisionPairs)
+	std::vector<const FCollisionPair*> CollisionPairs;
+	std::vector<FCollisionDetectionResult> DetectionResults;
+
+	CollisionPairs.reserve(ActiveCollisionPairs.size());
+	DetectionResults.reserve(ActiveCollisionPairs.size());
+
+	//충돌 감지 및 정보 수집
+	for (auto it = ActiveCollisionPairs.begin(); it != ActiveCollisionPairs.end() ; ++it)
 	{
+
+		auto& ActivePair = *it;
 
 		auto CompA = RegisteredComponents[ActivePair.TreeIdA].lock();
 		auto CompB = RegisteredComponents[ActivePair.TreeIdB].lock();
@@ -309,23 +321,56 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 																 *CompB.get(), CompB->GetWorldTransform());
 			}
 		}
-		//충돌 시 최저 ToI 갱신
+		//충돌 시 최저 ToI 갱신 및 충돌 정보 수집
 		if (DetectResult.bCollided)
 		{
 			minCollideTime = std::min(minCollideTime, DetectResult.TimeOfImpact);
 
-			//response
-			ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+			CollisionPairs.push_back(&(*it));
+			DetectionResults.push_back(DetectResult);
 
-			float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
-			//position correction
-			ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
+			////response
+			//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
+
+			//float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
+			////position correction
+			//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
 			
 		}
-		//dispatch event
-		BroadcastCollisionEvents(ActivePair, DetectResult);
+		////dispatch event
+		//BroadcastCollisionEvents(ActivePair, DetectResult);
+		////충돌 정보 저장
+		//ActivePair.bPrevCollided = DetectResult.bCollided;
+	}
+
+	//수집 된 정보를 반복적 해결법 적용
+	for (int i = 0; i < 10; ++i)
+	{
+		for (int j = 0; j < CollisionPairs.size(); ++j)
+		{
+			auto& CurrentPair = *CollisionPairs[j];
+			auto& CurrentResult = DetectionResults[j];
+
+			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
+			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
+
+			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult);
+			float CorrectionRatio = CurrentPair.bPrevCollided ? 0.8f : 0.5f;
+			ApplyPositionCorrection(CompA, CompB, CurrentResult, DeltaTime, CorrectionRatio);
+
+			LOG("[%d] Apply Impulse : %.6f", i, CurrentPair.PrevConstraints.normalLambda);
+		}
+	}
+
+	for (int j = 0; j < CollisionPairs.size(); ++j)
+	{
+		auto& CurrentPair = *CollisionPairs[j];
+		auto& CurrentResult = DetectionResults[j];
+		BroadcastCollisionEvents(CurrentPair, CurrentResult);
 		//충돌 정보 저장
-		ActivePair.bPrevCollided = DetectResult.bCollided;
+		CurrentPair.bPrevCollided = CurrentResult.bCollided;
+		//수렴 정보 리셋
+		CurrentPair.bConverged = false;
 	}
 
 	return minCollideTime;
@@ -373,17 +418,24 @@ void FCollisionProcessor::ApplyPositionCorrection(const std::shared_ptr<UCollisi
 	if (!RigidA || !RigidB )
 		return;
 
+	float MassA = Math::Clamp(RigidA->P_GetMass(), 1.0f, FLT_MAX/2);
+	float MassB = Math::Clamp(RigidB->P_GetMass(), 1.0f, FLT_MAX/2);
+
 	Vector3 correction = DetectResult.Normal * DetectResult.PenetrationDepth;
 	// 각 물체를 반대 방향으로 밀어냄
-	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * CorrectionRatio;
+	Vector3 newPosA = RigidA->P_GetWorldPosition() - correction * CorrectionRatio *  MassB / (MassA+MassB);
 	RigidA->P_SetWorldPosition(newPosA);
 
-	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * CorrectionRatio;
+	Vector3 newPosB = RigidB->P_GetWorldPosition() + correction * CorrectionRatio * MassA / (MassA + MassB);;
 	RigidB->P_SetWorldPosition(newPosB);
 }
 
 void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
+	if (CollisionPair.bConverged)
+	{
+		return;
+	}
 
 	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
 	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
@@ -410,6 +462,14 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation);
 	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
 	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
+
+	//수렴 확인
+	if (std::fabs(CollisionPair.PrevConstraints.normalLambda - Accumulation.normalLambda) < KINDA_SMALL)
+	{
+		CollisionPair.bConverged = true;
+		return;
+	}
+
 	//A->B 방향의 법선벡터이므로 반대로 적용
 	RigidPtrA->P_ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->P_ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
