@@ -13,8 +13,8 @@ FCollisionResponseResult FCollisionResponseCalculator::CalculateResponseByContra
 {
     FCollisionResponseResult ResponseData;
 
-    // 충돌이 없거나 유효하지 않은 물리 매개변수인 경우 바로 반환
-    if (!DetectionResult.bCollided || ParameterA.Mass < 0.0f || ParameterB.Mass < 0.0f)
+    // 충돌이 없을경우 바로 반환
+    if (!DetectionResult.bCollided)
         return ResponseData;
 
     float currentNormalLambda = Accumulation.normalLambda;
@@ -82,7 +82,7 @@ Vector3 FCollisionResponseCalculator::SolveNormalCollisionConstraint(
     float DeltaTime,
     float& OutNormalLambda)
 {
-    if (!DetectionResult.bCollided || ParameterA.Mass < 0.0f || ParameterB.Mass < 0.0f)
+    if (!DetectionResult.bCollided)
         return Vector3::Zero();
 
     // 기존 누적 람다값으로 시작 (Warm Starting)

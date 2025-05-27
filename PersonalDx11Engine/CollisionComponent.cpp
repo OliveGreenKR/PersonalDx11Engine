@@ -43,8 +43,8 @@ void UCollisionComponentBase::BindRigidBody(const std::shared_ptr<URigidBodyComp
 	if (auto RigidPtr = RigidBody.lock())
 	{
 		RigidPtr->AddChild(shared_from_this());
-		Vector3 NewInerteria = CalculateInertiaTensor(RigidPtr->GetMass());
-		RigidPtr->SetRotationalInertia(NewInerteria, URigidBodyComponent::RotationalInertiaToken());
+		Vector3 NewInvInerteria = CalculateInvInertiaTensor(RigidPtr->GetInvMass());
+		RigidPtr->SetInvRotationalInertia(NewInvInerteria, URigidBodyComponent::RotationalInertiaToken());
 	}
 
 }

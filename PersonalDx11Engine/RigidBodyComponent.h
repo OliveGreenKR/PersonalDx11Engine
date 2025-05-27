@@ -60,8 +60,27 @@ public:
 	inline Vector3 GetVelocity() const override { return CachedState.Velocity;}
 	inline Vector3 GetAngularVelocity() const override { return CachedState.AngularVelocity; }
 
-	inline float GetMass() const override { return IsStatic() ? 1 / KINDA_SMALL : CachedState.Mass; }
-	inline Vector3 GetRotationalInertia() const override { return CachedState.RotationalInertia; }
+	inline float GetMass() const override
+	{
+		float invMass = P_GetInvMass();
+		return invMass > 0.0f ? 1.0f / invMass : KINDA_LARGE;
+	}
+	inline float GetInvMass() const override { return IsStatic() ? 0.0f : CachedState.InvMass; }
+
+	inline Vector3 GetRotationalInertia() const override 
+	{
+		Vector3 Result;
+		Vector3 InvRotationalInertia = CachedState.InvRotationalInertia;;
+		Result.x = (abs(InvRotationalInertia.x) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.x);
+		Result.y = (abs(InvRotationalInertia.y) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.y);
+		Result.z = (abs(InvRotationalInertia.z) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.z);
+		return Result;
+	}
+	inline Vector3 GetInvRotationalInertia() const override { return CachedState.InvRotationalInertia; }
+
 	inline float GetRestitution() const override { return CachedState.Restitution; }
 	inline float GetFrictionKinetic() const override { return CachedState.FrictionKinetic; }
 	inline float GetFrictionStatic() const override { return CachedState.FrictionStatic; }
@@ -71,16 +90,32 @@ public:
 #pragma endregion
 #pragma region IPhyscisStateInternal
 public:
-	//TODO : for test, simple redirection
-	float P_GetMass() const override { return SimulatedState.Mass;}
-	Vector3 P_GetRotationalInertia() const override { return SimulatedState.RotationalInertia; }
+	float P_GetMass() const override 
+	{
+		float invMass = P_GetInvMass();
+		return invMass > 0.0f ? 1.0f / invMass : KINDA_LARGE;
+	}
+	float P_GetInvMass() const override { return IsStatic() ? 0.0f : SimulatedState.InvMass;}
+	inline Vector3 P_GetRotationalInertia() const override
+	{
+		Vector3 Result;
+		Vector3 InvRotationalInertia = SimulatedState.InvRotationalInertia;;
+		Result.x = (abs(InvRotationalInertia.x) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.x);
+		Result.y = (abs(InvRotationalInertia.y) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.y);
+		Result.z = (abs(InvRotationalInertia.z) < KINDA_SMALL) ?
+			KINDA_LARGE : (1.0f / InvRotationalInertia.z);
+		return Result;
+	}
+	Vector3 P_GetInvRotationalInertia() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.InvRotationalInertia; }
 
     float P_GetRestitution() const override { return SimulatedState.Restitution; }
     float P_GetFrictionStatic() const override { return SimulatedState.FrictionStatic; }
     float P_GetFrictionKinetic() const override { return SimulatedState.FrictionKinetic; }
 
-    Vector3 P_GetVelocity() const override { return SimulatedState.Velocity; }
-    Vector3 P_GetAngularVelocity() const override { return SimulatedState.AngularVelocity; }
+    Vector3 P_GetVelocity() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.Velocity; }
+    Vector3 P_GetAngularVelocity() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.AngularVelocity; }
 
     const FTransform& P_GetWorldTransform() const override { return SimulatedState.WorldTransform; }
 	Vector3 P_GetCenterOfMass() const { return SimulatedState.WorldTransform.Position; }
@@ -120,7 +155,7 @@ public:
 	void SetRigidType(ERigidBodyType&& InType);
 
 	//토큰소유자만 접근 가능
-	void SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&);
+	void SetInvRotationalInertia(const Vector3& Value, const RotationalInertiaToken&);
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
 
@@ -157,6 +192,7 @@ private:
 	static bool IsValidAngularVelocity(const Vector3& InAngularVelocity);
 	static bool IsValidAcceleration(const Vector3& InAccel);
 	static bool IsValidAngularAcceleration(const Vector3& InAngularAccel);
+
 private:
 	struct FRigidPhysicsState
 	{
@@ -167,8 +203,8 @@ private:
 		Vector3 AccumulatedTorque = Vector3::Zero();
 
 		// 물리 속성
-		float Mass = 1.0f;
-		Vector3 RotationalInertia = Vector3::One();
+		float InvMass = 1.0f;
+		Vector3 InvRotationalInertia = Vector3::Zero();
 		float FrictionKinetic = 0.3f;
 		float FrictionStatic = 0.5f;
 		float Restitution = 0.5f;

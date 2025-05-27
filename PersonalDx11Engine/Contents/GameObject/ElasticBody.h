@@ -12,7 +12,6 @@ enum class EElasticBodyShape
 
 class UElasticBody : public UGameObject
 {
-    friend class UElasticBodyManager;
 
 public:
 

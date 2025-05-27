@@ -19,9 +19,9 @@ struct FCollisionDetectionResult
 struct FPhysicsParameters
 {
 	//if negative mass, it means invalied params
-	float Mass = -1.0f;  
+	float InvMass = -1.0f;  
 
-	XMVECTOR RotationalInertia = XMVectorZero();
+	XMVECTOR InvRotationalInertia = XMVectorZero();
 	XMVECTOR Position = XMVectorZero();
 	XMVECTOR Velocity = XMVectorZero();
 	XMVECTOR AngularVelocity = XMVectorZero();

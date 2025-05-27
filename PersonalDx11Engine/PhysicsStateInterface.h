@@ -6,7 +6,9 @@ class IPhysicsState
 {
 public:
 	virtual float GetMass() const = 0;
+    virtual float GetInvMass() const = 0;
     virtual Vector3 GetRotationalInertia() const = 0;
+    virtual Vector3 GetInvRotationalInertia() const = 0;
     virtual float GetRestitution() const = 0;
     virtual float GetFrictionStatic() const = 0;
     virtual float GetFrictionKinetic() const = 0;

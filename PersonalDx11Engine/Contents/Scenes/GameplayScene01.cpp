@@ -223,7 +223,7 @@ void UGameplayScene01::SubmitRenderUI()
         {
             bFloor = Floor->IsActive();
         }
-        if (ImGui::Checkbox("Floor", &bFloor))
+        if (ImGui::Checkbox("FloorActivation", &bFloor))
         {
             Floor->SetActive(bFloor);
         }

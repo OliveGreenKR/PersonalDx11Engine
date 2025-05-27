@@ -13,13 +13,13 @@ private:
     float DesiredSpeed = 0.0f;    // 목표 속도 
     float Bias = 0.0f;               // 위치 오차 보정 계수
     float PositionError = 0.0f;      // 위치 오차 
-    float MinLamda = -FLT_MAX;        //Lamda 제약
+    float MinLambda = -FLT_MAX;        //Lamda 제약
     XMVECTOR ContactPoint = XMVectorZero();
     XMVECTOR ContactNormal = XMVectorZero();
 
 public:
-    FVelocityConstraint(const Vector3& TargetDirection, float InDesiredSpeed = 0.0f, float minLamda = -FLT_MAX);
-    FVelocityConstraint(const XMVECTOR& TargetDirection, float InDesiredSpeed = 0.0f, float minLamda = -FLT_MAX);
+    FVelocityConstraint(const Vector3& TargetDirection, float InDesiredSpeed = 0.0f, float minLambda = -FLT_MAX);
+    FVelocityConstraint(const XMVECTOR& TargetDirection, float InDesiredSpeed = 0.0f, float minLambda = -FLT_MAX);
     // IConstraint 구현
     virtual Vector3 Solve(const FPhysicsParameters& ParameterA,
                           const FPhysicsParameters& ParameterB, float & InOutLambda) const override;
@@ -35,7 +35,7 @@ public:
     // 목표 속도 설정
     void SetDesiredSpeed(float InDesiredSpeed) { DesiredSpeed = InDesiredSpeed; }
 
-    static float CalculateEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
+    static float CalculateInvEffectiveMass(const FPhysicsParameters& ParameterA, const FPhysicsParameters& ParameterB,
                                  const XMVECTOR& Point, const XMVECTOR& Dir);
 
     static XMVECTOR CalculateRelativeVelocity (const FPhysicsParameters& BodyA, const FPhysicsParameters& BodyB,

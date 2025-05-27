@@ -19,7 +19,7 @@ public:
     virtual Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const = 0;
 
     // 관성 텐서 계산 (질량 기반)
-    virtual Vector3 CalculateInertiaTensor(float Mass) const = 0;
+    virtual Vector3 CalculateInvInertiaTensor(float InvMass) const = 0;
 
     // AABB 계산 (Axis-Aligned Bounding Box)
     virtual void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const = 0;

@@ -241,9 +241,6 @@ void FCollisionProcessor::UpdateCollisionPairs()
 			auto ExistingPair = ActiveCollisionPairs.find(NewPair);
 			if (ExistingPair != ActiveCollisionPairs.end()) {
 				NewPair = *ExistingPair;
-				//NewPair.bPrevCollided = ExistingPair->bPrevCollided;
-				//NewPair.PrevConstraints = ExistingPair->PrevConstraints;
-				//NewPair.bConverged = ExistingPair->bConverged;
 			}
 
 			NewCollisionPairs.insert(std::move(NewPair));
@@ -329,35 +326,24 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 
 			CollisionPairs.push_back(&(*it));
 			DetectionResults.push_back(DetectResult);
-
-			////response
-			//ApplyCollisionResponseByContraints(ActivePair, DetectResult);
-
-			//float CorrectionRatio = ActivePair.bPrevCollided ? 0.8f : 0.5f;
-			////position correction
-			//ApplyPositionCorrection(CompA, CompB, DetectResult, DeltaTime, CorrectionRatio);
-			
 		}
-		////dispatch event
-		//BroadcastCollisionEvents(ActivePair, DetectResult);
-		////충돌 정보 저장
-		//ActivePair.bPrevCollided = DetectResult.bCollided;
 	}
 
 	//수집 된 정보를 반복적 해결법 적용
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < MaxConstraintIterations; ++i)
 	{
 		for (int j = 0; j < CollisionPairs.size(); ++j)
 		{
 			auto& CurrentPair = *CollisionPairs[j];
 			auto& CurrentResult = DetectionResults[j];
 
+			if (CurrentPair.bConverged)
+				continue;
+
 			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
 			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
 
 			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult, DeltaTime);
-			//float CorrectionRatio = CurrentPair.bPrevCollided ? 0.8f : 0.5f;
-			//ApplyPositionCorrection(CompA, CompB, CurrentResult, DeltaTime, CorrectionRatio);
 		}
 	}
 
@@ -384,10 +370,10 @@ void FCollisionProcessor::GetPhysicsParams(const std::shared_ptr<UCollisionCompo
 	if (!PhysicsState)
 		return;
 
-	OutParams.Mass = PhysicsState->P_GetMass();
+	OutParams.InvMass = PhysicsState->P_GetInvMass();
 
-	Vector3 RotInerteria = PhysicsState->P_GetRotationalInertia();
-    OutParams.RotationalInertia = XMLoadFloat3(&RotInerteria);  
+	Vector3 RotInvInerteria = PhysicsState->P_GetInvRotationalInertia();
+    OutParams.InvRotationalInertia = XMLoadFloat3(&RotInvInerteria);
 
     Vector3 Position = PhysicsState->P_GetWorldPosition();  
     OutParams.Position = XMLoadFloat3(&Position);  

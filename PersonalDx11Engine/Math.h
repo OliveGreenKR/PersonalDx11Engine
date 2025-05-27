@@ -8,6 +8,8 @@ using namespace DirectX;
 constexpr float PI = XM_PI;
 constexpr float KINDA_SMALL = 1e-4f; // 보통 용도
 constexpr float KINDA_SMALLER = 1e-6f; // 정밀 계산 용도
+constexpr float KINDA_LARGE = 1e10;
+constexpr float KINDA_LARGER = 1e11;
 
 // Forward declarations
 struct Vector2;

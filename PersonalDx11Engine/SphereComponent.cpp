@@ -19,14 +19,22 @@ Vector3 USphereComponent::GetWorldSupportPoint(const Vector3& WorldDirection) co
     return GetWorldPosition()+RadiusVec;
 }
 
-Vector3 USphereComponent::CalculateInertiaTensor(float Mass) const
+Vector3 USphereComponent::CalculateInvInertiaTensor(float InvMass) const
 {
-    // For a solid sphere: I = (2/5) * m * r^2
-    float r = GetScaledHalfExtent().x;
-    float r2 = r * r;
-    float Inertia = (2.0f / 5.0f) * Mass * r2;
+    if (InvMass < KINDA_SMALL)
+        return Vector3::Zero();
 
-    return Vector3(Inertia, Inertia, Inertia);
+    // For a solid sphere: I = (2/5) * m * r^2
+    float r = GetScaledHalfExtent().x / ONE_METER;
+    float rSq = r * r;
+
+    if (rSq < KINDA_SMALLER)
+    {
+        return Vector3::Zero();
+    }
+    float invIertia = (5.0f * InvMass) / (2.0f * rSq);
+
+    return Vector3(invIertia, invIertia, invIertia);
 }
 
 void USphereComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const

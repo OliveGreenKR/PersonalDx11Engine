@@ -32,40 +32,35 @@ Vector3 UBoxComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
     return Result;
 }
 
-Vector3 UBoxComponent::CalculateInertiaTensor(float Mass) const
+Vector3 UBoxComponent::CalculateInvInertiaTensor(float InvMass) const
 {
+    //무한대 질량(Static Body)인 경우
+    if (InvMass < KINDA_SMALL)
+    {
+        return Vector3::Zero();
+    }
+
     // Load scaled half extents (world scale applied) into SIMD vector
     Vector3 ScaledHalfExtent = GetScaledHalfExtent(); // cm 단위
-    XMVECTOR vScaledHalfExtent = XMLoadFloat3(&ScaledHalfExtent);
+    Vector3 Size = ScaledHalfExtent * 2.0f * 1/ONE_METER ;
 
-    // Convert cm to meters (1 cm = 0.01 m)
-    vScaledHalfExtent = XMVectorScale(vScaledHalfExtent, 1.0f/ONE_METER);
+    // 박스 관성텐서 공식: I = (m/12) * (h²+d², w²+d², w²+h²)
+    float SizeX2 = Size.x * Size.x;
+    float SizeY2 = Size.y * Size.y;
+    float SizeZ2 = Size.z * Size.z;
 
-    // Square each component: (he * 0.01)² = he² * 0.0001
-    XMVECTOR vSquared = XMVectorMultiply(vScaledHalfExtent, vScaledHalfExtent); // (x², y², z²) in m²
+    Vector3 InertiaTensor;
+    InertiaTensor.x = (SizeY2 + SizeZ2) / 12.0f;  // Ixx
+    InertiaTensor.y = (SizeX2 + SizeZ2) / 12.0f;  // Iyy
+    InertiaTensor.z = (SizeX2 + SizeY2) / 12.0f;  // Izz
 
-    // Scale by 4 to account for full extent: (2*he)² = 4*he²
-    vSquared = XMVectorScale(vSquared, 4.0f);
+    // 역관성텐서 = InvMass / InertiaTensor
+    Vector3 InvInertiaTensor;
+    InvInertiaTensor.x = (InertiaTensor.x > KINDA_SMALL) ? InvMass / InertiaTensor.x : 0.0f;
+    InvInertiaTensor.y = (InertiaTensor.y > KINDA_SMALL) ? InvMass / InertiaTensor.y : 0.0f;
+    InvInertiaTensor.z = (InertiaTensor.z > KINDA_SMALL) ? InvMass / InertiaTensor.z : 0.0f;
 
-    // Shuffle to get the proper sum combinations for inertia tensor
-    // I.x = (y² + z²)
-    // I.y = (x² + z²)
-    // I.z = (x² + y²)
-    XMVECTOR tensor = XMVectorSet(
-        XMVectorGetY(vSquared) + XMVectorGetZ(vSquared), // y² + z²
-        XMVectorGetX(vSquared) + XMVectorGetZ(vSquared), // x² + z²
-        XMVectorGetX(vSquared) + XMVectorGetY(vSquared), // x² + y²
-        0.0f
-    );
-
-    // Scale with mass * (1/12)
-    float Scale = Mass / 12.0f;
-    XMVECTOR vInerteria = XMVectorScale(tensor, Scale);
-
-    // Store result
-    Vector3 Result;
-    XMStoreFloat3(&Result, vInerteria);
-    return Result;
+    return InvInertiaTensor;
 }
 
 void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const

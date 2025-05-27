@@ -199,15 +199,15 @@ void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& 
 		return;
 
 	// 저장된 충격량 처리 (순간적인 속도 변화)
-	SimulatedState.Velocity += Impulse / SimulatedState.Mass;
+	SimulatedState.Velocity += Impulse  * SimulatedState.InvMass;
 
 	Vector3 AngularImpulse = Vector3::Cross(Location - GetCenterOfMass(), Impulse);
 	if (IsValidTorque(AngularImpulse))
 	{
 		SimulatedState.AngularVelocity += Vector3(
-			AngularImpulse.x / SimulatedState.RotationalInertia.x,
-			AngularImpulse.y / SimulatedState.RotationalInertia.y,
-			AngularImpulse.z / SimulatedState.RotationalInertia.z);
+			AngularImpulse.x * SimulatedState.InvRotationalInertia.x,
+			AngularImpulse.y * SimulatedState.InvRotationalInertia.y,
+			AngularImpulse.z * SimulatedState.InvRotationalInertia.z);
 	}
 
 }
@@ -257,8 +257,8 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	Vector3 AccumulatedForce = SimulatedState.AccumulatedForce;
 	Vector3 AccumulatedTorque = SimulatedState.AccumulatedTorque;
 
-	const float Mass = SimulatedState.Mass;
-	const Vector3 RotationalInertia = SimulatedState.RotationalInertia;
+	const float InvMass = SimulatedState.InvMass;
+	const Vector3 InvRotationalInertia = SimulatedState.InvRotationalInertia;
 	const float FrictionKinetic = SimulatedState.FrictionKinetic;
 	const float FrictionStatic = SimulatedState.FrictionStatic;
 	const float Restitution = SimulatedState.Restitution;
@@ -271,7 +271,7 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	constexpr float RotationalDragCoefficient = 0.1f;
 	//공기 저항
 	Vector3 DragForce = -Velocity.GetNormalized() * Velocity.LengthSquared() * DragCoefficient;
-	Vector3 DragAcceleration = DragForce / Mass;
+	Vector3 DragAcceleration = DragForce * InvMass;
 	TotalAcceleration += DragAcceleration;
 	
 	//공기저항 각속도
@@ -279,9 +279,9 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 		AngularVelocity.LengthSquared() *
 		RotationalDragCoefficient;
 	Vector3 AngularDragAcceleration = Vector3(
-		AngularDragTorque.x / RotationalInertia.x,
-		AngularDragTorque.y / RotationalInertia.y,
-		AngularDragTorque.z / RotationalInertia.z
+		AngularDragTorque.x * InvRotationalInertia.x,
+		AngularDragTorque.y * InvRotationalInertia.y,
+		AngularDragTorque.z * InvRotationalInertia.z
 	);
 	TotalAngularAcceleration += AngularDragAcceleration;
 
@@ -299,7 +299,7 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 
 		// 정적 마찰력 영역에서 운동 마찰력 영역으로의 전환 확인
 		if (Velocity.Length() < KINDA_SMALL &&
-			AccumulatedForce.Length() <= FrictionStatic * Mass * GravityFactor)
+			AccumulatedForce.Length() <= FrictionStatic * GravityFactor / InvMass )
 		{
 			// 정적 마찰력이 외력을 상쇄
 			AccumulatedForce = Vector3::Zero();
@@ -331,11 +331,11 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	{
 		//각 축별로 정적 마찰 검사
 		bool bStaticFrictionX = std::abs(AngularVelocity.x) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.x) <= FrictionStatic * RotationalInertia.x;
+			std::abs(AccumulatedTorque.x) <= FrictionStatic / InvRotationalInertia.x;
 		bool bStaticFrictionY = std::abs(AngularVelocity.y) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.y) <= FrictionStatic * RotationalInertia.y;
+			std::abs(AccumulatedTorque.y) <= FrictionStatic / InvRotationalInertia.y;
 		bool bStaticFrictionZ = std::abs(AngularVelocity.z) < KINDA_SMALL &&
-			std::abs(AccumulatedTorque.z) <= FrictionStatic * RotationalInertia.z;
+			std::abs(AccumulatedTorque.z) <= FrictionStatic / InvRotationalInertia.z;
 
 		// 축별로 정적/운동 마찰 적용
 		Vector3 frictionAccel;
@@ -349,14 +349,14 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	// 외부에서 적용된 힘에 의한 가속도 추가
 	if (IsValidForce(AccumulatedForce))
 	{
-		TotalAcceleration += AccumulatedForce / Mass;
+		TotalAcceleration += AccumulatedForce * InvMass;
 	}
 	if (IsValidTorque(AccumulatedTorque))
 	{
 		TotalAngularAcceleration += Vector3(
-			AccumulatedTorque.x / RotationalInertia.x,
-			AccumulatedTorque.y / RotationalInertia.y,
-			AccumulatedTorque.z / RotationalInertia.z);
+			AccumulatedTorque.x * InvRotationalInertia.x,
+			AccumulatedTorque.y * InvRotationalInertia.y,
+			AccumulatedTorque.z * InvRotationalInertia.z);
 	}
 
 	// 통합된 가속도로 속도 업데이트
@@ -518,9 +518,18 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
 void URigidBodyComponent::SetMass(float InMass)
 {
 	bStateDirty = true;
-	CachedState.Mass = std::max(InMass, KINDA_SMALL);
-	// 회전 관성도 질량에 따라 갱신
-	CachedState.RotationalInertia = 4.0f * CachedState.Mass * Vector3::One(); //근사
+	CachedState.InvMass = InMass > KINDA_LARGE ? 0.0f : 1 / InMass;
+
+	if (auto Collision = FindChildByType<UCollisionComponentBase>().lock())
+	{
+		CachedState.InvRotationalInertia = Collision->CalculateInvInertiaTensor(CachedState.InvMass);
+	}
+	else
+	{
+		// 회전 관성도 질량에 따라 갱신
+		CachedState.InvRotationalInertia = 0.25f * CachedState.InvMass * Vector3::One(); //근사
+	}
+	
 }
 
 void URigidBodyComponent::SetFrictionKinetic(float InFriction)
@@ -548,10 +557,12 @@ void URigidBodyComponent::SetRigidType(ERigidBodyType&& InType)
 }
 
 //토큰소유자만 접근 가능
-void URigidBodyComponent::SetRotationalInertia(const Vector3& Value, const RotationalInertiaToken&) 
+void URigidBodyComponent::SetInvRotationalInertia(const Vector3& Value, const RotationalInertiaToken&)
 { 
 	bStateDirty = true;
-	CachedState.RotationalInertia = Value;
+	CachedState.InvRotationalInertia.x = Value.x > KINDA_LARGE ? 0.0f : 1 / Value.x;
+	CachedState.InvRotationalInertia.y = Value.y > KINDA_LARGE ? 0.0f : 1 / Value.y;
+	CachedState.InvRotationalInertia.z = Value.z > KINDA_LARGE ? 0.0f : 1 / Value.z;
 }
 
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
