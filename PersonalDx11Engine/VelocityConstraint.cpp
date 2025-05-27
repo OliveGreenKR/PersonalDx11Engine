@@ -26,8 +26,8 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     XMVECTOR RelativeVelocity = CalculateRelativeVelocity(ParameterA, ParameterB, ContactPoint);
 
     // 상대 속도의 해당 방향 성분 계산
-    XMVECTOR DesiredRelativeVelocity = XMVector3Dot(RelativeVelocity, Direction);
-    float ProjectedSpeed = XMVectorGetX(DesiredRelativeVelocity);
+    XMVECTOR DesiredRelativeSpeed = XMVector3Dot(RelativeVelocity, Direction);
+    float ProjectedSpeed = XMVectorGetX(DesiredRelativeSpeed);
 
     // 속도 오차 계산 (현재 속도와 목표 속도의 차이)
     float VelocityError = ProjectedSpeed - DesiredSpeed;
@@ -39,7 +39,7 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     float EffectiveMassInv = CalculateInvEffectiveMass(ParameterA, ParameterB, ContactPoint, Direction);
 
     // 람다 계산
-    float DeltaLambda = -(VelocityError + PositionCorrection)  * EffectiveMassInv;
+    float DeltaLambda = -(VelocityError + PositionCorrection)  / EffectiveMassInv;
 
     // 람다 누적 (제약조건에 따라 제한할 수 있음)
     float OldLambda = InOutLambda;
