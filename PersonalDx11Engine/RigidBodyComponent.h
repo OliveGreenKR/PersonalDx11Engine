@@ -42,6 +42,9 @@ public:
 
 	//IPhysicsObject
 	virtual void TickPhysics(const float DeltaTime) override;
+
+	void SetWorldTransform(const FTransform& InWorldTransform) override;
+
 #pragma region IPhysicsState
 public:
 	// 속도 기반 인터페이스
@@ -120,9 +123,10 @@ public:
     const FTransform& P_GetWorldTransform() const override { return SimulatedState.WorldTransform; }
 	Vector3 P_GetCenterOfMass() const { return SimulatedState.WorldTransform.Position; }
 
-	void P_SetWorldPosition(const Vector3& InPoisiton) override;
-	void P_SetWorldRotation(const Quaternion& InQuat) override;
-	void P_SetWorldScale(const Vector3& InScale) override;
+	void P_SetWorldTransform(const FTransform& InTransfrom) override;
+	//void P_SetWorldPosition(const Vector3& InPoisiton) override;
+	//void P_SetWorldRotation(const Quaternion& InQuat) override;
+	//void P_SetWorldScale(const Vector3& InScale) override;
 
 	void P_ApplyForce(const Vector3& Force) override { P_ApplyForce(Force, P_GetCenterOfMass()); }
 	void P_ApplyImpulse(const Vector3& Impulse) override{ P_ApplyImpulse(Impulse, P_GetCenterOfMass()); }

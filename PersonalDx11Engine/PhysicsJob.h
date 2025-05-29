@@ -12,6 +12,7 @@ enum class EPhysicsJob : uint8_t
 	ADD_VELOCITY,
 	SET_ANGULARVELOCITY,
 	ADD_ANGULARVELOCITY,
+	SET_WORLDTRANSFORM,
 };
 
  struct alignas(16) FPhysicsJob
@@ -109,10 +110,10 @@ private:
 	Vector3 Velocity;
 
 public:
-	explicit  FJobSetVelocity(Vector3 InVelocity)
+	explicit  FJobSetVelocity(Vector3 InVelocity) : Velocity(InVelocity)
 	{
 		Set(EPhysicsJob::SET_VELOCITY);
-	};
+	}; 
 
 	void Execute(IPhysicsStateInternal* PhysicsObj)
 	{
@@ -126,7 +127,7 @@ private:
 	Vector3 Velocity;
 
 public:
-	explicit  FJobAddVelocity(Vector3 InVelocity)
+	explicit  FJobAddVelocity(Vector3 InVelocity) : Velocity(InVelocity)
 	{
 		Set(EPhysicsJob::ADD_VELOCITY);
 	};
@@ -143,7 +144,7 @@ private:
 	Vector3 AngularVelocity;
 
 public:
-	explicit  FJobSetAngularVelocity(Vector3 InAngularVelocity)
+	explicit  FJobSetAngularVelocity(Vector3 InAngularVelocity) : AngularVelocity(InAngularVelocity)
 	{
 		Set(EPhysicsJob::SET_ANGULARVELOCITY);
 	};
@@ -160,7 +161,7 @@ private:
 	Vector3 AngularVelocity;
 
 public:
-	explicit  FJobAddAngularVelocity(Vector3 InAngularVelocity)
+	explicit  FJobAddAngularVelocity(Vector3 InAngularVelocity) : AngularVelocity(InAngularVelocity)
 	{
 		Set(EPhysicsJob::ADD_ANGULARVELOCITY);
 	};
@@ -170,3 +171,21 @@ public:
 		PhysicsObj->P_AddAngularVelocity(AngularVelocity);
 	}
 };
+
+struct alignas(16) FJobSetWorldTransform : public FPhysicsJob
+{
+private:
+	FTransform WorldTransform;
+
+public:
+	explicit  FJobSetWorldTransform(FTransform InWorldTransform) :  WorldTransform(InWorldTransform)
+	{
+		Set(EPhysicsJob::SET_WORLDTRANSFORM);
+	};
+
+	void Execute(IPhysicsStateInternal* PhysicsObj)
+	{
+		PhysicsObj->P_SetWorldTransform(WorldTransform);
+	}
+};
+

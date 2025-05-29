@@ -37,7 +37,7 @@ public:
     void AddLocalRotationEuler(const Vector3& InDeltaEuler);
 
     // 월드 트랜스폼 설정자
-    void SetWorldTransform(const FTransform& InWorldTransform);
+    virtual void SetWorldTransform(const FTransform& InWorldTransform);
     void SetWorldPosition(const Vector3& InWorldPosition);
     void SetWorldRotation(const Quaternion& InWorldRotation);
     void SetWorldRotationEuler(const Vector3& InWorldEuler);

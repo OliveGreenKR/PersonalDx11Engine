@@ -27,15 +27,7 @@ public:
     const Vector3 P_GetWorldPosition() const { return P_GetWorldTransform().Position; }
     const Quaternion P_GetWorldRotation() const { return P_GetWorldTransform().Rotation; }
 
-    virtual void P_SetWorldPosition(const Vector3& InPoisiton) = 0;
-    virtual void P_SetWorldRotation(const Quaternion& InQuat) = 0;
-    virtual void P_SetWorldScale(const Vector3& InScale) = 0;
-    void P_SetWorldTransform(const FTransform& InTransform)
-    {
-        P_SetWorldPosition(InTransform.Position);
-        P_SetWorldRotation(InTransform.Rotation);
-        P_SetWorldScale(InTransform.Scale);
-    }
+    virtual void P_SetWorldTransform(const FTransform& InTransform) = 0;
     
     virtual void P_ApplyForce(const Vector3& Force) = 0;
     virtual void P_ApplyImpulse(const Vector3& Impulse) = 0;

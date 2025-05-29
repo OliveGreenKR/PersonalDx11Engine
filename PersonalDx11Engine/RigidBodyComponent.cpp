@@ -21,11 +21,6 @@ void URigidBodyComponent::PostInitialized()
 {
 	USceneComponent::PostInitialized();
 
-	OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform&)
-										 { 
-											 this->bStateDirty = true;
-										 }, "RigidBody_OnWorldTransformChagned");
-	
 	//초기 상태 저장
 	CachedState.WorldTransform = GetWorldTransform();
 	SimulatedState = CachedState;
@@ -142,29 +137,48 @@ void URigidBodyComponent::P_UpdateTransformByVelocity(const float DeltaTime)
 	}
 }
 
-void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
+//void URigidBodyComponent::P_SetWorldPosition(const Vector3& InPoisiton)
+//{
+//	if (IsStatic() || !FTransform::IsValidPosition(SimulatedState.WorldTransform.Position - InPoisiton))
+//	{
+//		return;
+//	}
+//	SimulatedState.WorldTransform.Position = InPoisiton;
+//}
+//void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
+//{
+//	if (IsStatic() || !FTransform::IsValidRotation(SimulatedState.WorldTransform.Rotation, InQuat))
+//	{
+//		return;
+//	}
+//	SimulatedState.WorldTransform.Rotation = InQuat;
+//}
+//void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
+//{
+//	if (IsStatic() || !FTransform::IsValidScale(SimulatedState.WorldTransform.Scale - InScale))
+//	{
+//		return;
+//	}
+//	SimulatedState.WorldTransform.Scale = InScale;
+//}
+
+void URigidBodyComponent::P_SetWorldTransform(const FTransform& InTransfrom)
 {
-	if (IsStatic() || !FTransform::IsValidPosition(SimulatedState.WorldTransform.Position - InPoisiton))
+	if (IsStatic())
 	{
 		return;
 	}
-	SimulatedState.WorldTransform.Position = InPoisiton;
-}
-void URigidBodyComponent::P_SetWorldRotation(const Quaternion& InQuat)
-{
-	if (IsStatic() || !FTransform::IsValidRotation(SimulatedState.WorldTransform.Rotation, InQuat))
+
+	bool bIsUpate = false;
+	bIsUpate = FTransform::IsValidScale(SimulatedState.WorldTransform.Scale - InTransfrom.Scale) ||
+		FTransform::IsValidRotation(SimulatedState.WorldTransform.Rotation, InTransfrom.Rotation) ||
+		FTransform::IsValidPosition(SimulatedState.WorldTransform.Position - InTransfrom.Position);
+
+	if (bIsUpate)
 	{
-		return;
+		SimulatedState.WorldTransform = InTransfrom;
 	}
-	SimulatedState.WorldTransform.Rotation = InQuat;
-}
-void URigidBodyComponent::P_SetWorldScale(const Vector3& InScale)
-{
-	if (IsStatic() || !FTransform::IsValidScale(SimulatedState.WorldTransform.Scale - InScale))
-	{
-		return;
-	}
-	SimulatedState.WorldTransform.Scale = InScale;
+
 }
 
 void URigidBodyComponent::P_ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -378,6 +392,24 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 
 	//  저장된 상태값에 따른 위치 업데이트
 	P_UpdateTransformByVelocity(DeltaTime);
+}
+
+void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
+{
+	FTransform OldWorld = GetWorldTransform();
+	bool bIsUpdate =
+		FTransform::IsValidPosition(OldWorld.Position - InWorldTransform.Position) ||
+		FTransform::IsValidScale(OldWorld.Scale - InWorldTransform.Scale) ||
+		FTransform::IsValidRotation(OldWorld.Rotation, InWorldTransform.Rotation);
+
+	if (!bIsUpdate)
+		return;
+
+	USceneComponent::SetWorldTransform(InWorldTransform);
+	bStateDirty = true;
+	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobSetWorldTransform>
+												 (Engine::Cast<URigidBodyComponent>(shared_from_this()), GetWorldTransform());
+	UPhysicsSystem::Get()->RequestPhysicsJob(Job);
 }
 
 
