@@ -396,7 +396,10 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 
 void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
+	//기존 트랜스폼 로직 실행
 	FTransform OldWorld = GetWorldTransform();
+
+	//잡 전달 여부
 	bool bIsUpdate =
 		FTransform::IsValidPosition(OldWorld.Position - InWorldTransform.Position) ||
 		FTransform::IsValidScale(OldWorld.Scale - InWorldTransform.Scale) ||
@@ -405,7 +408,10 @@ void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
 	if (!bIsUpdate)
 		return;
 
+	//트랜스폼 수정
 	USceneComponent::SetWorldTransform(InWorldTransform);
+	
+	//잡 전달
 	bStateDirty = true;
 	auto Job = UPhysicsSystem::Get()->AcquireJob<FJobSetWorldTransform>
 												 (Engine::Cast<URigidBodyComponent>(shared_from_this()), GetWorldTransform());
