@@ -34,15 +34,24 @@ public:
 	bool IsLoaded() const override { return bIsLoaded; }
 	void Release() override;
 
+
 	size_t GetMemorySize() const override;
 	EResourceType GetType() const override { return EResourceType::Material; }
-
+	std::wstring GetPath() const override { return RscPath; }
 protected:
+	virtual bool LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path);
+	virtual bool LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path);
+	virtual void ReleaseImpl();
+
 	FResourceHandle TextureHandle = FResourceHandle();
 	FResourceHandle VertexShaderHandle;
 	FResourceHandle PixelShaderHandle;
 
 private:
+	void ReleaseMaterialBase();
+
+private:
+	std::wstring RscPath = L"NONE";
 	bool bIsLoaded = true; //TODO :  Matrial to File
 
 

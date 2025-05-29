@@ -30,7 +30,7 @@ UMaterial::UMaterial(const FResourceHandle& Texture, const FResourceHandle& Vert
 
 UMaterial::~UMaterial()
 {
-    Release();
+    ReleaseMaterialBase();
 }
 
 UTexture2D* UMaterial::GetTexture() const
@@ -94,12 +94,34 @@ void UMaterial::SetPixelShader(const FResourceHandle& InShader)
 
 bool UMaterial::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
+    bool result = LoadImpl(RenderHardware, Path);
+    if (result)
+    {
+        bIsLoaded = result;
+        RscPath = Path;
+    }
+    return result;
+}
+
+bool UMaterial::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+    bool result = LoadAsyncImpl(RenderHardware, Path);
+    if (result)
+    {
+        bIsLoaded = result;
+        RscPath = Path;
+    }
+    return result;
+}
+
+bool UMaterial::LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
     bool result = false;
 
     //TODO Materai Info to File...
 
     //1. Check Required Resources are Loaded
- 
+
     //2. Load UnLoaded Required Resources with ResourceManagers.
 
     if (Path == MAT_TILE)
@@ -117,14 +139,25 @@ bool UMaterial::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
     return result;
 }
 
-bool UMaterial::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UMaterial::LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     //TOTO Load Async
-    return Load(RenderHardware, Path);
+    return LoadImpl(RenderHardware, Path);
+}
+
+void UMaterial::ReleaseImpl()
+{
+    //MaterialBase Release
+}
+
+void UMaterial::ReleaseMaterialBase()
+{
 }
 
 void UMaterial::Release()
 {
+    ReleaseMaterialBase();
+    ReleaseImpl();
 }
 
 size_t UMaterial::GetMemorySize() const

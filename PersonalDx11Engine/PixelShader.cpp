@@ -3,16 +3,16 @@
 
 UPixelShader::~UPixelShader()
 {
-    Release();
+    ReleasePixel();
 }
 
-bool UPixelShader::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UPixelShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     if (!RenderHardware || !RenderHardware->IsDeviceReady())
         return false;
 
     // 이미 로드된 경우 재사용
-    if (bIsLoaded)
+    if (IsLoaded())
         return true;
 
     // 이전 리소스 해제
@@ -53,33 +53,27 @@ bool UPixelShader::Load(IRenderHardware* RenderHardware, const std::wstring& Pat
     // 메모리 사용량 계산
     CalculateMemoryUsage();
 
-    bIsLoaded = true;
     return true;
 }
 
-bool UPixelShader::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UPixelShader::LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     // 비동기 로드 구현 (단순화를 위해 여기서는 동기 로드로 대체)
     LOG("Async loading not implemented, falling back to sync loading");
-    return Load(RenderHardware, Path);
-}
-
-void UPixelShader::Release()
-{
-    if (PixelShader)
-    {
-        PixelShader->Release();
-        PixelShader = nullptr;
-    }
-
-    UShaderBase::Release();
-
-    bIsLoaded = false;
-    MemorySize = 0;
+    return LoadImpl(RenderHardware, Path);
 }
 
 void UPixelShader::CalculateMemoryUsage()
 {
     UShaderBase::CalculateMemoryUsage();
     MemorySize += (PixelShader ? 128 : 0);
+}
+
+void UPixelShader::ReleasePixel()
+{
+    if (PixelShader)
+    {
+        PixelShader->Release();
+        PixelShader = nullptr;
+    }
 }

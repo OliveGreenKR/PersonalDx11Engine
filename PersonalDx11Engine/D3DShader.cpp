@@ -5,7 +5,29 @@
 
 UShaderBase::~UShaderBase()
 {
-	Release();
+	ReleaseShaderBase();
+}
+
+bool UShaderBase::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+	bool result = LoadImpl(RenderHardware,Path);
+	if (result)
+	{
+		bIsLoaded = true;
+		RscPath = Path;
+	}
+	return result;
+}
+
+bool UShaderBase::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+	bool result = LoadAsyncImpl(RenderHardware, Path);
+	if (result)
+	{
+		bIsLoaded = true;
+		RscPath = Path;
+	}
+	return result;
 }
 
 bool UShaderBase::FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob)
@@ -53,25 +75,8 @@ bool UShaderBase::FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob)
 
 void UShaderBase::Release()
 {
-	// 상수 버퍼 해제
-	for (auto& cbInfo : ConstantBuffers)
-	{
-		if (cbInfo.Buffer)
-		{
-			cbInfo.Buffer->Release();
-			cbInfo.Buffer = nullptr;
-		}
-	}
-	ConstantBuffers.clear();
-
-	// 입력 레이아웃 해제
-	if (InputLayout)
-	{
-		InputLayout->Release();
-		InputLayout = nullptr;
-	}
-
-	ResourceBindingMeta.clear();
+	ReleaseShaderBase();
+	ReleaseImpl();
 }
 
 void UShaderBase::CalculateMemoryUsage()
@@ -321,5 +326,29 @@ void UShaderBase::ExtractResourceBindings(ID3D11ShaderReflection* Reflection, st
 		}
 	}
 }
+
+void UShaderBase::ReleaseShaderBase()
+{
+	// 상수 버퍼 해제
+	for (auto& cbInfo : ConstantBuffers)
+	{
+		if (cbInfo.Buffer)
+		{
+			cbInfo.Buffer->Release();
+			cbInfo.Buffer = nullptr;
+		}
+	}
+	ConstantBuffers.clear();
+
+	// 입력 레이아웃 해제
+	if (InputLayout)
+	{
+		InputLayout->Release();
+		InputLayout = nullptr;
+	}
+
+	ResourceBindingMeta.clear();
+}
+
 
 

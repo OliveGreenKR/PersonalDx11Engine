@@ -72,7 +72,7 @@ void UGameplayScene02::Initialize()
     // 캐릭터 2 (탄성체) 설정
     Character2 = UGameObject::Create<UElasticBody>(EElasticBodyShape::Box);
     Character2->SetScale(50.0f * Vector3::One());
-    Character2->SetPosition({ -60.0f, -30.0f, 0.0f });
+    Character2->SetPosition({ 60.0f, 0.0f, 0.0f });
 
     // 초기화 및 설정
     Camera->PostInitialized();
@@ -116,7 +116,6 @@ void UGameplayScene02::Initialize()
 
     Character->SetGravity(false);
     Character2->SetGravity(false);
-    Character2->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
 
     auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
     Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEventData& InEvent) {
@@ -298,10 +297,19 @@ void UGameplayScene02::SubmitRenderUI()
             bool bPhysics2 = Character2->IsPhysicsSimulated();
             bool bIsActive2 = Character2->IsActive();
             float Restitution = Character2->GetRestitution();
+            bool bStatic2 = Character2->GetComponentByType<URigidBodyComponent>()->IsStatic();
             ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
             ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
             ImGui::Checkbox("bPhysicsBased", &bPhysics2);
             ImGui::Checkbox("bGravity", &bGravity2);
+            if(ImGui::Checkbox("Stathc", &bStatic2))
+            {
+                if(bStatic2)
+                {
+                    Character2->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
+                }
+                
+            }
             Character2->SetGravity(bGravity2);
             Character2->SetPhysics(bPhysics2);
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,

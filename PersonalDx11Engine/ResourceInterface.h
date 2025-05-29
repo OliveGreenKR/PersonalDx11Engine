@@ -19,4 +19,5 @@ public:
     virtual void Release() = 0;
     virtual size_t GetMemorySize() const = 0;
     virtual EResourceType GetType() const = 0;
+    virtual std::wstring GetPath() const = 0;
 };

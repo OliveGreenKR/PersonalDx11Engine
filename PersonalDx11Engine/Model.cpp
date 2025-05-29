@@ -64,31 +64,17 @@ bool UModel::CreateBuffers(ID3D11Device* InDevice, const FVertexDataContainer& I
 
 UModel::~UModel()
 {
-    Release();
+	ReleaseModelBase();
 }
 
 void UModel::Release()
 {
-    if (VertexBuffer)
-    {
-        VertexBuffer->Release();
-        VertexBuffer = nullptr;
-    }
-
-    if (IndexBuffer)
-    {
-        IndexBuffer->Release();
-        IndexBuffer = nullptr;
-    }
-
-    VertexCount = 0;
-    IndexCount = 0;
-    Stride = 0;
-    Offset = 0;
+	ReleaseImpl();
+	ReleaseModelBase();
 }
 
 
-bool UModel::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UModel::LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     if (!RenderHardware || !RenderHardware->GetDevice())
     {
@@ -135,10 +121,32 @@ bool UModel::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
     return false;
 }
 
-bool UModel::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UModel::LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     //TODO
-    return Load(RenderHardware, Path);
+    return LoadImpl(RenderHardware, Path);
+}
+
+bool UModel::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+	bool result = LoadImpl(RenderHardware, Path);
+	if (result)
+	{
+		bIsLoaded = true;
+		RscPath = Path;
+	}
+	return result;
+}
+
+bool UModel::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+{
+	bool result = LoadAsyncImpl(RenderHardware, Path);
+	if (result)
+	{
+		bIsLoaded = true;
+		RscPath = Path;
+	}
+	return result;
 }
 
 size_t UModel::GetMemorySize() const
@@ -296,7 +304,6 @@ FVertexDataContainer UModel::CreateSphereVertexData(int InSegments)
 
 	return data;
 }
-
 FVertexDataContainer UModel::CreatePlaneVertexData()
 {
 	FVertexDataContainer data;
@@ -322,4 +329,24 @@ FVertexDataContainer UModel::CreatePlaneVertexData()
 	};
 
 	return data;
+}
+
+void UModel::ReleaseModelBase()
+{
+	if (VertexBuffer)
+	{
+		VertexBuffer->Release();
+		VertexBuffer = nullptr;
+	}
+
+	if (IndexBuffer)
+	{
+		IndexBuffer->Release();
+		IndexBuffer = nullptr;
+	}
+
+	VertexCount = 0;
+	IndexCount = 0;
+	Stride = 0;
+	Offset = 0;
 }

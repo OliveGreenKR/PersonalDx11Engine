@@ -30,10 +30,20 @@ public:
     bool IsLoaded() const override         { return bIsLoaded; } 
     size_t GetMemorySize() const override;
     EResourceType GetType() const override { return EResourceType::Model; }
+    std::wstring GetPath() const override { return RscPath; }
+
+protected:
+    virtual void ReleaseImpl() {}
+    virtual bool LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path);
+    virtual bool LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path);
+
 private:
     static FVertexDataContainer CreateCubeVertexData();
     static FVertexDataContainer CreateSphereVertexData(int InSegments = 32);
     static FVertexDataContainer CreatePlaneVertexData();
+
+    void ReleaseModelBase();
+ 
 private:
     ID3D11Buffer* VertexBuffer = nullptr;
     ID3D11Buffer* IndexBuffer = nullptr;
@@ -42,6 +52,7 @@ private:
     uint32_t Stride = 0;
     uint32_t Offset = 0;
 
+    std::wstring RscPath = L"NONE";
     bool bIsLoaded = false;
 };
 

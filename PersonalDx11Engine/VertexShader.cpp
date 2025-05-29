@@ -3,16 +3,16 @@
 
 UVertexShader::~UVertexShader()
 {
-    Release();
+    ReleaseVertex();
 }
 
-bool UVertexShader::Load(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UVertexShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     if (!RenderHardware || !RenderHardware->IsDeviceReady())
         return false;
 
     // 이미 로드된 경우 재사용
-    if (bIsLoaded)
+    if (IsLoaded())
         return true;
 
     // 이전 리소스 해제
@@ -57,27 +57,23 @@ bool UVertexShader::Load(IRenderHardware* RenderHardware, const std::wstring& Pa
     // 메모리 사용량 계산
     CalculateMemoryUsage();
 
-    bIsLoaded = true;
     return true;
 }
 
-bool UVertexShader::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path)
+bool UVertexShader::LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path)
 {
     // 비동기 로드 구현 (단순화를 위해 여기서는 동기 로드로 대체)
     LOG("Async loading not implemented, falling back to sync loading");
-    return Load(RenderHardware, Path);
+    return LoadImpl(RenderHardware, Path);
 }
 
-void UVertexShader::Release()
+void UVertexShader::ReleaseVertex()
 {
     if (VertexShader)
     {
         VertexShader->Release();
         VertexShader = nullptr;
     }
-
-    bIsLoaded = false;
-    MemorySize = 0;
 }
 
 void UVertexShader::CalculateMemoryUsage()

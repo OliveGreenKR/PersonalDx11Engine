@@ -1,4 +1,4 @@
-﻿#include "Texture.h"
+#include "Texture.h"
 #include <wincodec.h>
 #include "Math.h"
 UTexture2D::UTexture2D()
@@ -8,50 +8,16 @@ UTexture2D::UTexture2D()
 
 UTexture2D::~UTexture2D()
 {
-    Release();
+    ReleaseTextureBase();
 }
 
 void UTexture2D::Release()
 {
-    // 비동기 로딩 컨텍스트 정리
-    if (AsyncLoadingContext)
-    {
-        // 비동기 로딩 취소 로직이 필요하다면 여기서 구현
-        AsyncLoadingContext.reset();
-    }
-
-    // Direct3D 리소스 해제
-    if (UnorderedAccessView)
-    {
-        UnorderedAccessView->Release();
-        UnorderedAccessView = nullptr;
-    }
-
-    if (RenderTargetView)
-    {
-        RenderTargetView->Release();
-        RenderTargetView = nullptr;
-    }
-
-    if (ShaderResourceView)
-    {
-        ShaderResourceView->Release();
-        ShaderResourceView = nullptr;
-    }
-
-    if (Texture)
-    {
-        Texture->Release();
-        Texture = nullptr;
-    }
-
-    // 상태 초기화
-    bIsLoaded = false;
-    bIsLoading = false;
-    MemorySize = 0;
+    ReleaseImpl();
+    ReleaseTextureBase();
 }
 
-bool UTexture2D::Load(IRenderHardware* RenderHardware, const std::wstring& InFilePath)
+bool UTexture2D::LoadImpl(IRenderHardware* RenderHardware, const std::wstring& InFilePath)
 {
     if (!RenderHardware)
         return false;
@@ -173,7 +139,7 @@ bool UTexture2D::Load(IRenderHardware* RenderHardware, const std::wstring& InFil
     return bCreateResult;
 }
 
-bool UTexture2D::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& InFilePath)
+bool UTexture2D::LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& InFilePath)
 {
     if (!RenderHardware)
         return false;
@@ -342,6 +308,68 @@ void UTexture2D::OnLoadingComplete(bool bSuccess)
 
     // 컨텍스트 정리
     AsyncLoadingContext.reset();
+}
+
+void UTexture2D::ReleaseTextureBase()
+{
+    // 비동기 로딩 컨텍스트 정리
+    if (AsyncLoadingContext)
+    {
+        // 비동기 로딩 취소 로직이 필요하다면 여기서 구현
+        AsyncLoadingContext.reset();
+    }
+
+    // Direct3D 리소스 해제
+    if (UnorderedAccessView)
+    {
+        UnorderedAccessView->Release();
+        UnorderedAccessView = nullptr;
+    }
+
+    if (RenderTargetView)
+    {
+        RenderTargetView->Release();
+        RenderTargetView = nullptr;
+    }
+
+    if (ShaderResourceView)
+    {
+        ShaderResourceView->Release();
+        ShaderResourceView = nullptr;
+    }
+
+    if (Texture)
+    {
+        Texture->Release();
+        Texture = nullptr;
+    }
+
+    // 상태 초기화
+    bIsLoaded = false;
+    bIsLoading = false;
+    MemorySize = 0;
+}
+
+bool UTexture2D::Load(IRenderHardware* RenderHardware, const std::wstring& FilePath)
+{
+    bool result = LoadImpl(RenderHardware, FilePath);
+    if (result)
+    {
+        bIsLoaded = true;
+        RscPath = FilePath;
+    }
+    return result;
+}
+
+bool UTexture2D::LoadAsync(IRenderHardware* RenderHardware, const std::wstring& FilePath)
+{
+    bool result = LoadAsyncImpl(RenderHardware, FilePath);
+    if (result)
+    {
+        bIsLoaded = true;
+        RscPath = FilePath;
+    }
+    return result;
 }
 
 bool UTexture2D::CreateEmpty(IRenderHardware* RenderHardware, const FTextureDesc& Desc, const void* InitialData)

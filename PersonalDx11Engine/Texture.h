@@ -46,10 +46,12 @@ public:
     virtual bool IsLoaded() const override { return bIsLoaded; }
     virtual void Release() override;
     virtual size_t GetMemorySize() const override { return MemorySize; }
+    virtual std::wstring GetPath() const override { return RscPath; }
+    bool Load(IRenderHardware* RenderHardware, const std::wstring& FilePath) override;
+    bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& FilePath) override;
+    EResourceType GetType() const override { return EResourceType::Texture; }
 
-    // 텍스처 로드 메서드
-    bool Load(IRenderHardware* RenderHardware, const std::wstring& FilePath);
-    bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& FilePath);
+    //텍스처 메소드
     bool CreateEmpty(IRenderHardware* RenderHardware, const FTextureDesc& Desc, const void* InitialData = nullptr);
 
     // 데이터 업데이트 메서드
@@ -74,9 +76,10 @@ public:
     bool IsLoadingComplete() const { return !bIsLoading || bIsLoaded; }
     bool IsLoading() const { return bIsLoading; }
 
-    //리소스타입
-    EResourceType GetType() const override { return EResourceType::Texture; }
-
+protected:
+    virtual bool LoadImpl(IRenderHardware* RenderHardware, const std::wstring& FilePath);
+    virtual bool LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& FilePath);
+    virtual void ReleaseImpl() {};
 private:
     // DXGI 포맷 변환 헬퍼
     DXGI_FORMAT GetDXGIFormat(ETextureFormat Format) const;
@@ -86,6 +89,8 @@ private:
 
     // 비동기 로딩 완료 콜백
     void OnLoadingComplete(bool bSuccess);
+
+    void ReleaseTextureBase();
 
 private:
     // 텍스처 리소스
@@ -101,6 +106,7 @@ private:
     // 상태 플래그
     bool bIsLoaded = false;
     bool bIsLoading = false;
+    std::wstring RscPath = L"NONE";
 
     // 메모리 관리
     size_t MemorySize = 0;

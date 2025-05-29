@@ -3,8 +3,9 @@
 #include <vector>
 #include <string>
 #include <type_traits>
+#include "ResourceInterface.h"
 
-class UShaderBase
+class UShaderBase : public IResource
 {
 protected:
     // 상수 버퍼 변수 정보
@@ -40,8 +41,10 @@ protected:
     ID3D11InputLayout* InputLayout = nullptr;
     std::vector<FInternalConstantBufferInfo> ConstantBuffers;
     std::vector<FInternalResourceBindInfo> ResourceBindingMeta;
-    bool bIsLoaded = false;
     size_t MemorySize = 0;
+private:
+    bool bIsLoaded = false;
+    std::wstring RscPath = L"NONE";
 
 public:
     UShaderBase() = default;
@@ -50,6 +53,15 @@ public:
     const std::vector<FInternalConstantBufferInfo>& GetAllConstantBufferInfo() { return ConstantBuffers; }
     const std::vector<FInternalResourceBindInfo>& GetAllResourceBindInfo() { return ResourceBindingMeta; }
 
+    // Inherited via IResource
+    void Release() override;
+    bool Load(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+    bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& Path) override;
+    bool IsLoaded() const override { return bIsLoaded; }
+    size_t GetMemorySize() const override { return MemorySize; }
+    EResourceType GetType() const override { return EResourceType::Shader; }
+    std::wstring GetPath() const override { return RscPath; }
+
     ID3D11InputLayout* GetInputLayout() const { return InputLayout; }
     ID3D11Buffer* GetConstantBuffer(uint32_t Slot) const;
     uint32_t GetConstantBufferSize(uint32_t Slot) const;
@@ -57,9 +69,13 @@ public:
 
     // 메모리 관리 헬퍼
     virtual void CalculateMemoryUsage();
-    void Release();
+
 
 protected:
+    virtual void ReleaseImpl() = 0;
+    virtual bool LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path) = 0;
+    virtual bool LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path) = 0;
+
     bool FillShaderMeta(ID3D11Device* Device, ID3DBlob* ShaderBlob);
     static HRESULT CompileShader(const wchar_t* filename, const char* entryPoint, const char* target, ID3DBlob** ppBlob);
 
@@ -71,4 +87,8 @@ private:
                                          std::vector<FInternalConstantBufferInfo>& OutBuffers);
     void ExtractResourceBindings(ID3D11ShaderReflection* Reflection,
                                  std::vector<FInternalResourceBindInfo>& OutBindings);
+
+    void ReleaseShaderBase();
+
+
 };
