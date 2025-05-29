@@ -425,8 +425,9 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
 	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
 
-	//수렴 확인
-	if (std::fabs(CollisionPair.PrevConstraints.normalLambda - Accumulation.normalLambda) < KINDA_SMALL)
+	//수렴 조건 확인
+	if (std::fabs(CollisionPair.PrevConstraints.normalLambda - Accumulation.normalLambda) < 1.0f
+		|| collisionResponse.NetImpulse.Length () < KINDA_SMALL)
 	{
 		CollisionPair.bConverged = true;
 		return;

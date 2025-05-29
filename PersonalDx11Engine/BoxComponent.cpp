@@ -41,8 +41,8 @@ Vector3 UBoxComponent::CalculateInvInertiaTensor(float InvMass) const
     }
 
     // Load scaled half extents (world scale applied) into SIMD vector
-    Vector3 ScaledHalfExtent = GetScaledHalfExtent(); // cm 단위
-    Vector3 Size = ScaledHalfExtent * 2.0f * 1/ONE_METER ;
+    Vector3 ScaledHalfExtent = GetScaledHalfExtent(); 
+    Vector3 Size = ScaledHalfExtent * 2.0f;
 
     // 박스 관성텐서 공식: I = (m/12) * (h²+d², w²+d², w²+h²)
     float SizeX2 = Size.x * Size.x;

@@ -25,7 +25,7 @@ Vector3 USphereComponent::CalculateInvInertiaTensor(float InvMass) const
         return Vector3::Zero();
 
     // For a solid sphere: I = (2/5) * m * r^2
-    float r = GetScaledHalfExtent().x / ONE_METER;
+    float r = GetScaledHalfExtent().x ;
     float rSq = r * r;
 
     if (rSq < KINDA_SMALLER)
