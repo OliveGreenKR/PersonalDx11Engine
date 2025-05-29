@@ -14,6 +14,5 @@ public:
 
     // 충돌 지점 관련 데이터 설정
     virtual void SetContactData(const Vector3& ContactPoint,
-                                const Vector3& ContactNormal,
-                                float PenetrationDepth) = 0;
+                                const Vector3& ContactNormal) = 0;
 };

@@ -145,6 +145,11 @@ public:
 	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
 	bool IsSleep() const override;
+	virtual void SetSleep(const bool InBool) override { InBool ? Sleep() : Awake(); }
+
+private:
+	void Sleep();
+	void Awake();
 #pragma endregion
 public:
 	// 물리 속성 설정

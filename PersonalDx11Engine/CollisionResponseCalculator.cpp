@@ -89,8 +89,9 @@ Vector3 FCollisionResponseCalculator::SolveNormalCollisionConstraint(
     OutNormalLambda = Accumulation.normalLambda;
 
     Vector3 Normal = DetectionResult.Normal;
+
     FVelocityConstraint NormalConstraint(Normal, 0.0f, 0.0f);
-    NormalConstraint.SetContactData(DetectionResult.Point, Normal, DetectionResult.PenetrationDepth);
+    NormalConstraint.SetContactData(DetectionResult.Point, Normal);
 
     // 반발 계수 적용 (두 물체의 평균)
     float RestitutionCoef = std::min(0.9999f, (ParameterA.Restitution + ParameterB.Restitution) * 0.5f);
@@ -109,9 +110,9 @@ Vector3 FCollisionResponseCalculator::SolveNormalCollisionConstraint(
     // 반발 속도 목표 설정
     float DesiredVelocity = NormalVelocity < 0.0f ? -NormalVelocity * RestitutionCoef : 0.0f;
 
+
     // 위치 오차 보정 계수 (Baumgarte beta 값)
     const float BiasFactor = 0.2f; // 일반적인 값 (0.1 ~ 0.3)
-
     // 위치 오류를 속도 편향으로 변환하여 DesiredVelocity에 추가
     float positionBiasVelocity = CalculatePositionBiasVelocity(
         DetectionResult.PenetrationDepth, BiasFactor, DeltaTime, 0.01f);
@@ -159,7 +160,7 @@ Vector3 FCollisionResponseCalculator::SolveFrictionConstraint(
         // 접선 방향 제약 조건 (마찰력)
         // 마찰은 속도를 0으로 만드는 것이 목표이므로 DesiredSpeed는 0.0f
         FVelocityConstraint FrictionConstraint(Tangent, 0.0f);
-        FrictionConstraint.SetContactData(DetectionResult.Point, DetectionResult.Normal, 0.0f);
+        FrictionConstraint.SetContactData(DetectionResult.Point, DetectionResult.Normal);
 
         // Warm Starting: 이전 프레임의 마찰 람다 재사용
         TangentImpulse = FrictionConstraint.Solve(ParameterA, ParameterB, OutFrictionLambda);

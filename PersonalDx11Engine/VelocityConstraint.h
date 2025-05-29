@@ -10,10 +10,8 @@ class FVelocityConstraint : public IConstraint
 {
 private:
     XMVECTOR Direction = XMVectorZero();        // 제약 방향 
-    float DesiredSpeed = 0.0f;    // 목표 속도 
-    float Bias = 0.0f;               // 위치 오차 보정 계수
-    float PositionError = 0.0f;      // 위치 오차 
-    float MinLambda = -FLT_MAX;        //Lamda 제약
+    float DesiredSpeed = 0.0f;                 // 목표 속도 
+    float MinLambda = -FLT_MAX;                //Lamda 제약
     XMVECTOR ContactPoint = XMVectorZero();
     XMVECTOR ContactNormal = XMVectorZero();
 
@@ -27,11 +25,8 @@ public:
     
 
     virtual void SetContactData(const Vector3& InContactPoint,
-                                const Vector3& InContactNormal,
-                                float InPenetrationDepth) override;
+                                const Vector3& InContactNormal) override;
 
-    // 위치 오차 보정용 설정
-    void SetBias(float InBias) { Bias = InBias; }
     // 목표 속도 설정
     void SetDesiredSpeed(float InDesiredSpeed) { DesiredSpeed = InDesiredSpeed; }
 

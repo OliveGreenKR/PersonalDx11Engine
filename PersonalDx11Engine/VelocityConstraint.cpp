@@ -11,11 +11,10 @@ FVelocityConstraint::FVelocityConstraint(const XMVECTOR& TargetDirection, float 
 {
 }
 
-void FVelocityConstraint::SetContactData(const Vector3& InContactPoint, const Vector3& InContactNormal, float InPenetrationDepth)
+void FVelocityConstraint::SetContactData(const Vector3& InContactPoint, const Vector3& InContactNormal)
 {
     ContactPoint = XMLoadFloat3(&InContactPoint);
-    ContactNormal = XMLoadFloat3(&InContactNormal);
-    PositionError = InPenetrationDepth;
+    ContactNormal = XMLoadFloat3(&InContactNormal);;
 }
 
 
@@ -32,14 +31,12 @@ Vector3 FVelocityConstraint::Solve(const FPhysicsParameters& ParameterA,
     // 속도 오차 계산 (현재 속도와 목표 속도의 차이)
     float VelocityError = ProjectedSpeed - DesiredSpeed;
 
-    // 위치 오차에 따른 바이어스 항 추가 (Baumgarte 안정화)
-    float PositionCorrection = Bias * PositionError;
-
     // 유효 질량 계산
     float EffectiveMassInv = CalculateInvEffectiveMass(ParameterA, ParameterB, ContactPoint, Direction);
 
     // 람다 계산
-    float DeltaLambda = -(VelocityError + PositionCorrection)  / EffectiveMassInv;
+    //float DeltaLambda = -(VelocityError + PositionCorrection)  / EffectiveMassInv;
+    float DeltaLambda = -(VelocityError) / EffectiveMassInv; 
 
     // 람다 누적 (제약조건에 따라 제한할 수 있음)
     float OldLambda = InOutLambda;

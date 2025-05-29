@@ -24,7 +24,6 @@ void URigidBodyComponent::PostInitialized()
 	OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform&)
 										 { 
 											 this->bStateDirty = true;
-											 this->bSleep = false;
 											 //ForDebug
 											 auto Primitive = GetOwner()->GetComponentByType<UPrimitiveComponent>();
 											 if (Primitive)
@@ -70,13 +69,7 @@ Vector3 URigidBodyComponent::GetCenterOfMass() const
 
 bool URigidBodyComponent::ShouldSleep() const
 {
-	//에너지레벨이 충분히 낮으면 sleep
-	bool bShouldSleep = false;
-
-	bShouldSleep = 
-		FTransform::IsEqual(CachedState.WorldTransform, SimulatedState.WorldTransform, KINDA_SMALLER);
-
- 	return bShouldSleep;
+	return false;
 }
 
 #pragma region Helper For Numerical Stability
@@ -197,7 +190,6 @@ void URigidBodyComponent::P_ApplyImpulse(const Vector3& Impulse, const Vector3& 
 {
 	if (!IsActive() || IsStatic() || !IsValidForce(Impulse))
 		return;
-
 	// 저장된 충격량 처리 (순간적인 속도 변화)
 	SimulatedState.Velocity += Impulse  * SimulatedState.InvMass;
 
@@ -392,21 +384,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 
 	//  저장된 상태값에 따른 위치 업데이트
 	P_UpdateTransformByVelocity(DeltaTime);
-
-	if (ShouldSleep())
-	{
-		bSleep = true;
-		SimulatedState.Reset();
-		{
-			//ForDebug
-			auto Primitive = GetOwner()->GetComponentByType<UPrimitiveComponent>();
-			if (Primitive)
-			{
-				Primitive->SetColor(Vector4(1, 0, 0, 1));
-			}
-		}
-		return;
-	}
 }
 
 
@@ -414,10 +391,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 void URigidBodyComponent::SetGravity(const bool InBool) 
 {
 	bGravity = InBool; 
-	if (bGravity)
-	{
-		bSleep = false;
-	}
 }
 
 void URigidBodyComponent::RegisterPhysicsSystem()
@@ -451,7 +424,6 @@ void URigidBodyComponent::UpdateSimulatedStateFromCached()
 	{
 		return;
 	}
-	bSleep = false;
 	bStateDirty = false;
 	FTransform CurrentWorldTransform = GetWorldTransform();
 	CachedState.WorldTransform = CurrentWorldTransform;
@@ -472,6 +444,17 @@ bool URigidBodyComponent::IsActive() const
 bool URigidBodyComponent::IsSleep() const
 {
 	return bSleep;
+}
+
+void URigidBodyComponent::Sleep()
+{
+	bSleep = true;
+	SimulatedState.Reset();
+}
+
+void URigidBodyComponent::Awake()
+{
+	bSleep = false;
 }
 
 #pragma region External PhysicsState
