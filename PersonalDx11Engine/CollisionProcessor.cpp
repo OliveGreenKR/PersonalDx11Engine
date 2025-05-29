@@ -437,7 +437,7 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	RigidPtrA->P_ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->P_ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
-	LOG("%s", Debug::ToString(collisionResponse.NetImpulse));
+	//LOG("%s", Debug::ToString(collisionResponse.NetImpulse));
 
 	//반응 결과 저장
 	CollisionPair.PrevConstraints = Accumulation;
