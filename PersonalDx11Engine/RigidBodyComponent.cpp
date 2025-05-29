@@ -24,12 +24,6 @@ void URigidBodyComponent::PostInitialized()
 	OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform&)
 										 { 
 											 this->bStateDirty = true;
-											 //ForDebug
-											 auto Primitive = GetOwner()->GetComponentByType<UPrimitiveComponent>();
-											 if (Primitive)
-											 {
-												 Primitive->SetColor(Vector4(0, 1, 0, 1));
-											 }
 										 }, "RigidBody_OnWorldTransformChagned");
 	
 	//초기 상태 저장
@@ -414,7 +408,7 @@ void URigidBodyComponent::UnRegisterPhysicsSystem()
 void URigidBodyComponent::SynchronizeCachedStateFromSimulated()
 {
 	CachedState = SimulatedState;
-	SetWorldTransform(CachedState.WorldTransform);
+	USceneComponent::SetWorldTransform(CachedState.WorldTransform);
 	bStateDirty = false;
 }
 //연산 전 외부 상태 동기화
@@ -425,7 +419,7 @@ void URigidBodyComponent::UpdateSimulatedStateFromCached()
 		return;
 	}
 	bStateDirty = false;
-	FTransform CurrentWorldTransform = GetWorldTransform();
+	FTransform CurrentWorldTransform = USceneComponent::GetWorldTransform();
 	CachedState.WorldTransform = CurrentWorldTransform;
 	SimulatedState = CachedState;
 }

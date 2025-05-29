@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "ResourceHandle.h"
+#include "Debug.h"
 
 //외부 제공 리소스 핸들
 class FResourceHandle;
@@ -106,6 +107,7 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
     if (success)
     {
+        LOG_FUNC_CALL("Rsc Loaded : [%s]",rscUniquePtr->GetPath());
         // 캐시에 추가
         FResourceData ResourceData;
         ResourceData.Resource = std::move(rscUniquePtr);
