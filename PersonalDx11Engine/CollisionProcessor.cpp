@@ -516,11 +516,6 @@ void FCollisionProcessor::ApplyDirectPositionCorrection(const FCollisionPair& Co
 	}
 }
 
-bool FCollisionProcessor::IsPersistentContact(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
-{
-	//특정 프레임 이상 연속으로 침투 상태 유지?
-	return false;
-}
 float FCollisionProcessor::CalculatePositionBiasVelocity(
 	float PenetrationDepth,
 	float BiasFactor,

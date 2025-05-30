@@ -117,9 +117,6 @@ private:
         float CorrectionRatio = 0.8f
     );
 
-    //쌍의 접촉 상황 판단
-    bool IsPersistentContact(const FCollisionPair& CollisionPair,
-                             const FCollisionDetectionResult& DetectResult) ;
     /// <summary>
     ///  위치 보정 속도 편향 계산
     /// </summary>
