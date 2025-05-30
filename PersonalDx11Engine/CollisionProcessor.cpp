@@ -340,6 +340,10 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 			if (CurrentPair.bConverged)
 				continue;
 
+			if (!CurrentPair.bPrevCollided)
+			{
+				LOG("**********[First Collision]************");
+			}
 			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
 			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
 
@@ -411,14 +415,12 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	GetPhysicsParams(ComponentA, ParamsA);
 	GetPhysicsParams(ComponentB, ParamsB);
 
-	FAccumulatedConstraint Accumulation;
-
-	// Warm Starting - 이전 프레임 람다 재사용
-	if (CollisionPair.bPrevCollided)
-	{
-		Accumulation = CollisionPair.PrevConstraints;
-		Accumulation.Scale(0.8f);  // 안정성을 위한 스케일링
-	}
+	// Warm Starting  람다 재사용
+	FAccumulatedConstraint Accumulation = CollisionPair.PrevConstraints;
+	
+	// 새로운 접촉이면 더 강한 감쇠 적용
+	float dampingFactor = CollisionPair.bPrevCollided ? 0.8f : 0.5f;
+	Accumulation.Scale(dampingFactor);
 
 	FCollisionResponseResult collisionResponse =
 		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation, DeltaTime);
