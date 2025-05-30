@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <windows.h>
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
@@ -33,6 +33,11 @@ public:
     // UI 요소 등록
     void RegisterUIElement(const std::string& WindowName, const std::function<void()>& DrawFunction) {
         UIElements.push_back({ WindowName, DrawFunction });
+    }
+
+    void RegisterUIElement(const FUIElement& InElement)
+    {
+        UIElements.push_back(InElement);
     }
 
     void Initialize(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* context) 

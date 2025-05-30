@@ -137,6 +137,6 @@ private:
 private:
     float CCDVelocityThreshold = 3.0f;              // CCD 활성화 속도 임계값
     size_t InitialCollisonCapacity = 512;           // 초기 컴포넌트 및 트리 용량/
-    uint8_t MaxConstraintIterations = 10;              // 제약조건 해결 최대 반복수
+    uint16_t MaxConstraintIterations = 10;          // 제약조건 해결 최대 반복수
     float FatBoundsExtentRatio = 0.1f;             // AABB 여유 공간
 };

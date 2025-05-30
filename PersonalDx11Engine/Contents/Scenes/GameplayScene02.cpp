@@ -18,7 +18,7 @@
 #include "DebugDrawerManager.h"   
 #include "SceneManager.h"
 #include "ConfigReadManager.h"
- 
+#include "UI_DragVector.h"
 
 UGameplayScene02::UGameplayScene02()
 {
@@ -218,69 +218,42 @@ void UGameplayScene02::SubmitRenderUI()
         ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
 
+
     UUIManager::Get()->RegisterUIElement("Scene02UI", [this]() {
 
         if (Character)
         {
-            Vector3 Scale = Character->GetWorldTransform().Scale;
+            Vector3 CurrentScale = Character->GetWorldTransform().Scale;
             float Restitution = Character->GetRestitution();
-            bool bScale = false;
             Vector3 CurrentVelo = Character->GetCurrentVelocity();
             Vector3 CurrentPos = Character->GetWorldTransform().Position;
             bool bGravity = Character->IsGravity();
-            bool bPhysics = Character->IsPhysicsSimulated();
             ImGui::Begin("Charcter", nullptr, UIWindowFlags);
-            ImGui::Checkbox("bIsMove", &Character->bIsMoving);
-            ImGui::Checkbox("bPhysicsBased", &bPhysics);
             ImGui::Checkbox("bGravity", &bGravity);
             Character->SetGravity(bGravity);
-            Character->SetPhysics(bPhysics);
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
                         CurrentVelo.y,
                         CurrentVelo.z);
-            ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
-                        CurrentPos.y,
-                        CurrentPos.z);
-            auto Colli = Character->GetComponentByType<UCollisionComponentBase>();
-            if (Colli)
-            {
-                Vector3 ColliWorldPos = Colli->GetWorldPosition();
-                Vector3 ColliLocalPos = Colli->GetLocalPosition();
-                ImGui::Text("ColliWorldPosition : %.2f  %.2f  %.2f", ColliWorldPos.x,
-                            ColliWorldPos.y,
-                            ColliWorldPos.z);
-                ImGui::Text("ColliLocalPosition : %.2f  %.2f  %.2f", ColliLocalPos.x,
-                            ColliLocalPos.y,
-                            ColliLocalPos.z);
-            }
-
+            FUIVectorDrag::DrawVector3Drag(CurrentPos,
+                                             FDragParameters::Position(1.0f,"%.1f"),
+                                             "Position",nullptr,
+                                             [&](const Vector3& InPos)
+                                             {
+                                                 Character->SetPosition(InPos);
+                                                 return true;
+                                             });
+            FUIVectorDrag::DrawVector3Drag(CurrentScale,
+                                           FDragParameters::Scale(0.1f, "%.1f"),
+                                           "Scale", nullptr,
+                                           [&](const Vector3& InScale)
+                                           {
+                                               Character->SetScale(InScale);
+                                               return true;
+                                           });
             if (ImGui::Button("CompTree")) 
             {
                 Character->GetRootComp()->PrintComponentTree();
             }
-
-            ImGui::Text("Scale");
-            ImGui::SameLine();
-            ImGui::PushItemWidth(50.0f);
-            if (ImGui::DragFloat("x", &Scale.x, 0.1f, 0.01f,500.0f,"%.2f"))
-            {
-                bScale = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::DragFloat("y", &Scale.y, 0.1f, 0.01f, 500.0f, "%.2f"))
-            {
-                bScale = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::DragFloat("z", &Scale.z, 0.1f, 0.01f, 500.0f, "%.2f"))
-            {
-                bScale = true;
-            }
-            if (bScale && Scale.Length() > KINDA_SMALL)
-            {
-                Character->SetScale(Scale);
-            }
-            ImGui::PopItemWidth();
             if (ImGui::DragFloat("Restitution", &Restitution, 0.1f, 0.0001f, 1.5f, "%.2f"))
             {
                 Character->SetRestitution(Restitution);
@@ -292,17 +265,16 @@ void UGameplayScene02::SubmitRenderUI()
         {
             Vector3 CurrentPos = Character2->GetWorldTransform().Position;
             Quaternion CurrentRot = Character2->GetWorldTransform().Rotation;
+            Vector3 CurrentLocalPos = Character2->GetRootComp()->GetLocalTransform().Position;
+            Quaternion CurrentLocalRot = Character2->GetRootComp()->GetLocalTransform().Rotation;
             Vector3 CurrentVelo = Character2->GetCurrentVelocity();
             bool bGravity2 = Character2->IsGravity();
-            bool bPhysics2 = Character2->IsPhysicsSimulated();
             bool bIsActive2 = Character2->IsActive();
             float Restitution = Character2->GetRestitution();
             bool bStatic2 = Character2->GetComponentByType<URigidBodyComponent>()->IsStatic();
             ImGui::Begin("Charcter2", nullptr, UIWindowFlags);
-            ImGui::Checkbox("bIsMove", &Character2->bIsMoving);
-            ImGui::Checkbox("bPhysicsBased", &bPhysics2);
             ImGui::Checkbox("bGravity", &bGravity2);
-            if(ImGui::Checkbox("Stathc", &bStatic2))
+            if(ImGui::Checkbox("Static", &bStatic2))
             {
                 if(bStatic2)
                 {
@@ -315,23 +287,25 @@ void UGameplayScene02::SubmitRenderUI()
                 
             }
             Character2->SetGravity(bGravity2);
-            Character2->SetPhysics(bPhysics2);
             ImGui::Text("CurrentVelo : %.2f  %.2f  %.2f", CurrentVelo.x,
                         CurrentVelo.y,
                         CurrentVelo.z);
-            ImGui::Text("Position : %.2f  %.2f  %.2f", CurrentPos.x,
-                        CurrentPos.y,
-                        CurrentPos.z);
-            ImGui::Text("Rot : %.2f  %.2f  %.2f  %.2f", CurrentRot.x,
-                        CurrentRot.y,
-                        CurrentRot.z, 
-                        CurrentRot.w);
-            ImGui::Text("[LocalTransform] \n %s",
-                        Debug::ToString(Character2->GetRootComp()->GetLocalTransform()));
-            if (ImGui::DragFloat("Restitution", &Restitution, 0.1f, 0.0001f, 1.5f, "%.2f"))
-            {
-                Character2->SetRestitution(Restitution);
-            }
+            FUIVectorDrag::DrawVector3Drag(CurrentPos,
+                                           FDragParameters::Position(1.0f, "%.1f"),
+                                           "Position", nullptr,
+                                           [&](const Vector3& InPos)
+                                           {
+                                               Character2->SetPosition(InPos);
+                                               return true;
+                                           });
+            FUIVectorDrag::DrawVector3Drag(CurrentLocalPos,
+                                           FDragParameters::Position(1.0f, "%.1f"),
+                                           "LocalPosition", nullptr,
+                                           [&](const Vector3& InPos)
+                                           {
+                                               Character2->GetRootComp()->SetLocalPosition(InPos);
+                                               return true;
+                                           });
             ImGui::End();
         }
 

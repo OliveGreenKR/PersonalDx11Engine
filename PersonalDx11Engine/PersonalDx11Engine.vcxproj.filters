@@ -352,6 +352,9 @@
     <Filter Include="Engine\Physics\Constraints\Position">
       <UniqueIdentifier>{a54e645e-f3d2-4002-b516-623ab5209b3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\UI\Presets">
+      <UniqueIdentifier>{2421eaba-286b-4fcc-82e7-6325b76a7c16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -617,6 +620,12 @@
     </ClInclude>
     <ClInclude Include="PhysicsJob.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody\PhysicsJob</Filter>
+    </ClInclude>
+    <ClInclude Include="UI_InputVector.h">
+      <Filter>Engine\UI\Presets</Filter>
+    </ClInclude>
+    <ClInclude Include="UI_DragVector.h">
+      <Filter>Engine\UI\Presets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -527,6 +527,27 @@ namespace Math
 
 		return GetRotationBetweenVectors(V1, V2);
 	}
+
+
+	// 벡터 비교 (부동소수점 오차 고려)
+	template<typename VectorType>
+	static bool IsEqual(const VectorType& A, const VectorType& B, float Epsilon = KINDA_SMALL)
+	{
+		if constexpr (std::is_same_v<VectorType, Vector2>)
+		{
+			return std::abs(A.x - B.x) < Epsilon && std::abs(A.y - B.y) < Epsilon;
+		}
+		else if constexpr (std::is_same_v<VectorType, Vector3>)
+		{
+			return std::abs(A.x - B.x) < Epsilon && std::abs(A.y - B.y) < Epsilon && std::abs(A.z - B.z) < Epsilon;
+		}
+		else if constexpr (std::is_same_v<VectorType, Vector4>)
+		{
+			return std::abs(A.x - B.x) < Epsilon && std::abs(A.y - B.y) < Epsilon &&
+				std::abs(A.z - B.z) < Epsilon && std::abs(A.w - B.w) < Epsilon;
+		}
+		return false;
+	}
 }
 
 #pragma region Plane

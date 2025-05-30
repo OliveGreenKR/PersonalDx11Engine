@@ -107,7 +107,7 @@ inline FResourceHandle UResourceManager::LoadResource(const std::wstring& FilePa
 
     if (success)
     {
-        LOG_FUNC_CALL("Rsc Loaded : [%s]",rscUniquePtr->GetPath());
+        LOG("Rsc Loaded : [%ls]",rscUniquePtr->GetPath().c_str());
         // 캐시에 추가
         FResourceData ResourceData;
         ResourceData.Resource = std::move(rscUniquePtr);

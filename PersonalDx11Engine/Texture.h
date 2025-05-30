@@ -46,7 +46,7 @@ public:
     virtual bool IsLoaded() const override { return bIsLoaded; }
     virtual void Release() override;
     virtual size_t GetMemorySize() const override { return MemorySize; }
-    virtual std::wstring GetPath() const override { return RscPath; }
+    virtual const std::wstring& GetPath() const override { return RscPath; }
     bool Load(IRenderHardware* RenderHardware, const std::wstring& FilePath) override;
     bool LoadAsync(IRenderHardware* RenderHardware, const std::wstring& FilePath) override;
     EResourceType GetType() const override { return EResourceType::Texture; }

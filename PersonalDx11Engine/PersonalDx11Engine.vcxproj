@@ -211,6 +211,7 @@
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="BindableInterface.h" />
+    <ClInclude Include="UI_DragVector.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="DynamicCircularQueue.h" />
@@ -220,6 +221,7 @@
     <ClInclude Include="InputContext.h" />
     <ClInclude Include="InputDefines.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="UI_InputVector.h" />
     <ClInclude Include="LoadTextFile.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />

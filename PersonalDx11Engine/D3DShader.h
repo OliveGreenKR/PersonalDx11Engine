@@ -60,7 +60,7 @@ public:
     bool IsLoaded() const override { return bIsLoaded; }
     size_t GetMemorySize() const override { return MemorySize; }
     EResourceType GetType() const override { return EResourceType::Shader; }
-    std::wstring GetPath() const override { return RscPath; }
+    const std::wstring& GetPath() const override { return RscPath; }
 
     ID3D11InputLayout* GetInputLayout() const { return InputLayout; }
     ID3D11Buffer* GetConstantBuffer(uint32_t Slot) const;

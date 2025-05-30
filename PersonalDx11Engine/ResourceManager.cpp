@@ -64,7 +64,7 @@ void UResourceManager::UnloadUnusedResources(float TimeSinceLastUseSeconds)
     {
         if (CurrentTick - rscIt->second.LastAccessTick > TimeThreshold)
         {
-            LOG_FUNC_CALL("Rsc delted : [%s]", rscIt->second.Resource->GetPath());
+            LOG("Rsc delted : [%ls]", rscIt->second.Resource->GetPath().c_str());
             rscIt = ResourceCache.erase(rscIt);
 
             /*enum class EResourceType

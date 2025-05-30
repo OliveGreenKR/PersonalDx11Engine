@@ -37,7 +37,7 @@ public:
 
 	size_t GetMemorySize() const override;
 	EResourceType GetType() const override { return EResourceType::Material; }
-	std::wstring GetPath() const override { return RscPath; }
+	const std::wstring& GetPath() const override { return RscPath; }
 protected:
 	virtual bool LoadImpl(IRenderHardware* RenderHardware, const std::wstring& Path);
 	virtual bool LoadAsyncImpl(IRenderHardware* RenderHardware, const std::wstring& Path);

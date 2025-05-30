@@ -30,7 +30,7 @@ public:
     bool IsLoaded() const override         { return bIsLoaded; } 
     size_t GetMemorySize() const override;
     EResourceType GetType() const override { return EResourceType::Model; }
-    std::wstring GetPath() const override { return RscPath; }
+    const std::wstring& GetPath() const override { return RscPath; }
 
 protected:
     virtual void ReleaseImpl() {}
