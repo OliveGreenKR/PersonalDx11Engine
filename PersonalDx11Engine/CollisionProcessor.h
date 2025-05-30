@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include "CollisionComponent.h"
 #include "CollisionDefines.h"
+#include "DynamicAABBTree.h"
 
 class FDynamicAABBTree;
 struct FTransform;
@@ -106,24 +107,45 @@ private:
     //내부 연산을 위한 데이터 구조체 생성
     void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
 
-    //제약조건 기반 반복적 해결
+    //제약조건 기반 반복적 해결 - 충돌 반응
     void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
                                             const FCollisionDetectionResult& DetectResult, const float DeltaTime);
+    // 순수 좌표 기반 위치 보정 적용 
+    void ApplyDirectPositionCorrection(
+        const FCollisionPair& CollisionPair,
+        const FCollisionDetectionResult& DetectionResult,
+        float CorrectionRatio = 0.8f
+    );
 
     //쌍의 접촉 상황 판단
     bool IsPersistentContact(const FCollisionPair& CollisionPair,
                              const FCollisionDetectionResult& DetectResult) ;
-
-    // 순수 좌표 위치 보정 사용 여부
-    bool ShouldUsePositionCorrection(const FCollisionPair& CollisionPair,
-                                     const FCollisionDetectionResult& DetectResult, const float DeltaTime);
-    
     /// <summary>
     ///  위치 보정 속도 편향 계산
     /// </summary>
     /// <param name="Slop"> Slop 초과의 침투만 고려,  m 단위 </param>
     /// <returns></returns>
     float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop = 0.01f);
+
+
+    /// <summary>
+    /// AABB 겹침 정도를 통한 침투 깊이 비율 계산
+    /// </summary>
+    /// <param name="CollisionPair">충돌 쌍 정보</param>
+    /// <returns>AABB 겹침 비율 [0.0f ~ 1.0f], 깊을수록 1.0에 가까움</returns>
+    float CalculateAABBOverlapRatio(const FCollisionPair& CollisionPair) const;
+
+    /// <summary>
+    /// 두 AABB의 겹침 볼륨 계산
+    /// </summary>
+    /// <param name="BoundsA">첫 번째 AABB</param>
+    /// <param name="BoundsB">두 번째 AABB</param>
+    /// <returns>겹침 볼륨 크기</returns>
+    float CalculateAABBOverlapVolume(
+        const FDynamicAABBTree::AABB& BoundsA,
+        const FDynamicAABBTree::AABB& BoundsB
+    ) const;
+
 
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,

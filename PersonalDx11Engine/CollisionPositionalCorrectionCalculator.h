@@ -4,6 +4,7 @@
 
 class FPositionalCorrectionCalculator
 {
+public:
 	//질량 비례 분리 계산
 	bool CalculateMassProportionalSeparation(
 		const FPhysicsParameters& ParmasA,

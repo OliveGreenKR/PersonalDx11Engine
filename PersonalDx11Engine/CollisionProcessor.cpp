@@ -337,14 +337,20 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		}
 	}
 
+	// 겹침 비율에 따른 좌표 기반 위치 보정
 	for (int j = 0; j < CollisionPairs.size(); ++j)
 	{
 		auto& CurrentPair = *CollisionPairs[j];
 		auto& CurrentResult = DetectionResults[j];
 
-		if (!CurrentPair.bPrevCollided)
+		float overlapRatio = CalculateAABBOverlapRatio(CurrentPair);
+		if (overlapRatio > 0.7f)
 		{
-			LOG("**********[First Collision]************");
+			ApplyDirectPositionCorrection(CurrentPair, CurrentResult, 0.45f);
+		}
+		else if (overlapRatio > 0.4f)
+		{
+			ApplyDirectPositionCorrection(CurrentPair, CurrentResult, 0.2f);
 		}
 	}
 
@@ -471,29 +477,50 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	CollisionPair.PrevConstraints = Accumulation;
 }
 
+void FCollisionProcessor::ApplyDirectPositionCorrection(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectionResult, float CorrectionRatio)
+{
+	// 1. 컴포넌트 유효성 검증
+	auto CompA = RegisteredComponents[CollisionPair.TreeIdA].lock();
+	auto CompB = RegisteredComponents[CollisionPair.TreeIdB].lock();
+
+	// 2. 물리 매개변수 구성
+	FPhysicsParameters ParamsA, ParamsB;
+	GetPhysicsParams(CompA, ParamsA);
+	GetPhysicsParams(CompB, ParamsB);
+
+	// 3. PositionalCorrectionCalculator 활용 - 질량 비례 분리 계산
+	Vector3 CorrectionA, CorrectionB;
+	bool success = PositionCorrectionCalculator->CalculateMassProportionalSeparation(
+		ParamsA, ParamsB, DetectionResult,
+		CorrectionA, CorrectionB,
+		0.01f  // SafetyMargin
+	);
+
+	// 4. 보정 비율 적용 및 위치 갱신
+	if (success)
+	{
+		CorrectionA *= CorrectionRatio;
+		CorrectionB *= CorrectionRatio;
+
+		auto PhysicsA = CompA->GetPhysicsStateInternal();
+		auto PhysicsB = CompB->GetPhysicsStateInternal();
+
+		FTransform TransA = PhysicsA->P_GetWorldTransform();
+		FTransform TransB = PhysicsB->P_GetWorldTransform();
+
+		TransA.Position += CorrectionA;
+		TransB.Position +=  CorrectionB;
+
+		PhysicsA->P_SetWorldTransform(TransA);
+		PhysicsB->P_SetWorldTransform(TransB);
+	}
+}
+
 bool FCollisionProcessor::IsPersistentContact(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
 	//특정 프레임 이상 연속으로 침투 상태 유지?
 	return false;
 }
-
-bool FCollisionProcessor::ShouldUsePositionCorrection(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
-{
-	// 즉시 위치 보정 적용(최우선 순위)
-		//완전 겹침
-		
-		//극한 침투
-
-		//비합리적 속도 요구
-
-	// 조건부
-		// 첫 충돌 + 중간 침투
-		// 연속 실패
-		// 에너지 임계 
-
-	return false;
-}
-
 float FCollisionProcessor::CalculatePositionBiasVelocity(
 	float PenetrationDepth,
 	float BiasFactor,
@@ -512,6 +539,64 @@ float FCollisionProcessor::CalculatePositionBiasVelocity(
 		return (biasPenetration * BiasFactor) / DeltaTime;
 	}
 	return 0.0f;
+}
+
+float FCollisionProcessor::CalculateAABBOverlapRatio(const FCollisionPair& CollisionPair) const
+{
+	// 트리 노드에서 AABB 정보 획득
+	if (!CollisionTree->IsValidId(CollisionPair.TreeIdA) ||
+		!CollisionTree->IsValidId(CollisionPair.TreeIdB))
+	{
+		return 0.0f;
+	}
+
+	auto BoundsA = CollisionTree->GetBounds(CollisionPair.TreeIdA);
+	auto BoundsB = CollisionTree->GetBounds(CollisionPair.TreeIdB);
+
+	// AABB가 겹치지 않으면 0 반환
+	if (!BoundsA.Overlaps(BoundsB))
+	{
+		return 0.0f;
+	}
+
+	// 겹침 볼륨 계산
+	float OverlapVolume = CalculateAABBOverlapVolume(BoundsA, BoundsB);
+
+	auto CalculateAABBVolume = [](const FDynamicAABBTree::AABB& Bounds) {
+		Vector3 Size = Bounds.Max - Bounds.Min;
+		return Size.x * Size.y * Size.z;
+		};
+
+	// 더 작은 객체의 볼륨을 기준으로 비율 계산
+	float VolumeA = CalculateAABBVolume(BoundsA);
+	float VolumeB = CalculateAABBVolume(BoundsB);
+	float ReferenceVolume = Math::Min(VolumeA, VolumeB);
+
+	// 최소 볼륨 보장 (매우 작은 객체 대응)
+	constexpr float MinVolume = 0.001f; // 1cm³
+	ReferenceVolume = Math::Max(ReferenceVolume, MinVolume);
+
+	// 겹침 비율 계산 및 정규화
+	float OverlapRatio = OverlapVolume / ReferenceVolume;
+
+	// Sigmoid 함수로 부드러운 포화 (0~1 범위)
+	return Math::Clamp(1.0f - expf(-OverlapRatio * 3.0f), 0.0f, 1.0f);
+}
+
+float FCollisionProcessor::CalculateAABBOverlapVolume(
+	const FDynamicAABBTree::AABB& BoundsA,
+	const FDynamicAABBTree::AABB& BoundsB
+) const
+{
+	// 겹침 영역의 각 축별 길이 계산
+	float OverlapX = Math::Max(0.0f,
+							   Math::Min(BoundsA.Max.x, BoundsB.Max.x) - Math::Max(BoundsA.Min.x, BoundsB.Min.x));
+	float OverlapY = Math::Max(0.0f,
+							   Math::Min(BoundsA.Max.y, BoundsB.Max.y) - Math::Max(BoundsA.Min.y, BoundsB.Min.y));
+	float OverlapZ = Math::Max(0.0f,
+							   Math::Min(BoundsA.Max.z, BoundsB.Max.z) - Math::Max(BoundsA.Min.z, BoundsB.Min.z));
+
+	return OverlapX * OverlapY * OverlapZ;
 }
 
 void FCollisionProcessor::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)
