@@ -103,6 +103,7 @@ private:
     //컴포넌트 트랜스폼 업데이트
     void UpdateCollisionTransform();
 
+    //내부 연산을 위한 데이터 구조체 생성
     void GetPhysicsParams(const std::shared_ptr<UCollisionComponentBase>& InComp, FPhysicsParameters& Result) const;
 
     //제약조건 기반 반복적 해결
@@ -112,6 +113,17 @@ private:
     //쌍의 접촉 상황 판단
     bool IsPersistentContact(const FCollisionPair& CollisionPair,
                              const FCollisionDetectionResult& DetectResult) ;
+
+    // 순수 좌표 위치 보정 사용 여부
+    bool ShouldUsePositionCorrection(const FCollisionPair& CollisionPair,
+                                     const FCollisionDetectionResult& DetectResult, const float DeltaTime);
+    
+    /// <summary>
+    ///  위치 보정 속도 편향 계산
+    /// </summary>
+    /// <param name="Slop"> Slop 초과의 침투만 고려,  m 단위 </param>
+    /// <returns></returns>
+    float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop = 0.01f);
 
     void BroadcastCollisionEvents(
         const FCollisionPair& InPair,

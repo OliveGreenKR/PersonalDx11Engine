@@ -329,6 +329,17 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		}
 	}
 
+	for (int j = 0; j < CollisionPairs.size(); ++j)
+	{
+		auto& CurrentPair = *CollisionPairs[j];
+		auto& CurrentResult = DetectionResults[j];
+
+		if (!CurrentPair.bPrevCollided)
+		{
+			LOG("**********[First Collision]************");
+		}
+	}
+
 	//수집 된 정보를 반복적 해결법 적용
 	for (int i = 0; i < MaxConstraintIterations; ++i)
 	{
@@ -340,10 +351,6 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 			if (CurrentPair.bConverged)
 				continue;
 
-			if (!CurrentPair.bPrevCollided)
-			{
-				LOG("**********[First Collision]************");
-			}
 			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
 			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
 
@@ -422,11 +429,17 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	float dampingFactor = CollisionPair.bPrevCollided ? 0.8f : 0.5f;
 	Accumulation.Scale(dampingFactor);
 
-	FCollisionResponseResult collisionResponse =
-		ResponseCalculator->CalculateResponseByContraints(DetectResult, ParamsA, ParamsB, Accumulation, DeltaTime);
-	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
-	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
+	//충돌 반응 제약조건 계산
+	FCollisionResponseResult collisionResponse;
+	float BiasSpeed = CalculatePositionBiasVelocity(DetectResult.PenetrationDepth, 0.2f, DeltaTime, 0.01f);
+	Vector3 NormalImpulse = ResponseCalculator->CalculateNormalImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, BiasSpeed);
+	Vector3 FrictionImpulse = ResponseCalculator->CalculateFrictionImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, Accumulation.frictionLambda);
 
+	// 최종 순수 충격량 합산
+	// 마찰에 대한 접선 방향 충격량 약화 계수 (기존 상수 유지)
+	constexpr float TangentCoef = 1.0f;
+	collisionResponse.NetImpulse = (NormalImpulse + TangentCoef * FrictionImpulse);
+	collisionResponse.ApplicationPoint = DetectResult.Point;
 	//수렴 조건 확인
 	if (std::fabs(CollisionPair.PrevConstraints.normalLambda - Accumulation.normalLambda) < 1.0f
 		|| collisionResponse.NetImpulse.Length () < KINDA_SMALL)
@@ -435,6 +448,8 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 		return;
 	}
 
+	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
+	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
 	//A->B 방향의 법선벡터이므로 반대로 적용
 	RigidPtrA->P_ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	RigidPtrB->P_ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
@@ -447,30 +462,45 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 
 bool FCollisionProcessor::IsPersistentContact(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult)
 {
-	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
-	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
+	//특정 프레임 이상 연속으로 침투 상태 유지?
+	return false;
+}
 
-	if (!ComponentA || !ComponentA->GetPhysicsStateInternal() ||
-		!ComponentB || !ComponentB->GetPhysicsStateInternal() ||
-		!DetectResult.bCollided)
-		return false;
+bool FCollisionProcessor::ShouldUsePositionCorrection(const FCollisionPair& CollisionPair, const FCollisionDetectionResult& DetectResult, const float DeltaTime)
+{
+	// 즉시 위치 보정 적용(최우선 순위)
+		//완전 겹침
+		
+		//극한 침투
 
-	//여러 프레임간 충돌중 + 상대 속도가 일정 수준 이하면 -> 접촉상황
+		//비합리적 속도 요구
 
-	auto RigidA = ComponentA->GetPhysicsStateInternal();
-	auto RigidB = ComponentB->GetPhysicsStateInternal();
+	// 조건부
+		// 첫 충돌 + 중간 침투
+		// 연속 실패
+		// 에너지 임계 
 
-	auto VeloA = RigidA->P_GetVelocity();
-	auto VeloB = RigidB->P_GetVelocity();
+	return false;
+}
 
-	auto VeloAB = VeloB - VeloA;
+float FCollisionProcessor::CalculatePositionBiasVelocity(
+	float PenetrationDepth,
+	float BiasFactor,
+	float DeltaTime,
+	float Slop)
+{
+	Slop *= ONE_METER; //미터 단위로 변환
 
-	if (VeloAB.LengthSquared() < 1.0f && std::fabs(DetectResult.PenetrationDepth) < 1.0f)
+	// 슬롭(Slop)을 초과하는 침투만 고려
+	float biasPenetration = std::fmaxf(0.0f, PenetrationDepth - Slop);
+
+	if (biasPenetration > KINDA_SMALL) // 아주 작은 값은 무시
 	{
-		return true;
+		// Baumgarte 안정화 항: (위치 오류 * 보정 계수) / DeltaTime  
+		// 위치 보정을 나타낼 속도 편향
+		return (biasPenetration * BiasFactor) / DeltaTime;
 	}
-
-	return  false;
+	return 0.0f;
 }
 
 void FCollisionProcessor::BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult)

@@ -10,48 +10,31 @@ class FCollisionResponseCalculator
 {
 public:
 
-    FCollisionResponseResult CalculateResponseByContraints(const FCollisionDetectionResult& DetectionResult,
+    // 법선 방향 충격량 계산 (반발 + 위치 편향 포함)
+    Vector3 CalculateNormalImpulse(const FCollisionDetectionResult& DetectionResult,
         const FPhysicsParameters& ParameterA,
         const FPhysicsParameters& ParameterB,
-        FAccumulatedConstraint& Accumulation,
-        const float DeltaTime
-    );
+        float& InOutLambda,     // 초기 람다이자 출력  
+        float BiasSpeed = 0.0f   // 외부에서 결정된 편향 속도
+    ) const;
+
+    // 마찰 방향 충격량 계산
+    Vector3 CalculateFrictionImpulse(
+        const FCollisionDetectionResult& DetectionResult,
+        const FPhysicsParameters& ParameterA,
+        const FPhysicsParameters& ParameterB,
+        float NormalLambda,        // 법선 람다 (마찰 제한용)
+        float& InOutFrictionLambda   // 초기 람다이자 출력
+    ) const;
 
 private:
-
-    // 법선 방향 충돌 제약 조건 해결
-    Vector3 SolveNormalCollisionConstraint(
-        const FCollisionDetectionResult& DetectionResult,
-        const FPhysicsParameters& ParameterA,
-        const FPhysicsParameters& ParameterB,
-        FAccumulatedConstraint& Accumulation,
-        const float DeltaTime,
-        float& OutNormalLambda);
-
-    // 접선 방향 마찰 제약 조건 해결
-    Vector3 SolveFrictionConstraint(
-        const FCollisionDetectionResult& DetectionResult,
-        const FPhysicsParameters& ParameterA,
-        const FPhysicsParameters& ParameterB,
-        FAccumulatedConstraint& Accumulation,
-        float InNormalLambda, // 법선 임펄스 크기에 따라 마찰 클램핑 필요
-        float& OutFrictionLambda);
-
-    // 위치 오류를 속도 편향으로 변환하는 헬퍼 함수
-    // 슬롭 단위 : m
-    float CalculatePositionBiasVelocity(
-        float PenetrationDepth,
-        float BiasFactor,
-        const float DeltaTime,
-        float Slop = 0.05f); 
-
 
     void ClampFriction(const float TangentRelativeVelocityLength,
         const float NormalLambda,
         const float StaticFriction,
         const float KineticFriction,
         float& OutFrictionLambda,
-        Vector3& OutTangentImpulse);
+        Vector3& OutTangentImpulse) const;
 
  
 };
