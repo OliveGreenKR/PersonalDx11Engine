@@ -75,7 +75,7 @@
       <Filter>Engine\Resources\Shader\Vertex</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataTexture.cpp">
-      <Filter>Engine\Renderer\RenderData\Texture</Filter>
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture</Filter>
     </ClCompile>
     <ClCompile Include="RenderStates.cpp">
       <Filter>Engine\Renderer\RenderStates</Filter>
@@ -87,7 +87,7 @@
       <Filter>Engine\Resources\Material</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataSimpleColor.cpp">
-      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine\Managers\Resource</Filter>
@@ -122,15 +122,6 @@
     <ClCompile Include="PhysicsSystem.cpp">
       <Filter>Engine\Managers\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionDetector.cpp">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionEventDispatcher.cpp">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionResponseCalculator.cpp">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClCompile>
     <ClCompile Include="CollisionProcessor.cpp">
       <Filter>Engine\Physics\Collision</Filter>
     </ClCompile>
@@ -145,6 +136,18 @@
     </ClCompile>
     <ClCompile Include="Contents\Scenes\GameplayScene02.cpp">
       <Filter>Contents\Scenes\02</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionDetector.cpp">
+      <Filter>Engine\Physics\Collision\Part\Detect</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionResponseCalculator.cpp">
+      <Filter>Engine\Physics\Collision\Part\Response</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionEventDispatcher.cpp">
+      <Filter>Engine\Physics\Collision\Part\EventDispatch</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp">
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -223,12 +226,6 @@
     <Filter Include="Engine\Resources\Shader\Vertex">
       <UniqueIdentifier>{3fbdeccb-0d68-4a62-a070-e2eb4414dcc3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Renderer\RenderData">
-      <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\RenderData\Texture">
-      <UniqueIdentifier>{db5477cf-c077-4f53-af93-e27cd6104fd1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Renderer\RenderStates">
       <UniqueIdentifier>{9be6a8cf-40fc-4eea-8f79-39230118debd}</UniqueIdentifier>
     </Filter>
@@ -237,9 +234,6 @@
     </Filter>
     <Filter Include="Engine\Debug">
       <UniqueIdentifier>{3bae8376-c080-4939-b0a5-d0153ccf1157}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Renderer\RenderData\SimpleColor">
-      <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Managers\DebugDrawer">
       <UniqueIdentifier>{072e9c25-816f-4781-88c9-0e23fe021dcb}</UniqueIdentifier>
@@ -354,6 +348,27 @@
     </Filter>
     <Filter Include="Engine\UI\Presets">
       <UniqueIdentifier>{2421eaba-286b-4fcc-82e7-6325b76a7c16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\Detect">
+      <UniqueIdentifier>{010b2ab0-c76f-4f1f-9b10-fd7364cfa285}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\Response">
+      <UniqueIdentifier>{64fb9c6e-b2eb-4ebf-9507-aa030b097563}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\EventDispatch">
+      <UniqueIdentifier>{c90fc6d9-9bc3-49fb-80f1-3b5dd9a84f34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton">
+      <UniqueIdentifier>{8836804a-b200-48d0-b8a2-e4f70719fa07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData">
+      <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture">
+      <UniqueIdentifier>{db5477cf-c077-4f53-af93-e27cd6104fd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor">
+      <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -493,7 +508,7 @@
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataTexture.h">
-      <Filter>Engine\Renderer\RenderData\Texture</Filter>
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture</Filter>
     </ClInclude>
     <ClInclude Include="RenderStates.h">
       <Filter>Engine\Renderer\RenderStates</Filter>
@@ -514,7 +529,7 @@
       <Filter>Engine\Debug</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataSimpleColor.h">
-      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
       <Filter>Engine\Managers\DebugDrawer</Filter>
@@ -585,18 +600,6 @@
     <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Physics\Collision\Part</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionDetector.h">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionEventDispatcher.h">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionResponseCalculator.h">
-      <Filter>Engine\Physics\Collision\Part</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionProcessor.h">
-      <Filter>Engine\Physics\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="PhysicsObjectInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
@@ -626,6 +629,19 @@
     </ClInclude>
     <ClInclude Include="UI_DragVector.h">
       <Filter>Engine\UI\Presets</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDetector.h">
+      <Filter>Engine\Physics\Collision\Part\Detect</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionResponseCalculator.h">
+      <Filter>Engine\Physics\Collision\Part\Response</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionEventDispatcher.h">
+      <Filter>Engine\Physics\Collision\Part\EventDispatch</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionProcessor.h" />
+    <ClInclude Include="CollisionPositionalCorrectionCalculator.h">
+      <Filter>Engine\Physics\Collision\Part\PositionCorreciton</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

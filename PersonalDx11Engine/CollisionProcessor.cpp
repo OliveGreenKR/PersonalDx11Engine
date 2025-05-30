@@ -6,6 +6,7 @@
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventDispatcher.h"
+#include "CollisionPositionalCorrectionCalculator.h"
 #include "Debug.h"
 #include "ConfigReadManager.h"
 #include "PhysicsStateInternalInterface.h"
@@ -119,6 +120,8 @@ void FCollisionProcessor::Initialize()
 		Detector = new FCollisionDetector();
 		ResponseCalculator = new FCollisionResponseCalculator();
 		EventDispatcher = new FCollisionEventDispatcher();
+		PositionCorrectionCalculator = new FPositionalCorrectionCalculator();
+
 		CollisionTree = new FDynamicAABBTree(InitialCollisonCapacity);
 		CollisionTree->AABB_Extension = std::max(0.1f,FatBoundsExtentRatio); //기본은 0.1f
 
@@ -139,6 +142,11 @@ void FCollisionProcessor::Release()
 	{
 		delete CollisionTree;
 		CollisionTree = nullptr;
+	}
+	if(PositionCorrectionCalculator)
+	{
+		delete PositionCorrectionCalculator;
+		PositionCorrectionCalculator = nullptr;
 	}
 	if (EventDispatcher)
 	{
@@ -432,13 +440,16 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	//충돌 반응 제약조건 계산
 	FCollisionResponseResult collisionResponse;
 	float BiasSpeed = CalculatePositionBiasVelocity(DetectResult.PenetrationDepth, 0.2f, DeltaTime, 0.01f);
-	Vector3 NormalImpulse = ResponseCalculator->CalculateNormalImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, BiasSpeed);
-	Vector3 FrictionImpulse = ResponseCalculator->CalculateFrictionImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, Accumulation.frictionLambda);
+	Vector3 NormalImpulse = 
+		ResponseCalculator->CalculateNormalImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, BiasSpeed);
+	Vector3 FrictionImpulse = 
+		ResponseCalculator->CalculateFrictionImpulse(DetectResult, ParamsA, ParamsB, Accumulation.normalLambda, Accumulation.frictionLambda);
 
 	// 최종 순수 충격량 합산
 	// 마찰에 대한 접선 방향 충격량 약화 계수 (기존 상수 유지)
 	constexpr float TangentCoef = 1.0f;
 	collisionResponse.NetImpulse = (NormalImpulse + TangentCoef * FrictionImpulse);
+	// 충돌 지점 설정
 	collisionResponse.ApplicationPoint = DetectResult.Point;
 	//수렴 조건 확인
 	if (std::fabs(CollisionPair.PrevConstraints.normalLambda - Accumulation.normalLambda) < 1.0f

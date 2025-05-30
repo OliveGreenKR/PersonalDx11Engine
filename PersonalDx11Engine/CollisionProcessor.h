@@ -139,6 +139,7 @@ private:
     class FCollisionDetector* Detector = nullptr;
     class FCollisionResponseCalculator* ResponseCalculator = nullptr;
     class FCollisionEventDispatcher* EventDispatcher = nullptr;
+    class FPositionalCorrectionCalculator* PositionCorrectionCalculator = nullptr;
 
     // 컴포넌트 관리
     //std::vector<FComponentData> RegisteredComponents; 

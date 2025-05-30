@@ -167,6 +167,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="PixelShader.cpp" />
+    <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp" />
     <ClCompile Include="PrimitiveComponent.cpp" />
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="RenderDataSimpleColor.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="define.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="BindableInterface.h" />
+    <ClInclude Include="CollisionPositionalCorrectionCalculator.h" />
     <ClInclude Include="UI_DragVector.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
