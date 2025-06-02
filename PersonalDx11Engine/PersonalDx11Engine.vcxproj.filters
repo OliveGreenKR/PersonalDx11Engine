@@ -340,9 +340,6 @@
     <Filter Include="Contents\Scenes\01">
       <UniqueIdentifier>{e0bf360d-5a48-4602-810a-1359c1ac8e8e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Object\Components\ActorComponent\Scene\RigidBody\PhysicsJob">
-      <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Physics\Constraints\Position">
       <UniqueIdentifier>{a54e645e-f3d2-4002-b516-623ab5209b3a}</UniqueIdentifier>
     </Filter>
@@ -369,6 +366,9 @@
     </Filter>
     <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor">
       <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\PhysicsJob">
+      <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -622,7 +622,7 @@
       <Filter>Contents\Scenes\testScene</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsJob.h">
-      <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody\PhysicsJob</Filter>
+      <Filter>Engine\Physics\PhysicsJob</Filter>
     </ClInclude>
     <ClInclude Include="UI_InputVector.h">
       <Filter>Engine\UI\Presets</Filter>
@@ -639,9 +639,11 @@
     <ClInclude Include="CollisionEventDispatcher.h">
       <Filter>Engine\Physics\Collision\Part\EventDispatch</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionProcessor.h" />
     <ClInclude Include="CollisionPositionalCorrectionCalculator.h">
       <Filter>Engine\Physics\Collision\Part\PositionCorreciton</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionProcessor.h">
+      <Filter>Engine\Physics\Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,5 @@
 #include "CollisionResponseCalculator.h"
 #include "VelocityConstraint.h"
-#include "PhysicsStateInterface.h"
 #include "Debug.h"
 #include "PhysicsDefine.h"
 

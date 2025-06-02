@@ -251,7 +251,7 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	if (!IsActive() || IsStatic() || IsSleep())
 		return;
 
-    //물리 상태
+    //물리 상태 초기화
 	Vector3 Velocity = SimulatedState.Velocity;
 	Vector3 AngularVelocity = SimulatedState.AngularVelocity;
 	Vector3 AccumulatedForce = SimulatedState.AccumulatedForce;
@@ -263,7 +263,6 @@ void URigidBodyComponent::TickPhysics(const float DeltaTime)
 	const float FrictionStatic = SimulatedState.FrictionStatic;
 	const float Restitution = SimulatedState.Restitution;
 
-	// 모든 힘을 가속도로 변환
 	Vector3 TotalAcceleration = Vector3::Zero();
 	Vector3 TotalAngularAcceleration = Vector3::Zero();
 
