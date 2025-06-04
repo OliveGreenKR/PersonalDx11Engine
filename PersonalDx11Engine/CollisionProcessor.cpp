@@ -368,7 +368,7 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 			auto CompA = RegisteredComponents[CurrentPair.TreeIdA].lock();
 			auto CompB = RegisteredComponents[CurrentPair.TreeIdB].lock();
 
-			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult, DeltaTime);
+			ApplyCollisionResponseByContraints(CurrentPair, CurrentResult, minCollideTime * DeltaTime);
 		}
 	}
 
