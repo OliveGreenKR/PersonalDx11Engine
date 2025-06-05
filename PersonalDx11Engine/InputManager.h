@@ -130,7 +130,7 @@ public:
         return nullptr;
     }
 
-    void SetContextPriority(const std::string& ContextName, int NewPriority)
+    void UpdateContextPriority(const std::string& ContextName, int NewPriority)
     {
         // 시스템 컨텍스트는 우선순위 변경 불가
         if (ContextName == SYSTEM_CONTEXT_NAME)
