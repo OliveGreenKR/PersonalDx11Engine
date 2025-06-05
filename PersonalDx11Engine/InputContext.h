@@ -190,12 +190,12 @@ public:
     }
 
     // 활성화/비활성화
-    void SetActive(bool bActive) { bIsActive = bActive; }
+    void SetActive(bool bActive) noexcept { bIsActive = bActive; }
     bool IsActive() const { return bIsActive; }
 
     // 우선순위 관리
     int GetPriority() const { return Priority; }
-    void SetPriority(int NewPriority) { Priority = NewPriority; }
+    void SetPriority(int NewPriority) noexcept { Priority = NewPriority; }
 
     // 컨텍스트 이름 반환
     const std::string& GetName() const { return ContextName; }
