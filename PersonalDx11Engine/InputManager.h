@@ -29,8 +29,6 @@ private:
     };
 
 private:
-    // 키 상태 및 델리게이트
-    std::unordered_map<EKeyEvent, FOnKeyEvent> KeyEventDelegates;
     std::unordered_map<WPARAM, bool> KeyStates;
 
     // 컨텍스트 우선순위 정렬 맵
