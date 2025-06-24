@@ -565,95 +565,95 @@ void UGameplayScene02::SetupBorderTriggers()
         };
 
     Character->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character.get(),
-                                                               [IsInBorder, this](const FTransform& InTransform) {
-                                                                   if (!IsInBorder(InTransform.Position))
-                                                                   {
-                                                                       const Vector3 Position = InTransform.Position;
-                                                                       Vector3 Normal = Vector3::Zero();
-                                                                       Vector3 NewPosition = Position;
-
-                                                                       // 충돌한 면의 법선 계산과 위치 보정
-                                                                       if (std::abs(Position.x) >= XBorder)
+                                                                   [IsInBorder, this](const FTransform& InTransform) {
+                                                                       if (!IsInBorder(InTransform.Position))
                                                                        {
-                                                                           Normal.x = Position.x > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+                                                                           const Vector3 Position = InTransform.Position;
+                                                                           Vector3 Normal = Vector3::Zero();
+                                                                           Vector3 NewPosition = Position;
+
+                                                                           // 충돌한 면의 법선 계산과 위치 보정
+                                                                           if (std::abs(Position.x) >= XBorder)
+                                                                           {
+                                                                               Normal.x = Position.x > 0 ? -1.0f : 1.0f;
+                                                                               NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+                                                                           }
+                                                                           if (std::abs(Position.y) >= YBorder)
+                                                                           {
+                                                                               Normal.y = Position.y > 0 ? -1.0f : 1.0f;
+                                                                               NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
+                                                                           }
+                                                                           if (std::abs(Position.z) >= ZBorder)
+                                                                           {
+                                                                               Normal.z = Position.z > 0 ? -1.0f : 1.0f;
+                                                                               NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
+                                                                           }
+
+                                                                           Normal.Normalize();
+                                                                           //Position correction
+                                                                           Character->SetPosition(NewPosition);
+
+                                                                           const Vector3 CurrentVelo = Character->GetCurrentVelocity();
+                                                                           const float Restitution = 1.0f;
+                                                                           const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+
+                                                                           // 물체가 표면에서 멀어지는 중이면 충격량 없음
+                                                                           if (VelocityAlongNormal >= 0.0f)
+                                                                           {
+                                                                               return;
+                                                                           }
+
+                                                                           Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character->GetMass();
+
+                                                                           Character->ApplyImpulse(std::move(NewImpulse));
                                                                        }
-                                                                       if (std::abs(Position.y) >= YBorder)
-                                                                       {
-                                                                           Normal.y = Position.y > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
-                                                                       }
-                                                                       if (std::abs(Position.z) >= ZBorder)
-                                                                       {
-                                                                           Normal.z = Position.z > 0 ? -1.0f : 1.0f;
-                                                                           NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
-                                                                       }
-
-                                                                       Normal.Normalize();
-                                                                       //Position correction
-                                                                       Character->SetPosition(NewPosition);
-
-                                                                       const Vector3 CurrentVelo = Character->GetCurrentVelocity();
-                                                                       const float Restitution = 1.0f;
-                                                                       const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
-
-                                                                       // 물체가 표면에서 멀어지는 중이면 충격량 없음
-                                                                       if (VelocityAlongNormal >= 0.0f)
-                                                                       {
-                                                                           return;
-                                                                       }
-
-                                                                       Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character->GetMass();
-
-                                                                       Character->ApplyImpulse(std::move(NewImpulse));
-                                                                   }
-                                                               },
-                                                               "BorderCheck");
+                                                                   },
+                                                                   "BorderCheck");
     auto weakChacter2 = std::weak_ptr(Character2);
     Character2->GetRootComp()->OnWorldTransformChangedDelegate.Bind(Character.get(),
-                                                                [IsInBorder, this](const FTransform& InTransform) {
-                                                                    if (!IsInBorder(InTransform.Position))
-                                                                    {
-                                                                        const Vector3 Position = InTransform.Position;
-                                                                        Vector3 Normal = Vector3::Zero();
-                                                                        Vector3 NewPosition = Position;
-
-                                                                        // 충돌한 면의 법선 계산과 위치 보정
-                                                                        if (std::abs(Position.x) >= XBorder)
+                                                                    [IsInBorder, this](const FTransform& InTransform) {
+                                                                        if (!IsInBorder(InTransform.Position))
                                                                         {
-                                                                            Normal.x = Position.x > 0 ? -1.0f : 1.0f;
-                                                                            NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
-                                                                        }
-                                                                        if (std::abs(Position.y) >= YBorder)
-                                                                        {
-                                                                            Normal.y = Position.y > 0 ? -1.0f : 1.0f;
-                                                                            NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
-                                                                        }
-                                                                        if (std::abs(Position.z) >= ZBorder)
-                                                                        {
-                                                                            Normal.z = Position.z > 0 ? -1.0f : 1.0f;
-                                                                            NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
-                                                                        }
+                                                                            const Vector3 Position = InTransform.Position;
+                                                                            Vector3 Normal = Vector3::Zero();
+                                                                            Vector3 NewPosition = Position;
 
-                                                                        Normal.Normalize();
-                                                                        //Position correction
-                                                                        Character2->SetPosition(NewPosition);
+                                                                            // 충돌한 면의 법선 계산과 위치 보정
+                                                                            if (std::abs(Position.x) >= XBorder)
+                                                                            {
+                                                                                Normal.x = Position.x > 0 ? -1.0f : 1.0f;
+                                                                                NewPosition.x = XBorder * (Position.x > 0 ? 1.0f : -1.0f);
+                                                                            }
+                                                                            if (std::abs(Position.y) >= YBorder)
+                                                                            {
+                                                                                Normal.y = Position.y > 0 ? -1.0f : 1.0f;
+                                                                                NewPosition.y = YBorder * (Position.y > 0 ? 1.0f : -1.0f);
+                                                                            }
+                                                                            if (std::abs(Position.z) >= ZBorder)
+                                                                            {
+                                                                                Normal.z = Position.z > 0 ? -1.0f : 1.0f;
+                                                                                NewPosition.z = ZBorder * (Position.z > 0 ? 1.0f : -1.0f);
+                                                                            }
 
-                                                                        const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
-                                                                        const float Restitution = 1.0f;
-                                                                        const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
-                                                                        
-                                                                        // 물체가 표면에서 멀어지는 중이면 충격량 없음
-                                                                        if (VelocityAlongNormal >= 0.0f)
-                                                                        {
-                                                                            return;
+                                                                            Normal.Normalize();
+                                                                            //Position correction
+                                                                            Character2->SetPosition(NewPosition);
+
+                                                                            const Vector3 CurrentVelo = Character2->GetCurrentVelocity();
+                                                                            const float Restitution = 1.0f;
+                                                                            const float VelocityAlongNormal = Vector3::Dot(CurrentVelo, Normal);
+
+                                                                            // 물체가 표면에서 멀어지는 중이면 충격량 없음
+                                                                            if (VelocityAlongNormal >= 0.0f)
+                                                                            {
+                                                                                return;
+                                                                            }
+
+                                                                            Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
+                                                                            Character2->ApplyImpulse(std::move(NewImpulse));
                                                                         }
-
-                                                                        Vector3 NewImpulse = -(1.0f + Restitution) * VelocityAlongNormal * Normal * Character2->GetMass();
-                                                                        Character2->ApplyImpulse(std::move(NewImpulse));
-                                                                    }
-                                                                },
-                                                                "BorderCheck");
+                                                                    },
+                                                                    "BorderCheck");
 }
 
 void UGameplayScene02::SetMaxSpeeds(const float InMaxSpeed)

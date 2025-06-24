@@ -321,8 +321,7 @@ void UGameplayScene01::SetupBorderTriggers(UElasticBody* InBody)
                 }
             }
         },
-        "BorderCheck"
-    );
+        "BorderCheck");
 }
 
 void UGameplayScene01::SpawnElasticBody()
