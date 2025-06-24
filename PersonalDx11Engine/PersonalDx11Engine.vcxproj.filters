@@ -90,10 +90,10 @@
       <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
-      <Filter>Engine\Managers\Resource</Filter>
+      <Filter>Engine\Singleton\Resource</Filter>
     </ClCompile>
     <ClCompile Include="DebugDrawerManager.cpp">
-      <Filter>Engine\Managers\DebugDrawer</Filter>
+      <Filter>Engine\Singleton\DebugDrawer</Filter>
     </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Engine\Object</Filter>
@@ -111,7 +111,7 @@
       <Filter>Engine\Physics\Constraints\Velocity</Filter>
     </ClCompile>
     <ClCompile Include="ConfigReadManager.cpp">
-      <Filter>Engine\Managers\ConfigReadeer</Filter>
+      <Filter>Engine\Singleton\ConfigReadeer</Filter>
     </ClCompile>
     <ClCompile Include="CameraOrbitControl.cpp">
       <Filter>Contents</Filter>
@@ -120,7 +120,7 @@
       <Filter>Engine\Math</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsSystem.cpp">
-      <Filter>Engine\Managers\Physics</Filter>
+      <Filter>Engine\Singleton\Physics</Filter>
     </ClCompile>
     <ClCompile Include="CollisionProcessor.cpp">
       <Filter>Engine\Physics\Collision</Filter>
@@ -148,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp">
       <Filter>Engine\Physics\Collision\Part\PositionCorreciton</Filter>
+    </ClCompile>
+    <ClCompile Include="Name.cpp">
+      <Filter>Engine\Name</Filter>
+    </ClCompile>
+    <ClCompile Include="NameTableManager.cpp">
+      <Filter>Engine\Singleton\Name</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -180,9 +186,6 @@
     </Filter>
     <Filter Include="Engine\Delegate">
       <UniqueIdentifier>{bfc2cec4-294c-461a-bb81-22865ef0ab6d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers">
-      <UniqueIdentifier>{f545c3d7-a84c-4cf8-ad2d-1b86e7083b88}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\DataStructure">
       <UniqueIdentifier>{3789f00b-54d1-4c05-b63f-fa85424a14d0}</UniqueIdentifier>
@@ -235,24 +238,6 @@
     <Filter Include="Engine\Debug">
       <UniqueIdentifier>{3bae8376-c080-4939-b0a5-d0153ccf1157}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Managers\DebugDrawer">
-      <UniqueIdentifier>{072e9c25-816f-4781-88c9-0e23fe021dcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\MemoryPool">
-      <UniqueIdentifier>{abb122ca-1376-4071-a96d-a7aa10da79e0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\Input">
-      <UniqueIdentifier>{75c35733-3f29-45a5-81ea-411117eccb54}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\Resource">
-      <UniqueIdentifier>{95c3d204-372c-42f6-a547-91b8ba77e2a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\Scene">
-      <UniqueIdentifier>{43ea765c-4013-4b3f-b1f8-5890b287e900}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\UI">
-      <UniqueIdentifier>{dea3f746-c568-43e5-8658-08e2a4ddf215}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Object">
       <UniqueIdentifier>{bd7e67fd-9a5f-4f5c-93f1-dfa020fe1457}</UniqueIdentifier>
     </Filter>
@@ -292,9 +277,6 @@
     <Filter Include="Engine\Object\Components\ActorComponent\Scene\Collision\Base">
       <UniqueIdentifier>{46a99b17-830f-470d-bf62-17e9c6d3236a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Managers\ConfigReadeer">
-      <UniqueIdentifier>{857709f1-5313-49cd-b1d8-03305a3c1224}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Utils">
       <UniqueIdentifier>{060c49c8-3a77-485a-ae83-a47dc0ce6d7d}</UniqueIdentifier>
     </Filter>
@@ -309,9 +291,6 @@
     </Filter>
     <Filter Include="Engine\Resources\Model\Vertex">
       <UniqueIdentifier>{9ce88f28-62b5-4c33-8d44-9b50a670ef8e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Managers\Physics">
-      <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Physics\Collision">
       <UniqueIdentifier>{8a275dd0-cdb9-417c-b325-bb72a0ea29c9}</UniqueIdentifier>
@@ -370,8 +349,38 @@
     <Filter Include="Engine\Physics\PhysicsJob">
       <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\String">
+    <Filter Include="Engine\Singleton">
+      <UniqueIdentifier>{f545c3d7-a84c-4cf8-ad2d-1b86e7083b88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\DebugDrawer">
+      <UniqueIdentifier>{072e9c25-816f-4781-88c9-0e23fe021dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\MemoryPool">
+      <UniqueIdentifier>{abb122ca-1376-4071-a96d-a7aa10da79e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\Input">
+      <UniqueIdentifier>{75c35733-3f29-45a5-81ea-411117eccb54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\Resource">
+      <UniqueIdentifier>{95c3d204-372c-42f6-a547-91b8ba77e2a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\Scene">
+      <UniqueIdentifier>{43ea765c-4013-4b3f-b1f8-5890b287e900}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\UI">
+      <UniqueIdentifier>{dea3f746-c568-43e5-8658-08e2a4ddf215}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\ConfigReadeer">
+      <UniqueIdentifier>{857709f1-5313-49cd-b1d8-03305a3c1224}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\Physics">
+      <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Singleton\Name">
       <UniqueIdentifier>{fdeb5fb9-1f2b-4991-8a0e-2ff9206bd11e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Name">
+      <UniqueIdentifier>{15e3549a-906c-4e03-bcca-764a090507fa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -535,22 +544,22 @@
       <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
-      <Filter>Engine\Managers\DebugDrawer</Filter>
+      <Filter>Engine\Singleton\DebugDrawer</Filter>
     </ClInclude>
     <ClInclude Include="FramePoolManager.h">
-      <Filter>Engine\Managers\MemoryPool</Filter>
+      <Filter>Engine\Singleton\MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h">
-      <Filter>Engine\Managers\Input</Filter>
+      <Filter>Engine\Singleton\Input</Filter>
     </ClInclude>
     <ClInclude Include="ResourceManager.h">
-      <Filter>Engine\Managers\Resource</Filter>
+      <Filter>Engine\Singleton\Resource</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
-      <Filter>Engine\Managers\Scene</Filter>
+      <Filter>Engine\Singleton\Scene</Filter>
     </ClInclude>
     <ClInclude Include="UIManager.h">
-      <Filter>Engine\Managers\UI</Filter>
+      <Filter>Engine\Singleton\UI</Filter>
     </ClInclude>
     <ClInclude Include="LoadTextFile.h">
       <Filter>Engine\Utils</Filter>
@@ -574,7 +583,7 @@
       <Filter>Engine\Object\Components\ActorComponent\Scene\Collision\Base</Filter>
     </ClInclude>
     <ClInclude Include="ConfigReadManager.h">
-      <Filter>Engine\Managers\ConfigReadeer</Filter>
+      <Filter>Engine\Singleton\ConfigReadeer</Filter>
     </ClInclude>
     <ClInclude Include="ConstraintInterface.h">
       <Filter>Engine\Interface</Filter>
@@ -598,7 +607,7 @@
       <Filter>Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsSystem.h">
-      <Filter>Engine\Managers\Physics</Filter>
+      <Filter>Engine\Singleton\Physics</Filter>
     </ClInclude>
     <ClInclude Include="CollisionDefines.h">
       <Filter>Engine\Physics\Collision\Part</Filter>
@@ -647,6 +656,12 @@
     </ClInclude>
     <ClInclude Include="CollisionProcessor.h">
       <Filter>Engine\Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NameTableManager.h">
+      <Filter>Engine\Singleton\Name</Filter>
+    </ClInclude>
+    <ClInclude Include="Name.h">
+      <Filter>Engine\Name</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
