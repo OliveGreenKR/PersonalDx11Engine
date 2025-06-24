@@ -10,19 +10,19 @@
  * 전역 문자열 테이블 관리자 (싱글톤)
  * 문자열의 유일성 보장 및 참조 카운팅을 통한 메모리 관리
  */
-class UNameTableManager
+class FNameTable
 {
 private:
-    UNameTableManager();
-    ~UNameTableManager();
+    FNameTable();
+    ~FNameTable();
 
-    UNameTableManager(const UNameTableManager&) = delete;
-    UNameTableManager& operator=(const UNameTableManager&) = delete;
-    UNameTableManager(UNameTableManager&&) = delete;
-    UNameTableManager& operator=(UNameTableManager&&) = delete;
+    FNameTable(const FNameTable&) = delete;
+    FNameTable& operator=(const FNameTable&) = delete;
+    FNameTable(FNameTable&&) = delete;
+    FNameTable& operator=(FNameTable&&) = delete;
 
 public:
-    static UNameTableManager& Get();
+    static FNameTable& Get();
 
     /**
      * 문자열을 테이블에 추가하거나 기존 인덱스 반환

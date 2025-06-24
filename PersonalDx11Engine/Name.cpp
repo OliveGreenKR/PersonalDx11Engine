@@ -1,5 +1,5 @@
 #include "Name.h"
-#include "NameTableManager.h"
+#include "NameTable.h"
 #include <cctype>
 
 const FName FName::NAME_None;
@@ -16,7 +16,7 @@ inline FName::FName(const char* InString)
         return;
     }
 
-    Index = UNameTableManager::Get().GetOrAddString(InString);
+    Index = FNameTable::Get().GetOrAddString(InString);
 }
 
 inline FName::FName(const std::string& InString)
@@ -65,7 +65,7 @@ const char* FName::GetCString() const
         return nullptr;
     }
 
-    return UNameTableManager::Get().GetString(Index);
+    return FNameTable::Get().GetString(Index);
 }
 
 uint32_t FName::GetIndex() const
@@ -80,7 +80,7 @@ FName FName::FindName(const char* InString)
         return FName();
     }
 
-    uint32_t index = UNameTableManager::Get().FindString(InString);
+    uint32_t index = FNameTable::Get().FindString(InString);
     if (index == INDEX_NONE)
     {
         return FName();
@@ -132,14 +132,14 @@ bool FName::operator==(const char* Other) const
 
 void FName::PrintNameTable()
 {
-    UNameTableManager::Get().PrintAllStrings();
+    FNameTable::Get().PrintAllStrings();
 }
 
 void FName::AddRef()
 {
     if (IsValid())
     {
-        UNameTableManager::Get().AddReference(Index);
+        FNameTable::Get().AddReference(Index);
     }
 }
 
@@ -147,7 +147,7 @@ void FName::RemoveRef()
 {
     if (IsValid())
     {
-        UNameTableManager::Get().RemoveReference(Index);
+        FNameTable::Get().RemoveReference(Index);
     }
 }
 

@@ -1,10 +1,10 @@
-#include "NameTableManager.h"
+#include "NameTable.h"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <cctype>
 
-UNameTableManager::UNameTableManager()
+FNameTable::FNameTable()
 {
     HashTable.resize(HASH_TABLE_SIZE, INDEX_NONE);
 
@@ -13,18 +13,18 @@ UNameTableManager::UNameTableManager()
     StringArray[0] = nullptr;
 }
 
-UNameTableManager::~UNameTableManager()
+FNameTable::~FNameTable()
 {
     // unique_ptr이 자동으로 정리
 }
 
-UNameTableManager& UNameTableManager::Get()
+FNameTable& FNameTable::Get()
 {
-    static UNameTableManager Instance;
+    static FNameTable Instance;
     return Instance;
 }
 
-uint32_t UNameTableManager::GetOrAddString(const char* InString)
+uint32_t FNameTable::GetOrAddString(const char* InString)
 {
     if (!InString || *InString == '\0')
     {
@@ -64,7 +64,7 @@ uint32_t UNameTableManager::GetOrAddString(const char* InString)
     return newIndex;
 }
 
-uint32_t UNameTableManager::FindString(const char* InString) const
+uint32_t FNameTable::FindString(const char* InString) const
 {
     if (!InString || *InString == '\0')
     {
@@ -97,7 +97,7 @@ uint32_t UNameTableManager::FindString(const char* InString) const
     return INDEX_NONE;
 }
 
-const char* UNameTableManager::GetString(uint32_t Index) const
+const char* FNameTable::GetString(uint32_t Index) const
 {
     if (Index == INDEX_NONE || Index == 0 || Index >= StringArray.size())
     {
@@ -108,7 +108,7 @@ const char* UNameTableManager::GetString(uint32_t Index) const
     return entry ? entry->StringData.c_str() : nullptr;
 }
 
-void UNameTableManager::AddReference(uint32_t Index)
+void FNameTable::AddReference(uint32_t Index)
 {
     if (Index == INDEX_NONE || Index == 0 || Index >= StringArray.size())
     {
@@ -122,7 +122,7 @@ void UNameTableManager::AddReference(uint32_t Index)
     }
 }
 
-void UNameTableManager::RemoveReference(uint32_t Index)
+void FNameTable::RemoveReference(uint32_t Index)
 {
     if (Index == INDEX_NONE || Index == 0 || Index >= StringArray.size())
     {
@@ -177,7 +177,7 @@ void UNameTableManager::RemoveReference(uint32_t Index)
     }
 }
 
-uint32_t UNameTableManager::GetReferenceCount(uint32_t Index) const
+uint32_t FNameTable::GetReferenceCount(uint32_t Index) const
 {
     if (Index == INDEX_NONE || Index == 0 || Index >= StringArray.size())
     {
@@ -188,7 +188,7 @@ uint32_t UNameTableManager::GetReferenceCount(uint32_t Index) const
     return entry ? entry->ReferenceCount : 0;
 }
 
-size_t UNameTableManager::GetStringCount() const
+size_t FNameTable::GetStringCount() const
 {
     size_t count = 0;
     for (size_t i = 1; i < StringArray.size(); ++i)  // INDEX_NONE(0) 제외
@@ -201,7 +201,7 @@ size_t UNameTableManager::GetStringCount() const
     return count;
 }
 
-void UNameTableManager::PrintAllStrings() const
+void FNameTable::PrintAllStrings() const
 {
     std::cout << "=== FName String Table ===" << std::endl;
     std::cout << "Active Strings: " << GetStringCount() << std::endl;
@@ -220,7 +220,7 @@ void UNameTableManager::PrintAllStrings() const
     std::cout << std::endl;
 }
 
-uint32_t UNameTableManager::CalculateHash(const char* InString) const
+uint32_t FNameTable::CalculateHash(const char* InString) const
 {
     if (!InString)
     {
@@ -244,7 +244,7 @@ uint32_t UNameTableManager::CalculateHash(const char* InString) const
     return hash;
 }
 
-bool UNameTableManager::StringsEqualIgnoreCase(const char* Str1, const char* Str2) const
+bool FNameTable::StringsEqualIgnoreCase(const char* Str1, const char* Str2) const
 {
     if (!Str1 || !Str2)
     {

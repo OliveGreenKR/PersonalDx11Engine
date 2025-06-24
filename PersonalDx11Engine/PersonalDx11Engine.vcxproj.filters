@@ -152,8 +152,8 @@
     <ClCompile Include="Name.cpp">
       <Filter>Engine\Name</Filter>
     </ClCompile>
-    <ClCompile Include="NameTableManager.cpp">
-      <Filter>Engine\Singleton\Name</Filter>
+    <ClCompile Include="NameTable.cpp">
+      <Filter>Engine\Name\NameTable</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -376,11 +376,11 @@
     <Filter Include="Engine\Singleton\Physics">
       <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Singleton\Name">
-      <UniqueIdentifier>{fdeb5fb9-1f2b-4991-8a0e-2ff9206bd11e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Name">
       <UniqueIdentifier>{15e3549a-906c-4e03-bcca-764a090507fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Name\NameTable">
+      <UniqueIdentifier>{fdeb5fb9-1f2b-4991-8a0e-2ff9206bd11e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -657,11 +657,11 @@
     <ClInclude Include="CollisionProcessor.h">
       <Filter>Engine\Physics\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="NameTableManager.h">
-      <Filter>Engine\Singleton\Name</Filter>
-    </ClInclude>
     <ClInclude Include="Name.h">
       <Filter>Engine\Name</Filter>
+    </ClInclude>
+    <ClInclude Include="NameTable.h">
+      <Filter>Engine\Name\NameTable</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-class UNameTableManager;
+class FNameTable;
 
 /**
  * 경량 문자열 식별자 - 전역 테이블에 대한 약한 참조
