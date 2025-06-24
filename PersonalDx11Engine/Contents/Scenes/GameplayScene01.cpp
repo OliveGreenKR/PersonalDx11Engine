@@ -179,7 +179,7 @@ void UGameplayScene01::SubmitRenderUI()
         ImGuiWindowFlags_NoResize |      // 크기 조절 비활성화
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
 
-    UUIManager::Get()->RegisterUIElement("Scene01UI", [this]() {
+    UUIManager::Get()->RegisterUIElement([this]() {
 
         ImGui::Begin("ElasticBodies", nullptr, UIWindowFlags);
         ImGui::Checkbox("bSpawnBody", &bSpawnBody);

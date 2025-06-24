@@ -8,7 +8,6 @@
 
 // UI 데이터 구조체
 struct FUIElement {
-    std::string WindowName;
     std::function<void()> DrawFunction;
 };
 
@@ -31,8 +30,8 @@ public:
         return manager;
     }
     // UI 요소 등록
-    void RegisterUIElement(const std::string& WindowName, const std::function<void()>& DrawFunction) {
-        UIElements.push_back({ WindowName, DrawFunction });
+    void RegisterUIElement(const std::function<void()>& DrawFunction) {
+        UIElements.push_back({DrawFunction });
     }
 
     void RegisterUIElement(const FUIElement& InElement)

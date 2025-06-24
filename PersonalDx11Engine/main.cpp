@@ -330,7 +330,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->ProcessRender();
 
 #pragma region SystemUI
-		UUIManager::Get()->RegisterUIElement("SystemUI", [DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer, &TestScene01]() {
+		UUIManager::Get()->RegisterUIElement([DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer, &TestScene01]() {
 			ImGui::SetNextWindowSize(ImVec2(400, 100));
 			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 410, 0));
 			ImGui::Begin("SystemUI", nullptr,
@@ -385,7 +385,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::End();
 											 });
 
-		UUIManager::Get()->RegisterUIElement("SystemUI_ActiveCamera", []()
+		UUIManager::Get()->RegisterUIElement([]()
 											 {
 												 constexpr ImGuiWindowFlags UIWindowFlags =
 													 ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절

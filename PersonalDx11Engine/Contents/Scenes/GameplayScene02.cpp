@@ -219,7 +219,7 @@ void UGameplayScene02::SubmitRenderUI()
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
 
 
-    UUIManager::Get()->RegisterUIElement("Scene02UI", [this]() {
+    UUIManager::Get()->RegisterUIElement( [this]() {
 
         if (Character)
         {

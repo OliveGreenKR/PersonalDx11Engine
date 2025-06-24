@@ -166,7 +166,7 @@ void UTestScene01::SubmitRenderUI()
         ImGuiWindowFlags_AlwaysAutoResize;  // 항상 내용에 맞게 크기 조절
 
     static int BodyNum = 0;
-    UUIManager::Get()->RegisterUIElement("TestSceneUI", [this]() {
+    UUIManager::Get()->RegisterUIElement([this]() {
         ImGui::Begin("TestScene");
         ImGui::Checkbox("CollisionShape", &bDebug01);
         ImGui::Checkbox("PolytopeEPA", &bDebug02);
