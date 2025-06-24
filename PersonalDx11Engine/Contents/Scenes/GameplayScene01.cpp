@@ -21,7 +21,7 @@
 
 UGameplayScene01::UGameplayScene01()
 {
-    InputContext = UInputContext::Create(SceneName);
+    InputContext = UInputContext::Create(SceneName.c_str());
 }
 
 UGameplayScene01::~UGameplayScene01()
@@ -99,7 +99,7 @@ void UGameplayScene01::Load()
 void UGameplayScene01::Unload()
 {
     // 입력 컨텍스트 삭제
-    UInputManager::Get()->UnregisterInputContext(SceneName);
+    UInputManager::Get()->UnregisterInputContext(SceneName.c_str());
 
     //활성화 바디 상태 초기화
     //객체풀 클리어

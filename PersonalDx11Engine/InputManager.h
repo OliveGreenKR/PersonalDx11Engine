@@ -2,40 +2,34 @@
 #include "Delegate.h"
 #include <windows.h>
 #include <unordered_map>
-#include <map>
-#include <set>
+#include <vector>
+#include <algorithm>
 #include <memory>
-#include <string>
+#include <cstring>
 #include "InputDefines.h"
 #include "InputContext.h"
-
 #include "Debug.h"
 
+// 입력 매니저 클래스 - 컨텍스트 관리 및 시스템 레벨 키 이벤트 처리
 class UInputManager
 {
 private:
-    struct FContextKey
-    {
-        int Priority;
-        std::string Name;
-
-        // 우선순위 기준 정렬 (낮은 값이 높은 우선순위)
-        bool operator<(const FContextKey& Other) const
-        {
-            if (Priority != Other.Priority)
-                return Priority < Other.Priority;
-            return Name < Other.Name; // 동일 우선순위 시 이름순
-        }
-    };
-
-private:
+    // 시스템 레벨 키 이벤트 처리
+    std::unordered_map<EKeyEvent, FOnKeyEvent> KeyEventDelegates;
     std::unordered_map<WPARAM, bool> KeyStates;
 
-    // 컨텍스트 우선순위 정렬 맵
-    std::map<FContextKey, std::shared_ptr<UInputContext>> SortedContexts;
-    // 빠른 이름 기반 조회를 위한 보조 인덱스
-    std::unordered_map<std::string, FContextKey> NameToKeyMap;
+    // 우선순위 순으로 정렬된 컨텍스트 배열 (캐시 친화적 순회)
+    std::vector<std::shared_ptr<UInputContext>> SortedContexts;
 
+    // 시스템 컨텍스트
+    static constexpr int SYSTEM_CONTEXT_PRIORITY = INT32_MAX;
+    static constexpr const char* SYSTEM_CONTEXT_NAME = "SystemContext";
+
+public:
+    std::shared_ptr<UInputContext> SystemContext;
+
+private:
+    // 싱글톤 구현
     UInputManager()
     {
         // 시스템 컨텍스트 초기화
@@ -43,18 +37,20 @@ private:
         RegisterInputContext(SystemContext);
     }
 
-    // 복사 및 이동 방지
     UInputManager(const UInputManager&) = delete;
     UInputManager& operator=(const UInputManager&) = delete;
     UInputManager(UInputManager&&) = delete;
     UInputManager& operator=(UInputManager&&) = delete;
 
-public:
-
-    //최하위 우선순위 시스템 컨텍스트
-    static constexpr int SYSTEM_CONTEXT_PRIORITY = INT32_MAX; // 최하위 우선순위
-    static constexpr const char* SYSTEM_CONTEXT_NAME = "SystemContext";
-    std::shared_ptr<UInputContext> SystemContext;
+    // 우선순위 기반 정렬
+    void SortContextsByPriority()
+    {
+        std::sort(SortedContexts.begin(), SortedContexts.end(),
+                  [](const std::shared_ptr<UInputContext>& A, const std::shared_ptr<UInputContext>& B)
+                  {
+                      return A->GetPriority() < B->GetPriority(); // 낮은 값이 높은 우선순위
+                  });
+    }
 
 public:
     static UInputManager* Get()
@@ -66,111 +62,107 @@ public:
         return Instance;
     }
 
-    // 입력 컨텍스트 등록
+public:
+    // 컨텍스트 관리
     void RegisterInputContext(const std::shared_ptr<UInputContext>& Context)
     {
         if (!Context) return;
 
-        const std::string& ContextName = Context->GetName();
+        // 기존 컨텍스트 제거 (선형 탐색)
+        SortedContexts.erase(
+            std::remove_if(SortedContexts.begin(), SortedContexts.end(),
+                           [&Context](const std::shared_ptr<UInputContext>& ExistingContext)
+                           {
+                               return ExistingContext->GetHash() == Context->GetHash();
+                           }),
+            SortedContexts.end());
 
-        // 이미 있으면 제거 후 다시 추가 (우선순위 변경 가능성)
-        auto nameIt = NameToKeyMap.find(ContextName);
-        if (nameIt != NameToKeyMap.end())
-        {
-            SortedContexts.erase(nameIt->second);
-            NameToKeyMap.erase(nameIt);
-        }
-
-        // 새 키로 등록
-        FContextKey NewKey{ Context->GetPriority(), ContextName };
-        SortedContexts[NewKey] = Context;
-        NameToKeyMap[ContextName] = NewKey;
+        // 새 컨텍스트 추가 후 정렬
+        SortedContexts.push_back(Context);
+        SortContextsByPriority();
     }
 
-    // 입력 컨텍스트 제거
-    void UnregisterInputContext(const std::string& ContextName)
+    void UnregisterInputContext(const char* ContextName)
     {
+        if (!ContextName) return;
+
         // 시스템 컨텍스트는 제거 불가
-        if (ContextName == SYSTEM_CONTEXT_NAME)
+        if (strcmp(ContextName, SYSTEM_CONTEXT_NAME) == 0)
             return;
 
-        // 1. 기존 컨텍스트 찾기
-        auto nameIt = NameToKeyMap.find(ContextName);
-        if (nameIt == NameToKeyMap.end())
-            return; // 존재하지 않는 컨텍스트
-
-        const FContextKey& OldKey = nameIt->second;
-
-        // 2. 기존 컨텍스트 추출
-        auto contextIt = SortedContexts.find(OldKey);
-        if (contextIt == SortedContexts.end())
-        {
-            // 데이터 무결성 오류 - 보조 인덱스와 메인 맵 불일치
-            LOG_FUNC_CALL("[ERROR] Data integrity - mismatch between auxiliary index and main map");
-            NameToKeyMap.erase(nameIt);
-            return;
-        }
-
-        // 3. 기존 항목 제거
-        SortedContexts.erase(contextIt);
-        NameToKeyMap.erase(nameIt);
+        FStringHash contextHash(ContextName);
+        SortedContexts.erase(
+            std::remove_if(SortedContexts.begin(), SortedContexts.end(),
+                           [&contextHash](const std::shared_ptr<UInputContext>& Context)
+                           {
+                               return Context->GetHash() == contextHash;
+                           }),
+            SortedContexts.end());
     }
 
-    // 컨텍스트 조회 (O(1) 복잡도)
-    std::shared_ptr<UInputContext> GetContext(const std::string& ContextName)
+    std::shared_ptr<UInputContext> GetContext(const char* ContextName)
     {
-        auto nameIt = NameToKeyMap.find(ContextName);
-        if (nameIt != NameToKeyMap.end())
+        if (!ContextName) return nullptr;
+
+        FStringHash contextHash(ContextName);
+        for (const auto& context : SortedContexts)
         {
-            auto contextIt = SortedContexts.find(nameIt->second);
-            return (contextIt != SortedContexts.end()) ? contextIt->second : nullptr;
+            if (context->GetHash() == contextHash)
+            {
+                return context;
+            }
         }
         return nullptr;
     }
 
-    void UpdateContextPriority(const std::string& ContextName, int NewPriority)
+    std::shared_ptr<UInputContext> GetSystemContext()
     {
-        // 시스템 컨텍스트는 우선순위 변경 불가
-        if (ContextName == SYSTEM_CONTEXT_NAME)
-            return;
-
-        // 1. 기존 컨텍스트 찾기
-        auto nameIt = NameToKeyMap.find(ContextName);
-        if (nameIt == NameToKeyMap.end())
-            return; // 존재하지 않는 컨텍스트
-
-        const FContextKey& OldKey = nameIt->second;
-
-        // 2. 우선순위가 동일하면 변경 불필요
-        if (OldKey.Priority == NewPriority)
-            return;
-
-        // 3. 기존 컨텍스트 추출
-        auto contextIt = SortedContexts.find(OldKey);
-        if (contextIt == SortedContexts.end())
-        {
-            // 데이터 무결성 오류 - 보조 인덱스와 메인 맵 불일치
-            LOG_FUNC_CALL("[ERROR] Data integrity - mismatch between auxiliary index and main map");
-            NameToKeyMap.erase(nameIt);
-            return;
-        }
-
-        std::shared_ptr<UInputContext> Context = contextIt->second;
-
-        // 4. 기존 항목 제거
-        SortedContexts.erase(contextIt);
-        NameToKeyMap.erase(nameIt);
-
-        // 5. 컨텍스트 내부 우선순위 업데이트
-        Context->SetPriority(NewPriority);
-
-        // 6. 새 키로 재등록
-        FContextKey NewKey{ NewPriority, ContextName };
-        SortedContexts[NewKey] = Context;
-        NameToKeyMap[ContextName] = NewKey;
+        return SystemContext;
     }
 
-    // Windows 메시지 처리 (확장)
+public:
+    // 컨텍스트 우선순위 관리
+    void SetContextPriority(const char* ContextName, int NewPriority)
+    {
+        if (!ContextName) return;
+
+        // 시스템 컨텍스트는 수정 불가
+        if (strcmp(ContextName, SYSTEM_CONTEXT_NAME) == 0)
+            return;
+
+        auto context = GetContext(ContextName);
+        if (context)
+        {
+            context->SetPriority(NewPriority);
+            SortContextsByPriority(); // 우선순위 변경 후 재정렬
+        }
+    }
+
+public:
+    // 시스템 레벨 키 이벤트 바인딩
+    void BindKeyEventSystem(EKeyEvent EventType,
+                            const std::function<void(const FKeyEventData&)>& InFunction,
+                            const char* InFunctionName)
+    {
+        KeyEventDelegates[EventType].BindSystem(InFunction, InFunctionName);
+    }
+
+    void UnbindKeyEventSystem(EKeyEvent EventType, const char* InFunctionName)
+    {
+        auto it = KeyEventDelegates.find(EventType);
+        if (it != KeyEventDelegates.end())
+        {
+            it->second.UnbindSystem(InFunctionName);
+        }
+    }
+
+    void ClearAllKeyEventBindings()
+    {
+        KeyEventDelegates.clear();
+    }
+
+public:
+    // Windows 메시지 처리
     bool ProcessWindowsMessage(UINT Message, WPARAM WParam, LPARAM LParam)
     {
         switch (Message)
@@ -180,92 +172,148 @@ public:
             {
                 const bool bWasPressed = KeyStates[WParam];
                 KeyStates[WParam] = true;
-                FKeyEventData EventData = CreateEventData(Message, WParam, LParam, EKeyEvent::Pressed);
+
+                FKeyEventData EventData;
+                EventData.KeyCode = WParam;
+                EventData.bAlt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+                EventData.bControl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                EventData.bShift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
 
                 bool bIsRepeat = (HIWORD(LParam) & KF_REPEAT) == KF_REPEAT;
 
                 if (!bWasPressed)
                 {
-                    return ProcessKeyEventData(EventData);
+                    EventData.EventType = EKeyEvent::Pressed;
+
+                    // 우선순위 순으로 컨텍스트 순회 (캐시 친화적)
+                    for (const auto& Context : SortedContexts)
+                    {
+                        if (Context->IsActive() && Context->ProcessInput(EventData))
+                        {
+                            return true; // 처리 완료
+                        }
+                    }
+
+                    // 컨텍스트에서 처리되지 않은 경우 시스템 레벨 처리
+                    auto sysIt = KeyEventDelegates.find(EventData.EventType);
+                    if (sysIt != KeyEventDelegates.end())
+                    {
+                        sysIt->second.Broadcast(EventData);
+                    }
                 }
-                if (bIsRepeat)
+                else if (bIsRepeat)
                 {
                     EventData.EventType = EKeyEvent::Repeat;
-                    return ProcessKeyEventData(EventData);
+
+                    for (const auto& Context : SortedContexts)
+                    {
+                        if (Context->IsActive() && Context->ProcessInput(EventData))
+                        {
+                            return true; // 처리 완료
+                        }
+                    }
+
+                    // 컨텍스트에서 처리되지 않은 경우 시스템 레벨 처리
+                    auto sysIt = KeyEventDelegates.find(EventData.EventType);
+                    if (sysIt != KeyEventDelegates.end())
+                    {
+                        sysIt->second.Broadcast(EventData);
+                    }
                 }
-
-                return true;
+                break;
             }
-
             case WM_KEYUP:
             case WM_SYSKEYUP:
             {
                 KeyStates[WParam] = false;
-                FKeyEventData EventData = CreateEventData(Message, WParam, LParam, EKeyEvent::Released);
-                return ProcessKeyEventData(EventData);
+
+                FKeyEventData EventData;
+                EventData.KeyCode = WParam;
+                EventData.EventType = EKeyEvent::Released;
+                EventData.bAlt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+                EventData.bControl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                EventData.bShift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+
+                // 우선순위 순으로 컨텍스트 순회
+                for (const auto& Context : SortedContexts)
+                {
+                    if (Context->IsActive() && Context->ProcessInput(EventData))
+                    {
+                        return true; // 처리 완료
+                    }
+                }
+
+                // 컨텍스트에서 처리되지 않은 경우 시스템 레벨 처리
+                auto sysIt = KeyEventDelegates.find(EventData.EventType);
+                if (sysIt != KeyEventDelegates.end())
+                {
+                    sysIt->second.Broadcast(EventData);
+                }
+                break;
             }
         }
-
         return false;
     }
 
-
-    // 키 상태 조회
-    bool IsKeyDown(WPARAM KeyCode) const
+public:
+    // 디버깅 및 유틸리티
+    void PrintDebugInfo() const
     {
-        auto It = KeyStates.find(KeyCode);
-        return It != KeyStates.end() && It->second;
-    }
+        LOG("InputManager - Registered Contexts:");
+        LOG("Priority Order (Lower = Higher Priority):");
 
-    // 모디파이어와 함께 키 상태 조회
-    bool IsKeyDownWithModifiers(WPARAM KeyCode, bool bCheckAlt, bool bCheckCtrl, bool bCheckShift) const
-    {
-        if (!IsKeyDown(KeyCode)) return false;
-
-        if (bCheckAlt && !(GetAsyncKeyState(VK_MENU) & 0x8000)) return false;
-        if (bCheckCtrl && !(GetAsyncKeyState(VK_CONTROL) & 0x8000)) return false;
-        if (bCheckShift && !(GetAsyncKeyState(VK_SHIFT) & 0x8000)) return false;
-
-        return true;
-    }
-
-#pragma region DEBUG
-#ifdef _DEBUG
-    void ValidateDataIntegrity() const
-    {
-        // NameToKeyMap과 SortedContexts 동기화 확인
-        for (const auto& [Name, Key] : NameToKeyMap)
+        for (const auto& context : SortedContexts)
         {
-            auto it = SortedContexts.find(Key);
-            assert(it != SortedContexts.end() && "Data integrity violation detected");
-            assert(it->second->GetName() == Name && "Name mismatch detected");
+            LOG("  - %s (Priority: %d, Hash: %llu)",
+                context->GetName(),
+                context->GetPriority(),
+                context->GetHash().GetHash());
+        }
+
+        LOG("Total Contexts: %zu", SortedContexts.size());
+    }
+
+    void PrintKeyStates() const
+    {
+        LOG("Current Key States:");
+        for (const auto& pair : KeyStates)
+        {
+            if (pair.second) // 눌린 키만 출력
+            {
+                LOG("  - Key %c (%d): Pressed", (char)pair.first, (int)pair.first);
+            }
         }
     }
-#endif
-#pragma endregion
+
+    bool IsKeyPressed(WPARAM KeyCode) const
+    {
+        auto it = KeyStates.find(KeyCode);
+        return (it != KeyStates.end()) ? it->second : false;
+    }
+
+    void ClearKeyStates()
+    {
+        KeyStates.clear();
+        LOG("All key states cleared");
+    }
+
+    void PrintStatistics() const
+    {
+        LOG("InputManager Statistics:");
+        LOG("  - Total Contexts: %zu", SortedContexts.size());
+        LOG("  - Active Contexts: %d", CountActiveContexts());
+        LOG("  - System Context Priority: %d", SYSTEM_CONTEXT_PRIORITY);
+    }
+
 private:
-    FKeyEventData CreateEventData(UINT Message, WPARAM WParam, LPARAM LParam, EKeyEvent InEventType)
+    int CountActiveContexts() const
     {
-        FKeyEventData EventData;
-        EventData.KeyCode = WParam;
-        EventData.EventType = InEventType;
-        EventData.bAlt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
-        EventData.bControl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-        EventData.bShift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-
-        return EventData;
-    }
-
-    bool ProcessKeyEventData(const FKeyEventData& InEventData)
-    {
-        // 정렬된 컨텍스트 순회
-        for (const auto& [Key, Context] : SortedContexts)
+        int count = 0;
+        for (const auto& context : SortedContexts)
         {
-            if (Context->IsActive() && Context->ProcessInput(InEventData))
-                return true;
+            if (context->IsActive())
+                count++;
         }
-        return false;
+        return count;
     }
-
-
 };

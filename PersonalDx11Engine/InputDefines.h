@@ -1,6 +1,9 @@
 #pragma once
 #include "Delegate.h"
+#include "StringHash.h"
 #include <windows.h>
+#include <vector>
+#include <cstring>
 
 // 키 이벤트 타입 정의
 enum class EKeyEvent
@@ -23,33 +26,85 @@ struct FKeyEventData
 // 키 이벤트 델리게이트 타입 정의
 using FOnKeyEvent = TDelegate<const FKeyEventData&>;
 
-//행동에 따른 키 바인딩
-class UInputAction 
+// 입력 액션 클래스
+class UInputAction
 {
 public:
-    UInputAction() = default;
-    UInputAction(const std::string& InName) : Name(InName)
-    {
-    }
-    // 복사 생성자
-    UInputAction(const UInputAction& InAction) : Name(InAction.Name), KeyCodes(InAction.KeyCodes)
-    {
-    }
-
-    const std::string& GetName() const { return Name; }
     std::vector<WPARAM> KeyCodes;
 
-    // 대입 연산자 수정
-    UInputAction& operator= (const UInputAction& InAction)
+private:
+    static constexpr size_t MAX_ACTION_NAME = 64;
+
+    FStringHash ActionHash;
+    char ActionName[MAX_ACTION_NAME];
+
+public:
+    // 기본 생성자
+    UInputAction() : ActionHash()
     {
-        if (this != &InAction) // 자기 할당 방지
+        ActionName[0] = '\0';
+    }
+
+    // 문자열 생성자
+    explicit UInputAction(const char* InName)
+        : ActionHash(InName)
+    {
+        if (InName)
         {
-            Name = InAction.Name;
+            strncpy_s(ActionName, InName, MAX_ACTION_NAME - 1);
+            ActionName[MAX_ACTION_NAME - 1] = '\0';
+        }
+        else
+        {
+            ActionName[0] = '\0';
+        }
+    }
+
+    // 복사 생성자
+    UInputAction(const UInputAction& InAction)
+        : ActionHash(InAction.ActionHash), KeyCodes(InAction.KeyCodes)
+    {
+        strncpy_s(ActionName, InAction.ActionName, MAX_ACTION_NAME - 1);
+        ActionName[MAX_ACTION_NAME - 1] = '\0';
+    }
+
+    // 대입 연산자
+    UInputAction& operator=(const UInputAction& InAction)
+    {
+        if (this != &InAction)
+        {
+            ActionHash = InAction.ActionHash;
             KeyCodes = InAction.KeyCodes;
+            strncpy_s(ActionName, InAction.ActionName, MAX_ACTION_NAME - 1);
+            ActionName[MAX_ACTION_NAME - 1] = '\0';
         }
         return *this;
     }
 
-private:
-    std::string Name;
-}; 
+    // 접근자
+    const FStringHash& GetHash() const { return ActionHash; }
+    const char* GetName() const { return ActionName; }
+
+    // 비교 연산자
+    bool operator==(const UInputAction& Other) const
+    {
+        return ActionHash == Other.ActionHash;
+    }
+
+    bool operator!=(const UInputAction& Other) const
+    {
+        return ActionHash != Other.ActionHash;
+    }
+
+    bool operator<(const UInputAction& Other) const
+    {
+        return ActionHash < Other.ActionHash;
+    }
+
+    // 유효성 검사
+    bool IsValid() const { return ActionHash.IsValid(); }
+    bool MatchesHash(const FStringHash& Hash) const
+    {
+        return ActionHash == Hash;
+    }
+};

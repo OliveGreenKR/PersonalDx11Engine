@@ -22,7 +22,7 @@
 
 UGameplayScene02::UGameplayScene02()
 {
-    InputContext = UInputContext::Create(SceneName);
+    InputContext = UInputContext::Create(SceneName.c_str());
 }
 
 UGameplayScene02::~UGameplayScene02()
@@ -161,7 +161,7 @@ void UGameplayScene02::Unload()
     }
 
     // 입력 컨텍스트 삭제
-    UInputManager::Get()->UnregisterInputContext(SceneName);
+    UInputManager::Get()->UnregisterInputContext(SceneName.c_str());
 }
 
 void UGameplayScene02::Tick(float DeltaTime)

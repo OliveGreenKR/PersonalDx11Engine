@@ -20,7 +20,7 @@ using namespace DirectX;
 
 UTestScene01::UTestScene01()
 {
-    InputContext = UInputContext::Create(SceneName);
+    InputContext = UInputContext::Create(SceneName.c_str());
 }
 
 UTestScene01::~UTestScene01()
@@ -81,7 +81,7 @@ void UTestScene01::Load()
 
 void UTestScene01::Unload()
 {
-    UInputManager::Get()->UnregisterInputContext(SceneName);
+    UInputManager::Get()->UnregisterInputContext(SceneName.c_str());
 
     if (ObjectPool)
     {
