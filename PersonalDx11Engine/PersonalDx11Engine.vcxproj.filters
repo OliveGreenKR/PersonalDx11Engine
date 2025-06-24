@@ -370,6 +370,9 @@
     <Filter Include="Engine\Physics\PhysicsJob">
       <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\String">
+      <UniqueIdentifier>{fdeb5fb9-1f2b-4991-8a0e-2ff9206bd11e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
