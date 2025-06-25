@@ -18,7 +18,7 @@ private:
     std::unordered_map<EKeyEvent, FOnKeyEvent> KeyEventDelegates;
     std::unordered_map<WPARAM, bool> KeyStates;
 
-    // 우선순위 순으로 정렬된 컨텍스트 배열 (캐시 친화적 순회)
+    // 우선순위 순으로 정렬된 컨텍스트 배열
     std::vector<std::shared_ptr<UInputContext>> SortedContexts;
 
     // 시스템 컨텍스트

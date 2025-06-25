@@ -370,6 +370,9 @@
     <Filter Include="Engine\Singleton\Physics">
       <UniqueIdentifier>{85d9f38c-c15b-4712-836c-f2904d7712fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\String">
+      <UniqueIdentifier>{d492e603-6bfb-4445-ac52-f7b80769f307}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -516,9 +519,6 @@
     <ClInclude Include="RenderDataInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="StringHash.h">
-      <Filter>Engine\DataStructure</Filter>
-    </ClInclude>
     <ClInclude Include="ResourceHandle.h">
       <Filter>Engine\Resources</Filter>
     </ClInclude>
@@ -644,6 +644,9 @@
     </ClInclude>
     <ClInclude Include="CollisionProcessor.h">
       <Filter>Engine\Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="StringHash.h">
+      <Filter>Engine\String</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
