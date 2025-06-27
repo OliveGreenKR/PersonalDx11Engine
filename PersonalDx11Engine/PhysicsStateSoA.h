@@ -126,6 +126,7 @@ private:
     static constexpr uint32_t INVALID_ID = 0;
     static constexpr uint32_t INVALID_IDX = 0;
     static constexpr uint32_t FIRST_VALID_ID = 1;
+    static constexpr uint32_t FIRST_VALID_INDEX = 1;
     static constexpr float COMPACTION_THRESHOLD = 0.3f;
 
     // ID 관리

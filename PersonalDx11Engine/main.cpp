@@ -39,6 +39,7 @@
 //test
 #include "testDynamicAABBTree.h"
 #include "testSceneComponent.h"
+#include "testPhysicsStateArray.h"
 
 #include "CameraOrbitControl.h"
 
@@ -154,6 +155,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 콘솔 생성
 	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
 
+#pragma region temp Testing code Execution
 	//TestDynamicAABBTree::RunAllTestsIterate(std::cout, 100, 500, 500, 500);
 	//std::string input;
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
@@ -163,6 +165,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::string input;
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
+
+	auto PrintResult = [](bool InBool) {
+		LOG("%s", InBool ? "PASS" : "FAIL"); };
+
+	FTestPhysicsState TestPhysicsState;
+	std::string input;
+	//PrintResult ( TestPhysicsState.TestBasicLifecycle() );
+	//std::getline(std::cin, input); // 사용자 입력을 기다림
+
+	PrintResult ( TestPhysicsState.TestIDReuseSystem() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	PrintResult ( TestPhysicsState.TestCompactionSystem() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	PrintResult ( TestPhysicsState.TestActivationManagement() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	PrintResult ( TestPhysicsState.TestStatusQueries() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	PrintResult ( TestPhysicsState.TestResizing() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
+	std::getline(std::cin, input); // 사용자 입력을 기다림
+	return 0;
+#pragma endregion
 
 	//Hardware
 	auto RenderHardware = make_shared<FD3D>();

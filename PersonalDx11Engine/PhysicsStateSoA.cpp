@@ -32,7 +32,7 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize)
 SoAID PhysicsStateArrays::AllocateSlot()
 {
     // 공간이 부족하면 확장 시도
-    if (AllocatedCount >= Size())
+    if (AllocatedCount >= Size()-1)
     {
         if (!TryResize(Size() * 2))
         {
@@ -89,7 +89,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         }
 
         // 새 슬롯 할당 (연속적으로 배치)
-        NewIndex = AllocatedCount++;
+        NewIndex = 1+AllocatedCount++;
 
         // 쌍방향 매핑 등록
         IdToIdx[NewId] = NewIndex;
@@ -125,16 +125,10 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
     SoAIdx Index = It->second;
 
     // 인덱스 유효성 검사
-    if (Index >= AllocatedCount)
+    //인덱스 범위 + 할당되어있는 인덱스
+    if (!IsValidAllocatedIndex(Index))
     {
-        LOG_FUNC_CALL("[Error] Invalid index for ID %u: %u >= %u", Id, Index, AllocatedCount);
-        return;
-    }
-
-    // 이미 해제된 슬롯 재해제 방지
-    if (!AllocatedFlags[Index])
-    {
-        LOG_FUNC_CALL("[Warning] Attempting to deallocate already freed ID: %u", Id);
+        LOG_FUNC_CALL("[Error] Invalid index for ID %u", Id, Index, AllocatedCount);
         return;
     }
 
@@ -158,7 +152,7 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
 bool PhysicsStateArrays::TryResize(uint32_t NewSize)
 {
     // 현재 할당된 크기보다 작게 축소 시도 시 거부
-    if (NewSize < AllocatedCount)
+    if (NewSize < AllocatedCount+1)
     {
         LOG_FUNC_CALL("[Warning] Cannot resize below allocated count: %u < %u", NewSize, AllocatedCount);
         return false;
@@ -326,16 +320,13 @@ bool PhysicsStateArrays::IsActiveObject(SoAID Id) const
 uint32_t PhysicsStateArrays::GetActiveObjectCount() const
 {
     uint32_t ActiveCount = 0;
-
-    // 할당된 범위 내에서만 순회
-    for (uint32_t i = 0; i < AllocatedCount; ++i)
+    for (uint32_t i = FIRST_VALID_INDEX; i <= AllocatedCount; ++i)
     {
         if (AllocatedFlags[i] && ActiveFlags[i])
         {
             ActiveCount++;
         }
     }
-
     return ActiveCount;
 }
 
@@ -368,7 +359,7 @@ SoAIdx PhysicsStateArrays::GetIndex(SoAID Id) const
 // 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
 bool PhysicsStateArrays::IsValidAllocatedIndex(SoAIdx Index) const
 {
-    return Index < AllocatedCount && AllocatedFlags[Index];
+    return Index >= 1 && Index <= AllocatedCount && AllocatedFlags[Index];
 }
 
 // 슬롯을 기본값으로 초기화
@@ -454,14 +445,14 @@ void PhysicsStateArrays::PerformCompaction()
         return;
     }
 
-    uint32_t WriteIndex = 0;  // 압축된 배열의 쓰기 위치
+    uint32_t WriteIndex = FIRST_VALID_INDEX;  // 압축된 배열의 쓰기 위치
     uint32_t ValidObjectCount = 0;
 
     LOG_FUNC_CALL("[Info] Starting compaction: %u allocated, %u deallocated",
                   AllocatedCount, DeallocatedCount);
 
     // 1단계: 유효한 객체들을 앞쪽으로 압축
-    for (uint32_t ReadIndex = 0; ReadIndex < AllocatedCount; ++ReadIndex)
+    for (uint32_t ReadIndex = FIRST_VALID_INDEX; ReadIndex <= AllocatedCount; ++ReadIndex)
     {
         // 할당된 슬롯만 처리
         if (AllocatedFlags[ReadIndex])
@@ -486,7 +477,7 @@ void PhysicsStateArrays::PerformCompaction()
     }
 
     // 2단계: 압축 후 상태 업데이트
-    AllocatedCount = WriteIndex;
+    AllocatedCount = ValidObjectCount;
     DeallocatedCount = 0;
 
     // 4단계: 재사용 ID 정리
@@ -718,7 +709,7 @@ void PhysicsStateArrays::ValidateMappingIntegrity() const
         }
 
         // 인덱스 유효성 검증
-        if (Index >= AllocatedCount)
+        if (Index < FIRST_VALID_INDEX || Index > AllocatedCount)
         {
             LOG_FUNC_CALL("[Error] Mapping integrity violation: ID %u → Index %u out of allocated range",
                           Id, Index);
