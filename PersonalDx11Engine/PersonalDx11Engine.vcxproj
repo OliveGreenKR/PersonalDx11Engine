@@ -165,6 +165,7 @@
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PhysicsStateSoA.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp" />
@@ -213,6 +214,10 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="BindableInterface.h" />
     <ClInclude Include="CollisionPositionalCorrectionCalculator.h" />
+    <ClInclude Include="PhysicsStateSoA.h" />
+    <ClInclude Include="test\testDynamicAABBTree.h" />
+    <ClInclude Include="test\testPhysicsStateArray.h" />
+    <ClInclude Include="test\testSceneComponent.h" />
     <ClInclude Include="UI_DragVector.h" />
     <ClInclude Include="DynamicAABBTree.h" />
     <ClInclude Include="DynamicBoundableInterface.h" />
@@ -268,8 +273,6 @@
     <ClInclude Include="SceneInterface.h" />
     <ClInclude Include="SceneComponent.h" />
     <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="testDynamicAABBTree.h" />
-    <ClInclude Include="testSceneComponent.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TypeCast.h" />
