@@ -65,7 +65,7 @@ public:
 
 public:
     // === 생성자 ===
-    explicit PhysicsStateArrays(size_t InitialSize);
+    explicit PhysicsStateArrays(size_t InitialSize, size_t AutoCompactThresholdSize = 64 , float AutoCompactThresholdRatio = 0.3332f);
     ~PhysicsStateArrays() = default;
 
     PhysicsStateArrays(const PhysicsStateArrays&) = delete;
@@ -98,6 +98,12 @@ public:
 
     // === 상태 조회 ===
 
+    /// 자동 압축 크기 임계점 조회
+    size_t GetAutoCompactThresholdSize() const { return AutoCompactThresholdSize; }
+
+    /// 자동 압축 비율 임계점 조회
+    float GetAutoCompactThresholdRatio() const { return AutoCompactThresholdRatio; }
+
     /// ID가 할당된 유효한 슬롯인지 확인
     bool IsAllocatedSlot(SoAID Id) const;
 
@@ -127,7 +133,9 @@ private:
     static constexpr uint32_t INVALID_IDX = 0;
     static constexpr uint32_t FIRST_VALID_ID = 1;
     static constexpr uint32_t FIRST_VALID_INDEX = 1;
-    static constexpr float COMPACTION_THRESHOLD = 0.3f;
+
+    size_t AutoCompactThresholdSize;      // 자동 압축을 고려할 최소 순회 범위
+    float AutoCompactThresholdRatio;      // 자동 압축을 유발하는 해제 비율
 
     // ID 관리
     std::unordered_map<SoAID, SoAIdx> IdToIdx;   // ID → Index 매핑

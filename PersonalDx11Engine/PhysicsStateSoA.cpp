@@ -2,12 +2,30 @@
 #include "Debug.h"
 
 // 생성자
-PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize)
+PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize, 
+                                     size_t InAutoCompactThresholdSize, 
+                                     float InAutoCompactThresholdRatio)
+    : AutoCompactThresholdSize(InAutoCompactThresholdSize)
+    , AutoCompactThresholdRatio(InAutoCompactThresholdRatio)
 {
     if (InitialSize == 0)
     {
         LOG_FUNC_CALL("[Warning] PhysicsStateArrays initialized with size 0");
         InitialSize = 1;
+    }
+
+    // 임계값 유효성 검증
+    if (InAutoCompactThresholdSize == 0)
+    {
+        LOG_FUNC_CALL("[Warning] AutoCompactThresholdSize is 0, setting to 1");
+       AutoCompactThresholdSize = 1;
+    }
+
+    if (InAutoCompactThresholdRatio <= 0.0f || InAutoCompactThresholdRatio >= 1.0f)
+    {
+        LOG_FUNC_CALL("[Warning] Invalid AutoCompactThresholdRatio %.3f, clamping to [0.1, 0.9]", 
+                      InAutoCompactThresholdRatio);
+       AutoCompactThresholdRatio = Math::Clamp(InAutoCompactThresholdRatio, 0.1f, 0.9f);
     }
 
     ResizeAllVectors(InitialSize);
@@ -23,7 +41,8 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize)
         ActiveFlags[INVALID_IDX] = false;
     }
 
-    LOG_FUNC_CALL("[Info] PhysicsStateArrays initialized with size: %zu", InitialSize);
+    LOG_FUNC_CALL("[Info] PhysicsStateArrays initialized - Size: %zu, CompactThresholdSize: %zu, CompactThresholdRatio: %.3f", 
+                  InitialSize,AutoCompactThresholdSize,AutoCompactThresholdRatio);
 }
 
 // === 객체 생명주기 관리 ===
@@ -284,7 +303,7 @@ void PhysicsStateArrays::ActivateObject(SoAID Id)
     LOG_FUNC_CALL("[Info] Activated object ID: %u", Id);
 }
 
-// === 상태 조회 ===
+// === 상태 조회 ==
 
 // ID가 할당된 유효한 슬롯인지 확인
 bool PhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
@@ -333,13 +352,16 @@ uint32_t PhysicsStateArrays::GetActiveObjectCount() const
 // 압축이 필요한지 확인
 bool PhysicsStateArrays::NeedsCompaction() const
 {
-    if (AllocatedCount == 0 || DeallocatedCount == 0)
+    // 조건 1: 순회 범위가 크기 임계값 이상이어야 함
+    // 조건 2: 해제된 객체가 있어야 함
+    // 조건 3: 해제 비율이 비율 임계값 이상이어야 함
+    if (AllocatedCount >= AutoCompactThresholdSize && DeallocatedCount > 0)
     {
-        return false;
+        float DeallocatedRatio = static_cast<float>(DeallocatedCount) / static_cast<float>(AllocatedCount);
+        return DeallocatedRatio >= AutoCompactThresholdRatio;
     }
 
-    float DeallocatedRatio = static_cast<float>(DeallocatedCount) / static_cast<float>(AllocatedCount);
-    return DeallocatedRatio >= COMPACTION_THRESHOLD;
+    return false;
 }
 
 // === 내부 헬퍼 함수들 ===

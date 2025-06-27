@@ -172,20 +172,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	FTestPhysicsState TestPhysicsState;
 	std::string input;
 	//PrintResult ( TestPhysicsState.TestBasicLifecycle() );
-	//std::getline(std::cin, input); // 사용자 입력을 기다림
+	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestIDReuseSystem() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	//PrintResult ( TestPhysicsState.TestIDReuseSystem() );
+	//std::getline(std::cin, input); 
+	
 	PrintResult ( TestPhysicsState.TestCompactionSystem() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	std::getline(std::cin, input); 
+
 	PrintResult ( TestPhysicsState.TestActivationManagement() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	std::getline(std::cin, input); 
+
 	PrintResult ( TestPhysicsState.TestStatusQueries() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	std::getline(std::cin, input); 
+
 	PrintResult ( TestPhysicsState.TestResizing() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	std::getline(std::cin, input); 
+
 	PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
-	std::getline(std::cin, input); // 사용자 입력을 기다림
+	std::getline(std::cin, input); 
 	return 0;
 #pragma endregion
 
