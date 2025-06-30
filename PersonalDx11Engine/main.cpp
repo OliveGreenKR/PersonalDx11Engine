@@ -150,7 +150,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GetWindowRect(hWnd, &appRect); //윈도우 크기 가져오기
 
 	// 콘솔 생성
-	CreateConsole(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
+	UConsoleManager::Get()->Initialize(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
 
 #pragma region temp Testing code Execution
 	//TestDynamicAABBTree::RunAllTestsIterate(std::cout, 100, 500, 500, 500);
@@ -454,6 +454,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Renderer = nullptr;
 	RenderHardware = nullptr;
 
+	//Console
+	UConsoleManager::Get()->Shutdown();
 #pragma region COM
 	CoUninitialize();
 #pragma endregion

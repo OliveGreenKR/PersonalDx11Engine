@@ -26,7 +26,216 @@ UConsoleManager::~UConsoleManager()
         ResetConsoleColor();
     }
 #endif
+    Shutdown();
 }
+
+// ConsoleManager.cpp에 추가할 구현
+
+bool UConsoleManager::Initialize(const FConsoleSettings& Settings)
+{
+    if (bConsoleCreated)
+    {
+        return true; // 이미 생성됨
+    }
+
+    ConsoleSettings = Settings;
+
+    if (!CreateConsoleWindow())
+    {
+        return false;
+    }
+
+    // 기존 초기화 로직
+    CategoryEnabledMask.store(CATEGORY_MASK_ALL);
+    LogBuffer.fill('\0');
+    WritePosition.store(0);
+    PendingBytes.store(0);
+
+    // 콘솔 색상 초기화
+    InitializeColors();
+
+    bConsoleCreated = true;
+    return true;
+}
+
+bool UConsoleManager::Initialize(int Width, int Height, int PosX, int PosY, int BufferLines)
+{
+    FConsoleSettings Settings;
+    Settings.Width = Width;
+    Settings.Height = Height;
+    Settings.PosX = PosX;
+    Settings.PosY = PosY;
+    Settings.BufferLines = BufferLines;
+    Settings.bAutoPosition = false;
+
+    return Initialize(Settings);
+}
+
+bool UConsoleManager::CreateConsoleWindow()
+{
+#ifdef _WIN32
+    // 콘솔 할당
+    if (!AllocConsole())
+    {
+        return false;
+    }
+
+    // 표준 입출력 스트림을 콘솔로 리다이렉션
+    FILE* pConsole = nullptr;
+    if (freopen_s(&pConsole, "CONOUT$", "w", stdout) != 0)
+    {
+        FreeConsole();
+        return false;
+    }
+
+    if (freopen_s(&pConsole, "CONIN$", "r", stdin) != 0)
+    {
+        FreeConsole();
+        return false;
+    }
+
+    // 콘솔 창 핸들 가져오기
+    ConsoleWindow = GetConsoleWindow();
+    if (!ConsoleWindow)
+    {
+        FreeConsole();
+        return false;
+    }
+
+    // 위치 및 크기 설정
+    SetupConsolePosition();
+
+    // 버퍼 설정
+    ConfigureConsoleBuffer();
+
+    // 콘솔 핸들 가져오기 (색상 출력용)
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    return true;
+#else
+    // 다른 플랫폼에서는 콘솔이 기본적으로 존재
+    hConsole = nullptr;
+    bConsoleCreated = true;
+    return true;
+#endif
+}
+
+void UConsoleManager::SetupConsolePosition()
+{
+#ifdef _WIN32
+    if (!ConsoleWindow) return;
+
+    int PosX = ConsoleSettings.PosX;
+    int PosY = ConsoleSettings.PosY;
+
+    // 자동 위치 설정
+    if (ConsoleSettings.bAutoPosition)
+    {
+        // 주 모니터 해상도 가져오기
+        int ScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int ScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        // 화면 우측에 배치
+        PosX = ScreenWidth - ConsoleSettings.Width - 50;
+        PosY = 50;
+    }
+
+    // 창 크기와 위치 설정
+    MoveWindow(ConsoleWindow, PosX, PosY,
+               ConsoleSettings.Width, ConsoleSettings.Height, TRUE);
+#endif
+}
+
+void UConsoleManager::ConfigureConsoleBuffer()
+{
+#ifdef _WIN32
+    HANDLE ConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (ConsoleHandle == INVALID_HANDLE_VALUE) return;
+
+    // 현재 콘솔 정보 가져오기
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(ConsoleHandle, &csbi);
+
+    // 버퍼 크기 설정
+    COORD bufferSize;
+    bufferSize.X = static_cast<SHORT>(std::min(ConsoleSettings.Width / 8, static_cast<int>(SHRT_MAX)));
+    bufferSize.Y = static_cast<SHORT>(std::min(ConsoleSettings.BufferLines, static_cast<int>(SHRT_MAX)));
+
+    SetConsoleScreenBufferSize(ConsoleHandle, bufferSize);
+#endif
+}
+
+void UConsoleManager::Shutdown()
+{
+#ifdef _WIN32
+    if (bConsoleCreated && ConsoleWindow)
+    {
+        // 버퍼 플러시
+        FlushBuffer();
+
+        // 콘솔 색상 복원
+        ResetConsoleColor();
+
+        // 콘솔 해제
+        FreeConsole();
+
+        ConsoleWindow = nullptr;
+        hConsole = INVALID_HANDLE_VALUE;
+        bConsoleCreated = false;
+    }
+#endif
+}
+
+void UConsoleManager::ShowConsole(bool bShow)
+{
+#ifdef _WIN32
+    if (ConsoleWindow)
+    {
+        ShowWindow(ConsoleWindow, bShow ? SW_SHOW : SW_HIDE);
+    }
+#endif
+}
+
+void UConsoleManager::SetConsolePosition(int PosX, int PosY)
+{
+#ifdef _WIN32
+    if (ConsoleWindow)
+    {
+        SetWindowPos(ConsoleWindow, nullptr, PosX, PosY, 0, 0,
+                     SWP_NOSIZE | SWP_NOZORDER);
+        ConsoleSettings.PosX = PosX;
+        ConsoleSettings.PosY = PosY;
+        ConsoleSettings.bAutoPosition = false;
+    }
+#endif
+}
+
+void UConsoleManager::SetConsoleSize(int Width, int Height)
+{
+#ifdef _WIN32
+    if (ConsoleWindow)
+    {
+        SetWindowPos(ConsoleWindow, nullptr, 0, 0, Width, Height,
+                     SWP_NOMOVE | SWP_NOZORDER);
+        ConsoleSettings.Width = Width;
+        ConsoleSettings.Height = Height;
+
+        // 버퍼 크기도 재조정
+        ConfigureConsoleBuffer();
+    }
+#endif
+}
+
+void UConsoleManager::SetConsoleTitleF(const char* Title)
+{
+#ifdef _WIN32
+    if (bConsoleCreated)
+    {
+        SetConsoleTitleA(Title);
+    }
+#endif
+}
+
 
 void UConsoleManager::Log(ELogCategory Category, const char* FileName, int LineNumber, const char* Format, ...)
 {

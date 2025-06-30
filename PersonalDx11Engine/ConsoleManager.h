@@ -64,10 +64,27 @@ private:
     std::atomic<bool> bAutoFlush{ true };
 
 #ifdef _WIN32
+private:
     HANDLE hConsole;
     WORD OriginalAttributes;
 #endif
+private:
+    // 콘솔 창 관련 추가 멤버
+    bool bConsoleCreated = false;
+    HWND ConsoleWindow = nullptr;
 
+    // 콘솔 설정
+    struct FConsoleSettings
+    {
+        int Width = 800;
+        int Height = 600;
+        int PosX = 100;
+        int PosY = 100;
+        int BufferLines = 1000;
+        bool bAutoPosition = true;
+    } ConsoleSettings;
+
+private:
     // 싱글톤
     UConsoleManager();
     ~UConsoleManager();
@@ -108,6 +125,31 @@ public:
     const char* GetCategoryName(ELogCategory Category) const;
     static constexpr size_t GetCategoryCount() { return static_cast<size_t>(ELogCategory::COUNT); }
 
+#pragma region Console
+public:
+    bool Initialize(const FConsoleSettings& Settings = FConsoleSettings{});
+    bool Initialize(int Width, int Height, int PosX, int PosY, int BufferLines = 1000);
+
+    // 콘솔 해제
+    void Shutdown();
+
+    // 콘솔 창 제어
+    void ShowConsole(bool bShow);
+    void SetConsolePosition(int PosX, int PosY);
+    void SetConsoleSize(int Width, int Height);
+    void SetConsoleTitleF(const char* Title);
+
+    // 설정 접근자
+    const FConsoleSettings& GetConsoleSettings() const { return ConsoleSettings; }
+    bool IsConsoleCreated() const { return bConsoleCreated; }
+
+private:
+        // 내부 콘솔 생성 함수
+        bool CreateConsoleWindow();
+        void ConfigureConsoleBuffer();
+        void SetupConsolePosition();
+
+#pragma endregion
 private:
     static constexpr uint8_t GetCategoryMask(ELogCategory Category)
     {
