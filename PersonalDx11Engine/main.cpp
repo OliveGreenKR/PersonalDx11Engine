@@ -166,32 +166,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	auto PrintResult = [](bool InBool) {
-		LOG("%s", InBool ? "PASS" : "FAIL"); };
+	//auto PrintResult = [](bool InBool) {
+	//	LOG("%s", InBool ? "PASS" : "FAIL"); };
 
-	FTestPhysicsState TestPhysicsState;
-	std::string input;
+	//FTestPhysicsState TestPhysicsState;
+	//std::string input;
+
 	//PrintResult ( TestPhysicsState.TestBasicLifecycle() );
 	//std::getline(std::cin, input); 
 
 	//PrintResult ( TestPhysicsState.TestIDReuseSystem() );
 	//std::getline(std::cin, input); 
-	
-	PrintResult ( TestPhysicsState.TestCompactionSystem() );
-	std::getline(std::cin, input); 
+	//
+	//PrintResult ( TestPhysicsState.TestCompactionSystem() );
+	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestActivationManagement() );
-	std::getline(std::cin, input); 
+	//PrintResult ( TestPhysicsState.TestActivationManagement() );
+	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestStatusQueries() );
-	std::getline(std::cin, input); 
+	//PrintResult ( TestPhysicsState.TestStatusQueries() );
+	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestResizing() );
-	std::getline(std::cin, input); 
+	//PrintResult ( TestPhysicsState.TestResizing() );
+	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
-	std::getline(std::cin, input); 
-	return 0;
+	//PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
+	//std::getline(std::cin, input); 
+	//return 0;
 #pragma endregion
 
 	//Hardware

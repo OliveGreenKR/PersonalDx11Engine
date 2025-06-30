@@ -177,25 +177,35 @@ bool PhysicsStateArrays::TryResize(uint32_t NewSize)
         return false;
     }
 
-    // 이미 충분한 크기인 경우
-    if (NewSize <= Size())
+    // 2. 이미 동일한 크기인 경우
+    if (NewSize == Size())
     {
-        LOG_FUNC_CALL("[Info] Resize skipped - already sufficient size: %u <= %zu", NewSize, Size());
+        LOG_FUNC_CALL("[Info] Resize skipped - already target size: %u", NewSize);
         return true;
     }
 
+    //Resize
     try
     {
         size_t OldSize = Size();
 
-        // 모든 SoA 벡터들 크기 조정
+        // 3. 모든 SoA 벡터들 크기 조정
         ResizeAllVectors(NewSize);
 
-        // 플래그 벡터들 크기 조정
-        ActiveFlags.resize(NewSize, false);
-        AllocatedFlags.resize(NewSize, false);
+        // 4. 플래그 벡터들 크기 조정
+        // 축소든 확장이든 동일한 호출 - vector가 알아서 처리
+        ActiveFlags.resize(NewSize, false);      // 확장 시에만 새 요소들이 false로 초기화
+        AllocatedFlags.resize(NewSize, false);   // 축소 시에는 false 매개변수 무시됨
 
-        LOG_FUNC_CALL("[Info] PhysicsStateArrays resized from %zu to %u", OldSize, NewSize);
+        if (NewSize > OldSize)
+        {
+            LOG_FUNC_CALL("[Info] Expanded arrays from %zu to %u", OldSize, NewSize);
+        }
+        else
+        {
+            LOG_FUNC_CALL("[Info] Shrunk arrays from %zu to %u", OldSize, NewSize);
+        }
+
         return true;
     }
     catch (const std::exception& e)
@@ -663,7 +673,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
 
 // === 최적화된 매핑 관리 함수들 ===
 
-// 해제된 ID의 매핑을 완전히 제거 (압축 시 사용) - 최적화된 버전
+// 해제된 ID의 매핑을 완전히 제거 (압축 시 사용)
 void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 {
     if (ToRemove.empty())
@@ -697,7 +707,7 @@ void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 
             RemovedCount++;
 
-            LOG_FUNC_CALL("[Debug] Removed mapping: ID %u → Index %u", Id, Index);
+            LOG_FUNC_CALL("[Debug] Removed mapping: ID %u => Index %u", Id, Index);
         }
         else
         {
