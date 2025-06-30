@@ -143,6 +143,7 @@
     <ClCompile Include="CollisionProcessor.cpp" />
     <ClCompile Include="CollisionResponseCalculator.cpp" />
     <ClCompile Include="ConfigReadManager.cpp" />
+    <ClCompile Include="ConsoleManager.cpp" />
     <ClCompile Include="Contents\GameObject\ElasticBody.cpp" />
     <ClCompile Include="Contents\Scenes\GameplayScene01.cpp" />
     <ClCompile Include="Contents\Scenes\GameplayScene02.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="CollisionShapeInterface.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ConfigReadManager.h" />
+    <ClInclude Include="ConsoleManager.h" />
     <ClInclude Include="ConstraintInterface.h" />
     <ClInclude Include="Contents\GameObject\ElasticBody.h" />
     <ClInclude Include="Contents\Scenes\GameplayScene01.h" />

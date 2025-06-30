@@ -83,9 +83,6 @@ void CreateConsole(int consoleWidth, int consoleHeight, int xPos, int yPos)
 	//bufferSize.Y = static_cast<SHORT>(min(consoleHeight / 16, SHRT_MAX)); // 대략적인 문자 높이로 나눔
 	bufferSize.Y = static_cast<SHORT>(min(consoleHeight, SHRT_MAX)); 
 	SetConsoleScreenBufferSize(consoleHandle, bufferSize);
-
-	// 콘솔 창 스타일 설정 (필요시)
-	// SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 }
 
 //struct for Processing Win Msgs

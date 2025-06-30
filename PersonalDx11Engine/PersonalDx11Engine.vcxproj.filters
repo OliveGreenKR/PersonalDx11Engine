@@ -149,6 +149,12 @@
     <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp">
       <Filter>Engine\Physics\Collision\Part\PositionCorreciton</Filter>
     </ClCompile>
+    <ClCompile Include="ConsoleManager.cpp">
+      <Filter>Engine\Singleton\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsStateSoA.cpp">
+      <Filter>Engine\Physics\PhysicsSoA</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="D3D">
@@ -373,6 +379,15 @@
     <Filter Include="Engine\String">
       <UniqueIdentifier>{d492e603-6bfb-4445-ac52-f7b80769f307}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Singleton\Console">
+      <UniqueIdentifier>{8eba02a6-e84c-4968-922a-853b8bac8a69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics\PhysicsSoA">
+      <UniqueIdentifier>{8292084b-1e27-49a3-831f-ff9875feedd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TestOnly">
+      <UniqueIdentifier>{cbe0d3f7-611b-4ef4-8689-3c90f5478ef6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -453,9 +468,6 @@
     <ClInclude Include="DynamicAABBTree.h">
       <Filter>Engine\DataStructure\DynamicAABBTree</Filter>
     </ClInclude>
-    <ClInclude Include="testDynamicAABBTree.h">
-      <Filter>Engine\DataStructure\DynamicAABBTree\test</Filter>
-    </ClInclude>
     <ClInclude Include="InputContext.h">
       <Filter>Engine\Input</Filter>
     </ClInclude>
@@ -479,9 +491,6 @@
     </ClInclude>
     <ClInclude Include="SceneComponent.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="testSceneComponent.h">
-      <Filter>Engine\Object\Components\ActorComponent\Scene\testScene</Filter>
     </ClInclude>
     <ClInclude Include="TypeCast.h">
       <Filter>Engine\Core</Filter>
@@ -647,6 +656,21 @@
     </ClInclude>
     <ClInclude Include="StringHash.h">
       <Filter>Engine\String</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleManager.h">
+      <Filter>Engine\Singleton\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsStateSoA.h">
+      <Filter>Engine\Physics\PhysicsSoA</Filter>
+    </ClInclude>
+    <ClInclude Include="test\testDynamicAABBTree.h">
+      <Filter>TestOnly</Filter>
+    </ClInclude>
+    <ClInclude Include="test\testPhysicsStateArray.h">
+      <Filter>TestOnly</Filter>
+    </ClInclude>
+    <ClInclude Include="test\testSceneComponent.h">
+      <Filter>TestOnly</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
