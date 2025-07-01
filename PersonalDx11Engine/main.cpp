@@ -55,36 +55,6 @@ using namespace std;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-void CreateConsole(int consoleWidth, int consoleHeight, int xPos, int yPos)
-{
-	// 콘솔 할당
-	AllocConsole();
-
-	// 표준 입출력 스트림을 콘솔로 리다이렉션
-	FILE* pConsole;
-	freopen_s(&pConsole, "CONOUT$", "w", stdout);
-	freopen_s(&pConsole, "CONIN$", "r", stdin);
-
-	// 콘솔 창의 핸들 가져오기
-	HWND consoleWindow = GetConsoleWindow();
-
-	// 콘솔 창의 크기와 위치 설정
-	RECT rect;
-	GetWindowRect(consoleWindow, &rect);
-	MoveWindow(consoleWindow, xPos, yPos, consoleWidth, consoleHeight, TRUE);
-
-	// 콘솔 버퍼 크기 설정
-	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(consoleHandle, &csbi);
-
-	COORD bufferSize;
-	bufferSize.X = static_cast<SHORT>(min(consoleWidth / 8, SHRT_MAX)); // 대략적인 문자 너비로 나눔
-	//bufferSize.Y = static_cast<SHORT>(min(consoleHeight / 16, SHRT_MAX)); // 대략적인 문자 높이로 나눔
-	bufferSize.Y = static_cast<SHORT>(min(consoleHeight, SHRT_MAX)); 
-	SetConsoleScreenBufferSize(consoleHandle, bufferSize);
-}
-
 //struct for Processing Win Msgs
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -150,7 +120,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GetWindowRect(hWnd, &appRect); //윈도우 크기 가져오기
 
 	// 콘솔 생성
-	UConsoleManager::Get()->Initialize(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.bottom - CONSOLE_HEIGHT);
+	UConsoleManager::Get()->
+		Initialize(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.left , appRect.bottom);
 
 #pragma region temp Testing code Execution
 	//TestDynamicAABBTree::RunAllTestsIterate(std::cout, 100, 500, 500, 500);
@@ -163,10 +134,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	FTestPhysicsState TestPhysicsState;
-	std::string input;
-	auto PrintResult = [](bool InBool) {
-		LOG("%s", InBool ? "PASS" : "FAIL"); };
+	//FTestPhysicsState TestPhysicsState;
+	//std::string input;
+	//auto PrintResult = [](bool InBool) {
+	//	LOG("%s", InBool ? "PASS" : "FAIL"); };
 
 	//PrintResult ( TestPhysicsState.TestBasicLifecycle() );
 	//std::getline(std::cin, input); 
@@ -186,9 +157,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//PrintResult ( TestPhysicsState.TestResizing() );
 	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
-	std::getline(std::cin, input); 
-	return 0;
+	//PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
+	//std::getline(std::cin, input); 
+	//return 0;
 #pragma endregion
 
 	//Hardware
@@ -441,6 +412,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		UFramePoolManager::Get()->EndFrame();
 #pragma endregion
 
+#pragma region Log
+		UConsoleManager::Get()->FlushBuffer();
+#pragma endregion
 	}//end main Loop
 #pragma endregion 
 

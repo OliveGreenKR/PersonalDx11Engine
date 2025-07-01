@@ -62,7 +62,6 @@ private:
     // 동기화
     mutable std::mutex BufferMutex;
     std::atomic<bool> bAutoFlush{ true };
-
 #ifdef _WIN32
 private:
     HANDLE hConsole;

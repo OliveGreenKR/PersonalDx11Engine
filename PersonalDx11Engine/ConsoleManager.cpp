@@ -254,10 +254,10 @@ void UConsoleManager::Log(ELogCategory Category, const char* FileName, int LineN
     va_end(Args);
 
     // 최종 메시지 조립 (카테고리 + 소스 정보 + 메시지)
-    const char* CategoryPrefix = GetCategoryName(Category);
+    //const char* CategoryPrefix = GetCategoryName(Category);
     snprintf(FormattedMessage, sizeof(FormattedMessage),
-             "[%s] %s:%d - %s\n",
-             CategoryPrefix, FileName, LineNumber, TempBuffer);
+             "%s:%d - %s\n",
+             FileName, LineNumber, TempBuffer);
 
     // 버퍼에 쓰기
     WriteToBuffer(Category, FormattedMessage);
