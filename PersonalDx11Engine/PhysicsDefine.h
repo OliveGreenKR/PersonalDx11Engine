@@ -28,7 +28,7 @@ struct FPhysicsState
 	float MaxSpeed = 0.0f;
 	float MaxAngularSpeed = 0.0f;
 	EPhysicsType PhysicsType = EPhysicsType::Dynamic;
-    FPhysicsMask PhysicsFlags = FPhysicsMask();
+    FPhysicsMask PhysicsMasks = FPhysicsMask();
 };
 
 struct FPhysicsMask

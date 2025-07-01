@@ -27,7 +27,7 @@ using SoAIdx = uint32_t;
 /// - 재사용/사용 가능한 ID-Slot의 관계는 항상 지속적으로 유효
 /// - 압축 시 FreeIDs는 완전 초기화되어 해제된 ID들은 영구 무효화
 /// </summary>
-struct PhysicsStateArrays
+struct FPhysicsStateArrays
 {
 public:
     // === 공개 물리 상태 데이터 (SoA 구조) ===
@@ -58,18 +58,17 @@ public:
     std::vector<FPhysicsMask> PhysicsMasks;
 
     // === 상태 관리 데이터 ===
-    std::vector<bool> ActiveFlags;       // 각 슬롯의 활성/비활성 (외부 연산 참고용)
     std::vector<bool> AllocatedFlags;    // 각 슬롯의 할당 여부
     uint32_t AllocatedCount = 0;         // 할당된 슬롯 수 (순회 범위)
     uint32_t DeallocatedCount = 0;       // 해제된 슬롯 수 (압축 대상)
 
 public:
     // === 생성자 ===
-    explicit PhysicsStateArrays(size_t InitialSize, size_t AutoCompactThresholdSize = 64 , float AutoCompactThresholdRatio = 0.3332f);
-    ~PhysicsStateArrays() = default;
+    explicit FPhysicsStateArrays(size_t InitialSize, size_t AutoCompactThresholdSize = 64 , float AutoCompactThresholdRatio = 0.3332f);
+    ~FPhysicsStateArrays() = default;
 
-    PhysicsStateArrays(const PhysicsStateArrays&) = delete;
-    PhysicsStateArrays& operator=(const PhysicsStateArrays&) = delete;
+    FPhysicsStateArrays(const FPhysicsStateArrays&) = delete;
+    FPhysicsStateArrays& operator=(const FPhysicsStateArrays&) = delete;
 
     // === 객체 생명주기 관리 ===
 
@@ -128,6 +127,9 @@ public:
     /// 재사용 가능한 ID 수
     uint32_t GetFreeIDCount() const { return static_cast<uint32_t>(ReusableIDs.size()); }
 
+    /// ID를 내부 인덱스로 변환
+    SoAIdx GetIndex(SoAID Id) const;
+
 private:
     static constexpr uint32_t INVALID_ID = 0;
     static constexpr uint32_t INVALID_IDX = 0;
@@ -144,9 +146,6 @@ private:
     std::vector<SoAID> ReusableIDs;                  // 재사용 가능한 ID 풀 (압축 시 초기화됨)
 
     // === 내부 헬퍼 함수들 ===
-
-    /// ID를 내부 인덱스로 변환 (할당된 ID만, 내부 전용)
-    SoAIdx GetIndex(SoAID Id) const;
 
     /// 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
     bool IsValidAllocatedIndex(SoAIdx Index) const;

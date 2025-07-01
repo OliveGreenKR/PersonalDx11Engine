@@ -1,6 +1,9 @@
 #pragma once
+
+using PhysicsID = uint32_t;
+
 ///물리시스템 관리 객체
-class IPhysicsObejct
+class IPhysicsObject
 {
 public:
     virtual void TickPhysics(const float DeltaTime) = 0;
@@ -14,4 +17,7 @@ public:
     //플래그 확인
     virtual bool IsStatic() const = 0;
     virtual bool IsActive() const = 0;
+
+    virtual PhysicsID GetPhysicsID() const = 0;
+    virtual void SetPhysicsID(PhysicsID InID) = 0;
 };

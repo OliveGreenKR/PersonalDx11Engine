@@ -4,7 +4,7 @@
 #include "ActorComponent.h"
 #include "SceneComponent.h"
 #include "PhysicsStateInterface.h"
-#include "PhysicsStateInternalInterface.h"
+#include "PhysicsDefine.h"
 #include "PhysicsObjectInterface.h"
 #include "PhysicsJob.h"
 
@@ -17,7 +17,7 @@ enum class ERigidBodyType
 };
 
 class URigidBodyComponent : public USceneComponent ,
-	public IPhysicsState, public IPhysicsObejct
+	public IPhysicsState, public IPhysicsObject
 {
 public:
 	URigidBodyComponent();
@@ -88,6 +88,8 @@ public:
 	// 현재 상태를 외부 상태로 저장
 	void SynchronizeCachedStateFromSimulated()  override;
 	bool IsActive() const override;
+	PhysicsID GetPhysicsID() const override { return PhysicsID; }
+	void SetPhysicsID(uint32_t InID) override { PhysicsID = InID; }
 #pragma endregion
 public:
 	// 물리 속성 설정
@@ -100,25 +102,19 @@ public:
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
 
-	inline void SetMaxSpeed(float InSpeed) { MaxSpeed = InSpeed; }
-	inline void SetMaxAngularSpeed(float InSpeed) { MaxAngularSpeed = InSpeed; }
-	inline void SetGravityScale(float InScale) { GravityScale = InScale; }
+	inline void SetMaxSpeed(float InSpeed);
+	inline void SetMaxAngularSpeed(float InSpeed);
+	inline void SetGravityScale(float InScale);
 public:
 	// 시뮬레이션 플래그
 	void SetGravity(const bool InBool);
-	bool IsGravity() const { return CachedState. }
-	bool IsStatic() const { return CachedState.RigidType == ERigidBodyType::Static; }
+	bool IsGravity() const { return CachedState.PhysicsMasks.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED); }
+	bool IsStatic() const { return CachedState.PhysicsType == EPhysicsType::Static; }
 
 private:
 	void RegisterPhysicsSystem() override;
 	void UnRegisterPhysicsSystem() override;
 
-	//속도에 따른 트랜스폼 변화
-	void P_UpdateTransformByVelocity(float DeltaTime);
-	void ClampVelocities(Vector3& OutVelocity, Vector3& OutAngularVelocity);
-	void ClampLinearVelocity(Vector3& OutVelocity);
-	void ClampAngularVelocity(Vector3& OutAngularVelocity);
-	void ApplyDrag(float DeltaTime) {}//todo
 	Vector3 GetCenterOfMass() const;
 
 	__forceinline bool IsSpeedRestricted() { return !(MaxSpeed < 0.0f); }
@@ -136,9 +132,10 @@ private:
 
 private:
 	
+	SoAID PhysicsID = 0;
+
 	mutable bool bStateDirty = false;
-	FRigidPhysicsState CachedState;  //저장된 물리 상태값, 외부에 읽기전용으로 제공될것
-	mutable FRigidPhysicsState SimulatedState;  //물리시스템 내부 연산용 물리 상태값. 
+	FPhysicsState CachedState;  //저장된 물리 상태값, 외부에 읽기전용으로 제공될것
 
 	float MaxSpeed = 400.0f;
 	float MaxAngularSpeed = 6.0f * PI;

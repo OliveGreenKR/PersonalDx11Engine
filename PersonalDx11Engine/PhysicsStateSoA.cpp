@@ -2,7 +2,7 @@
 #include "Debug.h"
 
 // 생성자
-PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize, 
+FPhysicsStateArrays::FPhysicsStateArrays(size_t InitialSize, 
                                      size_t InAutoCompactThresholdSize, 
                                      float InAutoCompactThresholdRatio)
     : AutoCompactThresholdSize(InAutoCompactThresholdSize)
@@ -29,7 +29,6 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize,
     }
 
     ResizeAllVectors(InitialSize);
-    ActiveFlags.resize(InitialSize, false);
     AllocatedFlags.resize(InitialSize, false);
 
     // 첫 번째 슬롯(인덱스 0)은 더미로 사용 (INVALID_ID 대응)
@@ -38,7 +37,7 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize,
         InitializeSlot(INVALID_IDX);
         // 더미 슬롯은 할당되지 않은 상태로 유지
         AllocatedFlags[INVALID_IDX] = false;
-        ActiveFlags[INVALID_IDX] = false;
+        PhysicsMasks[INVALID_IDX].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
     }
 
     LOG_INFO("PhysicsStateArrays initialized - Size: %zu, CompactThresholdSize: %zu, CompactThresholdRatio: %.3f", 
@@ -48,7 +47,7 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize,
 // === 객체 생명주기 관리 ===
 
 // 새 슬롯 할당
-SoAID PhysicsStateArrays::AllocateSlot()
+SoAID FPhysicsStateArrays::AllocateSlot()
 {
     // 공간이 부족하면 확장 시도
     if (AllocatedCount >= Size()-1)
@@ -88,7 +87,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
 
         // 재할당: 기존 매핑 유지, 상태만 변경
         AllocatedFlags[NewIndex] = true;
-        ActiveFlags[NewIndex] = true;
+        PhysicsMasks[NewIndex].SetFlag(FPhysicsMask::MASK_ACTIVATION);
 
         // 해제 카운트 감소
         DeallocatedCount--;
@@ -117,7 +116,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         // 슬롯 초기화 및 활성화
         InitializeSlot(NewIndex);
         AllocatedFlags[NewIndex] = true;
-        ActiveFlags[NewIndex] = true;
+        PhysicsMasks[INVALID_IDX].SetFlag(FPhysicsMask::MASK_ACTIVATION);
 
         LOG_INFO("Allocated new slot - ID: %u, Index: %u", NewId, NewIndex);
     }
@@ -126,7 +125,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
 }
 
 // 슬롯 해제 - 재사용가능한 슬롯으로 만듦
-void PhysicsStateArrays::DeallocateSlot(SoAID Id)
+void FPhysicsStateArrays::DeallocateSlot(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
@@ -153,7 +152,7 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
 
     // 슬롯 해제: 매핑은 유지, 상태만 변경
     AllocatedFlags[Index] = false;
-    ActiveFlags[Index] = false;
+    PhysicsMasks[Index].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
 
     // ID를 재사용 풀에 추가
     ReusableIDs.push_back(Id);
@@ -168,7 +167,7 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
 }
 
 // 배열 크기 변경
-bool PhysicsStateArrays::TryResize(uint32_t NewSize)
+bool FPhysicsStateArrays::TryResize(uint32_t NewSize)
 {
     // 현재 할당된 크기보다 작게 축소 시도 시 거부
     if (NewSize < AllocatedCount+1)
@@ -194,7 +193,6 @@ bool PhysicsStateArrays::TryResize(uint32_t NewSize)
 
         // 4. 플래그 벡터들 크기 조정
         // 축소든 확장이든 동일한 호출 - vector가 알아서 처리
-        ActiveFlags.resize(NewSize, false);      // 확장 시에만 새 요소들이 false로 초기화
         AllocatedFlags.resize(NewSize, false);   // 축소 시에는 false 매개변수 무시됨
 
         if (NewSize > OldSize)
@@ -216,7 +214,7 @@ bool PhysicsStateArrays::TryResize(uint32_t NewSize)
 }
 
 // 압축 필요 시 수행
-void PhysicsStateArrays::CompactIfNeeded()
+void FPhysicsStateArrays::CompactIfNeeded()
 {
     if (NeedsCompaction())
     {
@@ -228,7 +226,7 @@ void PhysicsStateArrays::CompactIfNeeded()
 }
 
 // 명시적 압축 수행
-void PhysicsStateArrays::ForceCompact()
+void FPhysicsStateArrays::ForceCompact()
 {
     if (DeallocatedCount > 0)
     {
@@ -244,7 +242,7 @@ void PhysicsStateArrays::ForceCompact()
 // === 활성화 상태 관리 ===
 
 // 객체 비활성화
-void PhysicsStateArrays::DeactivateObject(SoAID Id)
+void FPhysicsStateArrays::DeactivateObject(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
@@ -268,18 +266,18 @@ void PhysicsStateArrays::DeactivateObject(SoAID Id)
         return;
     }
 
-    if (!ActiveFlags[Index])
+    if (!PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION))
     {
         LOG_INFO("ID %u is already inactive", Id);
         return;
     }
 
-    ActiveFlags[Index] = false;
+    PhysicsMasks[Index].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
     LOG_INFO("Deactivated object ID: %u", Id);
 }
 
 // 객체 활성화
-void PhysicsStateArrays::ActivateObject(SoAID Id)
+void FPhysicsStateArrays::ActivateObject(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
@@ -303,20 +301,20 @@ void PhysicsStateArrays::ActivateObject(SoAID Id)
         return;
     }
 
-    if (ActiveFlags[Index])
+    if (PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION))
     {
         LOG_INFO("ID %u is already active", Id);
         return;
     }
 
-    ActiveFlags[Index] = true;
+    PhysicsMasks[Index].SetFlag(FPhysicsMask::MASK_ACTIVATION);
     LOG_INFO("Activated object ID: %u", Id);
 }
 
 // === 상태 조회 ==
 
 // ID가 할당된 유효한 슬롯인지 확인
-bool PhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
+bool FPhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
 {
     if (Id == INVALID_ID)
     {
@@ -334,7 +332,7 @@ bool PhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
 }
 
 // ID 객체가 활성 상태인지 확인 (할당되고 활성화된 경우만 true)
-bool PhysicsStateArrays::IsActiveObject(SoAID Id) const
+bool FPhysicsStateArrays::IsActiveObject(SoAID Id) const
 {
     if (!IsAllocatedSlot(Id))
     {
@@ -342,16 +340,16 @@ bool PhysicsStateArrays::IsActiveObject(SoAID Id) const
     }
 
     SoAIdx Index = GetIndex(Id);
-    return ActiveFlags[Index];
+    return PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
 }
 
 // 활성 객체 수 계산
-uint32_t PhysicsStateArrays::GetActiveObjectCount() const
+uint32_t FPhysicsStateArrays::GetActiveObjectCount() const
 {
     uint32_t ActiveCount = 0;
     for (uint32_t i = FIRST_VALID_INDEX; i <= AllocatedCount; ++i)
     {
-        if (AllocatedFlags[i] && ActiveFlags[i])
+        if (AllocatedFlags[i] && PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_ACTIVATION))
         {
             ActiveCount++;
         }
@@ -360,7 +358,7 @@ uint32_t PhysicsStateArrays::GetActiveObjectCount() const
 }
 
 // 압축이 필요한지 확인
-bool PhysicsStateArrays::NeedsCompaction() const
+bool FPhysicsStateArrays::NeedsCompaction() const
 {
     // 조건 1: 순회 범위가 크기 임계값 이상이어야 함
     // 조건 2: 해제된 객체가 있어야 함
@@ -377,7 +375,7 @@ bool PhysicsStateArrays::NeedsCompaction() const
 // === 내부 헬퍼 함수들 ===
 
 // ID를 내부 인덱스로 변환 (할당된 ID만, 내부 전용)
-SoAIdx PhysicsStateArrays::GetIndex(SoAID Id) const
+SoAIdx FPhysicsStateArrays::GetIndex(SoAID Id) const
 {
     auto It = IdToIdx.find(Id);
     if (It == IdToIdx.end())
@@ -389,13 +387,13 @@ SoAIdx PhysicsStateArrays::GetIndex(SoAID Id) const
 }
 
 // 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
-bool PhysicsStateArrays::IsValidAllocatedIndex(SoAIdx Index) const
+bool FPhysicsStateArrays::IsValidAllocatedIndex(SoAIdx Index) const
 {
     return Index >= 1 && Index <= AllocatedCount && AllocatedFlags[Index];
 }
 
 // 슬롯을 기본값으로 초기화
-void PhysicsStateArrays::InitializeSlot(SoAIdx Index)
+void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
 {
     if (Index >= Size())
     {
@@ -430,7 +428,7 @@ void PhysicsStateArrays::InitializeSlot(SoAIdx Index)
 }
 
 // 모든 SoA 벡터들을 동시에 크기 조정
-void PhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
+void FPhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
 {
     try
     {
@@ -469,7 +467,7 @@ void PhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
 // === 압축 관련 함수들 ===
 
 // 압축 실행: 유효 객체들을 앞쪽으로 이동, FreeIDs 초기화
-void PhysicsStateArrays::PerformCompaction()
+void FPhysicsStateArrays::PerformCompaction()
 {
     if (DeallocatedCount == 0)
     {
@@ -500,7 +498,7 @@ void PhysicsStateArrays::PerformCompaction()
 
                 // 이전 위치 정리
                 AllocatedFlags[ReadIndex] = false;
-                ActiveFlags[ReadIndex] = false;
+                PhysicsMasks[ReadIndex].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
             }
 
             WriteIndex++;
@@ -523,7 +521,7 @@ void PhysicsStateArrays::PerformCompaction()
 }
 
 // 슬롯 데이터를 한 위치에서 다른 위치로 이동
-void PhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
+void FPhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
 {
     if (FromIndex >= Size() || ToIndex >= Size())
     {
@@ -563,12 +561,11 @@ void PhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
     PhysicsMasks[ToIndex] = PhysicsMasks[FromIndex];
 
     // 상태 플래그 이동
-    ActiveFlags[ToIndex] = ActiveFlags[FromIndex];
     AllocatedFlags[ToIndex] = AllocatedFlags[FromIndex];
 }
 
 // 두 슬롯의 데이터를 교환
-void PhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
+void FPhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
 {
     if (Index1 >= Size() || Index2 >= Size())
     {
@@ -608,10 +605,6 @@ void PhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
     std::swap(PhysicsMasks[Index1], PhysicsMasks[Index2]);
 
     // 상태 플래그 교환
-    bool tempActive = ActiveFlags[Index1];
-    ActiveFlags[Index1] = ActiveFlags[Index2];
-    ActiveFlags[Index2] = tempActive;
-
     bool tempAllocated = AllocatedFlags[Index1];
     AllocatedFlags[Index1] = AllocatedFlags[Index2];
     AllocatedFlags[Index2] = tempAllocated;
@@ -620,7 +613,7 @@ void PhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
 // === 매핑 관리 함수들 구현 ===
 
 // 매핑 관계를 업데이트 (압축 시 사용)
-void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex)
+void FPhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex)
 {
     if (OldIndex >= Size() || NewIndex >= Size())
     {
@@ -674,7 +667,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
 // === 최적화된 매핑 관리 함수들 ===
 
 // 해제된 ID의 매핑을 완전히 제거 (압축 시 사용)
-void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
+void FPhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 {
     if (ToRemove.empty())
     {
@@ -727,7 +720,7 @@ void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 
 // 매핑 무결성 검증 (디버그용)
 #ifdef _DEBUG
-void PhysicsStateArrays::ValidateMappingIntegrity() const
+void FPhysicsStateArrays::ValidateMappingIntegrity() const
 {
     // ID → Index 매핑 검증
     for (const auto& [Id, Index] : IdToIdx)

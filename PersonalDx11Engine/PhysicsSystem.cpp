@@ -34,12 +34,12 @@ void UPhysicsSystem::RequestPhysicsJob(const FPhysicsJobRequest& RequestedJob)
     JobQueue.Push(RequestedJob);
 }
 
-void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
+void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& InObject)
 {
     if (!InObject)
         return;
 
-    auto It = std::find_if(RegisteredObjects.begin(), RegisteredObjects.end(), [&InObject](const std::weak_ptr<IPhysicsObejct>& Object)
+    auto It = std::find_if(RegisteredObjects.begin(), RegisteredObjects.end(), [&InObject](const std::weak_ptr<IPhysicsObject>& Object)
                  {
                      return Object.lock() == InObject;
                  });
@@ -48,23 +48,27 @@ void UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InOb
         return;
     
     RegisteredObjects.push_back(InObject);
+    PhysicsID NewPhysicsID = PhysicsStateSoA->AllocateSlot();
+    InObject->SetPhysicsID(NewPhysicsID);
 }
 
-void UPhysicsSystem::UnregisterPhysicsObject(std::shared_ptr<IPhysicsObejct>& InObject)
+void UPhysicsSystem::UnregisterPhysicsObject(std::shared_ptr<IPhysicsObject>& InObject)
 {
     if (!InObject)
         return;
 
-    RegisteredObjects.erase(
-        std::remove_if(
-            RegisteredObjects.begin(), RegisteredObjects.end(),
-            [&InObject](const std::weak_ptr<IPhysicsObejct>& Object) {
-                return Object.lock() == InObject;
-            }
-        ),
-        RegisteredObjects.end()
+    auto EraseIt = std::remove_if(
+        RegisteredObjects.begin(), RegisteredObjects.end(),
+        [&InObject](const std::weak_ptr<IPhysicsObject>& Object) {
+            return Object.lock() == InObject;
+        }
     );
-
+    if (EraseIt != RegisteredObjects.end())
+    {
+        PhysicsID ErasedID = InObject->GetPhysicsID();
+        RegisteredObjects.erase(EraseIt, RegisteredObjects.end());
+        PhysicsStateSoA->DeallocateSlot(ErasedID);
+    }
 }
 
 // 메인 물리 업데이트 (메인 루프에서 호출)
@@ -98,6 +102,7 @@ void UPhysicsSystem::Initialzie()
     {
         LoadConfigFromIni();
         RegisteredObjects.reserve(InitialPhysicsObjectCapacity);
+        PhysicsStateSoA = std::make_unique<FPhysicsStateArrays>(InitialPhysicsObjectCapacity , 64, 0.332f);
         PhysicsJobPool.Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
     }
     catch (...)
@@ -130,35 +135,18 @@ void UPhysicsSystem::PrepareSimulation()
         std::remove_if(
             RegisteredObjects.begin(),
             RegisteredObjects.end(),
-            [](const std::weak_ptr<IPhysicsObejct>& objWeak) {
+            [](const std::weak_ptr<IPhysicsObject>& objWeak) {
                 return objWeak.expired();
             }
         ),        RegisteredObjects.end()
     );
-
-    // 모든 물리 객체의 현재 상태 캡처
-    for (auto& ObjectWeak : RegisteredObjects)
-    {
-        auto Object = ObjectWeak.lock();
-        if (!Object)
-        {
-            LOG_FUNC_CALL("[Error] InValid PhysicsObejct");
-            continue;
-        }
-   
-        // 외부상태 현재 상태로 캡처
-        if (Object->IsActive() && (Object->IsDirtyPhysicsState()))
-        {
-            Object->UpdateSimulatedStateFromCached();
-        }
-    }
 
     // 작업 큐 차례대로 실행
     for (auto& RequestedJob : JobQueue)
     {
         if (!RequestedJob.IsValid())
             continue;
-        RequestedJob.PhysicsJob->Execute(RequestedJob.TargetWeak.lock().get());
+        RequestedJob.PhysicsJob->Execute(RequestedJob.TargetWeak.lock().get(), _placeholder_);
     }
     //JobQeueu 클리어
     JobQueue.Clear();
@@ -238,6 +226,84 @@ void UPhysicsSystem::FinalizeSimulation()
     }
 }
 
+#pragma region Numeric Stability for PhysicsStates
+bool UPhysicsSystem::IsValidForce(const Vector3& InForce)
+{
+    return InForce.LengthSquared() > 100.0f;
+}
+
+bool UPhysicsSystem::IsValidTorque(const Vector3& InTorque)
+{
+    return InTorque.LengthSquared() > 100.0f;
+}
+
+bool UPhysicsSystem::IsValidVelocity(const Vector3& InVelocity)
+{
+    return InVelocity.LengthSquared() > KINDA_SMALL;
+}
+
+bool UPhysicsSystem::IsValidAngularVelocity(const Vector3& InAngularVelocity)
+{
+    return InAngularVelocity.LengthSquared() > KINDA_SMALL;
+}
+bool UPhysicsSystem::IsValidAcceleration(const Vector3& InAccel)
+{
+    return InAccel.LengthSquared() > 1.0f;
+}
+bool UPhysicsSystem::IsValidAngularAcceleration(const Vector3& InAngularAccel)
+{
+    return InAngularAccel.LengthSquared() > 1.0f;;
+}
+#pragma endregion
+
+void UPhysicsSystem::ClampVelocities(SoAID ObjectID)
+{
+    if (!PhysicsStateSoA->IsAllocatedSlot(ObjectID) ||
+        !PhysicsStateSoA->IsActiveObject(ObjectID))
+    {
+        return;
+    }
+
+    SoAIdx Index = PhysicsStateSoA->GetIndex(ObjectID);
+
+    XMVECTOR& Velocity = PhysicsStateSoA->Velocities[Index];
+    const float MaxLinearSpeed = PhysicsStateSoA->MaxSpeeds[Index];
+
+    XMVECTOR& AngularVelocity = PhysicsStateSoA->AngularVelocities[Index];
+    const float MaxAngularSpeed = PhysicsStateSoA->MaxAngularSpeeds[Index];
+
+    ClampLinearVelocity(MaxLinearSpeed, Velocity);
+    ClampAngularVelocity(MaxAngularSpeed, AngularVelocity);
+}
+
+void UPhysicsSystem::ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity)
+{
+    float Speed = XMVector3Length(InOutVelocity).m128_f32[0];
+
+    if (Speed > InMaxSpeed)
+    {
+        InOutVelocity = XMVector3Normalize(InOutVelocity) * InMaxSpeed;
+    }
+    else if (Speed < KINDA_SMALL)
+    {
+        InOutVelocity = XMVectorZero();
+    }
+}
+
+void UPhysicsSystem::ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity)
+{
+    // 각속도 제한
+    float angularSpeedSq = XMVector3Length(InOutAngularVelocity).m128_f32[0];
+
+    if (angularSpeedSq > InAngularMaxSpeed * InAngularMaxSpeed)
+    {
+        InOutAngularVelocity = XMVector3Normalize(InOutAngularVelocity) * InAngularMaxSpeed;
+    }
+    else if (angularSpeedSq < KINDA_SMALL)
+    {
+        InOutAngularVelocity = XMVectorZero();
+    }
+}
 
 ///////////////////////////////////////////////////////////
 
