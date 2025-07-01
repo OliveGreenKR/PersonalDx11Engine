@@ -1,6 +1,6 @@
 // ConsoleManager.h
 #pragma once
-
+#include <cstdint>
 #include <cstdio>
 #include <cstdarg>
 #include <cstring>
@@ -16,11 +16,11 @@
 #endif
 
 // 로그 카테고리
-enum class ELogCategory : uint8_t
+enum class ELogCategory : std::uint8_t
 {
     LogLevel_Normal = 0,
     LogLevel_Info,
-    LogLevel_Error,    
+    LogLevel_Error,
     LogLevel_Warning,
     COUNT
 };
@@ -33,6 +33,7 @@ namespace LogLevel
     constexpr ELogCategory Error = ELogCategory::LogLevel_Error;
     constexpr ELogCategory Warning = ELogCategory::LogLevel_Warning;
 }
+
 class UConsoleManager
 {
 private:
@@ -51,7 +52,7 @@ private:
     // 로깅 카테고리
     std::atomic<uint8_t> CategoryEnabledMask{ CATEGORY_MASK_ALL }; // 기본값: 모든 카테고리 활성화
 
-    // 색상 배열은 유지 (자주 변경되지 않으므로)
+    // 색상 배열 (Windows API 호환용)
     std::array<WORD, static_cast<size_t>(ELogCategory::COUNT)> CategoryColors;
 
     // 단순한 순환 문자열 버퍼
@@ -62,13 +63,15 @@ private:
     // 동기화
     mutable std::mutex BufferMutex;
     std::atomic<bool> bAutoFlush{ true };
+
 #ifdef _WIN32
 private:
     HANDLE hConsole;
     WORD OriginalAttributes;
 #endif
+
 private:
-    // 콘솔 창 관련 추가 멤버
+    // 콘솔 창 관련 멤버
     bool bConsoleCreated = false;
     HWND ConsoleWindow = nullptr;
 
@@ -82,6 +85,17 @@ private:
         int BufferLines = 1000;
         bool bAutoPosition = true;
     } ConsoleSettings;
+
+private:
+    // Virtual Terminal 지원 여부 (내부적으로만 사용)
+    bool bVirtualTerminalEnabled = false;
+
+    // ANSI 색상 코드 상수 (내부적으로만 사용)
+    static constexpr const char* ANSI_RESET = "\033[0m";
+    static constexpr const char* ANSI_RED = "\033[91m";
+    static constexpr const char* ANSI_GREEN = "\033[92m";
+    static constexpr const char* ANSI_YELLOW = "\033[93m";
+    static constexpr const char* ANSI_WHITE = "\033[97m";
 
 private:
     // 싱글톤
@@ -110,9 +124,6 @@ public:
     void SetCategoryEnabled(ELogCategory Category, bool bEnabled);
     void EnableAllCategories() { CategoryEnabledMask.store(CATEGORY_MASK_ALL); }
     void DisableAllCategories() { CategoryEnabledMask.store(0); }
-
-    WORD GetCategoryColor(ELogCategory Category) const;
-    void SetCategoryColor(ELogCategory Category, WORD Color);
 
     bool IsAutoFlushEnabled() const { return bAutoFlush.load(); }
     void SetAutoFlush(bool bEnabled) { bAutoFlush.store(bEnabled); }
@@ -143,12 +154,13 @@ public:
     bool IsConsoleCreated() const { return bConsoleCreated; }
 
 private:
-        // 내부 콘솔 생성 함수
-        bool CreateConsoleWindow();
-        void ConfigureConsoleBuffer();
-        void SetupConsolePosition();
+    // 내부 콘솔 생성 함수
+    bool CreateConsoleWindow();
+    void ConfigureConsoleBuffer();
+    void SetupConsolePosition();
 
 #pragma endregion
+
 private:
     static constexpr uint8_t GetCategoryMask(ELogCategory Category)
     {
@@ -156,7 +168,15 @@ private:
     }
 
     void WriteToBuffer(ELogCategory Category, const char* FormattedMessage);
+
+    // 색상 설정 (Virtual Terminal 지원 여부에 따라 내부적으로 방식 선택)
     void SetConsoleColor(ELogCategory Category);
     void ResetConsoleColor();
     void InitializeColors();
+
+    // Virtual Terminal 관련 (내부적으로만 사용)
+    bool EnableVirtualTerminal();
+    const char* GetAnsiColorCode(ELogCategory Category) const;
+    WORD GetCategoryColor(ELogCategory Category) const;
+    void SetCategoryColor(ELogCategory Category, WORD Color);
 };

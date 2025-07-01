@@ -1,8 +1,4 @@
 #include "ConsoleManager.h"
-
-// ConsoleManager.cpp
-#include "ConsoleManager.h"
-
 UConsoleManager::UConsoleManager()
 {
     // 기본값: 모든 카테고리 활성화
@@ -17,7 +13,6 @@ UConsoleManager::UConsoleManager()
     InitializeColors();
 }
 
-
 UConsoleManager::~UConsoleManager()
 {
 #ifdef _WIN32
@@ -29,7 +24,71 @@ UConsoleManager::~UConsoleManager()
     Shutdown();
 }
 
-// ConsoleManager.cpp에 추가할 구현
+#pragma region Virtual Terminal
+bool UConsoleManager::EnableVirtualTerminal()
+{
+#ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode))
+    {
+        return false;
+    }
+
+    // Virtual Terminal Processing 활성화
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (!SetConsoleMode(hOut, dwMode))
+    {
+        return false;
+    }
+
+    bVirtualTerminalEnabled = true;
+    return true;
+#else
+    // Unix/Linux 시스템은 기본적으로 ANSI 이스케이프 시퀀스 지원
+    bVirtualTerminalEnabled = true;
+    return true;
+#endif
+}
+
+const char* UConsoleManager::GetAnsiColorCode(ELogCategory Category) const
+{
+    if (!bVirtualTerminalEnabled)
+        return "";
+
+    switch (Category)
+    {
+        case ELogCategory::LogLevel_Error:   return ANSI_RED;
+        case ELogCategory::LogLevel_Warning: return ANSI_YELLOW;
+        case ELogCategory::LogLevel_Info:    return ANSI_GREEN;
+        case ELogCategory::LogLevel_Normal:  return ANSI_WHITE;
+        default: return ANSI_RESET;
+    }
+}
+
+WORD UConsoleManager::GetCategoryColor(ELogCategory Category) const
+{
+    size_t Index = static_cast<size_t>(Category);
+    if (Index >= CategoryColors.size())
+        return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // 기본 흰색
+
+    return CategoryColors[Index];
+}
+
+void UConsoleManager::SetCategoryColor(ELogCategory Category, WORD Color)
+{
+    size_t Index = static_cast<size_t>(Category);
+    if (Index < CategoryColors.size())
+    {
+        CategoryColors[Index] = Color;
+    }
+}
+#pragma endregion
 
 bool UConsoleManager::Initialize(const FConsoleSettings& Settings)
 {
@@ -51,8 +110,11 @@ bool UConsoleManager::Initialize(const FConsoleSettings& Settings)
     WritePosition.store(0);
     PendingBytes.store(0);
 
-    // 콘솔 색상 초기화
+    // 색상 초기화
     InitializeColors();
+
+    // Virtual Terminal 활성화 시도 (내부적으로 처리)
+    EnableVirtualTerminal();
 
     bConsoleCreated = true;
     return true;
@@ -267,19 +329,67 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
 {
     std::lock_guard<std::mutex> Lock(BufferMutex);
 
-    size_t MessageLength = strlen(FormattedMessage);
+    char ColoredMessage[MAX_SINGLE_LOG_SIZE * 2]; // 색상 코드를 위한 추가 공간
+    size_t MessageLength;
+    const char* CategoryPrefix = GetCategoryName(Category);
+
+    if (bVirtualTerminalEnabled)
+    {
+        // ANSI 이스케이프 시퀀스를 포함한 메시지 생성 (CategoryPrefix 포함)
+        const char* colorCode = GetAnsiColorCode(Category);
+        int result = snprintf(ColoredMessage, sizeof(ColoredMessage),
+                              "[%s] %s%s%s",
+                              CategoryPrefix,
+                              colorCode,
+                              FormattedMessage,
+                              ANSI_RESET);
+
+        if (result < 0 || result >= static_cast<int>(sizeof(ColoredMessage)))
+        {
+            // 버퍼 오버플로우 방지: CategoryPrefix + 원본 메시지만 사용
+            int fallbackResult = snprintf(ColoredMessage, sizeof(ColoredMessage),
+                                          "[%s] %s", CategoryPrefix, FormattedMessage);
+
+            if (fallbackResult < 0 || fallbackResult >= static_cast<int>(sizeof(ColoredMessage)))
+            {
+                // 최후의 안전장치: 강제로 null 종료
+                ColoredMessage[sizeof(ColoredMessage) - 1] = '\0';
+            }
+        }
+
+        MessageLength = strlen(ColoredMessage);
+    }
+    else
+    {
+        // Virtual Terminal이 비활성화된 경우: CategoryPrefix + 원본 메시지
+        int result = snprintf(ColoredMessage, sizeof(ColoredMessage),
+                              "[%s] %s",
+                              CategoryPrefix,
+                              FormattedMessage);
+
+        if (result < 0 || result >= static_cast<int>(sizeof(ColoredMessage)))
+        {
+            // 버퍼 오버플로우 방지: 강제로 null 종료
+            ColoredMessage[sizeof(ColoredMessage) - 1] = '\0';
+        }
+
+        MessageLength = strlen(ColoredMessage);
+
+        // 즉시 색상 설정 (Windows API 방식)
+        SetConsoleColor(Category);
+    }
+
     size_t CurrentPos = WritePosition.load();
 
     // 버퍼 오버플로우 체크
     if (MessageLength >= BUFFER_SIZE - CurrentPos)
     {
-        // 버퍼가 가득 찼으면 강제 플러시
         FlushBuffer();
         CurrentPos = 0;
     }
 
-    // 문자열 복사
-    memcpy(&LogBuffer[CurrentPos], FormattedMessage, MessageLength);
+    // 메시지를 버퍼에 저장
+    memcpy(&LogBuffer[CurrentPos], ColoredMessage, MessageLength);
 
     // 위치 업데이트
     WritePosition.store(CurrentPos + MessageLength);
@@ -299,7 +409,6 @@ void UConsoleManager::FlushBuffer()
     if (PendingBytes.load() == 0)
         return;
 
-    // 버퍼 전체를 한 번에 출력
     size_t CurrentWrite = WritePosition.load();
     LogBuffer[CurrentWrite] = '\0'; // null 종료 보장
 
@@ -312,6 +421,12 @@ void UConsoleManager::FlushBuffer()
     fwrite(LogBuffer.data(), 1, CurrentWrite, stdout);
     fflush(stdout);
 #endif
+
+    // Virtual Terminal이 비활성화된 경우에만 색상 리셋
+    if (!bVirtualTerminalEnabled)
+    {
+        ResetConsoleColor();
+    }
 
     // 버퍼 초기화
     WritePosition.store(0);
@@ -364,31 +479,6 @@ void UConsoleManager::SetCategoryEnabled(ELogCategory Category, bool bEnabled)
     }
 }
 
-WORD UConsoleManager::GetCategoryColor(ELogCategory Category) const
-{
-#ifdef _WIN32
-    size_t Index = static_cast<size_t>(Category);
-    if (Index < CategoryColors.size())
-    {
-        return CategoryColors[Index];
-    }
-    return OriginalAttributes;
-#else
-    return 0;
-#endif
-}
-
-void UConsoleManager::SetCategoryColor(ELogCategory Category, WORD Color)
-{
-#ifdef _WIN32
-    size_t Index = static_cast<size_t>(Category);
-    if (Index < CategoryColors.size())
-    {
-        CategoryColors[Index] = Color;
-    }
-#endif
-}
-
 const char* UConsoleManager::GetCategoryName(ELogCategory Category) const
 {
     switch (Category)
@@ -399,6 +489,42 @@ const char* UConsoleManager::GetCategoryName(ELogCategory Category) const
         case ELogCategory::LogLevel_Warning: return "WARNING";
         default:                             return "UNKNOWN";
     }
+}
+
+void UConsoleManager::SetConsoleColor(ELogCategory Category)
+{
+    if (bVirtualTerminalEnabled)
+    {
+        // Virtual Terminal이 활성화된 경우: ANSI 코드는 WriteToBuffer에서 처리
+        // 여기서는 아무것도 하지 않음 (ANSI 코드가 텍스트에 포함되어 출력됨)
+        return;
+    }
+
+    // Fallback: 기존 Windows API 방식
+#ifdef _WIN32
+    if (hConsole != INVALID_HANDLE_VALUE)
+    {
+        WORD Color = GetCategoryColor(Category);
+        SetConsoleTextAttribute(hConsole, Color);
+    }
+#endif
+}
+
+void UConsoleManager::ResetConsoleColor()
+{
+    if (bVirtualTerminalEnabled)
+    {
+        // Virtual Terminal 모드에서는 ANSI_RESET이 텍스트에 포함되어 처리됨
+        return;
+    }
+
+    // Fallback: 기존 Windows API 방식
+#ifdef _WIN32
+    if (hConsole != INVALID_HANDLE_VALUE)
+    {
+        SetConsoleTextAttribute(hConsole, OriginalAttributes);
+    }
+#endif
 }
 
 void UConsoleManager::InitializeColors()
@@ -412,32 +538,11 @@ void UConsoleManager::InitializeColors()
         GetConsoleScreenBufferInfo(hConsole, &ConsoleInfo);
         OriginalAttributes = ConsoleInfo.wAttributes;
 
-        // 카테고리별 색상 설정
+        // 카테고리별 색상 설정 (Windows API 호환용)
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Normal)] = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // 흰색
-        CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Info)] = FOREGROUND_GREEN | FOREGROUND_INTENSITY;             //  밝은 초록색
+        CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Info)] = FOREGROUND_GREEN | FOREGROUND_INTENSITY;             // 밝은 초록색
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Error)] = FOREGROUND_RED | FOREGROUND_INTENSITY;             // 밝은 빨간색
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Warning)] = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; // 노란색
-    }
-#endif
-}
-
-void UConsoleManager::SetConsoleColor(ELogCategory Category)
-{
-#ifdef _WIN32
-    if (hConsole != INVALID_HANDLE_VALUE)
-    {
-        WORD Color = GetCategoryColor(Category);
-        SetConsoleTextAttribute(hConsole, Color);
-    }
-#endif
-}
-
-void UConsoleManager::ResetConsoleColor()
-{
-#ifdef _WIN32
-    if (hConsole != INVALID_HANDLE_VALUE)
-    {
-        SetConsoleTextAttribute(hConsole, OriginalAttributes);
     }
 #endif
 }
