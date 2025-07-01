@@ -55,7 +55,7 @@ public:
     std::vector<float> MaxAngularSpeeds;
     std::vector<float> GravityScales;
     std::vector<EPhysicsType> PhysicsTypes;
-    std::vector<uint8_t> PhysicsFlags;
+    std::vector<FPhysicsMask> PhysicsMasks;
 
     // === 상태 관리 데이터 ===
     std::vector<bool> ActiveFlags;       // 각 슬롯의 활성/비활성 (외부 연산 참고용)

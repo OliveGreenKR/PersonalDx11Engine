@@ -425,8 +425,8 @@ void PhysicsStateArrays::InitializeSlot(SoAIdx Index)
     MaxSpeeds[Index] = 3.0f * ONE_METER;            // 기본 최대 속도
     MaxAngularSpeeds[Index] = XM_PIDIV2;      // 기본 최대 각속도
     GravityScales[Index] = 9.81f;          // 기본 중력 스케일
-    PhysicsTypes[Index] = EPhysicsType::Dynamic;  // 기본 동적 타입
-    PhysicsFlags[Index] = 0;              // 플래그 초기화
+    PhysicsTypes[Index] = EPhysicsType::Dynamic;        // 기본 동적 타입
+    PhysicsMasks[Index] = FPhysicsMask(FPhysicsMask::GROUP_BASIC_SIMULATION); // 플래그 초기화 (중력,활성화)
 }
 
 // 모든 SoA 벡터들을 동시에 크기 조정
@@ -457,7 +457,7 @@ void PhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
         MaxAngularSpeeds.resize(NewSize);
         GravityScales.resize(NewSize);
         PhysicsTypes.resize(NewSize);
-        PhysicsFlags.resize(NewSize);
+        PhysicsMasks.resize(NewSize);
     }
     catch (const std::exception& e)
     {
@@ -560,7 +560,7 @@ void PhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
     MaxAngularSpeeds[ToIndex] = MaxAngularSpeeds[FromIndex];
     GravityScales[ToIndex] = GravityScales[FromIndex];
     PhysicsTypes[ToIndex] = PhysicsTypes[FromIndex];
-    PhysicsFlags[ToIndex] = PhysicsFlags[FromIndex];
+    PhysicsMasks[ToIndex] = PhysicsMasks[FromIndex];
 
     // 상태 플래그 이동
     ActiveFlags[ToIndex] = ActiveFlags[FromIndex];
@@ -605,7 +605,7 @@ void PhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
     std::swap(MaxAngularSpeeds[Index1], MaxAngularSpeeds[Index2]);
     std::swap(GravityScales[Index1], GravityScales[Index2]);
     std::swap(PhysicsTypes[Index1], PhysicsTypes[Index2]);
-    std::swap(PhysicsFlags[Index1], PhysicsFlags[Index2]);
+    std::swap(PhysicsMasks[Index1], PhysicsMasks[Index2]);
 
     // 상태 플래그 교환
     bool tempActive = ActiveFlags[Index1];

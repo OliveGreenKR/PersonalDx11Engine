@@ -15,7 +15,7 @@ enum class EPhysicsJob : uint8_t
 	SET_WORLDTRANSFORM,
 };
 
- struct alignas(16) FPhysicsJob
+ struct FPhysicsJob
 {
 private:
 	std::bitset<16> JobTypeMask;

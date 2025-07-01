@@ -17,17 +17,8 @@ enum class ERigidBodyType
 };
 
 class URigidBodyComponent : public USceneComponent ,
-	public IPhysicsState, public IPhysicsObejct,  public IPhysicsStateInternal
+	public IPhysicsState, public IPhysicsObejct
 {
-public:
-	// 회전관성 접근제어 토근
-	class RotationalInertiaToken
-	{
-		friend class UCollisionComponentBase;
-	private:
-		RotationalInertiaToken() = default;
-	};
-
 public:
 	URigidBodyComponent();
 	~URigidBodyComponent();
@@ -65,7 +56,7 @@ public:
 
 	inline float GetMass() const override
 	{
-		float invMass = P_GetInvMass();
+		float invMass = GetInvMass();
 		return invMass > 0.0f ? 1.0f / invMass : KINDA_LARGE;
 	}
 	inline float GetInvMass() const override { return IsStatic() ? 0.0f : CachedState.InvMass; }
@@ -91,69 +82,12 @@ public:
 	inline float GetSpeed() const { return CachedState.Velocity.Length(); }
 
 #pragma endregion
-#pragma region IPhyscisStateInternal
-public:
-	float P_GetMass() const override 
-	{
-		float invMass = P_GetInvMass();
-		return invMass > KINDA_SMALL ? 1.0f / invMass : KINDA_LARGE;
-	}
-	float P_GetInvMass() const override { return IsStatic() ? 0.0f : SimulatedState.InvMass;}
-	inline Vector3 P_GetRotationalInertia() const override
-	{
-		Vector3 Result;
-		Vector3 InvRotationalInertia = SimulatedState.InvRotationalInertia;;
-		Result.x = (abs(InvRotationalInertia.x) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.x);
-		Result.y = (abs(InvRotationalInertia.y) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.y);
-		Result.z = (abs(InvRotationalInertia.z) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.z);
-		return Result;
-	}
-	Vector3 P_GetInvRotationalInertia() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.InvRotationalInertia; }
 
-    float P_GetRestitution() const override { return SimulatedState.Restitution; }
-    float P_GetFrictionStatic() const override { return SimulatedState.FrictionStatic; }
-    float P_GetFrictionKinetic() const override { return SimulatedState.FrictionKinetic; }
-
-    Vector3 P_GetVelocity() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.Velocity; }
-    Vector3 P_GetAngularVelocity() const override { return IsStatic() ? Vector3::Zero() : SimulatedState.AngularVelocity; }
-
-    const FTransform& P_GetWorldTransform() const override { return SimulatedState.WorldTransform; }
-	Vector3 P_GetCenterOfMass() const { return SimulatedState.WorldTransform.Position; }
-
-	void P_SetWorldTransform(const FTransform& InTransfrom) override;
-	//void P_SetWorldPosition(const Vector3& InPoisiton) override;
-	//void P_SetWorldRotation(const Quaternion& InQuat) override;
-	//void P_SetWorldScale(const Vector3& InScale) override;
-
-	void P_ApplyForce(const Vector3& Force) override { P_ApplyForce(Force, P_GetCenterOfMass()); }
-	void P_ApplyImpulse(const Vector3& Impulse) override{ P_ApplyImpulse(Impulse, P_GetCenterOfMass()); }
-
-	void P_ApplyForce(const Vector3& Force, const Vector3& Location) override;
-    void P_ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;
-
-    void P_SetVelocity(const Vector3& InVelocity) override;
-    void P_AddVelocity(const Vector3& InVelocityDelta) override;
-
-    void P_SetAngularVelocity(const Vector3& InAngularVelocity) override;
-    void P_AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
-#pragma endregion
 #pragma region IPhysicsObject
 public:
 	// 현재 상태를 외부 상태로 저장
 	void SynchronizeCachedStateFromSimulated()  override;
-	// 외부 상태를 현재 상태로 저장
-	void UpdateSimulatedStateFromCached() override;
-	bool IsDirtyPhysicsState() const override;
 	bool IsActive() const override;
-	bool IsSleep() const override;
-	virtual void SetSleep(const bool InBool) override { InBool ? Sleep() : Awake(); }
-
-private:
-	void Sleep();
-	void Awake();
 #pragma endregion
 public:
 	// 물리 속성 설정
@@ -162,9 +96,7 @@ public:
 	void SetFrictionStatic(float InFriction);
 	void SetRestitution(float InRestitution);
 	void SetRigidType(ERigidBodyType&& InType);
-
-	//토큰소유자만 접근 가능
-	void SetInvRotationalInertia(const Vector3& Value, const RotationalInertiaToken&);
+	void SetInvRotationalInertia(const Vector3& Value);
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
 
@@ -174,7 +106,7 @@ public:
 public:
 	// 시뮬레이션 플래그
 	void SetGravity(const bool InBool);
-	bool IsGravity() const { return bGravity; }
+	bool IsGravity() const { return CachedState. }
 	bool IsStatic() const { return CachedState.RigidType == ERigidBodyType::Static; }
 
 private:
@@ -203,35 +135,7 @@ private:
 	static bool IsValidAngularAcceleration(const Vector3& InAngularAccel);
 
 private:
-	struct FRigidPhysicsState
-	{
-		// 물리 상태 변수
-		Vector3 Velocity = Vector3::Zero();
-		Vector3 AngularVelocity = Vector3::Zero();
-		Vector3 AccumulatedForce = Vector3::Zero();
-		Vector3 AccumulatedTorque = Vector3::Zero();
-
-		// 물리 속성
-		float InvMass = 1.0f;
-		Vector3 InvRotationalInertia = Vector3::Zero();
-		float FrictionKinetic = 0.3f;
-		float FrictionStatic = 0.5f;
-		float Restitution = 0.5f;
-
-		// 물리 객체 상태
-		ERigidBodyType RigidType = ERigidBodyType::Dynamic;
-
-		FTransform WorldTransform;
-
-		void Reset()
-		{
-			Velocity = Vector3::Zero();
-			AngularVelocity = Vector3::Zero();
-			AccumulatedForce = Vector3::Zero();
-			AccumulatedTorque = Vector3::Zero();
-		}
-	};
-
+	
 	mutable bool bStateDirty = false;
 	FRigidPhysicsState CachedState;  //저장된 물리 상태값, 외부에 읽기전용으로 제공될것
 	mutable FRigidPhysicsState SimulatedState;  //물리시스템 내부 연산용 물리 상태값. 

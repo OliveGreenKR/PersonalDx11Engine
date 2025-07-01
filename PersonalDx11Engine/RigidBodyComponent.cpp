@@ -40,7 +40,7 @@ void URigidBodyComponent::DeActivate()
 
 void URigidBodyComponent::Reset()
 {
-	CachedState = FRigidPhysicsState();
+	CachedState = FPhysicsState();
 	SimulatedState = CachedState;
 }	
 
@@ -571,7 +571,7 @@ void URigidBodyComponent::SetRigidType(ERigidBodyType&& InType)
 }
 
 //토큰소유자만 접근 가능
-void URigidBodyComponent::SetInvRotationalInertia(const Vector3& Value, const RotationalInertiaToken&)
+void URigidBodyComponent::SetInvRotationalInertia(const Vector3& Value)
 { 
 	bStateDirty = true;
 	CachedState.InvRotationalInertia.x = Value.x > KINDA_LARGE ? 0.0f : 1 / Value.x;
