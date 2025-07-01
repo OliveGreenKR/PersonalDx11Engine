@@ -1,4 +1,9 @@
 #include "ConsoleManager.h"
+#include <iostream>  // std::ios 사용을 위해 필요
+#ifdef _WIN32
+#include <fcntl.h>   // 파일 제어 관련
+#endif
+
 UConsoleManager::UConsoleManager()
 {
     // 기본값: 모든 카테고리 활성화
@@ -113,10 +118,13 @@ bool UConsoleManager::Initialize(const FConsoleSettings& Settings)
     // 색상 초기화
     InitializeColors();
 
-    // Virtual Terminal 활성화 시도 (내부적으로 처리)
+    // Virtual Terminal 활성화 시도
     EnableVirtualTerminal();
 
     bConsoleCreated = true;
+
+    // 표준 출력 리다이렉션 자동 활성화 (옵션)
+    EnableStandardOutputRedirection();
     return true;
 }
 
@@ -232,6 +240,9 @@ void UConsoleManager::Shutdown()
 #ifdef _WIN32
     if (bConsoleCreated && ConsoleWindow)
     {
+        // 표준 출력 리다이렉션 해제
+        DisableStandardOutputRedirection();
+
         // 버퍼 플러시
         FlushBuffer();
 
@@ -329,13 +340,12 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
 {
     std::lock_guard<std::mutex> Lock(BufferMutex);
 
-    char ColoredMessage[MAX_SINGLE_LOG_SIZE * 2]; // 색상 코드를 위한 추가 공간
+    char ColoredMessage[MAX_SINGLE_LOG_SIZE * 2];
     size_t MessageLength;
     const char* CategoryPrefix = GetCategoryName(Category);
 
     if (bVirtualTerminalEnabled)
     {
-        // ANSI 이스케이프 시퀀스를 포함한 메시지 생성 (CategoryPrefix 포함)
         const char* colorCode = GetAnsiColorCode(Category);
         int result = snprintf(ColoredMessage, sizeof(ColoredMessage),
                               "[%s] %s%s%s",
@@ -346,13 +356,11 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
 
         if (result < 0 || result >= static_cast<int>(sizeof(ColoredMessage)))
         {
-            // 버퍼 오버플로우 방지: CategoryPrefix + 원본 메시지만 사용
             int fallbackResult = snprintf(ColoredMessage, sizeof(ColoredMessage),
                                           "[%s] %s", CategoryPrefix, FormattedMessage);
 
             if (fallbackResult < 0 || fallbackResult >= static_cast<int>(sizeof(ColoredMessage)))
             {
-                // 최후의 안전장치: 강제로 null 종료
                 ColoredMessage[sizeof(ColoredMessage) - 1] = '\0';
             }
         }
@@ -361,7 +369,6 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
     }
     else
     {
-        // Virtual Terminal이 비활성화된 경우: CategoryPrefix + 원본 메시지
         int result = snprintf(ColoredMessage, sizeof(ColoredMessage),
                               "[%s] %s",
                               CategoryPrefix,
@@ -369,13 +376,10 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
 
         if (result < 0 || result >= static_cast<int>(sizeof(ColoredMessage)))
         {
-            // 버퍼 오버플로우 방지: 강제로 null 종료
             ColoredMessage[sizeof(ColoredMessage) - 1] = '\0';
         }
 
         MessageLength = strlen(ColoredMessage);
-
-        // 즉시 색상 설정 (Windows API 방식)
         SetConsoleColor(Category);
     }
 
@@ -384,7 +388,8 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
     // 버퍼 오버플로우 체크
     if (MessageLength >= BUFFER_SIZE - CurrentPos)
     {
-        FlushBuffer();
+        // 뮤텍스가 이미 잠긴 상태에서 내부 플러시 호출
+        FlushBufferInternal();
         CurrentPos = 0;
     }
 
@@ -398,14 +403,12 @@ void UConsoleManager::WriteToBuffer(ELogCategory Category, const char* Formatted
     // 자동 플러시 체크
     if (bAutoFlush.load() && PendingBytes.load() >= FLUSH_THRESHOLD)
     {
-        FlushBuffer();
+        FlushBufferInternal();
     }
 }
 
-void UConsoleManager::FlushBuffer()
+void UConsoleManager::FlushBufferInternal()
 {
-    std::lock_guard<std::mutex> Lock(BufferMutex);
-
     if (PendingBytes.load() == 0)
         return;
 
@@ -431,6 +434,13 @@ void UConsoleManager::FlushBuffer()
     // 버퍼 초기화
     WritePosition.store(0);
     PendingBytes.store(0);
+}
+
+// 외부 호출용 플러시 메서드 (뮤텍스 보호)
+void UConsoleManager::FlushBuffer()
+{
+    std::lock_guard<std::mutex> Lock(BufferMutex);
+    FlushBufferInternal();
 }
 
 void UConsoleManager::ClearBuffer()
@@ -546,3 +556,46 @@ void UConsoleManager::InitializeColors()
     }
 #endif
 }
+
+#pragma region Std Redireciton
+void UConsoleManager::EnableStandardOutputRedirection()
+{
+    if (bStdoutRedirected || !bConsoleCreated)
+        return;
+
+#ifdef _WIN32
+    // stdout을 콘솔로 리다이렉션 (백업 없음)
+    FILE* pConsole = nullptr;
+    if (freopen_s(&pConsole, "CONOUT$", "w", stdout) == 0)
+    {
+        // stderr도 같은 콘솔로 리다이렉션
+        freopen_s(&pConsole, "CONOUT$", "w", stderr);
+
+        // 즉시 출력을 위한 버퍼링 해제
+        setvbuf(stdout, nullptr, _IONBF, 0);
+        setvbuf(stderr, nullptr, _IONBF, 0);
+
+        // C와 C++ 스트림 동기화
+        std::ios_base::sync_with_stdio(true);
+
+        bStdoutRedirected = true;
+
+        // 테스트 메시지
+        std::cout << "[NORMAL] std::cout redirection enabled\n";
+        printf("[NORMAL] printf redirection enabled\n");
+    }
+#else
+    bStdoutRedirected = true;
+    std::cout << "[NORMAL] std::cout redirection enabled (Unix)\n";
+#endif
+}
+
+void UConsoleManager::DisableStandardOutputRedirection()
+{
+    if (!bStdoutRedirected)
+        return;
+
+    //플래그만 변경
+    bStdoutRedirected = false;
+}
+#pragma endregion

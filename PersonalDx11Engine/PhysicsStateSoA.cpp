@@ -10,20 +10,20 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize,
 {
     if (InitialSize == 0)
     {
-        LOG_FUNC_CALL("[Warning] PhysicsStateArrays initialized with size 0");
+        LOG_WARNING("PhysicsStateArrays initialized with size 0");
         InitialSize = 1;
     }
 
     // 임계값 유효성 검증
     if (InAutoCompactThresholdSize == 0)
     {
-        LOG_FUNC_CALL("[Warning] AutoCompactThresholdSize is 0, setting to 1");
+        LOG_WARNING("AutoCompactThresholdSize is 0, setting to 1");
        AutoCompactThresholdSize = 1;
     }
 
     if (InAutoCompactThresholdRatio <= 0.0f || InAutoCompactThresholdRatio >= 1.0f)
     {
-        LOG_FUNC_CALL("[Warning] Invalid AutoCompactThresholdRatio %.3f, clamping to [0.1, 0.9]", 
+        LOG_WARNING("Invalid AutoCompactThresholdRatio %.3f, clamping to [0.1, 0.9]",
                       InAutoCompactThresholdRatio);
        AutoCompactThresholdRatio = Math::Clamp(InAutoCompactThresholdRatio, 0.1f, 0.9f);
     }
@@ -41,7 +41,7 @@ PhysicsStateArrays::PhysicsStateArrays(size_t InitialSize,
         ActiveFlags[INVALID_IDX] = false;
     }
 
-    LOG_FUNC_CALL("[Info] PhysicsStateArrays initialized - Size: %zu, CompactThresholdSize: %zu, CompactThresholdRatio: %.3f", 
+    LOG_INFO("PhysicsStateArrays initialized - Size: %zu, CompactThresholdSize: %zu, CompactThresholdRatio: %.3f", 
                   InitialSize,AutoCompactThresholdSize,AutoCompactThresholdRatio);
 }
 
@@ -55,7 +55,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
     {
         if (!TryResize(Size() * 2))
         {
-            LOG_FUNC_CALL("[Error] Failed to resize PhysicsStateArrays");
+            LOG_ERROR("Failed to resize PhysicsStateArrays");
             return INVALID_ID;
         }
     }
@@ -73,7 +73,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         auto It = IdToIdx.find(NewId);
         if (It == IdToIdx.end())
         {
-            LOG_FUNC_CALL("[Error] Data corruption: FreeID %u not found in IdToIdx", NewId);
+            LOG_ERROR("Data corruption: FreeID %u not found in IdToIdx", NewId);
             return INVALID_ID;
         }
 
@@ -82,7 +82,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         // 방어적 프로그래밍: 이미 할당된 슬롯 재할당 방지
         if (AllocatedFlags[NewIndex])
         {
-            LOG_FUNC_CALL("[Error] Data corruption: Attempting to reuse already allocated slot %u", NewIndex);
+            LOG_ERROR("Data corruption: Attempting to reuse already allocated slot %u", NewIndex);
             return INVALID_ID;
         }
 
@@ -93,7 +93,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         // 해제 카운트 감소
         DeallocatedCount--;
 
-        LOG_FUNC_CALL("[Info] Reused slot - ID: %u, Index: %u", NewId, NewIndex);
+        LOG_INFO("Reused slot - ID: %u, Index: %u", NewId, NewIndex);
     }
     else
     {
@@ -103,7 +103,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         // ID 오버플로우 검사
         if (NewId == INVALID_ID)
         {
-            LOG_FUNC_CALL("[Error] ID overflow in PhysicsStateArrays");
+            LOG_ERROR("ID overflow in PhysicsStateArrays");
             return INVALID_ID;
         }
 
@@ -119,7 +119,7 @@ SoAID PhysicsStateArrays::AllocateSlot()
         AllocatedFlags[NewIndex] = true;
         ActiveFlags[NewIndex] = true;
 
-        LOG_FUNC_CALL("[Info] Allocated new slot - ID: %u, Index: %u", NewId, NewIndex);
+        LOG_INFO("Allocated new slot - ID: %u, Index: %u", NewId, NewIndex);
     }
 
     return NewId;
@@ -130,14 +130,14 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
-        LOG_FUNC_CALL("[Warning] Attempting to deallocate INVALID_ID");
+        LOG_WARNING("Attempting to deallocate INVALID_ID");
         return;
     }
 
     auto It = IdToIdx.find(Id);
     if (It == IdToIdx.end())
     {
-        LOG_FUNC_CALL("[Warning] Attempting to deallocate non-existent ID: %u", Id);
+        LOG_WARNING("Attempting to deallocate non-existent ID: %u", Id);
         return;
     }
 
@@ -147,7 +147,7 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
     //인덱스 범위 + 할당되어있는 인덱스
     if (!IsValidAllocatedIndex(Index))
     {
-        LOG_FUNC_CALL("[Error] Invalid index for ID %u", Id, Index, AllocatedCount);
+        LOG_ERROR("Invalid index for ID %u", Id, Index, AllocatedCount);
         return;
     }
 
@@ -161,7 +161,7 @@ void PhysicsStateArrays::DeallocateSlot(SoAID Id)
     // 해제된 객체 수 증가
     DeallocatedCount++;
 
-    LOG_FUNC_CALL("[Info] Deallocated slot ID: %u, Index: %u", Id, Index);
+    LOG_INFO("Deallocated slot ID: %u, Index: %u", Id, Index);
 
     // 압축 필요성 검사
     CompactIfNeeded();
@@ -173,14 +173,14 @@ bool PhysicsStateArrays::TryResize(uint32_t NewSize)
     // 현재 할당된 크기보다 작게 축소 시도 시 거부
     if (NewSize < AllocatedCount+1)
     {
-        LOG_FUNC_CALL("[Warning] Cannot resize below allocated count: %u < %u", NewSize, AllocatedCount);
+        LOG_WARNING("Cannot resize below allocated count: %u < %u", NewSize, AllocatedCount);
         return false;
     }
 
     // 2. 이미 동일한 크기인 경우
     if (NewSize == Size())
     {
-        LOG_FUNC_CALL("[Info] Resize skipped - already target size: %u", NewSize);
+        LOG_INFO("Resize skipped - already target size: %u", NewSize);
         return true;
     }
 
@@ -199,18 +199,18 @@ bool PhysicsStateArrays::TryResize(uint32_t NewSize)
 
         if (NewSize > OldSize)
         {
-            LOG_FUNC_CALL("[Info] Expanded arrays from %zu to %u", OldSize, NewSize);
+            LOG_INFO("Expanded arrays from %zu to %u", OldSize, NewSize);
         }
         else
         {
-            LOG_FUNC_CALL("[Info] Shrunk arrays from %zu to %u", OldSize, NewSize);
+            LOG_INFO("Shrunk arrays from %zu to %u", OldSize, NewSize);
         }
 
         return true;
     }
     catch (const std::exception& e)
     {
-        LOG_FUNC_CALL("[Error] Failed to resize PhysicsStateArrays: %s", e.what());
+        LOG_ERROR("Failed to resize PhysicsStateArrays: %s", e.what());
         return false;
     }
 }
@@ -220,7 +220,7 @@ void PhysicsStateArrays::CompactIfNeeded()
 {
     if (NeedsCompaction())
     {
-        LOG_FUNC_CALL("[Info] Auto-compaction triggered: %u/%u deallocated objects (%.1f%%)",
+        LOG_INFO("Auto-compaction triggered: %u/%u deallocated objects (%.1f%%)",
                       DeallocatedCount, AllocatedCount,
                       100.0f * DeallocatedCount / AllocatedCount);
         PerformCompaction();
@@ -232,12 +232,12 @@ void PhysicsStateArrays::ForceCompact()
 {
     if (DeallocatedCount > 0)
     {
-        LOG_FUNC_CALL("[Info] Force compaction requested: %u deallocated objects", DeallocatedCount);
+        LOG_INFO("Force compaction requested: %u deallocated objects", DeallocatedCount);
         PerformCompaction();
     }
     else
     {
-        LOG_FUNC_CALL("[Info] Force compaction skipped: no deallocated objects");
+        LOG_INFO("Force compaction skipped: no deallocated objects");
     }
 }
 
@@ -248,14 +248,14 @@ void PhysicsStateArrays::DeactivateObject(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
-        LOG_FUNC_CALL("[Warning] Attempting to deactivate INVALID_ID");
+        LOG_WARNING("Attempting to deactivate INVALID_ID");
         return;
     }
 
     auto It = IdToIdx.find(Id);
     if (It == IdToIdx.end())
     {
-        LOG_FUNC_CALL("[Warning] Attempting to deactivate non-existent ID: %u", Id);
+        LOG_WARNING("Attempting to deactivate non-existent ID: %u", Id);
         return;
     }
 
@@ -264,18 +264,18 @@ void PhysicsStateArrays::DeactivateObject(SoAID Id)
     // 인덱스 유효성 및 할당 상태 검사
     if (!IsValidAllocatedIndex(Index))
     {
-        LOG_FUNC_CALL("[Warning] Attempting to deactivate invalid or deallocated ID: %u", Id);
+        LOG_WARNING("Attempting to deactivate invalid or deallocated ID: %u", Id);
         return;
     }
 
     if (!ActiveFlags[Index])
     {
-        LOG_FUNC_CALL("[Info] ID %u is already inactive", Id);
+        LOG_INFO("ID %u is already inactive", Id);
         return;
     }
 
     ActiveFlags[Index] = false;
-    LOG_FUNC_CALL("[Info] Deactivated object ID: %u", Id);
+    LOG_INFO("Deactivated object ID: %u", Id);
 }
 
 // 객체 활성화
@@ -283,14 +283,14 @@ void PhysicsStateArrays::ActivateObject(SoAID Id)
 {
     if (Id == INVALID_ID)
     {
-        LOG_FUNC_CALL("[Warning] Attempting to activate INVALID_ID");
+        LOG_WARNING("Attempting to activate INVALID_ID");
         return;
     }
 
     auto It = IdToIdx.find(Id);
     if (It == IdToIdx.end())
     {
-        LOG_FUNC_CALL("[Warning] Attempting to activate non-existent ID: %u", Id);
+        LOG_WARNING("Attempting to activate non-existent ID: %u", Id);
         return;
     }
 
@@ -299,18 +299,18 @@ void PhysicsStateArrays::ActivateObject(SoAID Id)
     // 인덱스 유효성 및 할당 상태 검사
     if (!IsValidAllocatedIndex(Index))
     {
-        LOG_FUNC_CALL("[Warning] Attempting to activate invalid or deallocated ID: %u", Id);
+        LOG_WARNING("Attempting to activate invalid or deallocated ID: %u", Id);
         return;
     }
 
     if (ActiveFlags[Index])
     {
-        LOG_FUNC_CALL("[Info] ID %u is already active", Id);
+        LOG_INFO("ID %u is already active", Id);
         return;
     }
 
     ActiveFlags[Index] = true;
-    LOG_FUNC_CALL("[Info] Activated object ID: %u", Id);
+    LOG_INFO("Activated object ID: %u", Id);
 }
 
 // === 상태 조회 ==
@@ -382,7 +382,7 @@ SoAIdx PhysicsStateArrays::GetIndex(SoAID Id) const
     auto It = IdToIdx.find(Id);
     if (It == IdToIdx.end())
     {
-        LOG_FUNC_CALL("[Error] GetIndex called with non-existent ID: %u", Id);
+        LOG_ERROR("GetIndex called with non-existent ID: %u", Id);
         return INVALID_IDX;
     }
     return It->second;
@@ -399,7 +399,7 @@ void PhysicsStateArrays::InitializeSlot(SoAIdx Index)
 {
     if (Index >= Size())
     {
-        LOG_FUNC_CALL("[Error] InitializeSlot: Index %u out of bounds (%zu)", Index, Size());
+        LOG_ERROR("InitializeSlot: Index %u out of bounds (%zu)", Index, Size());
         return;
     }
 
@@ -461,7 +461,7 @@ void PhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
     }
     catch (const std::exception& e)
     {
-        LOG_FUNC_CALL("[Error] Failed to resize vectors: %s", e.what());
+        LOG_ERROR("Failed to resize vectors: %s", e.what());
         throw;  // 예외 재전파
     }
 }
@@ -473,14 +473,14 @@ void PhysicsStateArrays::PerformCompaction()
 {
     if (DeallocatedCount == 0)
     {
-        LOG_FUNC_CALL("[Info] Compaction skipped: no deallocated objects");
+        LOG_INFO("Compaction skipped: no deallocated objects");
         return;
     }
 
     uint32_t WriteIndex = FIRST_VALID_INDEX;  // 압축된 배열의 쓰기 위치
     uint32_t ValidObjectCount = 0;
 
-    LOG_FUNC_CALL("[Info] Starting compaction: %u allocated, %u deallocated",
+    LOG_INFO("Starting compaction: %u allocated, %u deallocated",
                   AllocatedCount, DeallocatedCount);
 
     // 1단계: 유효한 객체들을 앞쪽으로 압축
@@ -518,7 +518,7 @@ void PhysicsStateArrays::PerformCompaction()
     // 재사용 아이디 초기화
     ReusableIDs.clear();
 
-    LOG_FUNC_CALL("[Info] Compaction completed: %u valid objects compacted, FreeIDs cleared",
+    LOG_INFO("Compaction completed: %u valid objects compacted, FreeIDs cleared",
                   ValidObjectCount);
 }
 
@@ -527,7 +527,7 @@ void PhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
 {
     if (FromIndex >= Size() || ToIndex >= Size())
     {
-        LOG_FUNC_CALL("[Error] MoveSlotData: Invalid indices From=%u, To=%u, Size=%zu",
+        LOG_ERROR("MoveSlotData: Invalid indices From=%u, To=%u, Size=%zu",
                       FromIndex, ToIndex, Size());
         return;
     }
@@ -572,7 +572,7 @@ void PhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
 {
     if (Index1 >= Size() || Index2 >= Size())
     {
-        LOG_FUNC_CALL("[Error] SwapSlotData: Invalid indices %u, %u, Size=%zu",
+        LOG_ERROR("SwapSlotData: Invalid indices %u, %u, Size=%zu",
                       Index1, Index2, Size());
         return;
     }
@@ -624,7 +624,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
 {
     if (OldIndex >= Size() || NewIndex >= Size())
     {
-        LOG_FUNC_CALL("[Error] UpdateMappingAfterMove: Invalid indices Old=%u, New=%u, Size=%zu",
+        LOG_ERROR("UpdateMappingAfterMove: Invalid indices Old=%u, New=%u, Size=%zu",
                       OldIndex, NewIndex, Size());
         return;
     }
@@ -638,7 +638,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
     auto OldIt = IdxToId.find(OldIndex);
     if (OldIt == IdxToId.end())
     {
-        LOG_FUNC_CALL("[Error] UpdateMappingAfterMove: No ID found for OldIndex %u", OldIndex);
+        LOG_ERROR("UpdateMappingAfterMove: No ID found for OldIndex %u", OldIndex);
         return;
     }
 
@@ -648,7 +648,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
     auto IdIt = IdToIdx.find(MovedId);
     if (IdIt == IdToIdx.end() || IdIt->second != OldIndex)
     {
-        LOG_FUNC_CALL("[Error] UpdateMappingAfterMove: Mapping inconsistency for ID %u", MovedId);
+        LOG_ERROR("UpdateMappingAfterMove: Mapping inconsistency for ID %u", MovedId);
         return;
     }
 
@@ -656,7 +656,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
     auto NewIt = IdxToId.find(NewIndex);
     if (NewIt != IdxToId.end())
     {
-        LOG_FUNC_CALL("[Warning] UpdateMappingAfterMove: Overwriting existing mapping at NewIndex %u", NewIndex);
+        LOG_WARNING("UpdateMappingAfterMove: Overwriting existing mapping at NewIndex %u", NewIndex);
         // 기존 매핑의 역방향도 정리
         SoAID ExistingId = NewIt->second;
         IdToIdx.erase(ExistingId);
@@ -667,7 +667,7 @@ void PhysicsStateArrays::UpdateMappingAfterMove(SoAIdx OldIndex, SoAIdx NewIndex
     IdxToId[NewIndex] = MovedId;    // 새로운 Index → ID
     IdxToId.erase(OldIndex);        // 이전 Index 매핑 제거
 
-    LOG_FUNC_CALL("[Debug] Updated mapping: ID %u moved from Index %u to %u",
+    LOG("Updated mapping: ID %u moved from Index %u to %u",
                   MovedId, OldIndex, NewIndex);
 }
 
@@ -678,11 +678,11 @@ void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 {
     if (ToRemove.empty())
     {
-        LOG_FUNC_CALL("[Info] No ID to remove");
+        LOG_INFO("No ID to remove");
         return;
     }
 
-    LOG_FUNC_CALL("[Info] Removing %zu IDs from mappings",
+    LOG_INFO("Removing %zu IDs from mappings",
                   ToRemove.size());
 
     size_t RemovedCount = 0;
@@ -691,7 +691,7 @@ void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
     {
         if (Id == INVALID_ID)
         {
-            LOG_FUNC_CALL("[Warning] RemoveIDs: Skipping INVALID_ID");
+            LOG_WARNING("RemoveIDs: Skipping INVALID_ID");
             continue;
         }
 
@@ -707,15 +707,15 @@ void PhysicsStateArrays::RemoveInvalidIDs(std::vector<SoAID>& ToRemove)
 
             RemovedCount++;
 
-            LOG_FUNC_CALL("[Debug] Removed mapping: ID %u => Index %u", Id, Index);
+            LOG("Removed mapping: ID %u => Index %u", Id, Index);
         }
         else
         {
-            LOG_FUNC_CALL("[Warning] RemoveIDs: ID %u not found in mappings", Id);
+            LOG_WARNING("RemoveIDs: ID %u not found in mappings", Id);
         }
     }
 
-    LOG_FUNC_CALL("[Info] RemoveIDs completed: %zu mappings removed from %zu requested",
+    LOG_INFO("RemoveIDs completed: %zu mappings removed from %zu requested",
                   RemovedCount, ToRemove.size());
 
     // 디버그 빌드에서 매핑 무결성 검증
@@ -736,21 +736,21 @@ void PhysicsStateArrays::ValidateMappingIntegrity() const
         auto ReverseIt = IdxToId.find(Index);
         if (ReverseIt == IdxToId.end() || ReverseIt->second != Id)
         {
-            LOG_FUNC_CALL("[Error] Mapping integrity violation: ID %u → Index %u lacks valid reverse mapping",
+            LOG_ERROR("Mapping integrity violation: ID %u → Index %u lacks valid reverse mapping",
                           Id, Index);
         }
 
         // 인덱스 유효성 검증
         if (Index < FIRST_VALID_INDEX || Index > AllocatedCount)
         {
-            LOG_FUNC_CALL("[Error] Mapping integrity violation: ID %u → Index %u out of allocated range",
+            LOG_ERROR("Mapping integrity violation: ID %u → Index %u out of allocated range",
                           Id, Index);
         }
 
         // 할당 상태 검증
         if (Index < AllocatedCount && !AllocatedFlags[Index])
         {
-            LOG_FUNC_CALL("[Error] Mapping integrity violation: ID %u → Index %u points to deallocated slot",
+            LOG_ERROR("Mapping integrity violation: ID %u → Index %u points to deallocated slot",
                           Id, Index);
         }
     }
@@ -762,12 +762,12 @@ void PhysicsStateArrays::ValidateMappingIntegrity() const
         auto ReverseIt = IdToIdx.find(Id);
         if (ReverseIt == IdToIdx.end() || ReverseIt->second != Index)
         {
-            LOG_FUNC_CALL("[Error] Mapping integrity violation: Index %u → ID %u lacks valid reverse mapping",
+            LOG_ERROR("Mapping integrity violation: Index %u → ID %u lacks valid reverse mapping",
                           Index, Id);
         }
     }
 
-    LOG_FUNC_CALL("[Debug] Mapping integrity validation completed: %zu mappings verified",
+    LOG("Mapping integrity validation completed: %zu mappings verified",
                   IdToIdx.size());
 }
 #endif
