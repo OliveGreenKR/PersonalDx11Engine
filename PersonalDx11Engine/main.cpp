@@ -134,11 +134,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//std::getline(std::cin, input); // 사용자 입력을 기다림
 	//return 0;
 
-	FTestPhysicsState TestPhysicsState;
-	std::string input;
-	auto PrintResult = [](bool InBool) {
-		LOG("%s", InBool ? "PASS" : "FAIL");
-		UConsoleManager::Get()->FlushBuffer(); };
+	//FTestPhysicsState TestPhysicsState;
+	//std::string input;
+	//auto PrintResult = [](bool InBool) {
+	//	LOG("%s", InBool ? "PASS" : "FAIL");
+	//	UConsoleManager::Get()->FlushBuffer(); };
 
 	//PrintResult ( TestPhysicsState.TestBasicLifecycle() );
 	//std::getline(std::cin, input); 
@@ -158,9 +158,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//PrintResult ( TestPhysicsState.TestResizing() );
 	//std::getline(std::cin, input); 
 
-	PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
-	std::getline(std::cin, input); 
-	return 0;
+	//PrintResult ( TestPhysicsState.TestIntegratedScenarios() );
+	//std::getline(std::cin, input); 
+	//return 0;
 #pragma endregion
 
 	//Hardware
