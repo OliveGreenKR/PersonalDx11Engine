@@ -124,7 +124,7 @@ void URenderer::ProcessJobsPerState(const ERenderStateType InState)
 	Context->GetDeviceContext()->PSGetSamplers(0, 1, &currentSampler);
 	if (!currentSampler && InState == ERenderStateType::Solid)
 	{
-		LOG("Sampler not Bound in Rendering Sessions");
+		LOG_WARNING("Sampler not Bound in Rendering Sessions");
 	}
 
 	for (auto& RenderDataPtr : RenderJobs[InState])

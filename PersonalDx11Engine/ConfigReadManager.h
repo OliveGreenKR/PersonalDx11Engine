@@ -37,16 +37,16 @@ public:
         {
             if (Engine::CastFromString(it->second, OutValue))
             {
-                LOG("[CONFIG] [%s] : %s ", key, it->second.c_str());
+                LOG_INFO("Config Loaded [%s] = %s ", key, it->second.c_str());
             }
             else
             {
-                LOG("[WARNING] Cannot cast [%s] to the requested type", key);
+                LOG_WARNING("Cannot cast [%s] to the requested type", key);
             }
         }
         else
         {
-            LOG("[WARNING] Cannot find [%s] in Configs", key);
+            LOG_WARNING("Cannot find [%s] in Configs", key);
         }
         return;
     }

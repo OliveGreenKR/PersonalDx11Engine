@@ -11,7 +11,7 @@ void FD3DContextDebugger::CaptureBindings(ID3D11DeviceContext* DeviceContext)
 {
     if (!DeviceContext)
     {
-        LOG("Error: NULL DeviceContext passed to CaptureBindings");
+        LOG_ERROR("NULL DeviceContext passed to CaptureBindings");
         return;
     }
 
@@ -248,56 +248,56 @@ bool FD3DContextDebugger::ValidateAllBindings() const
     // 필수적인 리소스 검증 (렌더링에 반드시 필요한 것들)
     if (!ValidateVertexBuffers())
     {
-        LOG("Error: Invalid vertex buffer binding");
+        LOG_ERROR("Invalid vertex buffer binding");
         bIsValid = false;
     }
 
     if (!ValidateShaders())
     {
-        LOG("Error: Invalid shader binding");
+        LOG_ERROR("Invalid shader binding");
         bIsValid = false;
     }
 
     if (!ValidateRenderTargets())
     {
-        LOG("Error: Invalid render target binding");
+        LOG_ERROR("Invalid render target binding");
         bIsValid = false;
     }
 
     // 옵셔널 리소스 검증 (있을 수도, 없을 수도 있는 것들)
     if (!ValidateIndexBuffers() && !IndexBuffers.empty())
     {
-        LOG("Warning: Invalid index buffer binding");
+        LOG_WARNING("Invalid index buffer binding");
     }
 
     if (!ValidateConstantBuffers() && (!ConstantBuffersVS.empty() || !ConstantBuffersPS.empty()))
     {
-        LOG("Warning: Invalid constant buffer binding");
+        LOG_WARNING("Invalid constant buffer binding");
     }
 
     if (!ValidateShaderResources() && !ShaderResources.empty())
     {
-        LOG("Warning: Invalid shader resource binding");
+        LOG_WARNING("Invalid shader resource binding");
     }
 
     if (!ValidateSamplers() && !Samplers.empty())
     {
-        LOG("Warning: Invalid sampler binding");
+        LOG_WARNING("Invalid sampler binding");
     }
 
     if (!ValidateRasterizerState())
     {
-        LOG("Warning: Invalid rasterizer state");
+        LOG_WARNING("Invalid rasterizer state");
     }
 
     if (!ValidateBlendState())
     {
-        LOG("Warning: Invalid blend state");
+        LOG_WARNING("Invalid blend state");
     }
 
     if (!ValidateDepthStencilState())
     {
-        LOG("Warning: Invalid depth stencil state");
+        LOG_WARNING("Invalid depth stencil state");
     }
 
     return bIsValid;
@@ -628,7 +628,7 @@ bool FD3DContextDebugger::InspectBufferContent(ID3D11Buffer* buffer, ID3D11Devic
         }
 
         if (allZero) {
-            LOG("WARNING: Buffer content is all zeros!");
+            LOG_WARNING("Buffer content is all zeros!");
         }
 
 

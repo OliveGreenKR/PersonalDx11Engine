@@ -54,7 +54,7 @@ void FCollisionProcessor::UnRegisterCollision(std::shared_ptr<UCollisionComponen
 
 	if (targetIt == RegisteredComponents.end())
 	{
-		LOG("[WARNING] Attempt to unregister collision component that is not registered");
+		LOG_WARNING("Attempt to unregister collision component that is not registered");
 		return;
 	}
 
@@ -80,7 +80,7 @@ void FCollisionProcessor::UnRegisterCollision(std::shared_ptr<UCollisionComponen
 		RegisteredComponents.erase(targetIt);
 	}
 	catch (const std::exception& e) {
-		LOG("[ERROR] Exception during collision unregistration: %s", e.what());
+		LOG_ERROR("Exception during collision unregistration: %s", e.what());
 	}
 }
 

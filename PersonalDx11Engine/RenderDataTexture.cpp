@@ -5,7 +5,7 @@ void FRenderDataTexture::AddPSConstantBuffer(uint32_t Slot, ID3D11Buffer* Buffer
 {
     if (!Buffer)
     {
-        LOG("Wrong ConstantBuffer");
+        LOG_WARNING("Wrong ConstantBuffer");
         return;
     }
     //null도 전달

@@ -414,7 +414,7 @@ void UConsoleManager::InitializeColors()
 
         // 카테고리별 색상 설정
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Normal)] = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // 흰색
-        CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Info)] = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // 흰색
+        CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Info)] = FOREGROUND_GREEN | FOREGROUND_INTENSITY;             //  밝은 초록색
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Error)] = FOREGROUND_RED | FOREGROUND_INTENSITY;             // 밝은 빨간색
         CategoryColors[static_cast<size_t>(ELogCategory::LogLevel_Warning)] = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; // 노란색
     }

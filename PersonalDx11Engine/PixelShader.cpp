@@ -24,7 +24,7 @@ bool UPixelShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring&
 
     if (FAILED(hr) || !PSBlob)
     {
-        LOG("Failed to compile pixel shader: %S", Path.c_str());
+        LOG_WARNING("Failed to compile pixel shader: %S", Path.c_str());
         return false;
     }
 
@@ -37,7 +37,7 @@ bool UPixelShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring&
 
     if (FAILED(hr))
     {
-        LOG("Failed to create vertex shader: %S", Path.c_str());
+        LOG_WARNING("Failed to create vertex shader: %S", Path.c_str());
         PSBlob->Release();
         return false;
     }

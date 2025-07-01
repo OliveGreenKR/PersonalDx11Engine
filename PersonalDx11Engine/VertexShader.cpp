@@ -24,7 +24,7 @@ bool UVertexShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring
 
     if (FAILED(hr) || !VSBlob)
     {
-        LOG("Failed to compile vertex shader: %S", Path.c_str());
+        LOG_WARNING("Failed to compile vertex shader: %S", Path.c_str());
         return false;
     }
 
@@ -41,7 +41,7 @@ bool UVertexShader::LoadImpl(IRenderHardware* RenderHardware, const std::wstring
 
     if (FAILED(hr))
     {
-        LOG("Failed to create vertex shader: %S", Path.c_str());
+        LOG_WARNING("Failed to create vertex shader: %S", Path.c_str());
         VSBlob->Release();
         return false;
     }
