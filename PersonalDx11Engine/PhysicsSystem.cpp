@@ -17,7 +17,7 @@ UPhysicsSystem::~UPhysicsSystem()
     Release();
 }
 
-void UPhysicsSystem::Initialzie()
+void UPhysicsSystem::Initialize()
 {
     try
     {
@@ -65,7 +65,8 @@ SoAID UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Obj
         return FPhysicsStateArrays::INVALID_ID;
     }
 
-    SoAID newID = PhysicsStateSoA.AllocateSlot();
+    std::weak_ptr<IPhysicsObject> weakRef = Object;
+    SoAID newID = PhysicsStateSoA.AllocateSlot(weakRef);
 
     if (newID != FPhysicsStateArrays::INVALID_ID)
     {
@@ -100,17 +101,26 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     int NumSubsteps = CalculateRequiredSubsteps();
     NumSubsteps = Math::Clamp(NumSubsteps, 0, MaxSubSteps);
 
+    if (NumSubsteps < 1)
+        return;
+
     // 물리 시뮬레이션 준비
     PrepareSimulation();
 
+    float TimeStep = FixedTimeStep;
     // 서브스텝 시뮬레이션
     for (int i = 0; i < NumSubsteps; i++)
     {
-        if (SimulateSubstep(FixedTimeStep) && i > MinSubSteps)
+        float SimualtedTime = SimulateSubstep(TimeStep);
+		TimeStep -= SimualtedTime;
+
+        // 시간 전부 사용- 서브  스텝 종료
+        if (TimeStep < KINDA_SMALL && i > MinSubSteps)
         {
-            // 시간 전부 사용- 서브  스텝 종료
             break;
         }
+        AccumulatedTime -= SimualtedTime;
+
     }
 
     // 시뮬레이션 결과 적용
@@ -130,39 +140,20 @@ void UPhysicsSystem::PrepareSimulation()
 {
     bIsSimulating = true;
 
-    // 파괴된(만료된) 객체 소멸
-    RegisteredObjects.erase(
-        std::remove_if(
-            RegisteredObjects.begin(),
-            RegisteredObjects.end(),
-            [](const std::weak_ptr<IPhysicsObject>& objWeak) {
-                return objWeak.expired();
-            }
-        ),        RegisteredObjects.end()
-    );
+    //비유효 ObejectRef 정리는 안함. Unregister시에 진행(ID를 통한 인터페이스 유지)
 
     // 작업 큐 차례대로 실행
-    for (auto& RequestedJob : JobQueue)
-    {
-        if (!RequestedJob.IsValid())
-            continue;
-        RequestedJob.PhysicsJob->Execute(RequestedJob.TargetWeak.lock().get(), _placeholder_);
-    }
+    ProcessJobQueue();
+
     //JobQeueu 클리어
     JobQueue.Clear();
     //JobPool 클리어
-    PhysicsJobPool.Reset();
+    JobPool.Reset();
 }
 
 // 단일 서브스텝 시뮬레이션
-bool UPhysicsSystem::SimulateSubstep(const float StepTime)
+float UPhysicsSystem::SimulateSubstep(const float StepTime)
 {
-	// 이미 충돌로 인해 전체 시간이 소진된 경우 검사
-	if (AccumulatedTime < KINDA_SMALL)
-	{
-		return true; // 더 이상 시뮬레이션 불필요
-
-	}
     //가장 적은 시뮬시간
     float MinSimulatedTimeRatio = 1.0f;
     
@@ -172,34 +163,34 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
 
     // 시뮬레이션 시간 업데이트
     // Tick 시간 클램핑 ( 로직 처리에 안정성을 주기위한 최소 틱시간 결정)
-    float RemainingTime = StepTime;
     float SimualtedTime = std::max(MinSubStepTickTime, StepTime * MinSimulatedTimeRatio);
-    AccumulatedTime -= SimualtedTime;
-    RemainingTime -= SimualtedTime;
+
+
+    //공통 물리 배치 시뮬레이션
+    // 중력 적용
+    BatchApplyGravity(Gravity, SimualtedTime);
+
+    // 드래그 적용
+    BatchApplyDrag(SimualtedTime);
+
+    // 속도 적분 (위치 업데이트)
+    BatchIntegrateVelocity(SimualtedTime);
+
 
     // 물리 Tick
-    for (auto& PhysicsObject : RegisteredObjects)
-    {
-        //PhysicsTick 
-        auto PhysicsObjectPtr = PhysicsObject.lock();
-        if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
-        {
-            PhysicsObjectPtr->TickPhysics(SimualtedTime);
-        }
-       
-    }
+    BatchPhysicsTick(SimualtedTime);
+    //for (auto& PhysicsObject : RegisteredObjects)
+    //{
+    //    //PhysicsTick 
+    //    auto PhysicsObjectPtr = PhysicsObject.lock();
+    //    if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
+    //    {
+    //        PhysicsObjectPtr->TickPhysics(SimualtedTime);
+    //    }
+    //   
+    //}
 
-    if (RemainingTime < KINDA_SMALL)
-    {
-        //시간 전부 사용
-        return true;
-
-    }
-    else
-    {
-        //시간 남음
-        return false;
-    }
+    return SimualtedTime;
 }
 
 
@@ -207,13 +198,8 @@ bool UPhysicsSystem::SimulateSubstep(const float StepTime)
 void UPhysicsSystem::FinalizeSimulation()
 {
     bIsSimulating = false;
-    //
-    //for (int i = 0; i <= PhysicsStateSoA.AllocatedCount; ++i)
-    //{
-    //    SoAID TargetID = PhysicsStateSoA.GetID(i);
-    //}
-    //PhysicsStateSoA.Velocities
 
+    BatchSynchronizeState();
 }
 
 #pragma endregion

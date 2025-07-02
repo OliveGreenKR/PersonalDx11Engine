@@ -153,7 +153,7 @@ public:
     {
         static UPhysicsSystem* manager = [](){
             UPhysicsSystem* instance = new UPhysicsSystem();
-            instance->Initialzie();
+            instance->Initialize();
             return instance;
         }();
 
@@ -182,7 +182,7 @@ public:
 #pragma endregion
 
 private:
-    void Initialzie();
+    void Initialize();
     void Release();
 
     //Configure File Load
@@ -194,8 +194,11 @@ private:
     // 시뮬레이션 시작 전 준비
     void PrepareSimulation();
 
-    // 단일 서브스텝 시뮬레이션
-    bool SimulateSubstep(const float TimeStep);
+    /// <summary>
+    /// 단일 서브스텝 시뮬레이션
+    /// </summary>
+    /// <returns> 사용한 SimulatedTime 반환 </returns>
+    float SimulateSubstep(const float TimeStep);
 
     // 시뮬레이션 완료 후 최종 상태 적용
     void FinalizeSimulation();
@@ -213,20 +216,23 @@ private:
 
 #pragma region Batch to All PhyscisObj
 private:
+    //물리 틱 전파
+    void BatchPhysicsTick(const float DeltaTime);
+
     //중력 적용
     void BatchApplyGravity(const Vector3& gravity, float deltaTime);
 
-    //속도를 통한 위치 적분
+    //내부에서 속도제한 설정 속도를 + 속도 통한 위치 적분 
     void BatchIntegrateVelocity(float deltaTime);
 
     //누적힘/토크 초기화
     void BatchResetForces();
 
-    //속도 제한 적용
-    void BatchClampVelocities();
-
     //저항 적용
     void BatchApplyDrag(float deltaTime);
+
+    //물리 상태 동기화
+    void BatchSynchronizeState();
 #pragma endregion
 private:
     //수치안정성 함수
@@ -241,7 +247,6 @@ private:
     /// <summary>
     /// 개별 객체 속도 제한 적용
     /// </summary>
-    void ClampVelocities(SoAID ObjectID);
     void ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity);
     void ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity);
 
@@ -255,12 +260,12 @@ private:
     int MaxSubSteps = 5;                 // 최대 서브스텝 수
     int MinSubSteps = 3;                 // 최소 서브스텝 수 - 연속적인 충돌을 처리하기 위함
 
+    Vector3 Gravity = -9.812f * Vector3::Up();
+
     //누적 tickTime 상태값
     float AccumulatedTime = 0.0f;
 
     // 시뮬레이션 상태
     bool bIsSimulating = false;
 
-    //상수
-    const float BaseGravity = 9.812f;
 };
