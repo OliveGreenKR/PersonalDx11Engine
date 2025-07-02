@@ -46,6 +46,23 @@ FPhysicsStateArrays::FPhysicsStateArrays(size_t InitialSize,
 
 // === 객체 생명주기 관리 ===
 
+SoAID FPhysicsStateArrays::AllocateSlot(std::weak_ptr<IPhysicsObject>& ObjectRef)
+{
+    if (ObjectRef.expired())
+    {
+        LOG_WARNING("Invalid Obejct tried to allocate PhysicsStates");
+        return INVALID_ID;
+    }
+    SoAID NewID = AllocateSlot();
+    if (NewID != INVALID_ID)
+    {
+        SoAIdx NewIdx = IdToIdx.at(NewID);
+        ObjectReferences[NewIdx] = ObjectRef;
+    }
+
+    return NewID;
+}
+
 // 새 슬롯 할당
 SoAID FPhysicsStateArrays::AllocateSlot()
 {
@@ -313,8 +330,7 @@ void FPhysicsStateArrays::ActivateObject(SoAID Id)
 
 // === 상태 조회 ==
 
-// ID가 할당된 유효한 슬롯인지 확인
-bool FPhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
+bool FPhysicsStateArrays::IsValidId(SoAID Id) const
 {
     if (Id == INVALID_ID)
     {
@@ -334,7 +350,7 @@ bool FPhysicsStateArrays::IsAllocatedSlot(SoAID Id) const
 // ID 객체가 활성 상태인지 확인 (할당되고 활성화된 경우만 true)
 bool FPhysicsStateArrays::IsActiveObject(SoAID Id) const
 {
-    if (!IsAllocatedSlot(Id))
+    if (!IsValidId(Id))
     {
         return false;
     }
@@ -382,6 +398,17 @@ SoAIdx FPhysicsStateArrays::GetIndex(SoAID Id) const
     {
         LOG_ERROR("GetIndex called with non-existent ID: %u", Id);
         return INVALID_IDX;
+    }
+    return It->second;
+}
+
+SoAID FPhysicsStateArrays::GetID(SoAIdx Idx) const
+{
+    auto It = IdxToId.find(Idx);
+    if (It == IdxToId.end())
+    {
+        LOG_ERROR("GetID called with non-existent Idx: %u", Idx);
+        return INVALID_ID;
     }
     return It->second;
 }

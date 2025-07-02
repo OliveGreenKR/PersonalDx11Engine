@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
+#include <memory>
 #include "Math.h"
 #include "PhysicsDefine.h"
+#include "PhysicsObjectInterface.h"
 #include <DirectXMath.h>
 
 using SoAID = uint32_t;
@@ -57,9 +59,12 @@ public:
     std::vector<EPhysicsType> PhysicsTypes;
     std::vector<FPhysicsMask> PhysicsMasks;
 
+    // 물리 객체 약한 참조
+    std::vector<std::weak_ptr<IPhysicsObject>> ObjectReferences;
+
     // === 상태 관리 데이터 ===
     std::vector<bool> AllocatedFlags;    // 각 슬롯의 할당 여부
-    uint32_t AllocatedCount = 0;         // 할당된 슬롯 수 (순회 범위)
+    uint32_t AllocatedCount = 0;         // 할당된 슬롯 수 (순회 범위 = [1:AllocatedCount]
     uint32_t DeallocatedCount = 0;       // 해제된 슬롯 수 (압축 대상)
 
 public:
@@ -72,6 +77,8 @@ public:
 
     // === 객체 생명주기 관리 ===
 
+    //새슬롯 할당 및 ID 반환 , ID-Ref 연동(기본적으로 활성 상태로 생성)
+    SoAID AllocateSlot(std::weak_ptr<IPhysicsObject>& ObjectRef);
     /// 새 슬롯 할당 및 ID 반환 (기본적으로 활성 상태로 생성)
     SoAID AllocateSlot();
 
@@ -103,8 +110,8 @@ public:
     /// 자동 압축 비율 임계점 조회
     float GetAutoCompactThresholdRatio() const { return AutoCompactThresholdRatio; }
 
-    /// ID가 할당된 유효한 슬롯인지 확인
-    bool IsAllocatedSlot(SoAID Id) const;
+    // ID가 할당된 유효한 슬롯인지 확인 - 활성화 여부와는 무관
+    bool IsValidId(SoAID Id) const;
 
     /// ID 객체가 활성 상태인지 확인 (할당되고 활성화된 경우만 true)
     bool IsActiveObject(SoAID Id) const;
@@ -127,11 +134,14 @@ public:
     /// 재사용 가능한 ID 수
     uint32_t GetFreeIDCount() const { return static_cast<uint32_t>(ReusableIDs.size()); }
 
-    /// ID를 내부 인덱스로 변환
+    //Id에 대응하는 Index
     SoAIdx GetIndex(SoAID Id) const;
 
-private:
+    //Index에 대응하는 ID 
+    SoAID GetID(SoAIdx Idx) const;
+public:
     static constexpr uint32_t INVALID_ID = 0;
+private:
     static constexpr uint32_t INVALID_IDX = 0;
     static constexpr uint32_t FIRST_VALID_ID = 1;
     static constexpr uint32_t FIRST_VALID_INDEX = 1;
