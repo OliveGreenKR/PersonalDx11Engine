@@ -26,7 +26,7 @@ class UPhysicsSystem;
 /// 
 /// 제약사항:
 /// - 물리 상태 직접 수정 금지 (Job을 통해서만 가능)
-/// - 시뮬레이션 중 캐시 수정 금지
+/// - 게임플레이에서 캐시 write 금지
 /// - PhysicsID 유효성에 의존적
 /// - 충돌 활성화는 CollisionComponent에서 독립 관리
 /// - ActorComponent::SetActive()와 MASK_ACTIVATION 자동 연동
@@ -34,7 +34,7 @@ class UPhysicsSystem;
 class URigidBodyComponent : public USceneComponent,
 	public IPhysicsState, public IPhysicsObject
 {
-#pragma region Constructor and Lifecycle(ActorComp)
+#pragma region Constructor and Lifecycle
 public:
 	URigidBodyComponent();
 	~URigidBodyComponent();
@@ -46,6 +46,7 @@ public:
 	virtual void Activate() override;
 	virtual void DeActivate() override;
 
+	void ResetPhysicsState();
 	virtual void Tick(const float DeltaTime) override;
 
 	virtual const char* GetComponentClassName() const override { return "URigid"; }
@@ -120,8 +121,8 @@ public:
 	virtual void TickPhysics(const float DeltaTime) override;
 
 	// === 물리 상태 및 식별자 ===
-	PhysicsID GetPhysicsID() const override { return PhysicsID; }
-	void SetPhysicsID(PhysicsID InID) override { PhysicsID = InID; }
+	PhysicsID GetPhysicsID() const override { return PhysicsObjectID; }
+	void SetPhysicsID(PhysicsID InID) override { PhysicsObjectID = InID; }
 
 	// === 최신 인터페이스: FPhysicsMask 반환 ===
 	FPhysicsMask GetPhysicsMask() const override { return CachedPhysicsState.PhysicsMasks; }
@@ -129,9 +130,6 @@ public:
 
 #pragma region Physics Property Settings (Job-Based)
 public:
-	//물리 속성 기본값으로 초기화 설정
-	void ResetPhysicsStates();
-
 	// === 물리 속성 설정 (Job 기반) ===
 	void SetMass(float InMass);
 	void SetFrictionKinetic(float InFriction);
@@ -164,10 +162,6 @@ private:
 	// === 헬퍼 메서드 ===
 	Vector3 GetCenterOfMass() const;
 
-	// === Job 요청 헬퍼 (템플릿으로 타입 안전성 보장) ===
-	template<typename JobType, typename... Args>
-	void RequestPhysicsJob(Args&&... args);
-
 	// === 물리 시스템 연동 내부 메서드 ===
 	void UpdatePhysicsActivationState();
 #pragma endregion
@@ -175,7 +169,7 @@ private:
 #pragma region Member Variables
 private:
 	// === 물리 시스템 식별자 ===
-	PhysicsID PhysicsID = 0;
+	PhysicsID PhysicsObjectID = 0;
 
 	// === 캐시된 물리 상태 (읽기 전용) ===
 	FPhysicsState CachedPhysicsState;

@@ -31,6 +31,9 @@ private:
 
         bool IsValid() const { return Job != nullptr; }
     };
+
+public:
+    static constexpr PhysicsID INVALID_PHYSICS_ID = 0;
 private:
     // 물리 상태 데이터 관리자
     FPhysicsStateArrays PhysicsStateSoA;
@@ -202,9 +205,6 @@ private:
 
     //Job 순차 처리
     void ProcessJobQueue();
-
-    // 물리 시뮬레이션 적분 처리
-    void ExecutePhysicsIntegration(float deltaTime);
 
 private:
 
