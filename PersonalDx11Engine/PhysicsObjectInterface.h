@@ -14,9 +14,8 @@ public:
     // 내부 연산 결과를 외부용으로 복사
     virtual void SynchronizeCachedStateFromSimulated() = 0;
 
-    //플래그 확인
-    virtual bool IsStatic() const = 0;
-    virtual bool IsActive() const = 0;
+    //상태 확인
+    virtual struct FPhysicsMask GetPhysicsMask() const = 0;
 
     virtual PhysicsID GetPhysicsID() const = 0;
     virtual void SetPhysicsID(PhysicsID InID) = 0;
