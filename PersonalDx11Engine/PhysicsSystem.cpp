@@ -176,19 +176,8 @@ float UPhysicsSystem::SimulateSubstep(const float StepTime)
     // 속도 적분 (위치 업데이트)
     BatchIntegrateVelocity(SimualtedTime);
 
-
     // 물리 Tick
     BatchPhysicsTick(SimualtedTime);
-    //for (auto& PhysicsObject : RegisteredObjects)
-    //{
-    //    //PhysicsTick 
-    //    auto PhysicsObjectPtr = PhysicsObject.lock();
-    //    if (PhysicsObjectPtr && SimualtedTime > KINDA_SMALL)
-    //    {
-    //        PhysicsObjectPtr->TickPhysics(SimualtedTime);
-    //    }
-    //   
-    //}
 
     return SimualtedTime;
 }
@@ -220,6 +209,7 @@ void UPhysicsSystem::ProcessJobQueue()
     }
 }
 
+// === 내부 유틸리티 구현 ===
 
 SoAIdx UPhysicsSystem::GetIdx(const SoAID targetID) const
 {
@@ -230,6 +220,392 @@ bool UPhysicsSystem::IsValidTargetID(const SoAID targetID) const
 {
     return PhysicsStateSoA.IsValidId(targetID);
 }
+
+#pragma region IPhysicsInternal
+// === 물리 속성 접근자 ===
+
+float UPhysicsSystem::P_GetMass(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetMass: %u", targetID);
+        return 1.0f;  // 기본값 반환
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    float invMass = PhysicsStateSoA.InvMasses[index];
+
+    // InvMass가 0이면 무한 질량 (Static)
+    return (invMass > KINDA_SMALL) ? (1.0f / invMass) : FLT_MAX;
+}
+
+float UPhysicsSystem::P_GetInvMass(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetInvMass: %u", targetID);
+        return 1.0f;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.InvMasses[index];
+}
+
+Vector3 UPhysicsSystem::P_GetRotationalInertia(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetRotationalInertia: %u", targetID);
+        return Vector3::One();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+
+    // InvRotationalInertia를 RotationalInertia로 변환
+    Vector3 result;
+    XMFLOAT3 invInertiaFloat;
+    XMStoreFloat3(&invInertiaFloat, invInertia);
+
+    result.x = (abs(invInertiaFloat.x) > KINDA_SMALL) ? (1.0f / invInertiaFloat.x) : FLT_MAX;
+    result.y = (abs(invInertiaFloat.y) > KINDA_SMALL) ? (1.0f / invInertiaFloat.y) : FLT_MAX;
+    result.z = (abs(invInertiaFloat.z) > KINDA_SMALL) ? (1.0f / invInertiaFloat.z) : FLT_MAX;
+
+    return result;
+}
+
+Vector3 UPhysicsSystem::P_GetInvRotationalInertia(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetInvRotationalInertia: %u", targetID);
+        return Vector3::One();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+
+    Vector3 result;
+    XMFLOAT3 invInertiaFloat;
+    XMStoreFloat3(&invInertiaFloat, invInertia);
+
+    result.x = invInertiaFloat.x;
+    result.y = invInertiaFloat.y;
+    result.z = invInertiaFloat.z;
+
+    return result;
+}
+
+float UPhysicsSystem::P_GetRestitution(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetRestitution: %u", targetID);
+        return 0.5f;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.Restitutions[index];
+}
+
+float UPhysicsSystem::P_GetFrictionStatic(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetFrictionStatic: %u", targetID);
+        return 0.5f;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.FrictionStatics[index];
+}
+
+float UPhysicsSystem::P_GetFrictionKinetic(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetFrictionKinetic: %u", targetID);
+        return 0.3f;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.FrictionKinetics[index];
+}
+
+float UPhysicsSystem::P_GetGravityScale(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetGravityScale: %u", targetID);
+        return 1.0f;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.GravityScales[index];
+}
+
+float UPhysicsSystem::P_GetMaxSpeed(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetMaxSpeed: %u", targetID);
+        return -1.0f;  // 무제한
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.MaxSpeeds[index];
+}
+
+float UPhysicsSystem::P_GetMaxAngularSpeed(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetMaxAngularSpeed: %u", targetID);
+        return -1.0f;  // 무제한
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.MaxAngularSpeeds[index];
+}
+
+// === 운동 상태 접근자 ===
+
+Vector3 UPhysicsSystem::P_GetVelocity(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetVelocity: %u", targetID);
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR velocity = PhysicsStateSoA.Velocities[index];
+
+    Vector3 result;
+    XMFLOAT3 velocityFloat;
+    XMStoreFloat3(&velocityFloat, velocity);
+
+    result.x = velocityFloat.x;
+    result.y = velocityFloat.y;
+    result.z = velocityFloat.z;
+
+    return result;
+}
+
+Vector3 UPhysicsSystem::P_GetAngularVelocity(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetAngularVelocity: %u", targetID);
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR angularVelocity = PhysicsStateSoA.AngularVelocities[index];
+
+    Vector3 result;
+    XMFLOAT3 angularVelocityFloat;
+    XMStoreFloat3(&angularVelocityFloat, angularVelocity);
+
+    result.x = angularVelocityFloat.x;
+    result.y = angularVelocityFloat.y;
+    result.z = angularVelocityFloat.z;
+
+    return result;
+}
+
+Vector3 UPhysicsSystem::P_GetAccumulatedForce(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetAccumulatedForce: %u", targetID);
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR force = PhysicsStateSoA.AccumulatedForces[index];
+
+    Vector3 result;
+    XMFLOAT3 forceFloat;
+    XMStoreFloat3(&forceFloat, force);
+
+    result.x = forceFloat.x;
+    result.y = forceFloat.y;
+    result.z = forceFloat.z;
+
+    return result;
+}
+
+Vector3 UPhysicsSystem::P_GetAccumulatedTorque(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetAccumulatedTorque: %u", targetID);
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR torque = PhysicsStateSoA.AccumulatedTorques[index];
+
+    Vector3 result;
+    XMFLOAT3 torqueFloat;
+    XMStoreFloat3(&torqueFloat, torque);
+
+    result.x = torqueFloat.x;
+    result.y = torqueFloat.y;
+    result.z = torqueFloat.z;
+
+    return result;
+}
+
+// === 트랜스폼 접근자 ===
+
+FTransform UPhysicsSystem::P_GetWorldTransform(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetWorldTransform: %u", targetID);
+        return FTransform();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+
+    FTransform result;
+
+    // Position
+    XMVECTOR position = PhysicsStateSoA.WorldPosition[index];
+    XMFLOAT3 positionFloat;
+    XMStoreFloat3(&positionFloat, position);
+    result.Position = Vector3(positionFloat.x, positionFloat.y, positionFloat.z);
+
+    // Rotation
+    XMVECTOR rotation = PhysicsStateSoA.WorldRotationQuat[index];
+    XMFLOAT4 rotationFloat;
+    XMStoreFloat4(&rotationFloat, rotation);
+    result.Rotation = Quaternion(rotationFloat.x, rotationFloat.y, rotationFloat.z, rotationFloat.w);
+
+    // Scale
+    XMVECTOR scale = PhysicsStateSoA.WorldScale[index];
+    XMFLOAT3 scaleFloat;
+    XMStoreFloat3(&scaleFloat, scale);
+    result.Scale = Vector3(scaleFloat.x, scaleFloat.y, scaleFloat.z);
+
+    return result;
+}
+
+Vector3 UPhysicsSystem::P_GetWorldPosition(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetWorldPosition: %u", targetID);
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR position = PhysicsStateSoA.WorldPosition[index];
+
+    Vector3 result;
+    XMFLOAT3 positionFloat;
+    XMStoreFloat3(&positionFloat, position);
+
+    result.x = positionFloat.x;
+    result.y = positionFloat.y;
+    result.z = positionFloat.z;
+
+    return result;
+}
+
+Quaternion UPhysicsSystem::P_GetWorldRotation(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetWorldRotation: %u", targetID);
+        return Quaternion::Identity();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR rotation = PhysicsStateSoA.WorldRotationQuat[index];
+
+    XMFLOAT4 rotationFloat;
+    XMStoreFloat4(&rotationFloat, rotation);
+
+    return Quaternion(rotationFloat.x, rotationFloat.y, rotationFloat.z, rotationFloat.w);
+}
+
+Vector3 UPhysicsSystem::P_GetWorldScale(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetWorldScale: %u", targetID);
+        return Vector3::One();
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    XMVECTOR scale = PhysicsStateSoA.WorldScale[index];
+
+    Vector3 result;
+    XMFLOAT3 scaleFloat;
+    XMStoreFloat3(&scaleFloat, scale);
+
+    result.x = scaleFloat.x;
+    result.y = scaleFloat.y;
+    result.z = scaleFloat.z;
+
+    return result;
+}
+
+// === 상태 타입 및 마스크 접근자 ===
+
+EPhysicsType UPhysicsSystem::P_GetPhysicsType(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetPhysicsType: %u", targetID);
+        return EPhysicsType::Dynamic;
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.PhysicsTypes[index];
+}
+
+FPhysicsMask UPhysicsSystem::P_GetPhysicsMask(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_GetPhysicsMask: %u", targetID);
+        return FPhysicsMask(FPhysicsMask::MASK_NONE);
+    }
+
+    SoAIdx index = GetIdx(targetID);
+    return PhysicsStateSoA.PhysicsMasks[index];
+}
+
+// === 활성화 제어 접근자 ===
+
+bool UPhysicsSystem::P_IsPhysicsActive(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_IsPhysicsActive: %u", targetID);
+        return false;
+    }
+
+    FPhysicsMask Mask = P_GetPhysicsMask(targetID);
+    return Mask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
+}
+
+bool UPhysicsSystem::P_IsCollisionActive(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_IsCollisionActive: %u", targetID);
+        return false;
+    }
+
+    FPhysicsMask Mask = P_GetPhysicsMask(targetID);
+    return Mask.HasFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
+}
+#pragma endregion
 
 ///////////////////////////////////////////////////////////
 

@@ -79,73 +79,73 @@ private:
 
 #pragma region IPhysicsStateInteranl
 public :
-    // 물리 속성 접근자 (SoAID 기반)
-    float P_GetMass(SoAID targetID) const override;
-    float P_GetInvMass(SoAID targetID) const override;
-    Vector3 P_GetRotationalInertia(SoAID targetID) const override;
-    Vector3 P_GetInvRotationalInertia(SoAID targetID) const override;
-    float P_GetRestitution(SoAID targetID) const override;
-    float P_GetFrictionStatic(SoAID targetID) const override;
-    float P_GetFrictionKinetic(SoAID targetID) const override;
-    float P_GetGravityScale(SoAID targetID) const override;
-    float P_GetMaxSpeed(SoAID targetID) const override;
-    float P_GetMaxAngularSpeed(SoAID targetID) const override;
+    // 물리 속성 접근자 (PhysicsID 기반)
+    float P_GetMass(PhysicsID targetID) const override;
+    float P_GetInvMass(PhysicsID targetID) const override;
+    Vector3 P_GetRotationalInertia(PhysicsID targetID) const override;
+    Vector3 P_GetInvRotationalInertia(PhysicsID targetID) const override;
+    float P_GetRestitution(PhysicsID targetID) const override;
+    float P_GetFrictionStatic(PhysicsID targetID) const override;
+    float P_GetFrictionKinetic(PhysicsID targetID) const override;
+    float P_GetGravityScale(PhysicsID targetID) const override;
+    float P_GetMaxSpeed(PhysicsID targetID) const override;
+    float P_GetMaxAngularSpeed(PhysicsID targetID) const override;
 
-    // 운동 상태 접근자 (SoAID 기반)
-    Vector3 P_GetVelocity(SoAID targetID) const override;
-    Vector3 P_GetAngularVelocity(SoAID targetID) const override;
-    Vector3 P_GetAccumulatedForce(SoAID targetID) const override;
-    Vector3 P_GetAccumulatedTorque(SoAID targetID) const override;
+    // 운동 상태 접근자 (PhysicsID 기반)
+    Vector3 P_GetVelocity(PhysicsID targetID) const override;
+    Vector3 P_GetAngularVelocity(PhysicsID targetID) const override;
+    Vector3 P_GetAccumulatedForce(PhysicsID targetID) const override;
+    Vector3 P_GetAccumulatedTorque(PhysicsID targetID) const override;
 
-    // 트랜스폼 접근자 (SoAID 기반)
-    FTransform P_GetWorldTransform(SoAID targetID) const override;
-    Vector3 P_GetWorldPosition(SoAID targetID) const override;
-    Quaternion P_GetWorldRotation(SoAID targetID) const override;
-    Vector3 P_GetWorldScale(SoAID targetID) const override;
+    // 트랜스폼 접근자 (PhysicsID 기반)
+    FTransform P_GetWorldTransform(PhysicsID targetID) const override;
+    Vector3 P_GetWorldPosition(PhysicsID targetID) const override;
+    Quaternion P_GetWorldRotation(PhysicsID targetID) const override;
+    Vector3 P_GetWorldScale(PhysicsID targetID) const override;
 
     // 상태 타입 및 마스크 접근자
-    EPhysicsType P_GetPhysicsType(SoAID targetID) const override;
-    FPhysicsMask P_GetPhysicsMask(SoAID targetID) const override;
+    EPhysicsType P_GetPhysicsType(PhysicsID targetID) const override;
+    FPhysicsMask P_GetPhysicsMask(PhysicsID targetID) const override;
 
-    // 운동 상태 설정자 (SoAID 기반)
-    void P_SetVelocity(SoAID targetID, const Vector3& velocity) override;
-    void P_AddVelocity(SoAID targetID, const Vector3& deltaVelocity) override;
-    void P_SetAngularVelocity(SoAID targetID, const Vector3& angularVelocity) override;
-    void P_AddAngularVelocity(SoAID targetID, const Vector3& deltaAngularVelocity) override;
+    // 운동 상태 설정자 (PhysicsID 기반)
+    void P_SetVelocity(PhysicsID targetID, const Vector3& velocity) override;
+    void P_AddVelocity(PhysicsID targetID, const Vector3& deltaVelocity) override;
+    void P_SetAngularVelocity(PhysicsID targetID, const Vector3& angularVelocity) override;
+    void P_AddAngularVelocity(PhysicsID targetID, const Vector3& deltaAngularVelocity) override;
 
-    // 트랜스폼 설정자 (SoAID 기반)
-    void P_SetWorldPosition(SoAID targetID, const Vector3& position) override;
-    void P_SetWorldRotation(SoAID targetID, const Quaternion& rotation) override;
-    void P_SetWorldScale(SoAID targetID, const Vector3& scale) override;
+    // 트랜스폼 설정자 (PhysicsID 기반)
+    void P_SetWorldPosition(PhysicsID targetID, const Vector3& position) override;
+    void P_SetWorldRotation(PhysicsID targetID, const Quaternion& rotation) override;
+    void P_SetWorldScale(PhysicsID targetID, const Vector3& scale) override;
 
-    // 힘/충격 적용 (SoAID 기반)
-    void P_ApplyForce(SoAID targetID, const Vector3& force) override;
-    void P_ApplyForce(SoAID targetID, const Vector3& force, const Vector3& location) override;
-    void P_ApplyImpulse(SoAID targetID, const Vector3& impulse) override;
-    void P_ApplyImpulse(SoAID targetID, const Vector3& impulse, const Vector3& location) override;
-    void P_ApplyTorque(SoAID targetID, const Vector3& torque) override;
+    // 힘/충격 적용 (PhysicsID 기반)
+    void P_ApplyForce(PhysicsID targetID, const Vector3& force) override;
+    void P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location) override;
+    void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse) override;
+    void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location) override;
+    void P_ApplyTorque(PhysicsID targetID, const Vector3& torque) override;
 
-    // 물리 속성 설정자 (SoAID 기반)
-    void P_SetMass(SoAID targetID, float mass) override;
-    void P_SetInvMass(SoAID targetID, float invMass) override;
-    void P_SetRotationalInertia(SoAID targetID, const Vector3& rotationalInertia) override;
-    void P_SetInvRotationalInertia(SoAID targetID, const Vector3& invRotationalInertia) override;
-    void P_SetRestitution(SoAID targetID, float restitution) override;
-    void P_SetFrictionStatic(SoAID targetID, float frictionStatic) override;
-    void P_SetFrictionKinetic(SoAID targetID, float frictionKinetic) override;
-    void P_SetGravityScale(SoAID targetID, float gravityScale) override;
-    void P_SetMaxSpeed(SoAID targetID, float maxSpeed) override;
-    void P_SetMaxAngularSpeed(SoAID targetID, float maxAngularSpeed) override;
+    // 물리 속성 설정자 (PhysicsID 기반)
+    void P_SetMass(PhysicsID targetID, float mass) override;
+    void P_SetInvMass(PhysicsID targetID, float invMass) override;
+    void P_SetRotationalInertia(PhysicsID targetID, const Vector3& rotationalInertia) override;
+    void P_SetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia) override;
+    void P_SetRestitution(PhysicsID targetID, float restitution) override;
+    void P_SetFrictionStatic(PhysicsID targetID, float frictionStatic) override;
+    void P_SetFrictionKinetic(PhysicsID targetID, float frictionKinetic) override;
+    void P_SetGravityScale(PhysicsID targetID, float gravityScale) override;
+    void P_SetMaxSpeed(PhysicsID targetID, float maxSpeed) override;
+    void P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed) override;
 
     // 상태 타입 및 마스크 설정자
-    void P_SetPhysicsType(SoAID targetID, EPhysicsType physicsType) override;
-    void P_SetPhysicsMask(SoAID targetID, const FPhysicsMask& physicsMask) override;
+    void P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType) override;
+    void P_SetPhysicsMask(PhysicsID targetID, const FPhysicsMask& physicsMask) override;
 
     // 활성화 제어
-    void P_SetPhysicsActive(SoAID targetID, bool bActive) override;
-    bool P_IsPhysicsActive(SoAID targetID) const override;
-    void P_SetCollisionActive(SoAID targetID, bool bActive) override;
-    bool P_IsCollisionActive(SoAID targetID) const override;
+    void P_SetPhysicsActive(PhysicsID targetID, bool bActive) override;
+    bool P_IsPhysicsActive(PhysicsID targetID) const override;
+    void P_SetCollisionActive(PhysicsID targetID, bool bActive) override;
+    bool P_IsCollisionActive(PhysicsID targetID) const override;
 #pragma endregion
 
 public:
@@ -171,8 +171,8 @@ public:
     }
 
     // 물리 객체 등록/해제
-    SoAID RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Object);
-    void UnregisterPhysicsObject(SoAID id);
+    PhysicsID RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Object);
+    void UnregisterPhysicsObject(PhysicsID id);
 
     // 메인 물리 업데이트 (게임 루프에서 호출)
     void TickPhysics(const float DeltaTime);

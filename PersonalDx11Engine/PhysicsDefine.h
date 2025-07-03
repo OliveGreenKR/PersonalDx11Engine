@@ -3,6 +3,8 @@
 //1m에 해당하는 수치
 #define ONE_METER (100.0f)
 
+using PhysicsID = std::uint32_t;
+
 enum class EPhysicsType
 {
 	Dynamic = 0,
@@ -45,7 +47,7 @@ struct FPhysicsMask
 
 	// 그룹 마스크(편의성)
 	static constexpr uint32_t GROUP_BASIC_SIMULATION = MASK_ACTIVATION | MASK_GRAVITY_AFFECTED;
-	static constexpr uint32_t GROUP_COLLISION_ALL = MASK_COLLISION_ENABLED | MASK_COLLISION_RESPONSE;
+	static constexpr uint32_t GROUP_COLLISION_ALL = MASK_COLLISION_ENABLED;
 
 private:
 	uint32_t Mask = MASK_NONE;

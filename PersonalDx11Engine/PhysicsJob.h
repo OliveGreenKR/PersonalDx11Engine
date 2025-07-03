@@ -14,9 +14,9 @@
 /// </summary>
 struct FPhysicsJob
 {
-    SoAID TargetID = 0;
+    PhysicsID TargetID = 0;
 
-    FPhysicsJob(SoAID InID) : TargetID(InID) {}
+    FPhysicsJob(PhysicsID InID) : TargetID(InID) {}
     virtual ~FPhysicsJob() = default;
 
     virtual void Execute(IPhysicsStateInternal* physicsInternal) = 0;
@@ -30,7 +30,7 @@ struct FJobSetVelocity : public FPhysicsJob
 {
     Vector3 Velocity;
 
-    FJobSetVelocity(SoAID targetID, const Vector3& velocity)
+    FJobSetVelocity(PhysicsID targetID, const Vector3& velocity)
         : FPhysicsJob(targetID)
         , Velocity(velocity)
     {
@@ -46,7 +46,7 @@ struct FJobAddVelocity : public FPhysicsJob
 {
     Vector3 DeltaVelocity;
 
-    FJobAddVelocity(SoAID targetID, const Vector3& deltaVelocity)
+    FJobAddVelocity(PhysicsID targetID, const Vector3& deltaVelocity)
         : FPhysicsJob(targetID)
         , DeltaVelocity(deltaVelocity)
     {
@@ -62,7 +62,7 @@ struct FJobSetAngularVelocity : public FPhysicsJob
 {
     Vector3 AngularVelocity;
 
-    FJobSetAngularVelocity(SoAID targetID, const Vector3& angularVelocity)
+    FJobSetAngularVelocity(PhysicsID targetID, const Vector3& angularVelocity)
         : FPhysicsJob(targetID)
         , AngularVelocity(angularVelocity)
     {
@@ -78,7 +78,7 @@ struct FJobAddAngularVelocity : public FPhysicsJob
 {
     Vector3 DeltaAngularVelocity;
 
-    FJobAddAngularVelocity(SoAID targetID, const Vector3& deltaAngularVelocity)
+    FJobAddAngularVelocity(PhysicsID targetID, const Vector3& deltaAngularVelocity)
         : FPhysicsJob(targetID)
         , DeltaAngularVelocity(deltaAngularVelocity)
     {
@@ -96,7 +96,7 @@ struct FJobApplyForceAtCenter : public FPhysicsJob
 {
     Vector3 Force;
 
-    FJobApplyForceAtCenter(SoAID targetID, const Vector3& force)
+    FJobApplyForceAtCenter(PhysicsID targetID, const Vector3& force)
         : FPhysicsJob(targetID)
         , Force(force)
     {
@@ -113,7 +113,7 @@ struct FJobApplyForceAtLocation : public FPhysicsJob
     Vector3 Force;
     Vector3 Location;
 
-    FJobApplyForceAtLocation(SoAID targetID, const Vector3& force, const Vector3& location)
+    FJobApplyForceAtLocation(PhysicsID targetID, const Vector3& force, const Vector3& location)
         : FPhysicsJob(targetID)
         , Force(force)
         , Location(location)
@@ -130,7 +130,7 @@ struct FJobApplyImpulseAtCenter : public FPhysicsJob
 {
     Vector3 Impulse;
 
-    FJobApplyImpulseAtCenter(SoAID targetID, const Vector3& impulse)
+    FJobApplyImpulseAtCenter(PhysicsID targetID, const Vector3& impulse)
         : FPhysicsJob(targetID)
         , Impulse(impulse)
     {
@@ -147,7 +147,7 @@ struct FJobApplyImpulseAtLocation : public FPhysicsJob
     Vector3 Impulse;
     Vector3 Location;
 
-    FJobApplyImpulseAtLocation(SoAID targetID, const Vector3& impulse, const Vector3& location)
+    FJobApplyImpulseAtLocation(PhysicsID targetID, const Vector3& impulse, const Vector3& location)
         : FPhysicsJob(targetID)
         , Impulse(impulse)
         , Location(location)
@@ -164,7 +164,7 @@ struct FJobApplyTorque : public FPhysicsJob
 {
     Vector3 Torque;
 
-    FJobApplyTorque(SoAID targetID, const Vector3& torque)
+    FJobApplyTorque(PhysicsID targetID, const Vector3& torque)
         : FPhysicsJob(targetID)
         , Torque(torque)
     {
@@ -182,7 +182,7 @@ struct FJobSetWorldTransform : public FPhysicsJob
 {
     FTransform WorldTransform;
 
-    FJobSetWorldTransform(SoAID targetID, const FTransform& transform)
+    FJobSetWorldTransform(PhysicsID targetID, const FTransform& transform)
         : FPhysicsJob(targetID)
         , WorldTransform(transform)
     {
@@ -198,7 +198,7 @@ struct FJobSetWorldPosition : public FPhysicsJob
 {
     Vector3 Position;
 
-    FJobSetWorldPosition(SoAID targetID, const Vector3& position)
+    FJobSetWorldPosition(PhysicsID targetID, const Vector3& position)
         : FPhysicsJob(targetID)
         , Position(position)
     {
@@ -214,7 +214,7 @@ struct FJobSetWorldRotation : public FPhysicsJob
 {
     Quaternion Rotation;
 
-    FJobSetWorldRotation(SoAID targetID, const Quaternion& rotation)
+    FJobSetWorldRotation(PhysicsID targetID, const Quaternion& rotation)
         : FPhysicsJob(targetID)
         , Rotation(rotation)
     {
@@ -230,7 +230,7 @@ struct FJobSetWorldScale : public FPhysicsJob
 {
     Vector3 Scale;
 
-    FJobSetWorldScale(SoAID targetID, const Vector3& scale)
+    FJobSetWorldScale(PhysicsID targetID, const Vector3& scale)
         : FPhysicsJob(targetID)
         , Scale(scale)
     {
@@ -248,7 +248,7 @@ struct FJobSetMass : public FPhysicsJob
 {
     float Mass;
 
-    FJobSetMass(SoAID targetID, float mass)
+    FJobSetMass(PhysicsID targetID, float mass)
         : FPhysicsJob(targetID)
         , Mass(mass)
     {
@@ -264,7 +264,7 @@ struct FJobSetInvMass : public FPhysicsJob
 {
     float InvMass;
 
-    FJobSetInvMass(SoAID targetID, float invMass)
+    FJobSetInvMass(PhysicsID targetID, float invMass)
         : FPhysicsJob(targetID)
         , InvMass(invMass)
     {
@@ -280,7 +280,7 @@ struct FJobSetRotationalInertia : public FPhysicsJob
 {
     Vector3 RotationalInertia;
 
-    FJobSetRotationalInertia(SoAID targetID, const Vector3& rotationalInertia)
+    FJobSetRotationalInertia(PhysicsID targetID, const Vector3& rotationalInertia)
         : FPhysicsJob(targetID)
         , RotationalInertia(rotationalInertia)
     {
@@ -296,7 +296,7 @@ struct FJobSetInvRotationalInertia : public FPhysicsJob
 {
     Vector3 InvRotationalInertia;
 
-    FJobSetInvRotationalInertia(SoAID targetID, const Vector3& invRotationalInertia)
+    FJobSetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia)
         : FPhysicsJob(targetID)
         , InvRotationalInertia(invRotationalInertia)
     {
@@ -312,7 +312,7 @@ struct FJobSetFrictionKinetic : public FPhysicsJob
 {
     float FrictionKinetic;
 
-    FJobSetFrictionKinetic(SoAID targetID, float friction)
+    FJobSetFrictionKinetic(PhysicsID targetID, float friction)
         : FPhysicsJob(targetID)
         , FrictionKinetic(friction)
     {
@@ -328,7 +328,7 @@ struct FJobSetFrictionStatic : public FPhysicsJob
 {
     float FrictionStatic;
 
-    FJobSetFrictionStatic(SoAID targetID, float friction)
+    FJobSetFrictionStatic(PhysicsID targetID, float friction)
         : FPhysicsJob(targetID)
         , FrictionStatic(friction)
     {
@@ -344,7 +344,7 @@ struct FJobSetRestitution : public FPhysicsJob
 {
     float Restitution;
 
-    FJobSetRestitution(SoAID targetID, float restitution)
+    FJobSetRestitution(PhysicsID targetID, float restitution)
         : FPhysicsJob(targetID)
         , Restitution(restitution)
     {
@@ -360,7 +360,7 @@ struct FJobSetGravityScale : public FPhysicsJob
 {
     float GravityScale;
 
-    FJobSetGravityScale(SoAID targetID, float scale)
+    FJobSetGravityScale(PhysicsID targetID, float scale)
         : FPhysicsJob(targetID)
         , GravityScale(scale)
     {
@@ -376,7 +376,7 @@ struct FJobSetMaxSpeed : public FPhysicsJob
 {
     float MaxSpeed;
 
-    FJobSetMaxSpeed(SoAID targetID, float maxSpeed)
+    FJobSetMaxSpeed(PhysicsID targetID, float maxSpeed)
         : FPhysicsJob(targetID)
         , MaxSpeed(maxSpeed)
     {
@@ -392,7 +392,7 @@ struct FJobSetMaxAngularSpeed : public FPhysicsJob
 {
     float MaxAngularSpeed;
 
-    FJobSetMaxAngularSpeed(SoAID targetID, float maxAngularSpeed)
+    FJobSetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed)
         : FPhysicsJob(targetID)
         , MaxAngularSpeed(maxAngularSpeed)
     {
@@ -410,7 +410,7 @@ struct FJobSetPhysicsType : public FPhysicsJob
 {
     EPhysicsType PhysicsType;
 
-    FJobSetPhysicsType(SoAID targetID, EPhysicsType physicsType)
+    FJobSetPhysicsType(PhysicsID targetID, EPhysicsType physicsType)
         : FPhysicsJob(targetID)
         , PhysicsType(physicsType)
     {
@@ -426,7 +426,7 @@ struct FJobSetPhysicsMask : public FPhysicsJob
 {
     FPhysicsMask PhysicsMask;
 
-    FJobSetPhysicsMask(SoAID targetID, const FPhysicsMask& physicsMask)
+    FJobSetPhysicsMask(PhysicsID targetID, const FPhysicsMask& physicsMask)
         : FPhysicsJob(targetID)
         , PhysicsMask(physicsMask)
     {
@@ -444,7 +444,7 @@ struct FJobSetPhysicsActive : public FPhysicsJob
 {
     bool bActive;
 
-    FJobSetPhysicsActive(SoAID targetID, bool active)
+    FJobSetPhysicsActive(PhysicsID targetID, bool active)
         : FPhysicsJob(targetID)
         , bActive(active)
     {
@@ -460,7 +460,7 @@ struct FJobSetCollisionActive : public FPhysicsJob
 {
     bool bActive;
 
-    FJobSetCollisionActive(SoAID targetID, bool active)
+    FJobSetCollisionActive(PhysicsID targetID, bool active)
         : FPhysicsJob(targetID)
         , bActive(active)
     {

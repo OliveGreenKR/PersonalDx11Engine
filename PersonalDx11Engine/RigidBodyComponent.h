@@ -132,7 +132,7 @@ private:
 
 private:
 	
-	SoAID PhysicsID = 0;
+	PhysicsID PhysicsID = 0;
 
 	mutable bool bStateDirty = false;
 	FPhysicsState CachedState;  //저장된 물리 상태값, 외부에 읽기전용으로 제공될것
