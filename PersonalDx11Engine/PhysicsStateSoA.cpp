@@ -161,15 +161,16 @@ void FPhysicsStateArrays::DeallocateSlot(SoAID Id)
 
     // 인덱스 유효성 검사
     //인덱스 범위 + 할당되어있는 인덱스
-    if (!IsValidAllocatedIndex(Index))
+    if (!IsValidSlotIndex(Index))
     {
         LOG_ERROR("Invalid index for ID %u", Id, Index, AllocatedCount);
         return;
     }
 
-    // 슬롯 해제: 매핑은 유지, 상태만 변경
+    // 슬롯 해제: 매핑은 유지, 상태만 변경, 객체 참조 해제
     AllocatedFlags[Index] = false;
     PhysicsMasks[Index].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
+    ObjectReferences[Index].reset();
 
     // ID를 재사용 풀에 추가
     ReusableIDs.push_back(Id);
@@ -181,6 +182,25 @@ void FPhysicsStateArrays::DeallocateSlot(SoAID Id)
 
     // 압축 필요성 검사
     CompactIfNeeded();
+}
+
+void FPhysicsStateArrays::CleanupExpiredObjectRefs()
+{
+    constexpr std::uint8_t BATCH_SIZE = 64;
+    const uint32_t EndCount = GetEndIdx();
+
+    for (uint32_t batchStart = GetStartIdx() ; batchStart < EndCount; batchStart += BATCH_SIZE)
+    {
+        uint32_t batchEnd = std::min(batchStart + BATCH_SIZE, EndCount);
+
+        for (uint32_t i = batchStart; i < batchEnd; ++i)
+        {
+            if (ObjectReferences[i].expired())
+            {
+                DeallocateSlot(GetID(i));
+            }
+        }
+    }
 }
 
 // 배열 크기 변경
@@ -256,6 +276,16 @@ void FPhysicsStateArrays::ForceCompact()
     }
 }
 
+SoAIdx FPhysicsStateArrays::GetStartIdx() const
+{
+    return  static_cast<SoAIdx>(FIRST_VALID_INDEX);
+}
+
+SoAIdx FPhysicsStateArrays::GetEndIdx() const
+{
+    return AllocatedCount > 0 ? static_cast<SoAIdx>(AllocatedCount + 1) : FIRST_VALID_INDEX;
+}
+
 // === 활성화 상태 관리 ===
 
 // 객체 비활성화
@@ -277,7 +307,7 @@ void FPhysicsStateArrays::DeactivateObject(SoAID Id)
     SoAIdx Index = It->second;
 
     // 인덱스 유효성 및 할당 상태 검사
-    if (!IsValidAllocatedIndex(Index))
+    if (!IsValidSlotIndex(Index))
     {
         LOG_WARNING("Attempting to deactivate invalid or deallocated ID: %u", Id);
         return;
@@ -312,7 +342,7 @@ void FPhysicsStateArrays::ActivateObject(SoAID Id)
     SoAIdx Index = It->second;
 
     // 인덱스 유효성 및 할당 상태 검사
-    if (!IsValidAllocatedIndex(Index))
+    if (!IsValidSlotIndex(Index))
     {
         LOG_WARNING("Attempting to activate invalid or deallocated ID: %u", Id);
         return;
@@ -330,33 +360,27 @@ void FPhysicsStateArrays::ActivateObject(SoAID Id)
 
 // === 상태 조회 ==
 
-bool FPhysicsStateArrays::IsValidId(SoAID Id) const
+bool FPhysicsStateArrays::IsValidSlotID(SoAID Id) const
 {
     if (Id == INVALID_ID)
     {
         return false;
     }
 
-    auto It = IdToIdx.find(Id);
-    if (It == IdToIdx.end())
-    {
-        return false;
-    }
-
-    SoAIdx Index = It->second;
-    return IsValidAllocatedIndex(Index);
+    SoAIdx Index = GetIndex(Id);
+    return IsValidSlotIndex(Index);
 }
 
 // ID 객체가 활성 상태인지 확인 (할당되고 활성화된 경우만 true)
-bool FPhysicsStateArrays::IsActiveObject(SoAID Id) const
+bool FPhysicsStateArrays::IsValidActiveSlotId(SoAID Id) const
 {
-    if (!IsValidId(Id))
+    if (Id == INVALID_ID)
     {
         return false;
     }
 
     SoAIdx Index = GetIndex(Id);
-    return PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
+    return IsValidSlotIndex(Index) && PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
 }
 
 // 활성 객체 수 계산
@@ -414,9 +438,14 @@ SoAID FPhysicsStateArrays::GetID(SoAIdx Idx) const
 }
 
 // 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
-bool FPhysicsStateArrays::IsValidAllocatedIndex(SoAIdx Index) const
+bool FPhysicsStateArrays::IsValidSlotIndex(SoAIdx Index) const
 {
     return Index >= 1 && Index <= AllocatedCount && AllocatedFlags[Index];
+}
+
+bool FPhysicsStateArrays::IsValidActiveSlotIndex(SoAIdx Index) const
+{
+    return IsValidSlotIndex(Index) && PhysicsMasks[Index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
 }
 
 // 슬롯을 기본값으로 초기화

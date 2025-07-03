@@ -85,6 +85,9 @@ public:
     /// 슬롯 해제 (ID 재사용 가능화, 압축 전까지만)
     void DeallocateSlot(SoAID Id);
 
+    //만료된 약한참조 슬롯 할당 해제
+    void CleanupExpiredObjectRefs();
+
     /// 배열 크기 확장 시도
     bool TryResize(uint32_t NewSize);
 
@@ -93,6 +96,13 @@ public:
 
     /// 명시적 압축 수행
     void ForceCompact();
+
+    // == 순회 범위 제공 ==
+    // 
+    //순회범위 idx : [StartIdx,EndIdx)
+    SoAIdx GetStartIdx() const;
+    //순회범위 idx : [StartIdx,EndIdx)
+    SoAIdx GetEndIdx() const;
 
     // === 활성화 상태 관리 (외부 연산 참고용) ===
 
@@ -111,10 +121,16 @@ public:
     float GetAutoCompactThresholdRatio() const { return AutoCompactThresholdRatio; }
 
     // ID가 할당된 유효한 슬롯인지 확인 - 활성화 여부와는 무관
-    bool IsValidId(SoAID Id) const;
+    bool IsValidSlotID(SoAID Id) const;
 
     /// ID 객체가 활성 상태인지 확인 (할당되고 활성화된 경우만 true)
-    bool IsActiveObject(SoAID Id) const;
+    bool IsValidActiveSlotId(SoAID Id) const;
+
+    /// 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
+    bool IsValidSlotIndex(SoAIdx Index) const;
+
+    /// 인덱스가 할당된 범위 내에 있고 실제로 할당되었으며, 활성화 상태인지 확인
+    bool IsValidActiveSlotIndex(SoAIdx Index) const;
 
     /// 전체 배열 크기
     size_t Size() const { return Velocities.size(); }
@@ -139,6 +155,7 @@ public:
 
     //Index에 대응하는 ID 
     SoAID GetID(SoAIdx Idx) const;
+
 public:
     static constexpr uint32_t INVALID_ID = 0;
 private:
@@ -156,9 +173,6 @@ private:
     std::vector<SoAID> ReusableIDs;                  // 재사용 가능한 ID 풀 (압축 시 초기화됨)
 
     // === 내부 헬퍼 함수들 ===
-
-    /// 인덱스가 할당된 범위 내에 있고 실제로 할당되었는지 확인
-    bool IsValidAllocatedIndex(SoAIdx Index) const;
 
     /// 슬롯을 기본값으로 초기화
     void InitializeSlot(SoAIdx Index);

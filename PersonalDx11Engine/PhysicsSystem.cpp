@@ -56,7 +56,6 @@ void UPhysicsSystem::LoadConfigFromIni()
     UConfigReadManager::Get()->GetValue("MinSubSteps", MinSubSteps);
 }
 
-
 SoAID UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Object)
 {
     if (!Object)
@@ -127,7 +126,6 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     FinalizeSimulation();
 }
 
-
 // 필요한 서브스텝 수 계산
 int UPhysicsSystem::CalculateRequiredSubsteps()
 {
@@ -140,10 +138,11 @@ void UPhysicsSystem::PrepareSimulation()
 {
     bIsSimulating = true;
 
-    //비유효 ObejectRef 정리는 안함. Unregister시에 진행(ID를 통한 인터페이스 유지)
-
     // 작업 큐 차례대로 실행
     ProcessJobQueue();
+
+    //비유효 객체 정리
+    PhysicsStateSoA.CleanupExpiredObjectRefs();
 
     //JobQeueu 클리어
     JobQueue.Clear();
@@ -182,12 +181,12 @@ float UPhysicsSystem::SimulateSubstep(const float StepTime)
     return SimualtedTime;
 }
 
-
-// 시뮬레이션 완료 후 상태 적용
 void UPhysicsSystem::FinalizeSimulation()
 {
+    // 시뮬레이션 플래그 해제
     bIsSimulating = false;
 
+    // 상태 동기화
     BatchSynchronizeState();
 }
 
@@ -216,11 +215,11 @@ SoAIdx UPhysicsSystem::GetIdx(const SoAID targetID) const
     return PhysicsStateSoA.GetIndex(targetID);
 }
 
-bool UPhysicsSystem::IsValidTargetID(const SoAID targetID) const
+bool UPhysicsSystem::IsValidTargetID(const PhysicsID targetID) const
 {
-    return PhysicsStateSoA.IsValidId(targetID);
+    SoAID soaID = static_cast<SoAID>(targetID);
+    return PhysicsStateSoA.IsValidSlotID(soaID);
 }
-
 #pragma region IPhysicsInternal
 
 #pragma region Getter
@@ -1097,6 +1096,285 @@ void UPhysicsSystem::P_SetCollisionActive(PhysicsID targetID, bool bActive)
     P_SetPhysicsMask(targetID, mask);
 }
 #pragma endregion
+
+#pragma endregion
+
+#pragma region Batching
+
+// === 배치 연산 구현 ===
+
+void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    XMVECTOR gravityVec = XMVectorSet(gravity.x, gravity.y, gravity.z, 0.0f);
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+    XMVECTOR gravityForce = XMVectorMultiply(gravityVec, deltaTimeVec);
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+                continue;
+
+            // Dynamic 타입만 중력 적용
+            if (PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
+            {
+                // 중력 스케일 적용
+                float gravityScale = PhysicsStateSoA.GravityScales[i];
+                XMVECTOR scaledGravityForce = XMVectorScale(gravityForce, gravityScale);
+
+                // 질량 적용 (F = ma)
+                float invMass = PhysicsStateSoA.InvMasses[i];
+                if (invMass > KINDA_SMALL)  // Static 객체 제외
+                {
+                    XMVECTOR gravityAccel = XMVectorScale(scaledGravityForce, invMass);
+
+                    // 속도에 가속도 적용 (v += a * dt)
+                    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+                    XMVECTOR newVelocity = XMVectorAdd(currentVelocity, gravityAccel);
+
+                    // 수치 안정성 검사
+                    if (IsValidLinearVelocity(newVelocity))
+                    {
+                        PhysicsStateSoA.Velocities[i] = newVelocity;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+                continue;
+
+            // 선형 속도 적분 + 속도 제한 (Position += Velocity * deltaTime)
+            XMVECTOR velocity = PhysicsStateSoA.Velocities[i];
+            if (IsValidLinearVelocity(velocity))
+            {
+                // 속도 제한 적용 (적분 전에)
+                float maxSpeed = PhysicsStateSoA.MaxSpeeds[i];
+                if (maxSpeed > 0.0f)  // 음수는 무제한
+                {
+                    ClampLinearVelocity(maxSpeed, velocity);
+                    PhysicsStateSoA.Velocities[i] = velocity;  // 제한된 속도 저장
+                }
+
+                XMVECTOR currentPosition = PhysicsStateSoA.WorldPosition[i];
+                XMVECTOR deltaPosition = XMVectorMultiply(velocity, deltaTimeVec);
+                XMVECTOR newPosition = XMVectorAdd(currentPosition, deltaPosition);
+
+                PhysicsStateSoA.WorldPosition[i] = newPosition;
+            }
+
+            // 각속도 적분 + 각속도 제한 (Rotation += AngularVelocity * deltaTime)
+            XMVECTOR angularVelocity = PhysicsStateSoA.AngularVelocities[i];
+            if (IsValidAngularVelocity(angularVelocity))
+            {
+                // 각속도 제한 적용 (적분 전에)
+                float maxAngularSpeed = PhysicsStateSoA.MaxAngularSpeeds[i];
+                if (maxAngularSpeed > 0.0f)  // 음수는 무제한
+                {
+                    ClampAngularVelocity(maxAngularSpeed, angularVelocity);
+                    PhysicsStateSoA.AngularVelocities[i] = angularVelocity;  // 제한된 각속도 저장
+                }
+
+                XMVECTOR currentRotation = PhysicsStateSoA.WorldRotationQuat[i];
+
+                // 각속도를 쿼터니언 회전으로 변환
+                XMVECTOR angularDisplacement = XMVectorMultiply(angularVelocity, deltaTimeVec);
+
+                // 각변위의 크기 계산
+                XMVECTOR angularMagnitude = XMVector3Length(angularDisplacement);
+                float angle;
+                XMStoreFloat(&angle, angularMagnitude);
+
+                if (angle > KINDA_SMALL)
+                {
+                    // 회전축 정규화
+                    XMVECTOR axis = XMVectorDivide(angularDisplacement, angularMagnitude);
+
+                    // 각변위를 쿼터니언으로 변환
+                    XMVECTOR deltaRotation = XMQuaternionRotationAxis(axis, angle);
+
+                    // 현재 회전에 적용
+                    XMVECTOR newRotation = XMQuaternionMultiply(currentRotation, deltaRotation);
+                    newRotation = XMQuaternionNormalize(newRotation);
+
+                    PhysicsStateSoA.WorldRotationQuat[i] = newRotation;
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchResetForces()
+{
+    XMVECTOR zeroVector = XMVectorZero();
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당된 슬롯만 처리 (활성화 여부 무관하게 힘 초기화)
+            if (!PhysicsStateSoA.IsValidSlotIndex(i))
+                continue;
+
+            PhysicsStateSoA.AccumulatedForces[i] = zeroVector;
+            PhysicsStateSoA.AccumulatedTorques[i] = zeroVector;
+        }
+    }
+}
+
+void UPhysicsSystem::BatchApplyDrag(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    // 간단한 선형 드래그 모델
+    const float linearDragCoefficient = 0.98f;
+    const float angularDragCoefficient = 0.95f;
+
+    float linearDragFactor = powf(linearDragCoefficient, deltaTime);
+    float angularDragFactor = powf(angularDragCoefficient, deltaTime);
+
+    XMVECTOR linearDragVec = XMVectorReplicate(linearDragFactor);
+    XMVECTOR angularDragVec = XMVectorReplicate(angularDragFactor);
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+                continue;
+
+            // Dynamic 타입만 드래그 적용
+            if (PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
+            {
+                // 선형 속도 드래그 적용
+                XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+                if (IsValidLinearVelocity(currentVelocity))
+                {
+                    XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
+                    PhysicsStateSoA.Velocities[i] = newVelocity;
+                }
+
+                // 각속도 드래그 적용
+                XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[i];
+                if (IsValidAngularVelocity(currentAngularVel))
+                {
+                    XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
+                    PhysicsStateSoA.AngularVelocities[i] = newAngularVel;
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+                continue;
+
+            // ObjectReferences를 통한 IPhysicsObject::TickPhysics 호출
+            if (i < PhysicsStateSoA.ObjectReferences.size())
+            {
+                if (auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock())
+                {
+                    physicsObject->TickPhysics(deltaTime);
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchSynchronizeState()
+{
+    // Loop tiling을 이용한 캐시 최적화 순회
+    constexpr std::uint8_t BatchSize = 64;
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당된 슬롯만 처리 (활성화 여부 무관하게 동기화)
+            if (!PhysicsStateSoA.IsValidSlotIndex(i))
+                continue;
+
+            // ObjectReferences를 통한 상태 동기화
+            if (i < PhysicsStateSoA.ObjectReferences.size())
+            {
+                if (auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock())
+                {
+                    physicsObject->SynchronizeCachedStateFromSimulated();
+                }
+            }
+        }
+    }
+}
 
 #pragma endregion
 

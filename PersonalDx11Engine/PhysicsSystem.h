@@ -256,6 +256,7 @@ private:
     float MinSubStepTickTime = 0.004f; // 15Hz
     int MaxSubSteps = 5;                 // 최대 서브스텝 수
     int MinSubSteps = 3;                 // 최소 서브스텝 수 - 연속적인 충돌을 처리하기 위함
+    std::uint8_t BatchSize = 64;
 
     Vector3 Gravity = -9.812f * Vector3::Up();
 
