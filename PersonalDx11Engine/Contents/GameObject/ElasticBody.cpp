@@ -92,7 +92,7 @@ void UElasticBody::Reset()
 	if (auto rigid = Rigid.lock())
 	{
 		// 물리 상태 초기화
-		rigid->Reset();
+		rigid->ResetPhysicsStates();
 	}
 
 	// 위치 및 회전 초기화 

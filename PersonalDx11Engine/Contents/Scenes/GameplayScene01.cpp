@@ -350,7 +350,7 @@ void UGameplayScene01::SpawnElasticBody()
     if (Rigid)
     {
         //물리적 상태값 초기화
-        Rigid->Reset();
+        Rigid->ResetPhysicsStates();
     }
     body->SetMass(FRandom::RandF(1.0f, 20.0f));
     body->SetRestitution(0.5f);

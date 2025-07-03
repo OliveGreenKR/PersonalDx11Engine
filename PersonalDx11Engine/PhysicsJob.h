@@ -390,8 +390,6 @@ struct FJobSetPhysicsMask : public FPhysicsJob
     }
 };
 
-// === 활성화 제어 관련 Job들 ===
-
 struct FJobSetPhysicsActive : public FPhysicsJob
 {
     bool bActive;
@@ -405,21 +403,5 @@ struct FJobSetPhysicsActive : public FPhysicsJob
     void Execute(IPhysicsStateInternal* physicsInternal) override
     {
         physicsInternal->P_SetPhysicsActive(TargetID, bActive);
-    }
-};
-
-struct FJobSetCollisionActive : public FPhysicsJob
-{
-    bool bActive;
-
-    FJobSetCollisionActive(PhysicsID targetID, bool active)
-        : FPhysicsJob(targetID)
-        , bActive(active)
-    {
-    }
-
-    void Execute(IPhysicsStateInternal* physicsInternal) override
-    {
-        physicsInternal->P_SetCollisionActive(TargetID, bActive);
     }
 };
