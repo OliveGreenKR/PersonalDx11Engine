@@ -1378,6 +1378,109 @@ void UPhysicsSystem::BatchSynchronizeState()
 
 #pragma endregion
 
+#pragma region Numeric Stability , Clamp States Helper
+// === 수치 안정성 헬퍼 메서드 구현 ===
+
+bool UPhysicsSystem::IsValidLinearVelocity(const XMVECTOR& InVelocity)
+{
+    // 속도 크기 계산
+    float magnitude = XMVector3Length(InVelocity).m128_f32[0];
+    // 최대 허용 속도 검사 (물리적으로 합리적인 범위)
+    const float MAX_REASONABLE_VELOCITY = 1000.0f * ONE_METER;  // 1000 m/s (음속의 약 3배)
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_VELOCITY;
+}
+
+bool UPhysicsSystem::IsValidAngularVelocity(const XMVECTOR& InAngularVelocity)
+{
+    // 각속도 크기 계산
+    float magnitude = XMVector3Length(InAngularVelocity).m128_f32[0];
+    // 최대 허용 각속도 검사 (라디안/초)
+    const float MAX_REASONABLE_ANGULAR_VELOCITY = 100.0f;  // 약 573도/초
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ANGULAR_VELOCITY;
+}
+
+bool UPhysicsSystem::IsValidForce(const XMVECTOR& InForce)
+{
+    // 힘의 크기 계산
+    float magnitude = XMVector3Length(InForce).m128_f32[0];
+    // 최대 허용 힘 검사 (뉴턴)
+    const float MAX_REASONABLE_FORCE = 1000000.0f;  // 1MN (메가뉴턴)
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_FORCE;
+}
+
+bool UPhysicsSystem::IsValidTorque(const XMVECTOR& InTorque)
+{
+    // 토크의 크기 계산
+    float magnitude = XMVector3Length(InTorque).m128_f32[0];
+    // 최대 허용 토크 검사 (뉴턴·미터)
+    const float MAX_REASONABLE_TORQUE = 100000.0f;  // 100kN·m
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_TORQUE;
+}
+
+bool UPhysicsSystem::IsValidLinearAcceleration(const XMVECTOR& InAccel)
+{
+    // 가속도 크기 계산
+    float magnitude = XMVector3Length(InAccel).m128_f32[0];
+    // 최대 허용 가속도 검사 (m/s²)
+    const float MAX_REASONABLE_ACCELERATION = 10000.0f;  // 약 1000G
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ACCELERATION;
+}
+
+bool UPhysicsSystem::IsValidAngularAcceleration(const XMVECTOR& InAngularAccel)
+{
+    // 각가속도 크기 계산
+    float magnitude = XMVector3Length(InAngularAccel).m128_f32[0];
+    // 최대 허용 각가속도 검사 (라디안/초²)
+    const float MAX_REASONABLE_ANGULAR_ACCELERATION = 1000.0f;  // 약 57,000도/초²
+    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ANGULAR_ACCELERATION;
+}
+
+void UPhysicsSystem::ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity)
+{
+    if (InMaxSpeed < 0.0f)
+        return;  // 제한 없음
+
+    // 속도 크기 계산
+    float magnitude = XMVector3Length(InOutVelocity).m128_f32[0];
+
+    // 극소값 처리
+    if (magnitude < KINDA_SMALL)
+    {
+        InOutVelocity = XMVectorZero();
+        return;
+    }
+
+    // 최대 속도 초과 시 클램핑
+    if (magnitude > InMaxSpeed)
+    {
+        float scale = InMaxSpeed / magnitude;
+        InOutVelocity = XMVectorScale(InOutVelocity, scale);
+    }
+}
+
+void UPhysicsSystem::ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity)
+{
+    if (InAngularMaxSpeed <= 0.0f)
+        return;  // 제한 없음
+
+    // 각속도 크기 계산
+    float magnitude = XMVector3Length(InOutAngularVelocity).m128_f32[0];
+
+    // 극소값 처리
+    if (magnitude < KINDA_SMALL)
+    {
+        InOutAngularVelocity = XMVectorZero();
+        return;
+    }
+
+    // 최대 각속도 초과 시 클램핑
+    if (magnitude > InAngularMaxSpeed)
+    {
+        float scale = InAngularMaxSpeed / magnitude;
+        InOutAngularVelocity = XMVectorScale(InOutAngularVelocity, scale);
+    }
+}
+#pragma endregion
 ///////////////////////////////////////////////////////////
 
 void UPhysicsSystem::PrintDebugInfo()
