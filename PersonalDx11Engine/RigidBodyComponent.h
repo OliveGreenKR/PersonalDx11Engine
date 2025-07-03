@@ -29,11 +29,13 @@ public:
 	virtual void DeActivate() override;
 
 	void Reset();
+
 	virtual void Tick(const float DeltaTime) override;
 
 	//IPhysicsObject
 	virtual void TickPhysics(const float DeltaTime) override;
 
+	//SceneComp override
 	void SetWorldTransform(const FTransform& InWorldTransform) override;
 
 #pragma region IPhysicsState
@@ -117,33 +119,9 @@ private:
 
 	Vector3 GetCenterOfMass() const;
 
-	__forceinline bool IsSpeedRestricted() { return !(MaxSpeed < 0.0f); }
-	__forceinline bool IsAngularSpeedRestricted() { return !(MaxAngularSpeed < 0.0f); }
-
-	bool ShouldSleep() const;
-
-	//물리 상태값 적분 안정화를 위한 헬퍼함수
-	static bool IsValidForce(const Vector3& InForce);
-	static bool IsValidTorque(const Vector3& InTorque);
-	static bool IsValidVelocity(const Vector3& InVelocity);
-	static bool IsValidAngularVelocity(const Vector3& InAngularVelocity);
-	static bool IsValidAcceleration(const Vector3& InAccel);
-	static bool IsValidAngularAcceleration(const Vector3& InAngularAccel);
-
 private:
-	
 	PhysicsID PhysicsID = 0;
 
 	mutable bool bStateDirty = false;
 	FPhysicsState CachedState;  //저장된 물리 상태값, 외부에 읽기전용으로 제공될것
-
-	float MaxSpeed = 400.0f;
-	float MaxAngularSpeed = 6.0f * PI;
-
-	bool bGravity = false;
-	float GravityScale = 9.81f;
-	Vector3 GravityDirection = -Vector3::Up();
-
-	bool bSleep = false;
-
 };

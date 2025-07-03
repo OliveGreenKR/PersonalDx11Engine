@@ -1127,8 +1127,9 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
             if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
                 continue;
 
-            // Dynamic 타입만 중력 적용
-            if (PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
+            // 중력 적용  +  Dynamic
+            if (PhysicsStateSoA.PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
+                PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
             {
                 // 중력 스케일 적용
                 float gravityScale = PhysicsStateSoA.GravityScales[i];
