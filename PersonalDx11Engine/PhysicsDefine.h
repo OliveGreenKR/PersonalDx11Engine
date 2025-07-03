@@ -42,12 +42,8 @@ struct FPhysicsMask
 	static constexpr uint32_t MASK_ACTIVATION = 1 << 0;        // 물리 시뮬레이션 활성화
 	static constexpr uint32_t MASK_GRAVITY_AFFECTED = 1 << 1;  // 중력 영향
 
-	// 충돌 관련 상태 
-	static constexpr uint32_t MASK_COLLISION_ENABLED = 1 << 2;  // 충돌 감지
-
 	// 그룹 마스크(편의성)
 	static constexpr uint32_t GROUP_BASIC_SIMULATION = MASK_ACTIVATION | MASK_GRAVITY_AFFECTED;
-	static constexpr uint32_t GROUP_COLLISION_ALL = MASK_COLLISION_ENABLED;
 
 private:
 	uint32_t Mask = MASK_NONE;
