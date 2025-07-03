@@ -222,6 +222,8 @@ bool UPhysicsSystem::IsValidTargetID(const SoAID targetID) const
 }
 
 #pragma region IPhysicsInternal
+
+#pragma region Getter
 // === 물리 속성 접근자 ===
 
 float UPhysicsSystem::P_GetMass(PhysicsID targetID) const
@@ -605,6 +607,497 @@ bool UPhysicsSystem::P_IsCollisionActive(PhysicsID targetID) const
     FPhysicsMask Mask = P_GetPhysicsMask(targetID);
     return Mask.HasFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
 }
+#pragma endregion
+#pragma region Setter
+// === 운동 상태 설정자 ===
+
+void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const Vector3& velocity)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetVelocity: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    // 유효성 검사
+    XMVECTOR velocityVec = XMVectorSet(velocity.x, velocity.y, velocity.z, 0.0f);
+    if (!IsValidLinearVelocity(velocityVec))
+    {
+        LOG_WARNING("Invalid velocity value for PhysicsID %u: (%f, %f, %f)",
+                    targetID, velocity.x, velocity.y, velocity.z);
+        return;
+    }
+
+    PhysicsStateSoA.Velocities[index] = velocityVec;
+}
+
+void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const Vector3& deltaVelocity)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_AddVelocity: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR deltaVec = XMVectorSet(deltaVelocity.x, deltaVelocity.y, deltaVelocity.z, 0.0f);
+    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[index];
+    XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVec);
+
+    // 유효성 검사
+    if (!IsValidLinearVelocity(newVelocity))
+    {
+        LOG_WARNING("Invalid result velocity for PhysicsID %u after adding delta", targetID);
+        return;
+    }
+
+    PhysicsStateSoA.Velocities[index] = newVelocity;
+}
+
+void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const Vector3& angularVelocity)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetAngularVelocity: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR angularVelVec = XMVectorSet(angularVelocity.x, angularVelocity.y, angularVelocity.z, 0.0f);
+    if (!IsValidAngularVelocity(angularVelVec))
+    {
+        LOG_WARNING("Invalid angular velocity value for PhysicsID %u: (%f, %f, %f)",
+                    targetID, angularVelocity.x, angularVelocity.y, angularVelocity.z);
+        return;
+    }
+
+    PhysicsStateSoA.AngularVelocities[index] = angularVelVec;
+}
+
+void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& deltaAngularVelocity)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_AddAngularVelocity: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR deltaVec = XMVectorSet(deltaAngularVelocity.x, deltaAngularVelocity.y, deltaAngularVelocity.z, 0.0f);
+    XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[index];
+    XMVECTOR newAngularVel = XMVectorAdd(currentAngularVel, deltaVec);
+
+    if (!IsValidAngularVelocity(newAngularVel))
+    {
+        LOG_WARNING("Invalid result angular velocity for PhysicsID %u after adding delta", targetID);
+        return;
+    }
+
+    PhysicsStateSoA.AngularVelocities[index] = newAngularVel;
+}
+
+// === 트랜스폼 설정자 ===
+
+void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, const Vector3& position)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetWorldPosition: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR positionVec = XMVectorSet(position.x, position.y, position.z, 1.0f);
+    PhysicsStateSoA.WorldPosition[index] = positionVec;
+}
+
+void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, const Quaternion& rotation)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetWorldRotation: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR rotationVec = XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w);
+    // 쿼터니언 정규화
+    rotationVec = XMQuaternionNormalize(rotationVec);
+
+    PhysicsStateSoA.WorldRotationQuat[index] = rotationVec;
+}
+
+void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetWorldScale: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    // 스케일 유효성 검사 (0 또는 음수 방지)
+    Vector3 validScale = scale;
+    if (validScale.x <= KINDA_SMALL) validScale.x = KINDA_SMALL;
+    if (validScale.y <= KINDA_SMALL) validScale.y = KINDA_SMALL;
+    if (validScale.z <= KINDA_SMALL) validScale.z = KINDA_SMALL;
+
+    XMVECTOR scaleVec = XMVectorSet(validScale.x, validScale.y, validScale.z, 1.0f);
+    PhysicsStateSoA.WorldScale[index] = scaleVec;
+}
+
+// === 힘/충격 적용 ===
+
+void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_ApplyForce at location: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR forceVec = XMVectorSet(force.x, force.y, force.z, 0.0f);
+    if (!IsValidForce(forceVec))
+    {
+        LOG_WARNING("Invalid force value for PhysicsID %u at location", targetID);
+        return;
+    }
+
+    // 중심에서 적용점까지의 벡터
+    Vector3 centerOfMass = P_GetWorldPosition(targetID);
+    Vector3 radius = location - centerOfMass;
+
+    // 힘을 누적 힘에 추가
+    XMVECTOR currentForce = PhysicsStateSoA.AccumulatedForces[index];
+    PhysicsStateSoA.AccumulatedForces[index] = XMVectorAdd(currentForce, forceVec);
+
+    // 토크 계산 및 추가 (radius × force)
+    XMVECTOR radiusVec = XMVectorSet(radius.x, radius.y, radius.z, 0.0f);
+    XMVECTOR torqueVec = XMVector3Cross(radiusVec, forceVec);
+
+    if (IsValidTorque(torqueVec))
+    {
+        XMVECTOR currentTorque = PhysicsStateSoA.AccumulatedTorques[index];
+        PhysicsStateSoA.AccumulatedTorques[index] = XMVectorAdd(currentTorque, torqueVec);
+    }
+}
+
+void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_ApplyImpulse at location: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR impulseVec = XMVectorSet(impulse.x, impulse.y, impulse.z, 0.0f);
+    if (!IsValidForce(impulseVec))
+    {
+        LOG_WARNING("Invalid impulse value for PhysicsID %u at location", targetID);
+        return;
+    }
+
+    // 선형 충격 적용
+    float invMass = PhysicsStateSoA.InvMasses[index];
+    XMVECTOR deltaVelocity = XMVectorScale(impulseVec, invMass);
+
+    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[index];
+    XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
+
+    if (IsValidLinearVelocity(newVelocity))
+    {
+        PhysicsStateSoA.Velocities[index] = newVelocity;
+    }
+
+    // 각속도 충격 적용
+    Vector3 centerOfMass = P_GetWorldPosition(targetID);
+    Vector3 radius = location - centerOfMass;
+
+    XMVECTOR radiusVec = XMVectorSet(radius.x, radius.y, radius.z, 0.0f);
+    XMVECTOR angularImpulse = XMVector3Cross(radiusVec, impulseVec);
+
+    if (IsValidTorque(angularImpulse))
+    {
+        XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+        XMVECTOR deltaAngularVel = XMVectorMultiply(angularImpulse, invInertia);
+
+        XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[index];
+        XMVECTOR newAngularVel = XMVectorAdd(currentAngularVel, deltaAngularVel);
+
+        if (IsValidAngularVelocity(newAngularVel))
+        {
+            PhysicsStateSoA.AngularVelocities[index] = newAngularVel;
+        }
+    }
+}
+
+// === 물리 속성 설정자 ===
+
+void UPhysicsSystem::P_SetMass(PhysicsID targetID, float mass)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetMass: %u", targetID);
+        return;
+    }
+
+    if (mass <= KINDA_SMALL)
+    {
+        LOG_WARNING("Invalid mass value for PhysicsID %u: %f", targetID, mass);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.InvMasses[index] = 1.0f / mass;
+}
+
+void UPhysicsSystem::P_SetInvMass(PhysicsID targetID, float invMass)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetInvMass: %u", targetID);
+        return;
+    }
+
+    if (invMass < 0.0f)
+    {
+        LOG_WARNING("Invalid inverse mass value for PhysicsID %u: %f", targetID, invMass);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.InvMasses[index] = invMass;
+}
+
+void UPhysicsSystem::P_SetRotationalInertia(PhysicsID targetID, const Vector3& rotationalInertia)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetRotationalInertia: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    // 회전 관성을 역수로 변환하여 저장
+    Vector3 invInertia;
+    invInertia.x = (rotationalInertia.x > KINDA_SMALL) ? (1.0f / rotationalInertia.x) : 0.0f;
+    invInertia.y = (rotationalInertia.y > KINDA_SMALL) ? (1.0f / rotationalInertia.y) : 0.0f;
+    invInertia.z = (rotationalInertia.z > KINDA_SMALL) ? (1.0f / rotationalInertia.z) : 0.0f;
+
+    XMVECTOR invInertiaVec = XMVectorSet(invInertia.x, invInertia.y, invInertia.z, 0.0f);
+    PhysicsStateSoA.InvRotationalInertias[index] = invInertiaVec;
+}
+
+void UPhysicsSystem::P_SetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetInvRotationalInertia: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    XMVECTOR invInertiaVec = XMVectorSet(invRotationalInertia.x, invRotationalInertia.y, invRotationalInertia.z, 0.0f);
+    PhysicsStateSoA.InvRotationalInertias[index] = invInertiaVec;
+}
+
+void UPhysicsSystem::P_SetRestitution(PhysicsID targetID, float restitution)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetRestitution: %u", targetID);
+        return;
+    }
+
+    // 반발계수는 0.0 ~ 1.0 범위로 클램핑
+    float clampedRestitution = Math::Clamp(restitution, 0.0f, 1.0f);
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.Restitutions[index] = clampedRestitution;
+}
+
+void UPhysicsSystem::P_SetFrictionStatic(PhysicsID targetID, float frictionStatic)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetFrictionStatic: %u", targetID);
+        return;
+    }
+
+    float clampedFriction = Math::Max(frictionStatic, 0.0f);
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.FrictionStatics[index] = clampedFriction;
+}
+
+void UPhysicsSystem::P_SetFrictionKinetic(PhysicsID targetID, float frictionKinetic)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetFrictionKinetic: %u", targetID);
+        return;
+    }
+
+    float clampedFriction = Math::Max(frictionKinetic, 0.0f);
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.FrictionKinetics[index] = clampedFriction;
+}
+
+void UPhysicsSystem::P_SetGravityScale(PhysicsID targetID, float gravityScale)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetGravityScale: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.GravityScales[index] = gravityScale;
+}
+
+void UPhysicsSystem::P_SetMaxSpeed(PhysicsID targetID, float maxSpeed)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetMaxSpeed: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.MaxSpeeds[index] = maxSpeed;
+}
+
+void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetMaxAngularSpeed: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.MaxAngularSpeeds[index] = maxAngularSpeed;
+}
+
+// === 상태 타입 및 마스크 설정자 ===
+
+void UPhysicsSystem::P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetPhysicsType: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.PhysicsTypes[index] = physicsType;
+}
+
+void UPhysicsSystem::P_SetPhysicsMask(PhysicsID targetID, const FPhysicsMask& physicsMask)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetPhysicsMask: %u", targetID);
+        return;
+    }
+
+    SoAID soaID = static_cast<SoAID>(targetID);
+    SoAIdx index = GetIdx(soaID);
+
+    PhysicsStateSoA.PhysicsMasks[index] = physicsMask;
+}
+
+// === 활성화 제어 설정자 ===
+
+void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetPhysicsActive: %u", targetID);
+        return;
+    }
+
+    FPhysicsMask mask = P_GetPhysicsMask(targetID);
+
+    if (bActive)
+    {
+        mask.SetFlag(FPhysicsMask::MASK_ACTIVATION);
+    }
+    else
+    {
+        mask.ClearFlag(FPhysicsMask::MASK_ACTIVATION);
+    }
+
+    P_SetPhysicsMask(targetID, mask);
+}
+
+void UPhysicsSystem::P_SetCollisionActive(PhysicsID targetID, bool bActive)
+{
+    if (!IsValidTargetID(targetID))
+    {
+        LOG_ERROR("Invalid PhysicsID for P_SetCollisionActive: %u", targetID);
+        return;
+    }
+
+    FPhysicsMask mask = P_GetPhysicsMask(targetID);
+
+    if (bActive)
+    {
+        mask.SetFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
+    }
+    else
+    {
+        mask.ClearFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
+    }
+
+    P_SetPhysicsMask(targetID, mask);
+}
+#pragma endregion
+
 #pragma endregion
 
 ///////////////////////////////////////////////////////////

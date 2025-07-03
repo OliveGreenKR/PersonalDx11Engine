@@ -78,11 +78,18 @@ public:
 
     // === 힘/충격 적용 (PhysicsID 기반) ===
 
-    virtual void P_ApplyForce(PhysicsID targetID, const Vector3& force) = 0;
+    void P_ApplyForce(PhysicsID targetID, const Vector3& force)
+    {
+        Vector3 centerOfMass = P_GetWorldPosition(targetID);
+        P_ApplyForce(targetID, force, centerOfMass);
+    }
     virtual void P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location) = 0;
-    virtual void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse) = 0;
+    void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse)
+    {
+        Vector3 centerOfMass = P_GetWorldPosition(targetID);
+        P_ApplyImpulse(targetID, impulse, centerOfMass);
+    }
     virtual void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location) = 0;
-    virtual void P_ApplyTorque(PhysicsID targetID, const Vector3& torque) = 0;
 
     // === 물리 속성 설정자 (PhysicsID 기반) ===
 

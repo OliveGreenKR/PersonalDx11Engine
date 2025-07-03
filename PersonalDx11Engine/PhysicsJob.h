@@ -92,28 +92,12 @@ struct FJobAddAngularVelocity : public FPhysicsJob
 
 // === 힘/충격 관련 Job들 ===
 
-struct FJobApplyForceAtCenter : public FPhysicsJob
-{
-    Vector3 Force;
-
-    FJobApplyForceAtCenter(PhysicsID targetID, const Vector3& force)
-        : FPhysicsJob(targetID)
-        , Force(force)
-    {
-    }
-
-    void Execute(IPhysicsStateInternal* physicsInternal) override
-    {
-        physicsInternal->P_ApplyForce(TargetID, Force);
-    }
-};
-
-struct FJobApplyForceAtLocation : public FPhysicsJob
+struct FJobApplyForce : public FPhysicsJob
 {
     Vector3 Force;
     Vector3 Location;
 
-    FJobApplyForceAtLocation(PhysicsID targetID, const Vector3& force, const Vector3& location)
+    FJobApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location)
         : FPhysicsJob(targetID)
         , Force(force)
         , Location(location)
@@ -126,28 +110,12 @@ struct FJobApplyForceAtLocation : public FPhysicsJob
     }
 };
 
-struct FJobApplyImpulseAtCenter : public FPhysicsJob
-{
-    Vector3 Impulse;
-
-    FJobApplyImpulseAtCenter(PhysicsID targetID, const Vector3& impulse)
-        : FPhysicsJob(targetID)
-        , Impulse(impulse)
-    {
-    }
-
-    void Execute(IPhysicsStateInternal* physicsInternal) override
-    {
-        physicsInternal->P_ApplyImpulse(TargetID, Impulse);
-    }
-};
-
-struct FJobApplyImpulseAtLocation : public FPhysicsJob
+struct FJobApplyImpulse : public FPhysicsJob
 {
     Vector3 Impulse;
     Vector3 Location;
 
-    FJobApplyImpulseAtLocation(PhysicsID targetID, const Vector3& impulse, const Vector3& location)
+    FJobApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location)
         : FPhysicsJob(targetID)
         , Impulse(impulse)
         , Location(location)
@@ -157,22 +125,6 @@ struct FJobApplyImpulseAtLocation : public FPhysicsJob
     void Execute(IPhysicsStateInternal* physicsInternal) override
     {
         physicsInternal->P_ApplyImpulse(TargetID, Impulse, Location);
-    }
-};
-
-struct FJobApplyTorque : public FPhysicsJob
-{
-    Vector3 Torque;
-
-    FJobApplyTorque(PhysicsID targetID, const Vector3& torque)
-        : FPhysicsJob(targetID)
-        , Torque(torque)
-    {
-    }
-
-    void Execute(IPhysicsStateInternal* physicsInternal) override
-    {
-        physicsInternal->P_ApplyTorque(TargetID, Torque);
     }
 };
 

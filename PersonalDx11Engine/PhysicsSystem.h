@@ -119,11 +119,8 @@ public :
     void P_SetWorldScale(PhysicsID targetID, const Vector3& scale) override;
 
     // 힘/충격 적용 (PhysicsID 기반)
-    void P_ApplyForce(PhysicsID targetID, const Vector3& force) override;
     void P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location) override;
-    void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse) override;
     void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location) override;
-    void P_ApplyTorque(PhysicsID targetID, const Vector3& torque) override;
 
     // 물리 속성 설정자 (PhysicsID 기반)
     void P_SetMass(PhysicsID targetID, float mass) override;
