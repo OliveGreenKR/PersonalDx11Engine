@@ -388,6 +388,9 @@
     <Filter Include="TestOnly">
       <UniqueIdentifier>{cbe0d3f7-611b-4ef4-8689-3c90f5478ef6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Physics\DataDefine">
+      <UniqueIdentifier>{1491f0b8-fb66-429b-9a95-01b5c876cd4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -591,9 +594,6 @@
     <ClInclude Include="PhysicsStateInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="PhysicsDefine.h">
-      <Filter>Engine\Physics</Filter>
-    </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Engine\Math</Filter>
     </ClInclude>
@@ -671,6 +671,12 @@
     </ClInclude>
     <ClInclude Include="test\testSceneComponent.h">
       <Filter>TestOnly</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsDefine.h">
+      <Filter>Engine\Physics\DataDefine</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsDataStructures.h">
+      <Filter>Engine\Physics\DataDefine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

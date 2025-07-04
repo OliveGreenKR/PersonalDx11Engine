@@ -216,6 +216,7 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="BindableInterface.h" />
     <ClInclude Include="CollisionPositionalCorrectionCalculator.h" />
+    <ClInclude Include="PhysicsDataStructures.h" />
     <ClInclude Include="PhysicsStateSoA.h" />
     <ClInclude Include="test\testDynamicAABBTree.h" />
     <ClInclude Include="test\testPhysicsStateArray.h" />
