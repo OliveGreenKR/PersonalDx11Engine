@@ -103,7 +103,8 @@ SoAID FPhysicsStateArrays::AllocateSlot()
             return INVALID_ID;
         }
 
-        // 재할당: 기존 매핑 유지, 상태만 변경
+        // 재할당: 기존 매핑 유지, 상태 초기화
+        InitializeSlot(NewIndex);
         AllocatedFlags[NewIndex] = true;
         PhysicsMasks[NewIndex].SetFlag(FPhysicsMask::MASK_ACTIVATION);
 
