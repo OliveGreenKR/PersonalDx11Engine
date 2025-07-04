@@ -1528,35 +1528,6 @@ void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
         }
     }
 }
-
-void UPhysicsSystem::BatchSynchronizeState()
-{
-    // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            // 할당된 슬롯만 처리 (활성화 여부 무관하게 동기화)
-            if (!PhysicsStateSoA.IsValidSlotIndex(i))
-                continue;
-
-            // ObjectReferences를 통한 상태 동기화
-            if (i < PhysicsStateSoA.ObjectReferences.size())
-            {
-                if (auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock())
-                {
-                    physicsObject->SynchronizeCachedStateFromSimulated();
-                }
-            }
-        }
-    }
-}
-
 #pragma endregion
 
 #pragma region Numeric Stability , Clamp States Helper

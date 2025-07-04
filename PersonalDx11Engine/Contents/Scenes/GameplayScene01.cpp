@@ -347,11 +347,11 @@ void UGameplayScene01::SpawnElasticBody()
     body->SetPosition(FRandom::RandVector(Vector3::One() * -150.0f, Vector3::One() * 150.0f));
 
     auto Rigid = body->GetComponentByType<URigidBodyComponent>();
-    if (Rigid)
-    {
-        //물리적 상태값 초기화
-        Rigid->ResetPhysicsState();
-    }
+    //if (Rigid)
+    //{
+    //    //물리적 상태값 초기화
+    //    Rigid->ResetPhysicsState();
+    //}
     body->SetMass(FRandom::RandF(1.0f, 20.0f));
     body->SetRestitution(0.5f);
     body->SetGravity(bGravity);

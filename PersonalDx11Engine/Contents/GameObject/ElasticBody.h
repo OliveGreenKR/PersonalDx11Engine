@@ -23,11 +23,6 @@ public:
     virtual void PostInitialized() override;
     virtual void PostInitializedComponents() override;
 
-    /// <summary>
-    /// 인스턴스 상태 초기화
-    /// </summary>
-    virtual void Reset();
-
     // 충돌 이벤트 핸들러
     //void OnCollisionBegin(const FCollisionEventData& InCollision);
     //void OnCollisionStay(const FCollisionEventData& InCollision);

@@ -254,9 +254,6 @@ private:
     //저항 적용
     void BatchApplyDrag(float deltaTime);
 
-    //물리 상태 동기화
-    void BatchSynchronizeState();
-
     //수치안정성 함수
     bool IsValidForce(const XMVECTOR& InForce);
     bool IsValidTorque(const XMVECTOR& InTorque);

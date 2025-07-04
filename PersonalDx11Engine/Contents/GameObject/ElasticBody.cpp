@@ -86,20 +86,6 @@ void UElasticBody::DeActivate()
 	UGameObject::DeActivate();
 }
 
-void UElasticBody::Reset()
-{
-	// 컴포넌트 상태 초기화
-	if (auto rigid = Rigid.lock())
-	{
-		// 물리 상태 초기화
-		rigid->ResetPhysicsState();
-	}
-
-	// 위치 및 회전 초기화 
-	SetPosition(Vector3::Zero());
-	SetRotation(Quaternion::Identity());
-}
-
 #pragma region Getter Setter
 const Vector3 UElasticBody::GetVelocity() const {
 	if (auto RigidPtr = Rigid.lock()) {
