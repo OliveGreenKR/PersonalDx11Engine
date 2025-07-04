@@ -45,19 +45,20 @@ public:
     std::vector<XMVECTOR> WorldScale;
     std::vector<XMVECTOR> WorldRotationQuat;
 
+    // 물리 상태 제어 플래그
+    std::vector<EPhysicsType> PhysicsTypes;
+    std::vector<FPhysicsMask> PhysicsMasks;
+
+
     // 물리 속성
     std::vector<XMVECTOR> InvRotationalInertias;
     std::vector<float> InvMasses;
     std::vector<float> FrictionKinetics;
     std::vector<float> FrictionStatics;
     std::vector<float> Restitutions;
-
-    // 제한 및 설정
     std::vector<float> MaxSpeeds;
     std::vector<float> MaxAngularSpeeds;
     std::vector<float> GravityScales;
-    std::vector<EPhysicsType> PhysicsTypes;
-    std::vector<FPhysicsMask> PhysicsMasks;
 
     // 물리 객체 약한 참조
     std::vector<std::weak_ptr<IPhysicsObject>> ObjectReferences;

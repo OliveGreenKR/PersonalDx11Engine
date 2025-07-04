@@ -79,7 +79,7 @@ private:
 
 #pragma endregion
 
-#pragma region Synchronization System
+#pragma region Synchronization System (Redesigned)
 
 public:
     /// <summary>
@@ -96,26 +96,15 @@ public:
     void SyncPhysicsToGame();
 
 private:
-    /// <summary>
-    /// 높은 빈도 데이터 동기화 - Transform
-    /// </summary>
-    /// <param name="index">PhysicsStateSoA 인덱스</param>
-    /// <param name="data">전송할 Transform 데이터</param>
-    void SyncHighFrequencyData(SoAIdx index, const FHighFrequencyData& data);
+    void BatchSyncHighFrequencyData();
 
-    /// <summary>
-    /// 중간 빈도 데이터 동기화 - Type, Mask
-    /// </summary>
-    /// <param name="index">PhysicsStateSoA 인덱스</param>
-    /// <param name="data">전송할 상태 제어 데이터</param>
-    void SyncMidFrequencyData(SoAIdx index, const FMidFrequencyData& data);
+    void BatchSyncMidFrequencyData();
 
-    /// <summary>
-    /// 낮은 빈도 데이터 동기화 - Properties
-    /// </summary>
-    /// <param name="index">PhysicsStateSoA 인덱스</param>
-    /// <param name="data">전송할 물리 속성 데이터</param>
-    void SyncLowFrequencyData(SoAIdx index, const FLowFrequencyData& data);
+    void BatchSyncLowFrequencyData();
+
+    void BatchSyncPhysicsResults();
+
+    void BatchClearAllDirtyFlags();
 
 #pragma endregion
 
