@@ -1,182 +1,189 @@
+// RigidBodyComponent.h
 #pragma once
 #include "Math.h"
 #include <memory>
 #include "ActorComponent.h"
 #include "SceneComponent.h"
-#include "PhysicsStateInterface.h"
-#include "PhysicsDefine.h"
 #include "PhysicsObjectInterface.h"
+#include "PhysicsDataStructures.h"
+#include "PhysicsDefine.h"
 
 class UGameObject;
 class UPhysicsSystem;
 
 /// <summary>
-/// RigidBodyComponent: 게임플레이 로직과 물리 시스템 간의 어댑터
+/// RigidBodyComponent: 새로운 하이브리드 물리 시스템의 핵심 컴포넌트
 /// 
 /// 역할:
-/// - 물리 상태의 캐시된 읽기 전용 접근 제공
-/// - 모든 물리 명령을 Job으로 변환하여 PhysicsSystem에 전달
-/// - ActorComponent 활성화 상태와 물리 시뮬레이션 자동 연동
+/// - 게임 상태 데이터 소유 및 관리 (Transform, Properties, Type/Mask)
+/// - 물리 결과 캐시 및 게임 로직 접근 제공
+/// - 더티 플래그 기반 효율적 동기화 지원
+/// - Job 시스템을 통한 즉시 물리 명령 전송
 /// 
-/// 책임:
-/// - IPhysicsState 인터페이스 구현 (Job 기반)
-/// - IPhysicsObject 인터페이스 구현 (최신 시그니처)
-/// - 캐시된 물리 상태 관리 및 동기화
-/// - PhysicsSystem과의 생명주기 연동
+/// 새로운 설계 특징:
+/// - 변경 빈도별 데이터 분리 관리
+/// - 배치 동기화 시스템 지원
+/// - 게임 상태 즉시 반영 (물리 결과는 동기화 시점에 반영)
+/// - Job과 동기화의 하이브리드 사용
 /// 
-/// 제약사항:
-/// - 물리 상태 직접 수정 금지 (Job을 통해서만 가능)
-/// - 게임플레이에서 캐시 write 금지
-/// - PhysicsID 유효성에 의존적
-/// - 충돌 활성화는 CollisionComponent에서 독립 관리
-/// - ActorComponent::SetActive()와 MASK_ACTIVATION 자동 연동
+/// 데이터 소유권:
+/// - 게임 컨텍스트: Transform, Properties, Type, Mask (즉시 변경 가능)
+/// - 물리 결과 캐시: Velocity, AngularVelocity 등 (동기화로 수신)
 /// </summary>
-class URigidBodyComponent : public USceneComponent,
-	public IPhysicsState, public IPhysicsObject
+class URigidBodyComponent : public USceneComponent, public IPhysicsObject
 {
 #pragma region Constructor and Lifecycle
+
 public:
-	URigidBodyComponent();
-	~URigidBodyComponent();
+    URigidBodyComponent();
+    ~URigidBodyComponent();
 
-	virtual void PostInitialized() override;
+    virtual void PostInitialized() override;
+    virtual void PostTreeInitialized() override;
+    virtual void Tick(const float DeltaTime) override;
 
-	// ActorComponent 활성화와 물리 시뮬레이션 자동 연동
-	// UActorComponent::SetActive(bool)에 의해 자동 호출됨
-	virtual void Activate() override;
-	virtual void DeActivate() override;
+    // ActorComponent 활성화와 물리 시뮬레이션 자동 연동
+    virtual void Activate() override;
+    virtual void DeActivate() override;
 
-	void ResetPhysicsState();
-	virtual void Tick(const float DeltaTime) override;
+    virtual const char* GetComponentClassName() const override { return "URigidBody"; }
 
-	virtual const char* GetComponentClassName() const override { return "URigid"; }
 #pragma endregion
 
-#pragma region SceneComponent Override
-public:
-	// SceneComponent override - Transform 변경을 물리 시스템에 전달
-	void SetWorldTransform(const FTransform& InWorldTransform) override;
-#pragma endregion
+#pragma region Game State Data Management (Game Ownership)
 
-#pragma region IPhysicsState Implementation (Job-Based)
-public:
-	// === 운동 상태 설정 (Job 기반 - PhysicsID 전달) ===
-	void SetVelocity(const Vector3& InVelocity) override;
-	void AddVelocity(const Vector3& InVelocityDelta) override;
-	void SetAngularVelocity(const Vector3& InAngularVelocity) override;
-	void AddAngularVelocity(const Vector3& InAngularVelocityDelta) override;
-
-	// === 힘 적용 (Job 기반 - PhysicsID 전달) ===
-	inline void ApplyForce(const Vector3& Force) override { ApplyForce(Force, GetCenterOfMass()); }
-	void ApplyForce(const Vector3& Force, const Vector3& Location) override;
-	inline void ApplyImpulse(const Vector3& Impulse) { ApplyImpulse(Impulse, GetCenterOfMass()); }
-	void ApplyImpulse(const Vector3& Impulse, const Vector3& Location) override;
-
-	// === 즉시 읽기 가능한 캐시된 상태 ===
-	inline Vector3 GetVelocity() const override { return CachedPhysicsState.Velocity; }
-	inline Vector3 GetAngularVelocity() const override { return CachedPhysicsState.AngularVelocity; }
-
-	inline float GetMass() const override
-	{
-		float invMass = GetInvMass();
-		return invMass > 0.0f ? 1.0f / invMass : KINDA_LARGE;
-	}
-	inline float GetInvMass() const override
-	{
-		return IsStatic() ? 0.0f : CachedPhysicsState.InvMass;
-	}
-
-	inline Vector3 GetRotationalInertia() const override
-	{
-		Vector3 Result;
-		Vector3 InvRotationalInertia = CachedPhysicsState.InvRotationalInertia;
-		Result.x = (abs(InvRotationalInertia.x) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.x);
-		Result.y = (abs(InvRotationalInertia.y) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.y);
-		Result.z = (abs(InvRotationalInertia.z) < KINDA_SMALL) ?
-			KINDA_LARGE : (1.0f / InvRotationalInertia.z);
-		return Result;
-	}
-	inline Vector3 GetInvRotationalInertia() const override { return CachedPhysicsState.InvRotationalInertia; }
-
-	inline float GetRestitution() const override { return CachedPhysicsState.Restitution; }
-	inline float GetFrictionKinetic() const override { return CachedPhysicsState.FrictionKinetic; }
-	inline float GetFrictionStatic() const override { return CachedPhysicsState.FrictionStatic; }
-
-	// === 편의 메서드 ===
-	inline float GetSpeed() const { return CachedPhysicsState.Velocity.Length(); }
-	inline bool IsGravity() const { return GetPhysicsMask().HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED); }
-#pragma endregion
-
-#pragma region IPhysicsObject Implementation (Latest Interface)
-public:
-	// === 물리 시스템과의 동기화 ===
-	void SynchronizeCachedStateFromSimulated() override;
-
-	// === 생명주기 관리 ===
-	void RegisterPhysicsSystem() override;
-	void UnRegisterPhysicsSystem() override;
-
-	// === 물리 시뮬레이션 (더 이상 직접 계산하지 않음) ===
-	virtual void TickPhysics(const float DeltaTime) override;
-
-	// === 물리 상태 및 식별자 ===
-	PhysicsID GetPhysicsID() const override { return PhysicsObjectID; }
-	void SetPhysicsID(PhysicsID InID) override { PhysicsObjectID = InID; }
-
-	// === 최신 인터페이스: FPhysicsMask 반환 ===
-	FPhysicsMask GetPhysicsMask() const override { return CachedPhysicsState.PhysicsMasks; }
-#pragma endregion
-
-#pragma region Physics Property Settings (Job-Based)
-public:
-	// === 물리 속성 설정 (Job 기반) ===
-	void SetMass(float InMass);
-	void SetFrictionKinetic(float InFriction);
-	void SetFrictionStatic(float InFriction);
-	void SetRestitution(float InRestitution);
-	void SetInvRotationalInertia(const Vector3& Value);
-
-	// === 제한값 설정 (Job 기반) ===
-	void SetMaxSpeed(float InSpeed);
-	void SetMaxAngularSpeed(float InSpeed);
-	void SetGravityScale(float InScale);
-
-	// === PhysicsMask 기반 상태 제어 (Job 기반) ===
-	void SetPhysicsType(EPhysicsType InType);
-	void SetGravityEnabled(bool bEnabled);
-	// 주의: 물리 활성화는 UActorComponent::SetActive()와 자동 연동됨
-#pragma endregion
-#pragma region Physics State Queries (Cache-Based)
-public:
-	// === PhysicsMask 기반 상태 조회 (캐시에서 즉시 읽기) ===
-	bool IsGravityEnabled() const { return CachedPhysicsState.PhysicsMasks.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED); }
-	bool IsPhysicsActive() const { return CachedPhysicsState.PhysicsMasks.HasFlag(FPhysicsMask::MASK_ACTIVATION); }
-	bool IsStatic() const { return CachedPhysicsState.PhysicsType == EPhysicsType::Static; }
-	bool IsDynamic() const { return CachedPhysicsState.PhysicsType == EPhysicsType::Dynamic; }
-	EPhysicsType GetPhysicsType() const { return CachedPhysicsState.PhysicsType; }
-#pragma endregion
-
-#pragma region Private Helpers and Internal Methods
 private:
-	// === 헬퍼 메서드 ===
-	Vector3 GetCenterOfMass() const;
+    // === 게임 상태 데이터 (소유권: 게임 컨텍스트) ===
+    FHighFrequencyData HighFrequencyGameState;    // Transform
+    FMidFrequencyData MidFrequencyGameState;      // Type, Mask
+    FLowFrequencyData LowFrequencyGameState;      // Properties
 
-	// === 물리 시스템 연동 내부 메서드 ===
-	void UpdatePhysicsActivationState();
+    // === 물리 결과 캐시 (소유권: 물리 시스템에서 수신) ===
+    FPhysicsToGameData PhysicsResultCache;
+
+    // === 더티 플래그 시스템 ===
+    FPhysicsDataDirtyFlags DirtyFlags = FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_ALL);
+
+    // === 물리 시스템 연동 ===
+    PhysicsID PhysicsObjectID = 0;
+    bool bIsRegisteredToPhysicsSystem = false;
+
 #pragma endregion
 
-#pragma region Member Variables
+#pragma region IPhysicsObject Implementation
+
+public:
+    // === 게임 상태 데이터 제공 (Game → Physics) ===
+    FHighFrequencyData GetHighFrequencyData() const override;
+    FMidFrequencyData GetMidFrequencyData() const override;
+    FLowFrequencyData GetLowFrequencyData() const override;
+
+    // === 물리 결과 수신 (Physics → Game) ===
+    void ReceivePhysicsResults(const FPhysicsToGameData& results) override;
+
+    // === 더티 플래그 관리 ===
+    FPhysicsDataDirtyFlags GetDirtyFlags() const override;
+    void MarkDataClean(const FPhysicsDataDirtyFlags& flags) override;
+
+    // === 물리 시스템 생명주기 ===
+    void RegisterPhysicsSystem() override;
+    void UnRegisterPhysicsSystem() override;
+    void TickPhysics(const float DeltaTime) override;
+
+    // === 물리 시스템 통합 ===
+    PhysicsID GetPhysicsID() const override;
+    FPhysicsMask GetPhysicsMask() const override;
+
+#pragma endregion
+
+#pragma region Game Logic Interface (Immediate Updates)
+
+public:
+    // === Transform 설정 (High Frequency) ===
+    void SetWorldTransform(const FTransform& InWorldTransform) override;
+    void SetWorldPosition(const Vector3& InPosition);
+    void SetWorldRotation(const Quaternion& InRotation);
+    void SetWorldScale(const Vector3& InScale);
+
+    // === Physics Type 및 Mask 설정 (Mid Frequency) ===
+    void SetPhysicsType(EPhysicsType InType);
+    void SetGravityEnabled(bool bEnabled);
+    void SetPhysicsActive(bool bActive);
+
+    // === Physics Properties 설정 (Low Frequency) ===
+    void SetMass(float InMass);
+    void SetFrictionKinetic(float InFriction);
+    void SetFrictionStatic(float InFriction);
+    void SetRestitution(float InRestitution);
+    void SetInvRotationalInertia(const Vector3& InValue);
+    void SetMaxSpeed(float InSpeed);
+    void SetMaxAngularSpeed(float InSpeed);
+    void SetGravityScale(float InScale);
+
+    // === 물리 상태 조회 (캐시된 값) ===
+    Vector3 GetVelocity() const;
+    Vector3 GetAngularVelocity() const;
+    float GetMass() const;
+    float GetInvMass() const;
+    Vector3 GetRotationalInertia() const;
+    Vector3 GetInvRotationalInertia() const;
+    float GetRestitution() const;
+    float GetFrictionKinetic() const;
+    float GetFrictionStatic() const;
+    float GetSpeed() const;
+    bool IsGravityEnabled() const;
+    bool IsPhysicsActive() const;
+    bool IsStatic() const;
+    bool IsDynamic() const;
+    EPhysicsType GetPhysicsType() const;
+
+#pragma endregion
+
+#pragma region Job-Based Physics Commands (Immediate Actions)
+
+public:
+    // === 힘/충격 적용 (Job 시스템 사용) ===
+    void ApplyForce(const Vector3& Force);
+    void ApplyForce(const Vector3& Force, const Vector3& Location);
+    void ApplyImpulse(const Vector3& Impulse);
+    void ApplyImpulse(const Vector3& Impulse, const Vector3& Location);
+
+    // === 즉시 속도 변경 (Job 시스템 사용) ===
+    void SetVelocity(const Vector3& InVelocity);
+    void AddVelocity(const Vector3& InVelocityDelta);
+    void SetAngularVelocity(const Vector3& InAngularVelocity);
+    void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
+
+#pragma endregion
+
+#pragma region Internal Helpers
+
 private:
-	// === 물리 시스템 식별자 ===
-	PhysicsID PhysicsObjectID = 0;
+    /// <summary>
+    /// 더티 플래그 설정 및 물리 시스템 업데이트 알림
+    /// </summary>
+    void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
 
-	// === 캐시된 물리 상태 (읽기 전용) ===
-	FPhysicsState CachedPhysicsState;
+    /// <summary>
+    /// 물리 시스템 ID 설정 (등록 시 자동 호출)
+    /// </summary>
+    void SetPhysicsID(PhysicsID InID);
 
-	// === 상태 플래그 ===
-	bool bIsRegisteredToPhysicsSystem = false;
+    /// <summary>
+    /// 게임 상태 기본값으로 초기화
+    /// </summary>
+    void InitializeGameState();
+
+    /// <summary>
+    /// 물리 결과 캐시 기본값으로 초기화
+    /// </summary>
+    void InitializePhysicsCache();
+
+    /// <summary>
+    /// 질량 중심 계산
+    /// </summary>
+    Vector3 GetCenterOfMass() const;
+
 #pragma endregion
 
 };

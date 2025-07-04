@@ -7,9 +7,12 @@
 #include "PhysicsJob.h"
 
 #pragma region Constructor and Lifecycle
+
 URigidBodyComponent::URigidBodyComponent()
 {
     bPhysicsSimulated = true;
+    InitializeGameState();
+    InitializePhysicsCache();
 }
 
 URigidBodyComponent::~URigidBodyComponent()
@@ -25,7 +28,21 @@ void URigidBodyComponent::PostInitialized()
 {
     USceneComponent::PostInitialized();
 
-    // 캐시는 나중에 물리 시스템에서 동기화될 예정 (직접 설정하지 않음)
+    // 현재 SceneComponent Transform을 게임 상태로 설정
+    FTransform currentTransform = USceneComponent::GetWorldTransform();
+    HighFrequencyGameState = FHighFrequencyData(currentTransform);
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+}
+
+void URigidBodyComponent::PostTreeInitialized()
+{
+    USceneComponent::PostTreeInitialized();
+
+    // 물리 시스템 등록 (아직 등록되지 않은 경우)
+    if (!bIsRegisteredToPhysicsSystem)
+    {
+        RegisterPhysicsSystem();
+    }
 }
 
 void URigidBodyComponent::Activate()
@@ -39,7 +56,7 @@ void URigidBodyComponent::Activate()
     }
 
     // 물리 활성화 상태 업데이트
-    UpdatePhysicsActivationState();
+    SetPhysicsActive(true);
 }
 
 void URigidBodyComponent::DeActivate()
@@ -47,45 +64,7 @@ void URigidBodyComponent::DeActivate()
     USceneComponent::DeActivate();
 
     // 물리 비활성화 상태 업데이트
-    UpdatePhysicsActivationState();
-}
-
-void URigidBodyComponent::ResetPhysicsState()
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::ResetPhysicsState - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (!PhysicsSystem)
-    {
-        LOG_ERROR("URigidBodyComponent::ResetPhysicsState - PhysicsSystem not available");
-        return;
-    }
-
-    // FPhysicsState 기본값으로 모든 물리 상태를 Job을 통해 순차 리셋
-    FPhysicsState DefaultState;
-
-    // 속도 리셋
-    PhysicsSystem->RequestPhysicsJob<FJobSetVelocity>(PhysicsObjectID, DefaultState.Velocity);
-    PhysicsSystem->RequestPhysicsJob<FJobSetAngularVelocity>(PhysicsObjectID, DefaultState.AngularVelocity);
-
-    // 물리 속성 리셋
-    PhysicsSystem->RequestPhysicsJob<FJobSetInvMass>(PhysicsObjectID, DefaultState.InvMass);
-    PhysicsSystem->RequestPhysicsJob<FJobSetInvRotationalInertia>(PhysicsObjectID, DefaultState.InvRotationalInertia);
-    PhysicsSystem->RequestPhysicsJob<FJobSetFrictionKinetic>(PhysicsObjectID, DefaultState.FrictionKinetic);
-    PhysicsSystem->RequestPhysicsJob<FJobSetFrictionStatic>(PhysicsObjectID, DefaultState.FrictionStatic);
-    PhysicsSystem->RequestPhysicsJob<FJobSetRestitution>(PhysicsObjectID, DefaultState.Restitution);
-    PhysicsSystem->RequestPhysicsJob<FJobSetMaxSpeed>(PhysicsObjectID, DefaultState.MaxSpeed);
-    PhysicsSystem->RequestPhysicsJob<FJobSetMaxAngularSpeed>(PhysicsObjectID, DefaultState.MaxAngularSpeed);
-
-    // 타입 및 마스크 리셋
-    PhysicsSystem->RequestPhysicsJob<FJobSetPhysicsType>(PhysicsObjectID, DefaultState.PhysicsType);
-    PhysicsSystem->RequestPhysicsJob<FJobSetPhysicsMask>(PhysicsObjectID, DefaultState.PhysicsMasks);
-
-    // 캐시는 Sync 시점에 물리 시스템에서 업데이트됨
+    SetPhysicsActive(false);
 }
 
 void URigidBodyComponent::Tick(const float DeltaTime)
@@ -95,27 +74,421 @@ void URigidBodyComponent::Tick(const float DeltaTime)
     if (!IsActive())
         return;
 }
+
 #pragma endregion
 
-#pragma region SceneComponent Override
-void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
-{  
+#pragma region IPhysicsObject Implementation
 
-    // Job으로만 물리 시스템에 전달 (실제 SceneComponent Transform 업데이트는 Sync 시점에)
-    if (bIsRegisteredToPhysicsSystem && PhysicsObjectID != 0)
+FHighFrequencyData URigidBodyComponent::GetHighFrequencyData() const
+{
+    return HighFrequencyGameState;
+}
+
+FMidFrequencyData URigidBodyComponent::GetMidFrequencyData() const
+{
+    return MidFrequencyGameState;
+}
+
+FLowFrequencyData URigidBodyComponent::GetLowFrequencyData() const
+{
+    return LowFrequencyGameState;
+}
+
+void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& results)
+{
+    // 물리 결과를 캐시에 저장
+    PhysicsResultCache = results;
+
+    // SceneComponent Transform 업데이트 (계층구조 동기화)
+    FTransform resultTransform = results.GetResultTransform();
+    USceneComponent::SetWorldTransform(resultTransform);
+
+    // 게임 상태도 물리 결과로 업데이트 (일관성 유지)
+    HighFrequencyGameState = FHighFrequencyData(resultTransform);
+}
+
+FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
+{
+    return DirtyFlags;
+}
+
+void URigidBodyComponent::MarkDataClean(const FPhysicsDataDirtyFlags& flags)
+{
+    DirtyFlags.ClearFlag(flags.GetRawFlags());
+}
+
+void URigidBodyComponent::RegisterPhysicsSystem()
+{
+    if (bIsRegisteredToPhysicsSystem)
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (!PhysicsSystem)
     {
-        UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-        if (PhysicsSystem)
-        {
-            PhysicsSystem->RequestPhysicsJob<FJobSetWorldTransform>(PhysicsObjectID, InWorldTransform);
-        }
+        LOG_ERROR("URigidBodyComponent::RegisterPhysicsSystem - PhysicsSystem not available");
+        return;
     }
 
-    // 캐시는 물리 시스템에서만 업데이트 (여기서는 수정하지 않음)
+    // IPhysicsObject로 등록
+    std::shared_ptr<IPhysicsObject> PhysicsObjectPtr = Engine::Cast<IPhysicsObject>(
+        Engine::Cast<URigidBodyComponent>(shared_from_this()));
+    PhysicsObjectID = PhysicsSystem->RegisterPhysicsObject(PhysicsObjectPtr);
+
+    if (PhysicsObjectID != 0)
+    {
+        bIsRegisteredToPhysicsSystem = true;
+        LOG_INFO("URigidBodyComponent registered to PhysicsSystem with ID: %u", PhysicsObjectID);
+    }
+    else
+    {
+        LOG_ERROR("URigidBodyComponent::RegisterPhysicsSystem - Failed to register");
+    }
 }
+
+void URigidBodyComponent::UnRegisterPhysicsSystem()
+{
+    if (!bIsRegisteredToPhysicsSystem)
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem && PhysicsObjectID != 0)
+    {
+        PhysicsSystem->UnregisterPhysicsObject(PhysicsObjectID);
+        LOG_INFO("URigidBodyComponent unregistered from PhysicsSystem with ID: %u", PhysicsObjectID);
+    }
+
+    PhysicsObjectID = 0;
+    bIsRegisteredToPhysicsSystem = false;
+}
+
+void URigidBodyComponent::TickPhysics(const float DeltaTime)
+{
+    // 게임플레이 로직과 물리 시스템 간 상호작용 처리
+    // 직접적인 물리 계산은 PhysicsSystem에서 배치 처리됨
+}
+
+PhysicsID URigidBodyComponent::GetPhysicsID() const
+{
+    return PhysicsObjectID;
+}
+
+FPhysicsMask URigidBodyComponent::GetPhysicsMask() const
+{
+    return MidFrequencyGameState.PhysicsMask;
+}
+
 #pragma endregion
 
-#pragma region IPhysicsState Implementation (Job-Based)
+#pragma region Game Logic Interface (Immediate Updates)
+
+void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
+{
+    // 게임 상태 즉시 업데이트
+    HighFrequencyGameState = FHighFrequencyData(InWorldTransform);
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+
+    // SceneComponent 계층구조도 즉시 업데이트
+    USceneComponent::SetWorldTransform(InWorldTransform);
+}
+
+void URigidBodyComponent::SetWorldPosition(const Vector3& InPosition)
+{
+    HighFrequencyGameState.Position = InPosition;
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+
+    // SceneComponent 동기화
+    FTransform newTransform = HighFrequencyGameState.GetTransform();
+    USceneComponent::SetWorldTransform(newTransform);
+}
+
+void URigidBodyComponent::SetWorldRotation(const Quaternion& InRotation)
+{
+    HighFrequencyGameState.Rotation = InRotation;
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+
+    // SceneComponent 동기화
+    FTransform newTransform = HighFrequencyGameState.GetTransform();
+    USceneComponent::SetWorldTransform(newTransform);
+}
+
+void URigidBodyComponent::SetWorldScale(const Vector3& InScale)
+{
+    HighFrequencyGameState.Scale = InScale;
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+
+    // SceneComponent 동기화
+    FTransform newTransform = HighFrequencyGameState.GetTransform();
+    USceneComponent::SetWorldTransform(newTransform);
+}
+
+void URigidBodyComponent::SetPhysicsType(EPhysicsType InType)
+{
+    if (MidFrequencyGameState.PhysicsType != InType)
+    {
+        MidFrequencyGameState.PhysicsType = InType;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetGravityEnabled(bool bEnabled)
+{
+    FPhysicsMask currentMask = MidFrequencyGameState.PhysicsMask;
+
+    if (bEnabled)
+    {
+        currentMask.SetFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+    }
+    else
+    {
+        currentMask.ClearFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+    }
+
+    if (currentMask != MidFrequencyGameState.PhysicsMask)
+    {
+        MidFrequencyGameState.PhysicsMask = currentMask;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetPhysicsActive(bool bActive)
+{
+    FPhysicsMask currentMask = MidFrequencyGameState.PhysicsMask;
+
+    if (bActive)
+    {
+        currentMask.SetFlag(FPhysicsMask::MASK_ACTIVATION);
+    }
+    else
+    {
+        currentMask.ClearFlag(FPhysicsMask::MASK_ACTIVATION);
+    }
+
+    if (currentMask != MidFrequencyGameState.PhysicsMask)
+    {
+        MidFrequencyGameState.PhysicsMask = currentMask;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetMass(float InMass)
+{
+    if (InMass <= KINDA_SMALL)
+    {
+        LOG_WARNING("Invalid mass value: %f", InMass);
+        return;
+    }
+
+    float newInvMass = 1.0f / InMass;
+    if (abs(LowFrequencyGameState.InvMass - newInvMass) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.InvMass = newInvMass;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetFrictionKinetic(float InFriction)
+{
+    float clampedFriction = Math::Max(InFriction, 0.0f);
+    if (abs(LowFrequencyGameState.FrictionKinetic - clampedFriction) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.FrictionKinetic = clampedFriction;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetFrictionStatic(float InFriction)
+{
+    float clampedFriction = Math::Max(InFriction, 0.0f);
+    if (abs(LowFrequencyGameState.FrictionStatic - clampedFriction) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.FrictionStatic = clampedFriction;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetRestitution(float InRestitution)
+{
+    float clampedRestitution = Math::Clamp(InRestitution, 0.0f, 1.0f);
+    if (abs(LowFrequencyGameState.Restitution - clampedRestitution) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.Restitution = clampedRestitution;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetInvRotationalInertia(const Vector3& InValue)
+{
+    if ((LowFrequencyGameState.InvRotationalInertia - InValue).LengthSquared() > KINDA_SMALL * KINDA_SMALL)
+    {
+        LowFrequencyGameState.InvRotationalInertia = InValue;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetMaxSpeed(float InSpeed)
+{
+    if (abs(LowFrequencyGameState.MaxSpeed - InSpeed) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.MaxSpeed = InSpeed;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetMaxAngularSpeed(float InSpeed)
+{
+    if (abs(LowFrequencyGameState.MaxAngularSpeed - InSpeed) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.MaxAngularSpeed = InSpeed;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetGravityScale(float InScale)
+{
+    if (abs(LowFrequencyGameState.GravityScale - InScale) > KINDA_SMALL)
+    {
+        LowFrequencyGameState.GravityScale = InScale;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+#pragma endregion
+
+#pragma region Physics State Queries (Cached Values)
+
+Vector3 URigidBodyComponent::GetVelocity() const
+{
+    return PhysicsResultCache.Velocity;
+}
+
+Vector3 URigidBodyComponent::GetAngularVelocity() const
+{
+    return PhysicsResultCache.AngularVelocity;
+}
+
+float URigidBodyComponent::GetMass() const
+{
+    float invMass = GetInvMass();
+    return invMass > KINDA_SMALL ? (1.0f / invMass) : KINDA_LARGE;
+}
+
+float URigidBodyComponent::GetInvMass() const
+{
+    return IsStatic() ? 0.0f : LowFrequencyGameState.InvMass;
+}
+
+Vector3 URigidBodyComponent::GetRotationalInertia() const
+{
+    Vector3 invInertia = LowFrequencyGameState.InvRotationalInertia;
+    Vector3 result;
+
+    result.x = (abs(invInertia.x) > KINDA_SMALL) ? (1.0f / invInertia.x) : KINDA_LARGE;
+    result.y = (abs(invInertia.y) > KINDA_SMALL) ? (1.0f / invInertia.y) : KINDA_LARGE;
+    result.z = (abs(invInertia.z) > KINDA_SMALL) ? (1.0f / invInertia.z) : KINDA_LARGE;
+
+    return result;
+}
+
+Vector3 URigidBodyComponent::GetInvRotationalInertia() const
+{
+    return LowFrequencyGameState.InvRotationalInertia;
+}
+
+float URigidBodyComponent::GetRestitution() const
+{
+    return LowFrequencyGameState.Restitution;
+}
+
+float URigidBodyComponent::GetFrictionKinetic() const
+{
+    return LowFrequencyGameState.FrictionKinetic;
+}
+
+float URigidBodyComponent::GetFrictionStatic() const
+{
+    return LowFrequencyGameState.FrictionStatic;
+}
+
+float URigidBodyComponent::GetSpeed() const
+{
+    return PhysicsResultCache.Velocity.Length();
+}
+
+bool URigidBodyComponent::IsGravityEnabled() const
+{
+    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+}
+
+bool URigidBodyComponent::IsPhysicsActive() const
+{
+    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
+}
+
+bool URigidBodyComponent::IsStatic() const
+{
+    return MidFrequencyGameState.PhysicsType == EPhysicsType::Static;
+}
+
+bool URigidBodyComponent::IsDynamic() const
+{
+    return MidFrequencyGameState.PhysicsType == EPhysicsType::Dynamic;
+}
+
+EPhysicsType URigidBodyComponent::GetPhysicsType() const
+{
+    return MidFrequencyGameState.PhysicsType;
+}
+
+#pragma endregion
+
+#pragma region Job-Based Physics Commands (Immediate Actions)
+
+void URigidBodyComponent::ApplyForce(const Vector3& Force)
+{
+    ApplyForce(Force, GetCenterOfMass());
+}
+
+void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::ApplyForce - Component not registered to physics system");
+        return;
+    }
+
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, Force, Location);
+    }
+}
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse)
+{
+    ApplyImpulse(Impulse, GetCenterOfMass());
+}
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::ApplyImpulse - Component not registered to physics system");
+        return;
+    }
+
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, Impulse, Location);
+    }
+}
+
 void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
 {
     if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
@@ -176,328 +549,50 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
     }
 }
 
-void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::ApplyForce - Component not registered to physics system");
-        return;
-    }
-
-    if (!IsActive() || IsStatic())
-        return;
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, Force, Location);
-    }
-}
-
-void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::ApplyImpulse - Component not registered to physics system");
-        return;
-    }
-
-    if (!IsActive() || IsStatic())
-        return;
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, Impulse, Location);
-    }
-}
 #pragma endregion
 
-#pragma region IPhysicsObject Implementation (Latest Interface)
-void URigidBodyComponent::SynchronizeCachedStateFromSimulated()
+#pragma region Internal Helpers
+
+void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
 {
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-        return;
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (!PhysicsSystem)
-        return;
-
-    // PhysicsSystem에서 최신 상태를 가져와 캐시 업데이트 (유일한 캐시 Write 지점)
-    CachedPhysicsState.Velocity = PhysicsSystem->P_GetVelocity(PhysicsObjectID);
-    CachedPhysicsState.AngularVelocity = PhysicsSystem->P_GetAngularVelocity(PhysicsObjectID);
-    CachedPhysicsState.WorldTransform = PhysicsSystem->P_GetWorldTransform(PhysicsObjectID);
-    CachedPhysicsState.PhysicsMasks = PhysicsSystem->P_GetPhysicsMask(PhysicsObjectID);
-    CachedPhysicsState.PhysicsType = PhysicsSystem->P_GetPhysicsType(PhysicsObjectID);
-    CachedPhysicsState.InvMass = PhysicsSystem->P_GetInvMass(PhysicsObjectID);
-    CachedPhysicsState.InvRotationalInertia = PhysicsSystem->P_GetInvRotationalInertia(PhysicsObjectID);
-    CachedPhysicsState.FrictionKinetic = PhysicsSystem->P_GetFrictionKinetic(PhysicsObjectID);
-    CachedPhysicsState.FrictionStatic = PhysicsSystem->P_GetFrictionStatic(PhysicsObjectID);
-    CachedPhysicsState.Restitution = PhysicsSystem->P_GetRestitution(PhysicsObjectID);
-    CachedPhysicsState.MaxSpeed = PhysicsSystem->P_GetMaxSpeed(PhysicsObjectID);
-    CachedPhysicsState.MaxAngularSpeed = PhysicsSystem->P_GetMaxAngularSpeed(PhysicsObjectID);
-
-    // 실제 SceneComponent의 Transform 계층구조 업데이트는 이 시점에!
-    USceneComponent::SetWorldTransform(CachedPhysicsState.WorldTransform);
+    DirtyFlags |= flags;
 }
 
-void URigidBodyComponent::RegisterPhysicsSystem()
+void URigidBodyComponent::SetPhysicsID(PhysicsID InID)
 {
-    if (bIsRegisteredToPhysicsSystem)
-        return;
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (!PhysicsSystem)
-    {
-        LOG_ERROR("URigidBodyComponent::RegisterPhysicsSystem - PhysicsSystem not available");
-        return;
-    }
-
-    // IPhysicsObject로 등록 (물리 시스템이 FPhysicsState 기본값으로 자동 초기화)
-    std::shared_ptr<IPhysicsObject> PhysicsObjectPtr = Engine::Cast<IPhysicsObject>(
-        Engine::Cast<URigidBodyComponent>(shared_from_this()));
-    PhysicsObjectID = PhysicsSystem->RegisterPhysicsObject(PhysicsObjectPtr);
-
-    if (PhysicsObjectID != 0)
-    {
-        bIsRegisteredToPhysicsSystem = true;
-
-        // 현재 Transform만 물리 시스템에 설정 (위치 동기화용)
-        PhysicsSystem->RequestPhysicsJob<FJobSetWorldTransform>(PhysicsObjectID, GetWorldTransform());
-
-        LOG_INFO("URigidBodyComponent registered to PhysicsSystem with ID: %u", PhysicsObjectID);
-    }
-    else
-    {
-        LOG_ERROR("URigidBodyComponent::RegisterPhysicsSystem - Failed to register");
-    }
+    PhysicsObjectID = InID;
 }
 
-void URigidBodyComponent::UnRegisterPhysicsSystem()
+void URigidBodyComponent::InitializeGameState()
 {
-    if (!bIsRegisteredToPhysicsSystem)
-        return;
+    // High Frequency 초기화 (Transform)
+    HighFrequencyGameState = FHighFrequencyData();
 
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem && PhysicsObjectID != 0)
-    {
-        PhysicsSystem->UnregisterPhysicsObject(PhysicsObjectID);
-        LOG_INFO("URigidBodyComponent unregistered from PhysicsSystem with ID: %u", PhysicsObjectID);
-    }
+    // Mid Frequency 초기화 (Type, Mask)
+    MidFrequencyGameState.PhysicsType = EPhysicsType::Dynamic;
+    MidFrequencyGameState.PhysicsMask = FPhysicsMask(FPhysicsMask::GROUP_BASIC_SIMULATION);
 
-    PhysicsObjectID = 0;
-    bIsRegisteredToPhysicsSystem = false;
+    // Low Frequency 초기화 (Properties)
+    LowFrequencyGameState = FLowFrequencyData(); // 기본값으로 초기화
+
+    // 모든 데이터가 더티 상태로 시작
+    DirtyFlags = FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_ALL);
 }
 
-void URigidBodyComponent::TickPhysics(const float DeltaTime)
+void URigidBodyComponent::InitializePhysicsCache()
 {
-    // 더 이상 직접적인 물리 계산을 수행하지 않음
-    // PhysicsSystem에서 배치 처리로 모든 물리 연산 수행
-    // 필요시 여기서 게임플레이 로직 관련 물리 처리 수행 가능
-}
-#pragma endregion
-
-#pragma region Physics Property Settings (Job-Based)
-void URigidBodyComponent::SetMass(float InMass)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetMass - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetMass>(PhysicsObjectID, InMass);
-        // 캐시는 물리 시스템에서 업데이트됨 (여기서 수정하지 않음)
-    }
+    // 물리 결과 캐시 초기화
+    PhysicsResultCache.Velocity = Vector3::Zero();
+    PhysicsResultCache.AngularVelocity = Vector3::Zero();
+    PhysicsResultCache.ResultPosition = Vector3::Zero();
+    PhysicsResultCache.ResultRotation = Quaternion::Identity();
+    PhysicsResultCache.ResultScale = Vector3::One();
 }
 
-void URigidBodyComponent::SetFrictionKinetic(float InFriction)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetFrictionKinetic - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetFrictionKinetic>(PhysicsObjectID, InFriction);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetFrictionStatic(float InFriction)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetFrictionStatic - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetFrictionStatic>(PhysicsObjectID, InFriction);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetRestitution(float InRestitution)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetRestitution - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetRestitution>(PhysicsObjectID, InRestitution);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetInvRotationalInertia(const Vector3& Value)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetInvRotationalInertia - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetInvRotationalInertia>(PhysicsObjectID, Value);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetMaxSpeed(float InSpeed)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetMaxSpeed - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetMaxSpeed>(PhysicsObjectID, InSpeed);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetMaxAngularSpeed(float InSpeed)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetMaxAngularSpeed - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetMaxAngularSpeed>(PhysicsObjectID, InSpeed);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetGravityScale(float InScale)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetGravityScale - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetGravityScale>(PhysicsObjectID, InScale);
-        // GravityScale은 캐시에 저장되지 않음
-    }
-}
-
-void URigidBodyComponent::SetPhysicsType(EPhysicsType InType)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetPhysicsType - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobSetPhysicsType>(PhysicsObjectID, InType);
-        // 캐시는 물리 시스템에서 업데이트됨
-    }
-}
-
-void URigidBodyComponent::SetGravityEnabled(bool bEnabled)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetGravityEnabled - Component not registered to physics system");
-        return;
-    }
-
-    // 물리 시스템에서 현재 마스크를 가져와서 중력 플래그만 업데이트
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (!PhysicsSystem)
-        return;
-
-    FPhysicsMask CurrentMask = PhysicsSystem->P_GetPhysicsMask(PhysicsObjectID);
-
-    if (bEnabled)
-    {
-        CurrentMask.SetFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
-    }
-    else
-    {
-        CurrentMask.ClearFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
-    }
-
-    PhysicsSystem->RequestPhysicsJob<FJobSetPhysicsMask>(PhysicsObjectID, CurrentMask);
-}
-#pragma endregion
-
-#pragma region Private Helpers and Internal Methods
 Vector3 URigidBodyComponent::GetCenterOfMass() const
 {
-    return CachedPhysicsState.WorldTransform.Position;
-}
-
-void URigidBodyComponent::UpdatePhysicsActivationState()
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-        return;
-
-    // 물리 시스템에서 현재 마스크를 가져와서 활성화 상태만 업데이트
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (!PhysicsSystem)
-        return;
-
-    FPhysicsMask CurrentMask = PhysicsSystem->P_GetPhysicsMask(PhysicsObjectID);
-
-    // ActorComponent 활성화 상태와 동기화
-    if (IsActive())
-    {
-        CurrentMask.SetFlag(FPhysicsMask::MASK_ACTIVATION);
-    }
-    else
-    {
-        CurrentMask.ClearFlag(FPhysicsMask::MASK_ACTIVATION);
-    }
-
-    PhysicsSystem->RequestPhysicsJob<FJobSetPhysicsMask>(PhysicsObjectID, CurrentMask);
+    // 현재는 Transform의 Position을 질량 중심으로 사용
+    // 향후 복잡한 형태의 경우 별도 계산 가능
+    return HighFrequencyGameState.Position;
 }
 #pragma endregion
