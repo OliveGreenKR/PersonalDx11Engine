@@ -99,7 +99,8 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 #pragma region SceneComponent Override
 void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
-{
+{  
+
     // Job으로만 물리 시스템에 전달 (실제 SceneComponent Transform 업데이트는 Sync 시점에)
     if (bIsRegisteredToPhysicsSystem && PhysicsObjectID != 0)
     {
