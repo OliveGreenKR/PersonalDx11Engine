@@ -114,7 +114,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
         TimeStep -= SimulatedTime;
 
         // 시간 전부 사용- 서브스텝 종료
-        if (TimeStep < KINDA_SMALL && i > MinSubSteps)
+        if (TimeStep < KINDA_SMALL)
         {
             break;
         }
@@ -1294,11 +1294,13 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
     if (deltaTime <= KINDA_SMALL)
         return;
 
+    // 중력은 이미 가속도(m/s²)이므로 deltaTime을 곱해서 속도 변화량으로 변환
     XMVECTOR gravityVec = XMVectorSet(gravity.x, gravity.y, gravity.z, 0.0f);
     XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
-    XMVECTOR gravityForce = XMVectorMultiply(gravityVec, deltaTimeVec);
 
-    // Loop tiling을 이용한 캐시 최적화 순회
+    // 올바른 계산: gravity(가속도) * deltaTime = 속도 변화량
+    XMVECTOR gravityVelocityDelta = XMVectorMultiply(gravityVec, deltaTimeVec);
+
     const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
     const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
 
@@ -1308,33 +1310,29 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
             if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
                 continue;
 
-            // 중력 적용  +  Dynamic
+            // 중력 적용 조건 확인
             if (PhysicsStateSoA.PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
                 PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
             {
+                float invMass = PhysicsStateSoA.InvMasses[i];
+                if (invMass <= KINDA_SMALL)  // Static 객체는 무한 질량
+                    continue;
+
                 // 중력 스케일 적용
                 float gravityScale = PhysicsStateSoA.GravityScales[i];
-                XMVECTOR scaledGravityForce = XMVectorScale(gravityForce, gravityScale);
+                XMVECTOR scaledGravityDelta = XMVectorScale(gravityVelocityDelta, gravityScale);
 
-                // 질량 적용 (F = ma)
-                float invMass = PhysicsStateSoA.InvMasses[i];
-                if (invMass > KINDA_SMALL)  // Static 객체 제외
+                // 직접 속도에 변화량 적용 (질량은 이미 중력에 반영되어 있음)
+                // 실제 물리에서는 모든 객체가 같은 중력 가속도를 받음
+                XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+                XMVECTOR newVelocity = XMVectorAdd(currentVelocity, scaledGravityDelta);
+
+                if (IsValidLinearVelocity(newVelocity))
                 {
-                    XMVECTOR gravityAccel = XMVectorScale(scaledGravityForce, invMass);
-
-                    // 속도에 가속도 적용 (v += a * dt)
-                    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
-                    XMVECTOR newVelocity = XMVectorAdd(currentVelocity, gravityAccel);
-
-                    // 수치 안정성 검사
-                    if (IsValidLinearVelocity(newVelocity))
-                    {
-                        PhysicsStateSoA.Velocities[i] = newVelocity;
-                    }
+                    PhysicsStateSoA.Velocities[i] = newVelocity;
                 }
             }
         }
@@ -1451,17 +1449,18 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
     if (deltaTime <= KINDA_SMALL)
         return;
 
-    // 간단한 선형 드래그 모델
-    const float linearDragCoefficient = 0.98f;
-    const float angularDragCoefficient = 0.95f;
+    // 개선된 드래그 모델 - 더 명확한 효과를 위한 계수 조정
+    const float linearDragCoefficient = 0.85f;    
+    const float angularDragCoefficient = 0.80f;   // 각속도는 더 강한 드래그
 
+    // 지수적 감쇠: v_new = v_old * (coefficient ^ deltaTime)
+    // deltaTime이 작을 때도 효과가 보이도록 계수를 낮춤
     float linearDragFactor = powf(linearDragCoefficient, deltaTime);
     float angularDragFactor = powf(angularDragCoefficient, deltaTime);
 
     XMVECTOR linearDragVec = XMVectorReplicate(linearDragFactor);
     XMVECTOR angularDragVec = XMVectorReplicate(angularDragFactor);
 
-    // Loop tiling을 이용한 캐시 최적화 순회
     const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
     const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
 
@@ -1471,7 +1470,6 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
             if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
                 continue;
 
@@ -1482,16 +1480,34 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
                 XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
                 if (IsValidLinearVelocity(currentVelocity))
                 {
-                    XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
-                    PhysicsStateSoA.Velocities[i] = newVelocity;
+                    // 속도가 매우 작으면 완전히 정지시켜 진동 방지
+                    float velocityMagnitude = XMVector3Length(currentVelocity).m128_f32[0];
+                    if (velocityMagnitude < 0.01f * ONE_METER)  
+                    {
+                        PhysicsStateSoA.Velocities[i] = XMVectorZero();
+                    }
+                    else
+                    {
+                        XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
+                        PhysicsStateSoA.Velocities[i] = newVelocity;
+                    }
                 }
 
                 // 각속도 드래그 적용
                 XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[i];
                 if (IsValidAngularVelocity(currentAngularVel))
                 {
-                    XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
-                    PhysicsStateSoA.AngularVelocities[i] = newAngularVel;
+                    // 각속도가 매우 작으면 완전히 정지시켜 진동 방지
+                    float angularMagnitude = XMVector3Length(currentAngularVel).m128_f32[0];
+                    if (angularMagnitude < 0.1f)  // 약 5.7도/초 이하면 정지
+                    {
+                        PhysicsStateSoA.AngularVelocities[i] = XMVectorZero();
+                    }
+                    else
+                    {
+                        XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
+                        PhysicsStateSoA.AngularVelocities[i] = newAngularVel;
+                    }
                 }
             }
         }
