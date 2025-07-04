@@ -10,10 +10,11 @@
 #include "ArenaMemoryPool.h"
 #include "PhysicsJob.h"
 #include "PhysicsStateInternalInterface.h"
+#include "PhysicsDataStructures.h"
 
 class UPhysicsSystem : public IPhysicsStateInternal
 {
-    
+
 private:
     UPhysicsSystem();
     ~UPhysicsSystem();
@@ -24,6 +25,8 @@ private:
     UPhysicsSystem(UPhysicsSystem&&) = delete;
     UPhysicsSystem& operator=(UPhysicsSystem&&) = delete;
 
+#pragma region Job System
+
 private:
     struct FPhysicsJobRequest
     {
@@ -32,16 +35,8 @@ private:
         bool IsValid() const { return Job != nullptr; }
     };
 
-public:
-    static constexpr PhysicsID INVALID_PHYSICS_ID = 0;
-private:
-    // 물리 상태 데이터 관리자
-    FPhysicsStateArrays PhysicsStateSoA;
-
     // Job 메모리 관리
     FArenaMemoryPool JobPool;
-
-    //물리 잡업 큐
     TCircularQueue<FPhysicsJobRequest> JobQueue;
 
 public:
@@ -60,28 +55,73 @@ public:
     }
 
 private:
+	template<typename JobType, typename... Args,
+		typename = std::enable_if_t<
+		std::conjunction_v<
+		std::is_base_of<FPhysicsJob, JobType>,
+		std::is_constructible<JobType, Args...>
+		>
+		>
+	>
+	void AcquireJob(Args&&... args)
+	{
+		FPhysicsJobRequest newJobRequest;
+		newJobRequest.Job = JobPool.Allocate<JobType>(std::forward<Args>(args)...);
 
-    template<typename JobType, typename... Args,
-        typename = std::enable_if_t<
-        std::conjunction_v<
-        std::is_base_of<FPhysicsJob, JobType>,
-        std::is_constructible<JobType, Args...>
-        >
-        >
-    >
-    void AcquireJob(Args&&... args)
-    {
-        FPhysicsJobRequest newJobRequest;
-        newJobRequest.Job = JobPool.Allocate<JobType>(std::forward<Args>(args)...);
+		if (newJobRequest.Job != nullptr)
+		{
+			JobQueue.Push(newJobRequest);
+		}
+	}
 
-        if (newJobRequest.Job != nullptr)
-        {
-            JobQueue.Push(newJobRequest);
-        }
-    }
+	//Job 순차 처리
+	void ProcessJobQueue();
 
-#pragma region IPhysicsStateInteranl
-public :
+#pragma endregion
+
+#pragma region Synchronization System
+
+public:
+    /// <summary>
+    /// 게임 → 물리 동기화
+    /// 변경된 게임 상태를 물리 시스템으로 전송
+    /// 더티 플래그 기반 선택적 동기화
+    /// </summary>
+    void SyncGameToPhysics();
+
+    /// <summary>
+    /// 물리 → 게임 동기화  
+    /// 물리 시뮬레이션 결과를 게임 객체로 전송
+    /// </summary>
+    void SyncPhysicsToGame();
+
+private:
+    /// <summary>
+    /// 높은 빈도 데이터 동기화 - Transform
+    /// </summary>
+    /// <param name="index">PhysicsStateSoA 인덱스</param>
+    /// <param name="data">전송할 Transform 데이터</param>
+    void SyncHighFrequencyData(SoAIdx index, const FHighFrequencyData& data);
+
+    /// <summary>
+    /// 중간 빈도 데이터 동기화 - Type, Mask
+    /// </summary>
+    /// <param name="index">PhysicsStateSoA 인덱스</param>
+    /// <param name="data">전송할 상태 제어 데이터</param>
+    void SyncMidFrequencyData(SoAIdx index, const FMidFrequencyData& data);
+
+    /// <summary>
+    /// 낮은 빈도 데이터 동기화 - Properties
+    /// </summary>
+    /// <param name="index">PhysicsStateSoA 인덱스</param>
+    /// <param name="data">전송할 물리 속성 데이터</param>
+    void SyncLowFrequencyData(SoAIdx index, const FLowFrequencyData& data);
+
+#pragma endregion
+
+#pragma region IPhysicsStateInternal
+
+public:
     // 물리 속성 접근자 (PhysicsID 기반)
     float P_GetMass(PhysicsID targetID) const override;
     float P_GetInvMass(PhysicsID targetID) const override;
@@ -144,26 +184,32 @@ public :
     // 활성화 제어
     void P_SetPhysicsActive(PhysicsID targetID, bool bActive) override;
     bool P_IsPhysicsActive(PhysicsID targetID) const override;
+
 #pragma endregion
 
+#pragma region Physics Object Lifecycle
+
 public:
+    static constexpr PhysicsID INVALID_PHYSICS_ID = 0;
+
     static UPhysicsSystem* Get()
     {
-        static UPhysicsSystem* manager = [](){
+        static UPhysicsSystem* manager = []() {
             UPhysicsSystem* instance = new UPhysicsSystem();
             instance->Initialize();
             return instance;
-        }();
+            }();
 
         return manager;
     }
+
     //하부시스템 - 충돌
     static FCollisionProcessor* GetCollisionSubsystem()
     {
         static FCollisionProcessor* instance = []() {
             FCollisionProcessor* collision = new FCollisionProcessor();
             collision->Initialize();
-            return collision;
+            return instance;
             }();
         return instance;
     }
@@ -175,9 +221,9 @@ public:
     // 메인 물리 업데이트 (게임 루프에서 호출)
     void TickPhysics(const float DeltaTime);
 
-#pragma region Debug
-    void PrintDebugInfo();
 #pragma endregion
+
+#pragma region Physics Simulation Core
 
 private:
     void Initialize();
@@ -201,16 +247,9 @@ private:
     // 시뮬레이션 완료 후 최종 상태 적용
     void FinalizeSimulation();
 
-    //Job 순차 처리
-    void ProcessJobQueue();
-
-private:
-
     SoAIdx GetIdx(const SoAID targetID) const;
     bool IsValidTargetID(const SoAID targetID) const;
 
-#pragma region Batch to All PhyscisObj
-private:
     //물리 틱 전파
     void BatchPhysicsTick(const float DeltaTime);
 
@@ -228,8 +267,7 @@ private:
 
     //물리 상태 동기화
     void BatchSynchronizeState();
-#pragma endregion
-private:
+
     //수치안정성 함수
     bool IsValidForce(const XMVECTOR& InForce);
     bool IsValidTorque(const XMVECTOR& InTorque);
@@ -238,15 +276,27 @@ private:
     bool IsValidLinearAcceleration(const XMVECTOR& InAccel);
     bool IsValidAngularAcceleration(const XMVECTOR& InAngularAccel);
 
-
     /// <summary>
     /// 개별 객체 속도 제한 적용
     /// </summary>
     void ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity);
     void ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity);
 
+#pragma endregion
+
+#pragma region Debug
+
+public:
+    void PrintDebugInfo();
+
+#pragma endregion
+
+#pragma region Member Variables
 
 private:
+    // 물리 상태 데이터 관리자
+    FPhysicsStateArrays PhysicsStateSoA;
+
     // 물리 시뮬레이션 설정
     int InitialPhysicsObjectCapacity = 512; //최초 관리 객체 메모리 크기
     int InitialPhysicsJobPoolSizeMB = 4; // 최초 물리 작업 풀 크기
@@ -263,5 +313,7 @@ private:
 
     // 시뮬레이션 상태
     bool bIsSimulating = false;
+
+#pragma endregion
 
 };
