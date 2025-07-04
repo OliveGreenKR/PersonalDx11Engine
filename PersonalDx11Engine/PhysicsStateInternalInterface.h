@@ -111,11 +111,6 @@ public:
 
 
     // === 활성화 제어 ===
-
     virtual void P_SetPhysicsActive(PhysicsID targetID, bool bActive) = 0;
     virtual bool P_IsPhysicsActive(PhysicsID targetID) const = 0;
-
-    virtual void P_SetCollisionActive(PhysicsID targetID, bool bActive) = 0;
-    virtual bool P_IsCollisionActive(PhysicsID targetID) const = 0;
-
 };

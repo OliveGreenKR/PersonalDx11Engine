@@ -2,6 +2,7 @@
 #include "Transform.h"
 #include <algorithm>
 #include "DynamicAABBTree.h"
+#include "PhysicsSystem.h"
 #include "CollisionComponent.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
@@ -283,11 +284,11 @@ void FCollisionProcessor::UpdateCollisionTransform()
 	CollisionTree->UpdateTree();
 }
 
-bool FCollisionProcessor::ShouldUseCCD(const IPhysicsStateInternal* PhysicsState) const
+bool FCollisionProcessor::ShouldUseCCD(const std::shared_ptr<UCollisionComponentBase>& InComp) const
 {
-	if (!PhysicsState)
+	if (!InComp)
 		return false;
-	return PhysicsState->P_GetVelocity().Length() > CCDVelocityThreshold;
+	return UPhysicsSystem::Get()->P_GetVelocity(InComp->GetPhysicsID()).Length() > CCDVelocityThreshold;
 }
 
 float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
@@ -314,7 +315,7 @@ float FCollisionProcessor::ProcessCollisions(const float DeltaTime)
 		FCollisionDetectionResult DetectResult;
 		if (CompA && CompB)
 		{
-			if (ShouldUseCCD(CompA->GetPhysicsStateInternal()) || ShouldUseCCD(CompB->GetPhysicsStateInternal()))
+			if (ShouldUseCCD(CompA) || ShouldUseCCD(CompB))
 			{
 				//ccd
 				DetectResult = Detector->DetectCollisionCCD(*CompA.get(), CompA->GetPreviousWorldTransform(), CompA->GetWorldTransform(),
@@ -391,27 +392,25 @@ void FCollisionProcessor::GetPhysicsParams(const std::shared_ptr<UCollisionCompo
 	auto CompPtr = InComp.get();
 	if (!CompPtr)
 		return;
-	auto PhysicsState = CompPtr->GetPhysicsStateInternal();
-	if (!PhysicsState)
-		return;
+	auto PhysicsId = CompPtr->GetPhysicsID();
 
-	OutParams.InvMass = PhysicsState->P_GetInvMass();
+	OutParams.InvMass = UPhysicsSystem::Get()->P_GetInvMass(PhysicsId);
 
-	Vector3 RotInvInerteria = PhysicsState->P_GetInvRotationalInertia();
-    OutParams.InvRotationalInertia = XMLoadFloat3(&RotInvInerteria);
+	Vector3 RotInvInerteria = UPhysicsSystem::Get()->P_GetInvRotationalInertia(PhysicsId);
+	OutParams.InvRotationalInertia = XMLoadFloat3(&RotInvInerteria);
 
-    Vector3 Position = PhysicsState->P_GetWorldPosition();  
-    OutParams.Position = XMLoadFloat3(&Position);  
+	Vector3 Position = UPhysicsSystem::Get()->P_GetWorldPosition(PhysicsId);
+	OutParams.Position = XMLoadFloat3(&Position);
 
-    Vector3 Velocity = PhysicsState->P_GetVelocity();  
-    OutParams.Velocity = XMLoadFloat3(&Velocity);
-	Vector3 AngularVelocity = PhysicsState->P_GetAngularVelocity();
+	Vector3 Velocity = UPhysicsSystem::Get()->P_GetVelocity(PhysicsId);
+	OutParams.Velocity = XMLoadFloat3(&Velocity);
+	Vector3 AngularVelocity = UPhysicsSystem::Get()->P_GetAngularVelocity(PhysicsId);
 	OutParams.AngularVelocity = XMLoadFloat3(&(AngularVelocity));
 
-	OutParams.Restitution = PhysicsState->P_GetRestitution();
-	OutParams.FrictionKinetic = PhysicsState->P_GetFrictionKinetic();
-	OutParams.FrictionStatic = PhysicsState->P_GetFrictionStatic();
-	Quaternion Rotation = PhysicsState->P_GetWorldRotation();
+	OutParams.Restitution = UPhysicsSystem::Get()->P_GetRestitution(PhysicsId);
+	OutParams.FrictionKinetic = UPhysicsSystem::Get()->P_GetFrictionKinetic(PhysicsId);
+	OutParams.FrictionStatic = UPhysicsSystem::Get()->P_GetFrictionStatic(PhysicsId);
+	Quaternion Rotation = UPhysicsSystem::Get()->P_GetWorldRotation(PhysicsId);
 	OutParams.Rotation = XMLoadFloat4(&Rotation);
 	return;
 }
@@ -427,8 +426,8 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	auto ComponentA = RegisteredComponents[CollisionPair.TreeIdA].lock();
 	auto ComponentB = RegisteredComponents[CollisionPair.TreeIdB].lock();
 
-	if (!ComponentA || !ComponentA->GetPhysicsStateInternal() ||
-		!ComponentB || !ComponentB->GetPhysicsStateInternal() ||
+	if (!ComponentA || !ComponentA->GetPhysicsID() ||
+		!ComponentB || !ComponentB->GetPhysicsID() ||
 		!DetectResult.bCollided)
 		return;
 
@@ -465,11 +464,11 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 		return;
 	}
 
-	auto RigidPtrA = ComponentA.get()->GetPhysicsStateInternal();
-	auto RigidPtrB = ComponentB.get()->GetPhysicsStateInternal();
+	auto RigidPhysicsIdA = ComponentA.get()->GetPhysicsID();
+	auto RigidPhysicsIdB = ComponentB.get()->GetPhysicsID();
 	//A->B 방향의 법선벡터이므로 반대로 적용
-	RigidPtrA->P_ApplyImpulse(-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
-	RigidPtrB->P_ApplyImpulse(collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	UPhysicsSystem::Get()->P_ApplyImpulse(RigidPhysicsIdA ,-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
+	UPhysicsSystem::Get()->P_ApplyImpulse(RigidPhysicsIdB, collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
 	//LOG("%s", Debug::ToString(collisionResponse.NetImpulse));
 
@@ -502,17 +501,17 @@ void FCollisionProcessor::ApplyDirectPositionCorrection(const FCollisionPair& Co
 		CorrectionA *= CorrectionRatio;
 		CorrectionB *= CorrectionRatio;
 
-		auto PhysicsA = CompA->GetPhysicsStateInternal();
-		auto PhysicsB = CompB->GetPhysicsStateInternal();
+		auto PhysicsA = CompA->GetPhysicsID();
+		auto PhysicsB = CompB->GetPhysicsID();
 
-		FTransform TransA = PhysicsA->P_GetWorldTransform();
-		FTransform TransB = PhysicsB->P_GetWorldTransform();
+		FTransform TransA = UPhysicsSystem::Get()->P_GetWorldTransform(PhysicsA);
+		FTransform TransB = UPhysicsSystem::Get()->P_GetWorldTransform(PhysicsB);
 
 		TransA.Position += CorrectionA;
 		TransB.Position +=  CorrectionB;
 
-		PhysicsA->P_SetWorldTransform(TransA);
-		PhysicsB->P_SetWorldTransform(TransB);
+		UPhysicsSystem::Get()->P_SetWorldTransform(PhysicsA,TransA);
+		UPhysicsSystem::Get()->P_SetWorldTransform(PhysicsB,TransB);
 	}
 }
 

@@ -28,7 +28,8 @@ FPhysicsStateArrays::FPhysicsStateArrays(size_t InitialSize,
        AutoCompactThresholdRatio = Math::Clamp(InAutoCompactThresholdRatio, 0.1f, 0.9f);
     }
 
-    ResizeAllVectors(InitialSize);
+    ResizeAllStatesVectors(InitialSize);
+    ObjectReferences.resize(InitialSize);
     AllocatedFlags.resize(InitialSize, false);
 
     // 첫 번째 슬롯(인덱스 0)은 더미로 사용 (INVALID_ID 대응)
@@ -163,7 +164,7 @@ void FPhysicsStateArrays::DeallocateSlot(SoAID Id)
     //인덱스 범위 + 할당되어있는 인덱스
     if (!IsValidSlotIndex(Index))
     {
-        LOG_ERROR("Invalid index for ID %u", Id, Index, AllocatedCount);
+        LOG_WARNING("Try to DeAllocate for Invalid index for ID %u", Id, Index, AllocatedCount);
         return;
     }
 
@@ -226,10 +227,11 @@ bool FPhysicsStateArrays::TryResize(uint32_t NewSize)
         size_t OldSize = Size();
 
         // 3. 모든 SoA 벡터들 크기 조정
-        ResizeAllVectors(NewSize);
+        ResizeAllStatesVectors(NewSize);
 
         // 4. 플래그 벡터들 크기 조정
         // 축소든 확장이든 동일한 호출 - vector가 알아서 처리
+        ObjectReferences.resize(NewSize);
         AllocatedFlags.resize(NewSize, false);   // 축소 시에는 false 매개변수 무시됨
 
         if (NewSize > OldSize)
@@ -484,7 +486,7 @@ void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
 }
 
 // 모든 SoA 벡터들을 동시에 크기 조정
-void FPhysicsStateArrays::ResizeAllVectors(uint32_t NewSize)
+void FPhysicsStateArrays::ResizeAllStatesVectors(uint32_t NewSize)
 {
     try
     {

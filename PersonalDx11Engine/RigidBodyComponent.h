@@ -106,6 +106,7 @@ public:
 
 	// === 편의 메서드 ===
 	inline float GetSpeed() const { return CachedPhysicsState.Velocity.Length(); }
+	inline bool IsGravity() const { return GetPhysicsMask().HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED); }
 #pragma endregion
 
 #pragma region IPhysicsObject Implementation (Latest Interface)

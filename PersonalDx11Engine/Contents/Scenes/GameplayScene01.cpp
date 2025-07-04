@@ -64,7 +64,7 @@ void UGameplayScene01::Initialize()
         Floor->PostInitialized();
         Floor->PostInitializedComponents();
         Floor->SetRestitution(0.0f);
-        Floor->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
+        Floor->GetComponentByType<URigidBodyComponent>()->SetPhysicsType(EPhysicsType::Static);
 		Floor->SetColor(Vector4(1, 1, 1, 1) * 0.33f);
 		ScalingFloor();
 		Floor->SetPosition(Vector3(0, -YBorder, 0));
@@ -350,7 +350,7 @@ void UGameplayScene01::SpawnElasticBody()
     if (Rigid)
     {
         //물리적 상태값 초기화
-        Rigid->ResetPhysicsStates();
+        Rigid->ResetPhysicsState();
     }
     body->SetMass(FRandom::RandF(1.0f, 20.0f));
     body->SetRestitution(0.5f);

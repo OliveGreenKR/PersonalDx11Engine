@@ -76,7 +76,7 @@ private:
 
         if (newJobRequest.Job != nullptr)
         {
-            JobQueue.push(newJobRequest);
+            JobQueue.Push(newJobRequest);
         }
     }
 
@@ -144,8 +144,6 @@ public :
     // 활성화 제어
     void P_SetPhysicsActive(PhysicsID targetID, bool bActive) override;
     bool P_IsPhysicsActive(PhysicsID targetID) const override;
-    void P_SetCollisionActive(PhysicsID targetID, bool bActive) override;
-    bool P_IsCollisionActive(PhysicsID targetID) const override;
 #pragma endregion
 
 public:
@@ -251,7 +249,7 @@ private:
 private:
     // 물리 시뮬레이션 설정
     int InitialPhysicsObjectCapacity = 512; //최초 관리 객체 메모리 크기
-    int InitialPhysicsJobPoolSize = 4; // 최초 물리 작업 풀 크기
+    int InitialPhysicsJobPoolSizeMB = 4; // 최초 물리 작업 풀 크기
     float FixedTimeStep = 0.016f;  // 60Hz
     float MinSubStepTickTime = 0.004f; // 15Hz
     int MaxSubSteps = 5;                 // 최대 서브스텝 수

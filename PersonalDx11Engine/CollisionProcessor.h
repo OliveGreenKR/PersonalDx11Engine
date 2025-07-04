@@ -96,7 +96,7 @@ private:
     float ProcessCollisions(const float DeltaTime);
 
     //CCD 임계속도 비교
-    bool ShouldUseCCD(const IPhysicsStateInternal * PhysicsStateInternal) const;
+    bool ShouldUseCCD(const std::shared_ptr<UCollisionComponentBase>& InComp) const;
 
     //새로운 충돌쌍 업데이트
     void UpdateCollisionPairs();

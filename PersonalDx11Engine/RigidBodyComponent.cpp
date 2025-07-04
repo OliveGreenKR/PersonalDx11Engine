@@ -253,7 +253,8 @@ void URigidBodyComponent::RegisterPhysicsSystem()
     }
 
     // IPhysicsObject로 등록 (물리 시스템이 FPhysicsState 기본값으로 자동 초기화)
-    std::shared_ptr<IPhysicsObject> PhysicsObjectPtr = std::static_pointer_cast<IPhysicsObject>(shared_from_this());
+    std::shared_ptr<IPhysicsObject> PhysicsObjectPtr = Engine::Cast<IPhysicsObject>(
+        Engine::Cast<URigidBodyComponent>(shared_from_this()));
     PhysicsObjectID = PhysicsSystem->RegisterPhysicsObject(PhysicsObjectPtr);
 
     if (PhysicsObjectID != 0)

@@ -1,9 +1,11 @@
 #pragma once
+#include "Transform.h"
 
 //1m에 해당하는 수치
 #define ONE_METER (100.0f)
 
 using PhysicsID = std::uint32_t;
+constexpr PhysicsID INVALID_PHYSICS_ID = 0;
 
 enum class EPhysicsType
 {
@@ -11,42 +13,20 @@ enum class EPhysicsType
 	Static,
 };
 
-struct FPhysicsState
-{
-	// 물리 상태 변수
-	Vector3 Velocity = Vector3::Zero();
-	Vector3 AngularVelocity = Vector3::Zero();
-
-	//월드 트랜스폼
-	FTransform WorldTransform;
-
-	// 물리 속성
-	float InvMass = 1.0f;
-	Vector3 InvRotationalInertia = Vector3::Zero();
-	float FrictionKinetic = 0.3f;
-	float FrictionStatic = 0.5f;
-	float Restitution = 0.5f;
-
-	float MaxSpeed = 0.0f;
-	float MaxAngularSpeed = 0.0f;
-	EPhysicsType PhysicsType = EPhysicsType::Dynamic;
-    FPhysicsMask PhysicsMasks = FPhysicsMask();
-};
-
 struct FPhysicsMask
 {
-	// === 비트 마스크 영역 정의  ===
-	static constexpr uint32_t MASK_NONE = 0;
+    // === 비트 마스크 영역 정의  ===
+    static constexpr uint32_t MASK_NONE = 0;
 
-	// 기본 활성화 상태 
-	static constexpr uint32_t MASK_ACTIVATION = 1 << 0;        // 물리 시뮬레이션 활성화
-	static constexpr uint32_t MASK_GRAVITY_AFFECTED = 1 << 1;  // 중력 영향
+    // 기본 활성화 상태 
+    static constexpr uint32_t MASK_ACTIVATION = 1 << 0;        // 물리 시뮬레이션 활성화
+    static constexpr uint32_t MASK_GRAVITY_AFFECTED = 1 << 1;  // 중력 영향
 
-	// 그룹 마스크(편의성)
-	static constexpr uint32_t GROUP_BASIC_SIMULATION = MASK_ACTIVATION | MASK_GRAVITY_AFFECTED;
+    // 그룹 마스크(편의성)
+    static constexpr uint32_t GROUP_BASIC_SIMULATION = MASK_ACTIVATION | MASK_GRAVITY_AFFECTED;
 
 private:
-	uint32_t Mask = MASK_NONE;
+    uint32_t Mask = MASK_NONE;
 public:
     // === 생성자 ===
     constexpr FPhysicsMask() = default;
@@ -173,3 +153,26 @@ public:
         return static_cast<int32_t>(index);
     }
 };
+
+struct FPhysicsState
+{
+	// 물리 상태 변수
+	Vector3 Velocity = Vector3::Zero();
+	Vector3 AngularVelocity = Vector3::Zero();
+
+	//월드 트랜스폼
+	FTransform WorldTransform;
+
+	// 물리 속성
+	float InvMass = 1.0f;
+	Vector3 InvRotationalInertia = Vector3::Zero();
+	float FrictionKinetic = 0.3f;
+	float FrictionStatic = 0.5f;
+	float Restitution = 0.5f;
+
+	float MaxSpeed = 0.0f;
+	float MaxAngularSpeed = 0.0f;
+	EPhysicsType PhysicsType = EPhysicsType::Dynamic;
+    FPhysicsMask PhysicsMasks = FPhysicsMask();
+};
+

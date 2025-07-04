@@ -178,7 +178,7 @@ private:
     void InitializeSlot(SoAIdx Index);
 
     /// 모든 SoA 벡터들을 동시에 크기 조정
-    void ResizeAllVectors(uint32_t NewSize);
+    void ResizeAllStatesVectors(uint32_t NewSize);
 
     /// 압축 실행: 유효 객체들을 앞쪽으로 이동, FreeIDs 초기화
     void PerformCompaction();

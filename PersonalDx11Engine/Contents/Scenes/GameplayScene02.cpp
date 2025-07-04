@@ -278,11 +278,11 @@ void UGameplayScene02::SubmitRenderUI()
             {
                 if(bStatic2)
                 {
-                    Character2->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Static);
+                    Character2->GetComponentByType<URigidBodyComponent>()->SetPhysicsType(EPhysicsType::Static);
                 }
                 else
                 {
-                    Character2->GetComponentByType<URigidBodyComponent>()->SetRigidType(ERigidBodyType::Dynamic);
+                    Character2->GetComponentByType<URigidBodyComponent>()->SetPhysicsType(EPhysicsType::Dynamic);
                 }
                 
             }

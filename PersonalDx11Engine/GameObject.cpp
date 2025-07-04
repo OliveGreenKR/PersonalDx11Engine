@@ -274,7 +274,7 @@ void UGameObject::SetGravity(const bool InBool)
 	auto RigidComp = RootComponent.get()->FindComponentByType<URigidBodyComponent>();
 	if (auto RigidPtr = RigidComp.lock())
 	{
-		RigidPtr->SetGravity(InBool);
+		RigidPtr->SetGravityEnabled(InBool);
 		return;
 	}
 }

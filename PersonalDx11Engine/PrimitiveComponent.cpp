@@ -45,7 +45,7 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
     auto Material = MaterialHandle.Get<UMaterial>();
     if (!Material)
     {
-        LOG_FUNC_CALL("UPrimtiive has Invalid Material");
+        LOG_ERROR("UPrimtiive has Invalid Material");
 		return false;
     }
     
@@ -53,7 +53,7 @@ bool UPrimitiveComponent::FillRenderData(const UCamera* Camera, IRenderData* Out
     auto VShader = Material->GetVertexShader();
     if (!VShader)
     {
-        LOG_FUNC_CALL("Material Has Invalid VShader");
+        LOG_ERROR("Material Has Invalid VShader");
         return false;
     }
 

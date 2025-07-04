@@ -54,9 +54,10 @@ void UCollisionComponentBase::SetHalfExtent(const Vector3& InHalfExtent)
 	SetLocalScale(InHalfExtent * 2.0f);
 }
 
-IPhysicsStateInternal* UCollisionComponentBase::GetPhysicsStateInternal() const
+PhysicsID UCollisionComponentBase::GetPhysicsID() const
 {
-	return Engine::Cast<IPhysicsStateInternal>(RigidBody.lock().get());
+	auto rigid = GetRigidBody();
+	return rigid ? rigid->GetPhysicsID() : INVALID_PHYSICS_ID;
 }
 
 void UCollisionComponentBase::Activate()

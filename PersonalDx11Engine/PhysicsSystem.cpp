@@ -7,7 +7,7 @@
 #pragma region Constructors and PhysicsObjects LifeCycle Management
 UPhysicsSystem::UPhysicsSystem()
     : PhysicsStateSoA(128)
-    , JobPool(sizeof(FPhysicsJob) * 1024)  // 기본 1024개 Job 크기로 초기화
+	, JobPool(1 * 1024 * 1024)  //기본 1MB
     , JobQueue(512)  // 기본 512개 큐 크기
 {
 }
@@ -23,7 +23,7 @@ void UPhysicsSystem::Initialize()
     {
         LoadConfigFromIni();
         PhysicsStateSoA.TryResize(InitialPhysicsObjectCapacity);
-        JobPool.Initialize(InitialPhysicsJobPoolSize * sizeof(FPhysicsJob));
+        JobPool.Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
     }
     catch (...)
     {
@@ -49,7 +49,7 @@ void UPhysicsSystem::Release()
 void UPhysicsSystem::LoadConfigFromIni()
 {
     UConfigReadManager::Get()->GetValue("InitialPhysicsObjectCapacity", InitialPhysicsObjectCapacity);
-    UConfigReadManager::Get()->GetValue("InitialPhysicsJobPoolSize", InitialPhysicsJobPoolSize);
+    UConfigReadManager::Get()->GetValue("InitialPhysicsJobPoolSizeMB", InitialPhysicsJobPoolSizeMB);
     UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
     UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
     UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
@@ -594,18 +594,6 @@ bool UPhysicsSystem::P_IsPhysicsActive(PhysicsID targetID) const
     FPhysicsMask Mask = P_GetPhysicsMask(targetID);
     return Mask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
 }
-
-bool UPhysicsSystem::P_IsCollisionActive(PhysicsID targetID) const
-{
-    if (!IsValidTargetID(targetID))
-    {
-        LOG_ERROR("Invalid PhysicsID for P_IsCollisionActive: %u", targetID);
-        return false;
-    }
-
-    FPhysicsMask Mask = P_GetPhysicsMask(targetID);
-    return Mask.HasFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
-}
 #pragma endregion
 #pragma region Setter
 // === 운동 상태 설정자 ===
@@ -1073,28 +1061,6 @@ void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
 
     P_SetPhysicsMask(targetID, mask);
 }
-
-void UPhysicsSystem::P_SetCollisionActive(PhysicsID targetID, bool bActive)
-{
-    if (!IsValidTargetID(targetID))
-    {
-        LOG_ERROR("Invalid PhysicsID for P_SetCollisionActive: %u", targetID);
-        return;
-    }
-
-    FPhysicsMask mask = P_GetPhysicsMask(targetID);
-
-    if (bActive)
-    {
-        mask.SetFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
-    }
-    else
-    {
-        mask.ClearFlag(FPhysicsMask::MASK_COLLISION_ENABLED);
-    }
-
-    P_SetPhysicsMask(targetID, mask);
-}
 #pragma endregion
 
 #pragma endregion
@@ -1405,7 +1371,7 @@ bool UPhysicsSystem::IsValidForce(const XMVECTOR& InForce)
     // 힘의 크기 계산
     float magnitude = XMVector3Length(InForce).m128_f32[0];
     // 최대 허용 힘 검사 (뉴턴)
-    const float MAX_REASONABLE_FORCE = 1000000.0f;  // 1MN (메가뉴턴)
+    const float MAX_REASONABLE_FORCE = 1000000.0f * ONE_METER;  // 1MN (메가뉴턴)
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_FORCE;
 }
 
@@ -1414,7 +1380,7 @@ bool UPhysicsSystem::IsValidTorque(const XMVECTOR& InTorque)
     // 토크의 크기 계산
     float magnitude = XMVector3Length(InTorque).m128_f32[0];
     // 최대 허용 토크 검사 (뉴턴·미터)
-    const float MAX_REASONABLE_TORQUE = 100000.0f;  // 100kN·m
+    const float MAX_REASONABLE_TORQUE = 100000.0f * ONE_METER;  // 100kN·m
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_TORQUE;
 }
 
@@ -1423,7 +1389,7 @@ bool UPhysicsSystem::IsValidLinearAcceleration(const XMVECTOR& InAccel)
     // 가속도 크기 계산
     float magnitude = XMVector3Length(InAccel).m128_f32[0];
     // 최대 허용 가속도 검사 (m/s²)
-    const float MAX_REASONABLE_ACCELERATION = 10000.0f;  // 약 1000G
+    const float MAX_REASONABLE_ACCELERATION = 10000.0f * ONE_METER;  // 약 1000G
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ACCELERATION;
 }
 
