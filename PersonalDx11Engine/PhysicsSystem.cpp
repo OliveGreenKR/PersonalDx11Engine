@@ -114,7 +114,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
         TimeStep -= SimulatedTime;
 
         // 시간 전부 사용- 서브스텝 종료
-        if (TimeStep < KINDA_SMALL)
+        if (TimeStep < KINDA_SMALL && i > MinSubSteps)
         {
             break;
         }
@@ -450,14 +450,18 @@ float UPhysicsSystem::P_GetMass(PhysicsID targetID) const
     if (!IsValidTargetID(targetID))
     {
         LOG_ERROR("Invalid PhysicsID for P_GetMass: %u", targetID);
-        return 1.0f;  // 기본값 반환
+        return KINDA_LARGE;  // 기본값 반환
     }
 
     SoAIdx index = GetIdx(targetID);
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        return KINDA_LARGE;
+    }
     float invMass = PhysicsStateSoA.InvMasses[index];
 
     // InvMass가 0이면 무한 질량 (Static)
-    return (invMass > KINDA_SMALL) ? (1.0f / invMass) : FLT_MAX;
+    return (invMass > KINDA_SMALL) ? (1.0f / invMass) : KINDA_LARGE;
 }
 
 float UPhysicsSystem::P_GetInvMass(PhysicsID targetID) const
@@ -465,10 +469,15 @@ float UPhysicsSystem::P_GetInvMass(PhysicsID targetID) const
     if (!IsValidTargetID(targetID))
     {
         LOG_ERROR("Invalid PhysicsID for P_GetInvMass: %u", targetID);
-        return 1.0f;
+        return KINDA_SMALL;
     }
 
     SoAIdx index = GetIdx(targetID);
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        return KINDA_SMALL;
+    }
+
     return PhysicsStateSoA.InvMasses[index];
 }
 
@@ -477,10 +486,14 @@ Vector3 UPhysicsSystem::P_GetRotationalInertia(PhysicsID targetID) const
     if (!IsValidTargetID(targetID))
     {
         LOG_ERROR("Invalid PhysicsID for P_GetRotationalInertia: %u", targetID);
-        return Vector3::One();
+        return KINDA_LARGE * Vector3::One();
     }
 
     SoAIdx index = GetIdx(targetID);
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        return KINDA_LARGE * Vector3::One();
+    }
     XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
 
     // InvRotationalInertia를 RotationalInertia로 변환
@@ -488,9 +501,9 @@ Vector3 UPhysicsSystem::P_GetRotationalInertia(PhysicsID targetID) const
     XMFLOAT3 invInertiaFloat;
     XMStoreFloat3(&invInertiaFloat, invInertia);
 
-    result.x = (abs(invInertiaFloat.x) > KINDA_SMALL) ? (1.0f / invInertiaFloat.x) : FLT_MAX;
-    result.y = (abs(invInertiaFloat.y) > KINDA_SMALL) ? (1.0f / invInertiaFloat.y) : FLT_MAX;
-    result.z = (abs(invInertiaFloat.z) > KINDA_SMALL) ? (1.0f / invInertiaFloat.z) : FLT_MAX;
+    result.x = (abs(invInertiaFloat.x) > KINDA_SMALL) ? (1.0f / invInertiaFloat.x) : KINDA_LARGE;
+    result.y = (abs(invInertiaFloat.y) > KINDA_SMALL) ? (1.0f / invInertiaFloat.y) : KINDA_LARGE;
+    result.z = (abs(invInertiaFloat.z) > KINDA_SMALL) ? (1.0f / invInertiaFloat.z) : KINDA_LARGE;
 
     return result;
 }
@@ -500,10 +513,14 @@ Vector3 UPhysicsSystem::P_GetInvRotationalInertia(PhysicsID targetID) const
     if (!IsValidTargetID(targetID))
     {
         LOG_ERROR("Invalid PhysicsID for P_GetInvRotationalInertia: %u", targetID);
-        return Vector3::One();
+        return KINDA_SMALL * Vector3::One();
     }
 
     SoAIdx index = GetIdx(targetID);
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        return KINDA_SMALL * Vector3::One();
+    }
     XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
 
     Vector3 result;
@@ -816,7 +833,7 @@ bool UPhysicsSystem::P_IsPhysicsActive(PhysicsID targetID) const
 }
 #pragma endregion
 #pragma region Setter
-// === 운동 상태 설정자 ===
+// === 운동 상태 설정자 (Static 타입 보호) ===
 
 void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const Vector3& velocity)
 {
@@ -826,14 +843,21 @@ void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const Vector3& velocity)
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     // 유효성 검사
     XMVECTOR velocityVec = XMVectorSet(velocity.x, velocity.y, velocity.z, 0.0f);
     if (!IsValidLinearVelocity(velocityVec))
     {
-        LOG_WARNING("Invalid velocity value for PhysicsID %u: (%f, %f, %f)",
+        LOG_WARNING("Invalid velocity value for PhysicsID %u: (%.3f, %.3f, %.3f)",
                     targetID, velocity.x, velocity.y, velocity.z);
         return;
     }
@@ -849,8 +873,15 @@ void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const Vector3& deltaVeloc
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_AddVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR deltaVec = XMVectorSet(deltaVelocity.x, deltaVelocity.y, deltaVelocity.z, 0.0f);
     XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[index];
@@ -874,13 +905,20 @@ void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const Vector3& ang
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetAngularVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR angularVelVec = XMVectorSet(angularVelocity.x, angularVelocity.y, angularVelocity.z, 0.0f);
     if (!IsValidAngularVelocity(angularVelVec))
     {
-        LOG_WARNING("Invalid angular velocity value for PhysicsID %u: (%f, %f, %f)",
+        LOG_WARNING("Invalid angular velocity value for PhysicsID %u: (%.3f, %.3f, %.3f)",
                     targetID, angularVelocity.x, angularVelocity.y, angularVelocity.z);
         return;
     }
@@ -896,8 +934,15 @@ void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& del
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_AddAngularVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR deltaVec = XMVectorSet(deltaAngularVelocity.x, deltaAngularVelocity.y, deltaAngularVelocity.z, 0.0f);
     XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[index];
@@ -912,7 +957,7 @@ void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& del
     PhysicsStateSoA.AngularVelocities[index] = newAngularVel;
 }
 
-// === 트랜스폼 설정자 ===
+// === 트랜스폼 설정자 (Static 타입 보호) ===
 
 void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, const Vector3& position)
 {
@@ -922,8 +967,15 @@ void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, const Vector3& posit
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetWorldPosition blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR positionVec = XMVectorSet(position.x, position.y, position.z, 1.0f);
     PhysicsStateSoA.WorldPosition[index] = positionVec;
@@ -937,8 +989,15 @@ void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, const Quaternion& ro
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetWorldRotation blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR rotationVec = XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w);
     // 쿼터니언 정규화
@@ -955,8 +1014,15 @@ void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetWorldScale blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     // 스케일 유효성 검사 (0 또는 음수 방지)
     Vector3 validScale = scale;
@@ -968,18 +1034,25 @@ void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
     PhysicsStateSoA.WorldScale[index] = scaleVec;
 }
 
-// === 힘/충격 적용 ===
+// === 힘/충격 적용 (Static 타입 보호) ===
 
 void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location)
 {
     if (!IsValidTargetID(targetID))
     {
-        LOG_ERROR("Invalid PhysicsID for P_ApplyForce at location: %u", targetID);
+        LOG_ERROR("Invalid PhysicsID for P_ApplyForce: %u", targetID);
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_ApplyForce blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR forceVec = XMVectorSet(force.x, force.y, force.z, 0.0f);
     if (!IsValidForce(forceVec))
@@ -1011,12 +1084,19 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, 
 {
     if (!IsValidTargetID(targetID))
     {
-        LOG_ERROR("Invalid PhysicsID for P_ApplyImpulse at location: %u", targetID);
+        LOG_ERROR("Invalid PhysicsID for P_ApplyImpulse: %u", targetID);
         return;
     }
 
+    // Static 타입 체크
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
+
+    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_ApplyImpulse blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
 
     XMVECTOR impulseVec = XMVectorSet(impulse.x, impulse.y, impulse.z, 0.0f);
     if (!IsValidForce(impulseVec))
@@ -1058,6 +1138,7 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, 
         }
     }
 }
+
 
 // === 물리 속성 설정자 ===
 
@@ -1283,8 +1364,6 @@ void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
 }
 #pragma endregion
 
-#pragma endregion
-
 #pragma region Batching Physis Simulation
 
 // === 배치 연산 구현 ===
@@ -1310,7 +1389,7 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // 중력 적용 조건 확인
@@ -1357,7 +1436,7 @@ void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // 선형 속도 적분 + 속도 제한 (Position += Velocity * deltaTime)
@@ -1435,7 +1514,7 @@ void UPhysicsSystem::BatchResetForces()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당된 슬롯만 처리 (활성화 여부 무관하게 힘 초기화)
-            if (!PhysicsStateSoA.IsValidSlotIndex(i))
+            if (!PhysicsStateSoA.IsValidSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             PhysicsStateSoA.AccumulatedForces[i] = zeroVector;
@@ -1470,7 +1549,7 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // Dynamic 타입만 드래그 적용
@@ -1530,7 +1609,7 @@ void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // ObjectReferences를 통한 IPhysicsObject::TickPhysics 호출
