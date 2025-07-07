@@ -120,8 +120,8 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
         PhysicsResultCache.ResultRotation,
         PhysicsResultCache.ResultScale
     );
-    //트랜스폼 업데이트
-    USceneComponent::SetWorldTransform(newTransform);
+    //트랜스폼 업데이트(보간 필요)
+    SetWorldTransform(newTransform);
 }
 
 FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
@@ -539,7 +539,7 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
 {
     //상태값 업데이트
-    HighFrequencyGameState = FHighFrequencyData(GetWorldTransform());
+    HighFrequencyGameState = FHighFrequencyData(NewTransform);
     // 더티 플래그 설정
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
 }

@@ -114,7 +114,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
         TimeStep -= SimulatedTime;
 
         // 시간 전부 사용- 서브스텝 종료
-        if (TimeStep < KINDA_SMALL)
+        if (TimeStep < KINDA_SMALL && i >MinSubSteps)
         {
             break;
         }

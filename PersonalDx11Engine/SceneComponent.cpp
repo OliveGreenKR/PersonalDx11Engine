@@ -289,26 +289,29 @@ void USceneComponent::OnParentChanged(const std::shared_ptr<UActorComponent>& Ne
 
 void USceneComponent::SetParent(const std::shared_ptr<USceneComponent>& InParent)
 {
-    // 사례 4: 부모 변경
     FTransform CurrentWorldTransform = GetWorldTransform();
+
+    // 부모 변경 후 월드 좌표 보존
+    UActorComponent::SetParent(InParent);
 
     if (InParent)
     {
-        UActorComponent::SetParent(InParent);
-        FTransform NewLocal = WorldToLocal(CurrentWorldTransform, InParent->GetWorldTransform());
-        SetLocalTransform(NewLocal);
+        LocalTransform = WorldToLocal(CurrentWorldTransform, InParent->GetWorldTransform());
+        WorldTransform = CurrentWorldTransform;
     }
     else
     {
-        UActorComponent::SetParent(nullptr);
         LocalTransform = CurrentWorldTransform;
         WorldTransform = CurrentWorldTransform;
     }
+
+    // 로컬만 변경됨 (월드는 보존되므로 자식 전파 불필요)
+    OnLocalTransformChangedDelegate.Broadcast(LocalTransform);
 }
 
 #pragma endregion
 
-#pragma region Local Transform Setters (사례 2 적용)
+#pragma region Local Transform Setters
 
 void USceneComponent::SetLocalTransform(const FTransform& InTransform)
 {
@@ -405,7 +408,7 @@ void USceneComponent::AddLocalRotationEuler(const Vector3& InDeltaEuler)
 
 #pragma endregion
 
-#pragma region World Transform Setters (사례 3 적용)
+#pragma region World Transform Setters
 
 void USceneComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
