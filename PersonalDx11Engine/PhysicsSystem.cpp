@@ -114,7 +114,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
         TimeStep -= SimulatedTime;
 
         // 시간 전부 사용- 서브스텝 종료
-        if (TimeStep < KINDA_SMALL && i > MinSubSteps)
+        if (TimeStep < KINDA_SMALL)
         {
             break;
         }
@@ -172,11 +172,17 @@ float UPhysicsSystem::SimulateSubstep(const float StepTime)
     // 중력 적용
     BatchApplyGravity(Gravity, SimualtedTime);
 
+    // 외부 힘 적용
+    BatchApplyForces(SimualtedTime);
+
     // 드래그 적용
     BatchApplyDrag(SimualtedTime);
 
     // 속도 적분 (위치 업데이트)
     BatchIntegrateVelocity(SimualtedTime);
+
+    //누적힘 리셋
+    BatchResetForces();
 
     // 물리 Tick
     BatchPhysicsTick(SimualtedTime);
@@ -1519,6 +1525,71 @@ void UPhysicsSystem::BatchResetForces()
 
             PhysicsStateSoA.AccumulatedForces[i] = zeroVector;
             PhysicsStateSoA.AccumulatedTorques[i] = zeroVector;
+        }
+    }
+}
+
+void UPhysicsSystem::BatchApplyForces(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 유효성 및 시뮬레이션 대상 검증
+            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) ||
+                PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            float currentInvMass = PhysicsStateSoA.InvMasses[i];
+            if (currentInvMass <= KINDA_SMALL)  // 무한 질량 객체 제외
+                continue;
+
+
+            // 선형 가속도
+            XMVECTOR currentForce = PhysicsStateSoA.AccumulatedForces[i];
+            XMVECTOR currentInvMassVec = XMVectorReplicate(currentInvMass);
+            XMVECTOR currentLinearAcceleration = XMVectorMultiply(currentForce, currentInvMassVec);
+            
+            // 가속도 적분
+            XMVECTOR deltaVelocity = XMVectorMultiply(currentLinearAcceleration, deltaTimeVec);
+            XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+            XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
+
+            // 안전성 검증 후 적용
+            if (IsValidLinearVelocity(newVelocity))
+            {
+                PhysicsStateSoA.Velocities[i] = newVelocity;
+            }
+
+            // 토크 각가속도
+            XMVECTOR currentTorque = PhysicsStateSoA.AccumulatedTorques[i];
+            XMVECTOR currentInvRotationalInertia = PhysicsStateSoA.InvRotationalInertias[i];
+            XMVECTOR currentAngularAcceleration = XMVectorMultiply(currentTorque, currentInvRotationalInertia);
+
+            // 각속도 전환
+            XMVECTOR deltaAngularVelocity = XMVectorMultiply(currentAngularAcceleration, deltaTimeVec);
+            XMVECTOR currentAngularVelocity = PhysicsStateSoA.AngularVelocities[i];
+            XMVECTOR newAngularVelocity = XMVectorAdd(currentAngularVelocity, deltaAngularVelocity);
+
+            // 안전성 검증 후 적용
+            if (IsValidAngularVelocity(newAngularVelocity))
+            {
+                PhysicsStateSoA.AngularVelocities[i] = newAngularVelocity;
+            }
+
+
+            // 힘과 토크 누적 초기화 (다음 프레임을 위한 준비)
+            PhysicsStateSoA.AccumulatedForces[i] = XMVectorZero();
+            PhysicsStateSoA.AccumulatedTorques[i] = XMVectorZero();
         }
     }
 }

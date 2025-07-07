@@ -253,6 +253,9 @@ private:
     //누적힘/토크 초기화
     void BatchResetForces();
 
+    //누적힘/토크 속도변환
+    void BatchApplyForces(float deltaTime);
+
     //저항 적용
     void BatchApplyDrag(float deltaTime);
 

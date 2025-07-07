@@ -470,7 +470,7 @@ void FCollisionProcessor::ApplyCollisionResponseByContraints(const FCollisionPai
 	UPhysicsSystem::Get()->P_ApplyImpulse(RigidPhysicsIdA ,-collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 	UPhysicsSystem::Get()->P_ApplyImpulse(RigidPhysicsIdB, collisionResponse.NetImpulse, collisionResponse.ApplicationPoint);
 
-	//LOG("%s", Debug::ToString(collisionResponse.NetImpulse));
+	LOG_INFO("Colliding Imulse : %s", Debug::ToString(collisionResponse.NetImpulse));
 
 	//반응 결과 저장
 	CollisionPair.PrevConstraints = Accumulation;
