@@ -104,12 +104,6 @@ public:
 #pragma region Game Logic Interface (Immediate Updates)
 
 public:
-    // === Transform 설정 (High Frequency) ===
-    void SetWorldTransform(const FTransform& InWorldTransform) override;
-    void SetWorldPosition(const Vector3& InPosition);
-    void SetWorldRotation(const Quaternion& InRotation);
-    void SetWorldScale(const Vector3& InScale);
-
     // === Physics Type 및 Mask 설정 (Mid Frequency) ===
     void SetPhysicsType(EPhysicsType InType);
     void SetGravityEnabled(bool bEnabled);
@@ -164,6 +158,9 @@ public:
 #pragma region Internal Helpers
 
 private:
+    //월드 트랜스폼 변경시 실행
+    void OnWorldTransformChanged(const FTransform& NewTransform);
+
     /// <summary>
     /// 더티 플래그 설정 및 물리 시스템 업데이트 알림
     /// </summary>

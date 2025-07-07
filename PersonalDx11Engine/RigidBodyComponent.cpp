@@ -32,6 +32,9 @@ void URigidBodyComponent::PostInitialized()
     FTransform currentTransform = USceneComponent::GetWorldTransform();
     HighFrequencyGameState = FHighFrequencyData(currentTransform);
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+
+    //월드 트랜스폼 변경시 이벤트 등록
+    OnWorldTransformChangedDelegate.Bind(this, &URigidBodyComponent::OnWorldTransformChanged, "OnTransformChagned_Rigid");
 }
 
 void URigidBodyComponent::PostTreeInitialized()
@@ -81,9 +84,9 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 FHighFrequencyData URigidBodyComponent::GetHighFrequencyData() const
 {
-    FHighFrequencyData result = HighFrequencyGameState;
-    result.Position = result.Position * UNIT_TO_METER;
-    return result;
+    FHighFrequencyData ToTransfer = HighFrequencyGameState;
+    ToTransfer.Position *= UNIT_TO_METER; //좌표계 변경
+    return ToTransfer;
 }
 
 FMidFrequencyData URigidBodyComponent::GetMidFrequencyData() const
@@ -194,46 +197,6 @@ FPhysicsMask URigidBodyComponent::GetPhysicsMask() const
 #pragma endregion
 
 #pragma region Game Logic Interface (Immediate Updates)
-
-void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
-{
-    // 게임 상태 즉시 업데이트
-    HighFrequencyGameState = FHighFrequencyData(InWorldTransform);
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-
-    // SceneComponent 계층구조도 즉시 업데이트
-    USceneComponent::SetWorldTransform(InWorldTransform);
-}
-
-void URigidBodyComponent::SetWorldPosition(const Vector3& InPosition)
-{
-    HighFrequencyGameState.Position = InPosition;
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-
-    // SceneComponent 동기화
-    FTransform newTransform = HighFrequencyGameState.GetTransform();
-    USceneComponent::SetWorldTransform(newTransform);
-}
-
-void URigidBodyComponent::SetWorldRotation(const Quaternion& InRotation)
-{
-    HighFrequencyGameState.Rotation = InRotation;
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-
-    // SceneComponent 동기화
-    FTransform newTransform = HighFrequencyGameState.GetTransform();
-    USceneComponent::SetWorldTransform(newTransform);
-}
-
-void URigidBodyComponent::SetWorldScale(const Vector3& InScale)
-{
-    HighFrequencyGameState.Scale = InScale;
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-
-    // SceneComponent 동기화
-    FTransform newTransform = HighFrequencyGameState.GetTransform();
-    USceneComponent::SetWorldTransform(newTransform);
-}
 
 void URigidBodyComponent::SetPhysicsType(EPhysicsType InType)
 {
@@ -572,6 +535,14 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
 #pragma endregion
 
 #pragma region Internal Helpers
+
+void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
+{
+    //상태값 업데이트
+    HighFrequencyGameState = FHighFrequencyData(GetWorldTransform());
+    // 더티 플래그 설정
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+}
 
 void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
 {

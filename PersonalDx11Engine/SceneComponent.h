@@ -14,8 +14,9 @@ public:
 
 private:
     FTransform LocalTransform;                      // 로컬 트랜스폼 (부모 기준)
-    mutable FTransform WorldTransform;              // 캐싱된 월드 트랜스폼
+    FTransform WorldTransform;              // 캐싱된 월드 트랜스폼
 
+    bool bIsUpdatingFromParent = false;
 public:
     virtual ~USceneComponent() = default;
 
@@ -37,7 +38,7 @@ public:
     void AddLocalRotationEuler(const Vector3& InDeltaEuler);
 
     // 월드 트랜스폼 설정자
-    virtual void SetWorldTransform(const FTransform& InWorldTransform);
+    void SetWorldTransform(const FTransform& InWorldTransform);
     void SetWorldPosition(const Vector3& InWorldPosition);
     void SetWorldRotation(const Quaternion& InWorldRotation);
     void SetWorldRotationEuler(const Vector3& InWorldEuler);
@@ -77,10 +78,11 @@ public:
 
     //자식의 로컬 -> 월드 좌표변환
     FTransform LocalToWorld(const FTransform& InParentWorldTransform) const;
-    //자식의 월드 -> 로컬 
-    FTransform WorldToLocal(const FTransform& InParentWorldTransform) const;
 
-protected:
+    //특정 트랜스폼의 로컬 계산
+    FTransform WorldToLocal(const FTransform& InTargetWorldTransform, const FTransform& InParentWorldTransform) const;
+
+private:
 
     void OnLocalTransformChanged();
     void OnWorldTransformChanged();
