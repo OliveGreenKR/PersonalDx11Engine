@@ -1,9 +1,6 @@
 #pragma once
 #include "Transform.h"
 
-//1m에 해당하는 수치
-#define ONE_METER (100.0f)
-
 using PhysicsID = std::uint32_t;
 constexpr PhysicsID INVALID_PHYSICS_ID = 0;
 
