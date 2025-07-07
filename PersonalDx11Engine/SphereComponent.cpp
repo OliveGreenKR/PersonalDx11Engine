@@ -37,18 +37,6 @@ Vector3 USphereComponent::CalculateInvInertiaTensor(float InvMass) const
     return Vector3(invIertia, invIertia, invIertia);
 }
 
-void USphereComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
-{
-    XMVECTOR Center = XMLoadFloat3(&GetWorldTransform().Position);
-    XMVECTOR Extent = XMVectorReplicate(GetScaledHalfExtent().x); // (r, r, r, r)
-
-    XMVECTOR MinPoint = XMVectorSubtract(Center, Extent);
-    XMVECTOR MaxPoint = XMVectorAdd(Center, Extent);
-
-    XMStoreFloat3(&OutMin, MinPoint);
-    XMStoreFloat3(&OutMax, MaxPoint);
-}
-
 void USphereComponent::RequestDebugRender(const float DeltaTime)
 {
     UDebugDrawManager::Get()->DrawSphere(

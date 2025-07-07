@@ -63,46 +63,6 @@ Vector3 UBoxComponent::CalculateInvInertiaTensor(float InvMass) const
     return InvInertiaTensor;
 }
 
-void UBoxComponent::CalculateAABB(Vector3& OutMin, Vector3& OutMax) const
-{
-    // Load world transform matrix (Scale * Rotation * Translation)
-    XMMATRIX WorldTransformMatrix = GetWorldTransform().GetModelingMatrix();
-
-    // Preload GetHalfExtent() for local box
-    float hx = GetHalfExtent().x;
-    float hy = GetHalfExtent().y;
-    float hz = GetHalfExtent().z;
-
-    // Precomputed 8 local corners in SIMD directly
-    XMVECTOR Points[8];
-    Points[0] = XMVectorSet(-hx, -hy, -hz, 1.0f); // w=1 for full transform
-    Points[1] = XMVectorSet(+hx, -hy, -hz, 1.0f);
-    Points[2] = XMVectorSet(-hx, +hy, -hz, 1.0f);
-    Points[3] = XMVectorSet(+hx, +hy, -hz, 1.0f);
-    Points[4] = XMVectorSet(-hx, -hy, +hz, 1.0f);
-    Points[5] = XMVectorSet(+hx, -hy, +hz, 1.0f);
-    Points[6] = XMVectorSet(-hx, +hy, +hz, 1.0f);
-    Points[7] = XMVectorSet(+hx, +hy, +hz, 1.0f);
-
-    // Apply full world transform (Scale, Rotation, Translation)
-    for (int i = 0; i < 8; ++i)
-        Points[i] = XMVector4Transform(Points[i], WorldTransformMatrix);
-
-    // Initialize Min/Max with first transformed point
-    XMVECTOR MinPoint = Points[0];
-    XMVECTOR MaxPoint = Points[0];
-
-    for (int i = 1; i < 8; ++i)
-    {
-        MinPoint = XMVectorMin(MinPoint, Points[i]);
-        MaxPoint = XMVectorMax(MaxPoint, Points[i]);
-    }
-
-    // Store back (only x, y, z components)
-    XMStoreFloat3(&OutMin, MinPoint);
-    XMStoreFloat3(&OutMax, MaxPoint);
-}
-
 void UBoxComponent::RequestDebugRender(const float DeltaTime)
 {
     

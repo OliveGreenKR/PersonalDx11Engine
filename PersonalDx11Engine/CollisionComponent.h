@@ -32,7 +32,6 @@ public:
 
 	virtual Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const = 0;
 	virtual Vector3 CalculateInvInertiaTensor(float InvMass) const = 0;
-	virtual void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const = 0;
 
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 

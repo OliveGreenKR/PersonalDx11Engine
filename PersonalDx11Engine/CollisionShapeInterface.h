@@ -21,8 +21,6 @@ public:
     // 관성 텐서 계산 (질량 기반)
     virtual Vector3 CalculateInvInertiaTensor(float InvMass) const = 0;
 
-    // AABB 계산 (Axis-Aligned Bounding Box)
-    virtual void CalculateAABB(Vector3& OutMin, Vector3& OutMax) const = 0;
     virtual Vector3 GetScaledHalfExtent() const = 0;
     virtual Vector3 GetHalfExtent() const = 0;
     virtual void SetHalfExtent(const Vector3& InVector) = 0;
