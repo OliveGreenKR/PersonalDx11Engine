@@ -16,6 +16,7 @@
 void FCollisionProcessor::LoadConfigFromIni()
 {
 	UConfigReadManager::Get()->GetValue("CCDVelocityThreshold", CCDVelocityThreshold);
+	CCDVelocityThreshold *= 0.01f; //to m/s
 	UConfigReadManager::Get()->GetValue("InitialCollisionCapacity", InitialCollisonCapacity);
 	UConfigReadManager::Get()->GetValue("MaxConstraintIterations", MaxConstraintIterations);
 	UConfigReadManager::Get()->GetValue("FatBoundsExtentRatio", FatBoundsExtentRatio);
@@ -521,8 +522,6 @@ float FCollisionProcessor::CalculatePositionBiasVelocity(
 	float DeltaTime,
 	float Slop)
 {
-	Slop *= ONE_METER; //미터 단위로 변환
-
 	// 슬롭(Slop)을 초과하는 침투만 고려
 	float biasPenetration = std::fmaxf(0.0f, PenetrationDepth - Slop);
 

@@ -230,7 +230,7 @@ struct FLowFrequencyData {
     float FrictionKinetic = 0.3f;
     float FrictionStatic = 0.5f;
     float Restitution = 0.2f;
-    float MaxSpeed = 3.0f * ONE_METER;
+    float MaxSpeed = 3.0f;
     float MaxAngularSpeed = XM_PIDIV2;
     float GravityScale = 1.0f;
 

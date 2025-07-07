@@ -81,7 +81,9 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 FHighFrequencyData URigidBodyComponent::GetHighFrequencyData() const
 {
-    return HighFrequencyGameState;
+    FHighFrequencyData result = HighFrequencyGameState;
+    result.Position = result.Position * UNIT_TO_METER;
+    return result;
 }
 
 FMidFrequencyData URigidBodyComponent::GetMidFrequencyData() const
@@ -91,20 +93,32 @@ FMidFrequencyData URigidBodyComponent::GetMidFrequencyData() const
 
 FLowFrequencyData URigidBodyComponent::GetLowFrequencyData() const
 {
-    return LowFrequencyGameState;
+    FLowFrequencyData result = LowFrequencyGameState;
+    result.MaxSpeed = result.MaxSpeed * UNIT_TO_METER;
+    return result;
 }
 
 void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& results)
 {
-    // 물리 결과를 캐시에 저장
+    //물리 결과 캐시에 저장
     PhysicsResultCache = results;
 
-    // SceneComponent Transform 업데이트 (계층구조 동기화)
-    FTransform resultTransform = results.GetResultTransform();
-    USceneComponent::SetWorldTransform(resultTransform);
+    //단위 변환
+    PhysicsResultCache.ResultPosition = PhysicsResultCache.ResultPosition * METER_TO_UNIT;
+    PhysicsResultCache.Velocity = PhysicsResultCache.Velocity * METER_TO_UNIT;
 
-    // 게임 상태도 물리 결과로 업데이트 (일관성 유지)
-    HighFrequencyGameState = FHighFrequencyData(resultTransform);
+    //게임 데이터에 복사
+    HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
+    HighFrequencyGameState.Rotation = PhysicsResultCache.ResultRotation;
+    HighFrequencyGameState.Scale = PhysicsResultCache.ResultScale;
+
+    FTransform newTransform(
+        PhysicsResultCache.ResultPosition,
+        PhysicsResultCache.ResultRotation,
+        PhysicsResultCache.ResultScale
+    );
+    //트랜스폼 업데이트
+    USceneComponent::SetWorldTransform(newTransform);
 }
 
 FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
@@ -445,7 +459,7 @@ EPhysicsType URigidBodyComponent::GetPhysicsType() const
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force)
 {
-    ApplyForce(Force, GetCenterOfMass());
+    ApplyForce(Force , GetCenterOfMass());
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
@@ -462,7 +476,9 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, Force, Location);
+        Vector3 ConvertedForce = Force * UNIT_TO_METER;
+        Vector3 ConvertedLocation = Location * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, ConvertedForce, ConvertedLocation);
     }
 }
 
@@ -478,14 +494,14 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
         LOG_WARNING("URigidBodyComponent::ApplyImpulse - Component not registered to physics system");
         return;
     }
-
     if (!IsActive() || IsStatic())
         return;
-
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, Impulse, Location);
+        Vector3 ConvertedImpulse = Impulse * UNIT_TO_METER;
+        Vector3 ConvertedLocation = Location * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, ConvertedImpulse, ConvertedLocation);
     }
 }
 
@@ -496,11 +512,13 @@ void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
         LOG_WARNING("URigidBodyComponent::SetVelocity - Component not registered to physics system");
         return;
     }
-
+    if (!IsActive() || IsStatic())
+        return;
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        PhysicsSystem->RequestPhysicsJob<FJobSetVelocity>(PhysicsObjectID, InVelocity);
+        Vector3 ConvertedVelocity = InVelocity * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobSetVelocity>(PhysicsObjectID, ConvertedVelocity);
     }
 }
 
@@ -511,11 +529,13 @@ void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
         LOG_WARNING("URigidBodyComponent::AddVelocity - Component not registered to physics system");
         return;
     }
-
+    if (!IsActive() || IsStatic())
+        return;
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        PhysicsSystem->RequestPhysicsJob<FJobAddVelocity>(PhysicsObjectID, InVelocityDelta);
+        Vector3 ConvertedVelocityDelta = InVelocityDelta * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobAddVelocity>(PhysicsObjectID, ConvertedVelocityDelta);
     }
 }
 

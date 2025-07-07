@@ -1370,6 +1370,8 @@ void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
 }
 #pragma endregion
 
+#pragma endregion
+
 #pragma region Batching Physis Simulation
 
 // === 배치 연산 구현 ===
@@ -1632,7 +1634,7 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
                 {
                     // 속도가 매우 작으면 완전히 정지시켜 진동 방지
                     float velocityMagnitude = XMVector3Length(currentVelocity).m128_f32[0];
-                    if (velocityMagnitude < 0.01f * ONE_METER)  
+                    if (velocityMagnitude < 0.01f )  
                     {
                         PhysicsStateSoA.Velocities[i] = XMVectorZero();
                     }
@@ -1704,7 +1706,7 @@ bool UPhysicsSystem::IsValidLinearVelocity(const XMVECTOR& InVelocity)
     // 속도 크기 계산
     float magnitude = XMVector3Length(InVelocity).m128_f32[0];
     // 최대 허용 속도 검사 (물리적으로 합리적인 범위)
-    const float MAX_REASONABLE_VELOCITY = 1000.0f * ONE_METER;  // 1000 m/s (음속의 약 3배)
+    const float MAX_REASONABLE_VELOCITY = 1000.0f ;  // 1000 m/s (음속의 약 3배)
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_VELOCITY;
 }
 
@@ -1722,7 +1724,7 @@ bool UPhysicsSystem::IsValidForce(const XMVECTOR& InForce)
     // 힘의 크기 계산
     float magnitude = XMVector3Length(InForce).m128_f32[0];
     // 최대 허용 힘 검사 (뉴턴)
-    const float MAX_REASONABLE_FORCE = 1000000.0f * ONE_METER;  // 1MN (메가뉴턴)
+    const float MAX_REASONABLE_FORCE = 1000000.0f ;  // 1MN (메가뉴턴)
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_FORCE;
 }
 
@@ -1731,7 +1733,7 @@ bool UPhysicsSystem::IsValidTorque(const XMVECTOR& InTorque)
     // 토크의 크기 계산
     float magnitude = XMVector3Length(InTorque).m128_f32[0];
     // 최대 허용 토크 검사 (뉴턴·미터)
-    const float MAX_REASONABLE_TORQUE = 100000.0f * ONE_METER;  // 100kN·m
+    const float MAX_REASONABLE_TORQUE = 100000.0f ;  // 100kN·m
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_TORQUE;
 }
 
@@ -1740,7 +1742,7 @@ bool UPhysicsSystem::IsValidLinearAcceleration(const XMVECTOR& InAccel)
     // 가속도 크기 계산
     float magnitude = XMVector3Length(InAccel).m128_f32[0];
     // 최대 허용 가속도 검사 (m/s²)
-    const float MAX_REASONABLE_ACCELERATION = 10000.0f * ONE_METER;  // 약 1000G
+    const float MAX_REASONABLE_ACCELERATION = 10000.0f ;  // 약 1000G
     return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ACCELERATION;
 }
 

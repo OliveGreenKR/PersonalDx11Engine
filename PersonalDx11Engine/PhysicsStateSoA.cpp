@@ -479,7 +479,7 @@ void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
     Restitutions[Index] = 0.2f;           // 기본 반발 계수
 
     // 제한 및 설정 초기화
-    MaxSpeeds[Index] = 3.0f * ONE_METER;            // 기본 최대 속도
+    MaxSpeeds[Index] = 3.0f;            // 기본 최대 속도
     MaxAngularSpeeds[Index] = XM_PIDIV2;      // 기본 최대 각속도
     GravityScales[Index] = 9.81f;          // 기본 중력 스케일
     PhysicsTypes[Index] = EPhysicsType::Dynamic;        // 기본 동적 타입

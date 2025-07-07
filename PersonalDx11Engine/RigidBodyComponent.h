@@ -32,6 +32,11 @@ class UPhysicsSystem;
 /// </summary>
 class URigidBodyComponent : public USceneComponent, public IPhysicsObject
 {
+#pragma region Unit Conversion
+private:
+    constexpr static float UNIT_TO_METER = 0.01f; 
+    constexpr static float METER_TO_UNIT = 100.0f; 
+#pragma endregion
 #pragma region Constructor and Lifecycle
 
 public:
