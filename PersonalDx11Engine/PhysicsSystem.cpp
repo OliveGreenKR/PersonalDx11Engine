@@ -1453,7 +1453,7 @@ void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
             {
                 // 속도 제한 적용 (적분 전에)
                 float maxSpeed = PhysicsStateSoA.MaxSpeeds[i];
-                if (maxSpeed > 0.0f)  // 음수는 무제한
+                if (maxSpeed > -KINDA_SMALL)  // 0.0 포함
                 {
                     ClampLinearVelocity(maxSpeed, velocity);
                     PhysicsStateSoA.Velocities[i] = velocity;  // 제한된 속도 저장

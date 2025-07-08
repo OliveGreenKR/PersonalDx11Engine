@@ -80,9 +80,9 @@ private:
 
 public:
     // === 게임 상태 데이터 제공 (Game → Physics) ===
-    FHighFrequencyData GetHighFrequencyData() const override;
-    FMidFrequencyData GetMidFrequencyData() const override;
-    FLowFrequencyData GetLowFrequencyData() const override;
+    FHighFrequencyData GetHighFrequencyData() override;  // Get당시 명시적 일괄 업데이트중
+    FMidFrequencyData GetMidFrequencyData() override;    
+    FLowFrequencyData GetLowFrequencyData() override;
 
     // === 물리 결과 수신 (Physics → Game) ===
     void ReceivePhysicsResults(const FPhysicsToGameData& results) override;
@@ -147,10 +147,8 @@ private:
     TFixedCircularQueue<float, TIME_WEIGHT_BUFFER_SIZE> TimeWeightBuffer{ 0.7f };
 
     // === 이전 상태 추적 ===
-    Vector3 PreviousPhysicsPosition = Vector3::Zero();
-    Quaternion PreviousPhysicsRotation = Quaternion::Identity();
-    Vector3 PreviousGamePosition = Vector3::Zero();
-    Quaternion PreviousGameRotation = Quaternion::Identity();
+    Vector3 PreviousPosition = Vector3::Zero();
+    Quaternion PreviousRotation = Quaternion::Identity();
 
     // === 시간 동기화 설정 ===
     float PhysicsFixedTimeStep = 0.016f;

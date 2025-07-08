@@ -31,19 +31,19 @@ public:
     /// 높은 변경 빈도 데이터 획득 - Transform 관련
     /// 매 프레임 변경 가능성이 있는 데이터
     /// </summary>
-    virtual FHighFrequencyData GetHighFrequencyData() const = 0;
+    virtual FHighFrequencyData GetHighFrequencyData() = 0;
 
     /// <summary>
     /// 중간 변경 빈도 데이터 획득 - 물리 타입 및 상태 제어
     /// 게임플레이 이벤트에 따라 변경되는 데이터
     /// </summary>
-    virtual FMidFrequencyData GetMidFrequencyData() const = 0;
+    virtual FMidFrequencyData GetMidFrequencyData() = 0;
 
     /// <summary>
     /// 낮은 변경 빈도 데이터 획득 - 물리 속성
     /// 초기화 또는 특수 상황에서만 변경되는 데이터
     /// </summary>
-    virtual FLowFrequencyData GetLowFrequencyData() const = 0;
+    virtual FLowFrequencyData GetLowFrequencyData() = 0;
 
 #pragma endregion
 

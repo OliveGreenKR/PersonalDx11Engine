@@ -84,19 +84,28 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 #pragma region IPhysicsObject Implementation
 
-FHighFrequencyData URigidBodyComponent::GetHighFrequencyData() const
+FHighFrequencyData URigidBodyComponent::GetHighFrequencyData()
 {
+    // 1. 현재 상태를 이전 상태로 백업
+    FTransform CurrentTransform = GetWorldTransform();
+    PreviousPosition = CurrentTransform.Position;
+    PreviousRotation = CurrentTransform.Rotation;
+
+    // 2. HighFrequencyData 명시적 업데이트
+    HighFrequencyGameState = FHighFrequencyData(CurrentTransform);
+
+    // 3. 물리 시스템에 전송
     FHighFrequencyData ToTransfer = HighFrequencyGameState;
-    ToTransfer.Position *= UNIT_TO_METER; //좌표계 변경
+    ToTransfer.Position *= UNIT_TO_METER;
     return ToTransfer;
 }
 
-FMidFrequencyData URigidBodyComponent::GetMidFrequencyData() const
+FMidFrequencyData URigidBodyComponent::GetMidFrequencyData()
 {
     return MidFrequencyGameState;
 }
 
-FLowFrequencyData URigidBodyComponent::GetLowFrequencyData() const
+FLowFrequencyData URigidBodyComponent::GetLowFrequencyData()
 {
     FLowFrequencyData result = LowFrequencyGameState;
     result.MaxSpeed = result.MaxSpeed * UNIT_TO_METER;
@@ -116,14 +125,14 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
     //시간 동기화 보간
     ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
 
-    LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f] to  [[%4.1f %4.1f %4.1f]]",
+    LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f]  \n to  [[%4.1f %4.1f %4.1f]]" ,
              CurrentGameTransform.Position.x,
              CurrentGameTransform.Position.y,
              CurrentGameTransform.Position.z,
              PhysicsResultCache.ResultPosition.x,
              PhysicsResultCache.ResultPosition.y,
              PhysicsResultCache.ResultPosition.z
-    );
+             );
 
     //물리 트랜스폼 업데이트
     HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
@@ -440,11 +449,8 @@ void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
     //게임 트랜스폼 업데이트
     USceneComponent::SetWorldTransform(InWorldTransform);
 
-    //물리 트랜스폼 업데이트
+    //물리 트랜스폼 플래그 설정
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-    HighFrequencyGameState.Position = InWorldTransform.Position * UNIT_TO_METER;
-    HighFrequencyGameState.Rotation = InWorldTransform.Rotation;
-    HighFrequencyGameState.Scale = InWorldTransform.Scale;
 }
 
 void URigidBodyComponent::ApplyForce(const Vector3& Force)
@@ -593,10 +599,8 @@ void URigidBodyComponent::ResetPreviousStates()
 {
     FTransform currentTransform = GetWorldTransform();
 
-    PreviousPhysicsPosition = currentTransform.Position;
-    PreviousPhysicsRotation = currentTransform.Rotation;
-    PreviousGamePosition = currentTransform.Position;
-    PreviousGameRotation = currentTransform.Rotation;
+    PreviousPosition = currentTransform.Position;
+    PreviousRotation = currentTransform.Rotation;
 }
 
 float URigidBodyComponent::CalculateTimeBasedWeight(float GameDeltaTime, float PhysicsFixedStep) const
@@ -653,9 +657,9 @@ void URigidBodyComponent::ApplyInterporateTransform(
 
     // 모든 벡터/쿼터니언을 한번에 XMVECTOR로 로드
     XMVECTOR vCurrentPhysicsPos = XMLoadFloat3(&PhysicsResult.ResultPosition);
-    XMVECTOR vPreviousPhysicsPos = XMLoadFloat3(&PreviousPhysicsPosition);
+    XMVECTOR vPreviousPos = XMLoadFloat3(&PreviousPosition);           
     XMVECTOR vCurrentPhysicsRot = XMLoadFloat4(&PhysicsResult.ResultRotation);
-    XMVECTOR vPreviousPhysicsRot = XMLoadFloat4(&PreviousPhysicsRotation);
+    XMVECTOR vPreviousRot = XMLoadFloat4(&PreviousRotation);          
     XMVECTOR vCurrentGamePos = XMLoadFloat3(&CurrentGameTransform.Position);
     XMVECTOR vCurrentGameRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
 
@@ -665,7 +669,7 @@ void URigidBodyComponent::ApplyInterporateTransform(
     XMVECTOR vMaxDelta = XMVectorReplicate(1000.0f); // MAX_DELTA_PER_FRAME
 
     // 위치 델타 계산 및 정규화 
-    XMVECTOR vRawPosDelta = XMVectorSubtract(vCurrentPhysicsPos, vPreviousPhysicsPos);
+    XMVECTOR vRawPosDelta = XMVectorSubtract(vCurrentPhysicsPos, vPreviousPos);
     XMVECTOR vScaledPosDelta = XMVectorMultiply(vRawPosDelta, vTimeScaling);
 
     // 위치 델타 클리핑
@@ -677,7 +681,7 @@ void URigidBodyComponent::ApplyInterporateTransform(
     );
 
     // 회전 델타 계산 및 정규화 (통합 SIMD 연산)
-    XMVECTOR vPreviousRotInverse = XMQuaternionInverse(vPreviousPhysicsRot);
+    XMVECTOR vPreviousRotInverse = XMQuaternionInverse(vPreviousRot);
     XMVECTOR vRawRotDelta = XMQuaternionMultiply(vCurrentPhysicsRot, vPreviousRotInverse);
 
     float TimeNormalizedFactor = XMVectorGetX(vTimeScaling);
@@ -685,7 +689,7 @@ void URigidBodyComponent::ApplyInterporateTransform(
 
     // 물리 회전 변화를 시간에 맞춰 조정
     XMVECTOR vTimeNormalizedPhysicsRot = XMQuaternionSlerp(
-        vPreviousPhysicsRot,
+        vPreviousRot,
         vCurrentPhysicsRot,
         TimeNormalizedFactor
     );
@@ -707,13 +711,8 @@ void URigidBodyComponent::ApplyInterporateTransform(
     FTransform FinalTransform(FinalPosition, FinalRotation, CurrentGameTransform.Scale);
     USceneComponent::SetWorldTransform(FinalTransform);
 
-    // 이전 상태 업데이트 (SIMD 결과 직접 저장)
-    XMStoreFloat3(&PreviousPhysicsPosition, vCurrentPhysicsPos);
-    XMStoreFloat4(&PreviousPhysicsRotation, vCurrentPhysicsRot);
-    XMStoreFloat3(&PreviousGamePosition, vCurrentGamePos);
-    XMStoreFloat4(&PreviousGameRotation, vCurrentGameRot);
+    // 이전 상태 저장은 GetHighFrequencyData에서 처리
 }
-
 
 #pragma endregion
 
@@ -721,8 +720,6 @@ void URigidBodyComponent::ApplyInterporateTransform(
 
 void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
 {
-    //상태값 업데이트
-    HighFrequencyGameState = FHighFrequencyData(NewTransform);
     // 더티 플래그 설정
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
 }
