@@ -202,9 +202,6 @@
     <Filter Include="Engine\DataStructure\DynamicAABBTree\test">
       <UniqueIdentifier>{8be354d4-b7f2-4f6e-8e35-51a3a45c2e43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Scene">
-      <UniqueIdentifier>{d953a0f8-c3fb-43b3-8c82-891be96f0c1b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Resources">
       <UniqueIdentifier>{a86807fb-7457-4cfd-ae18-567c2022eada}</UniqueIdentifier>
     </Filter>
@@ -390,6 +387,9 @@
     </Filter>
     <Filter Include="Engine\Physics\DataDefine">
       <UniqueIdentifier>{1491f0b8-fb66-429b-9a95-01b5c876cd4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\DataStructure\FixedCircularQueue">
+      <UniqueIdentifier>{0d5b3145-5461-4aff-a9a6-f90b8cbf1cca}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -677,6 +677,9 @@
     </ClInclude>
     <ClInclude Include="PhysicsDataStructures.h">
       <Filter>Engine\Physics\DataDefine</Filter>
+    </ClInclude>
+    <ClInclude Include="FixedCircularQueue.h">
+      <Filter>Engine\DataStructure\FixedCircularQueue</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
