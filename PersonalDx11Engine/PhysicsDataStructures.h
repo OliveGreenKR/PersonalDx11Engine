@@ -163,9 +163,9 @@ struct FPhysicsToGameData {
 /// 
 struct FHighFrequencyData
 {
-    Vector3 Position = Vector3::Zero();
-    Quaternion Rotation = Quaternion::Identity();
-    Vector3 Scale = Vector3::One();
+    Vector3 Position        = Vector3::Zero();
+    Quaternion Rotation     = Quaternion::Identity();
+    Vector3 Scale           = Vector3::One();
 
     FHighFrequencyData() = default;
 

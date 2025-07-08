@@ -116,7 +116,16 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
     //시간 동기화 보간
     ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
 
-    //게임 데이터에 복사
+    LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f] to  [[%4.1f %4.1f %4.1f]]",
+             CurrentGameTransform.Position.x,
+             CurrentGameTransform.Position.y,
+             CurrentGameTransform.Position.z,
+             PhysicsResultCache.ResultPosition.x,
+             PhysicsResultCache.ResultPosition.y,
+             PhysicsResultCache.ResultPosition.z
+    );
+
+    //물리 트랜스폼 업데이트
     HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
     HighFrequencyGameState.Rotation = PhysicsResultCache.ResultRotation;
     HighFrequencyGameState.Scale = PhysicsResultCache.ResultScale;
@@ -418,6 +427,26 @@ EPhysicsType URigidBodyComponent::GetPhysicsType() const
 
 #pragma region Job-Based Physics Commands (Immediate Actions)
 
+void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
+{
+    if (IsStatic())
+        return;
+
+    if (FTransform::IsEqual(GetWorldTransform(), InWorldTransform))
+    {
+        return;
+    }
+
+    //게임 트랜스폼 업데이트
+    USceneComponent::SetWorldTransform(InWorldTransform);
+
+    //물리 트랜스폼 업데이트
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+    HighFrequencyGameState.Position = InWorldTransform.Position * UNIT_TO_METER;
+    HighFrequencyGameState.Rotation = InWorldTransform.Rotation;
+    HighFrequencyGameState.Scale = InWorldTransform.Scale;
+}
+
 void URigidBodyComponent::ApplyForce(const Vector3& Force)
 {
     ApplyForce(Force , GetCenterOfMass());
@@ -676,7 +705,7 @@ void URigidBodyComponent::ApplyInterporateTransform(
     XMStoreFloat4(&FinalRotation, vFinalRot);
 
     FTransform FinalTransform(FinalPosition, FinalRotation, CurrentGameTransform.Scale);
-    SetWorldTransform(FinalTransform);
+    USceneComponent::SetWorldTransform(FinalTransform);
 
     // 이전 상태 업데이트 (SIMD 결과 직접 저장)
     XMStoreFloat3(&PreviousPhysicsPosition, vCurrentPhysicsPos);

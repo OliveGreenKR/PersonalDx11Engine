@@ -37,6 +37,7 @@ private:
     constexpr static float UNIT_TO_METER = 0.01f; 
     constexpr static float METER_TO_UNIT = 100.0f; 
 #pragma endregion
+
 #pragma region Constructor and Lifecycle
 
 public:
@@ -55,10 +56,10 @@ public:
 
 #pragma endregion
 
-#pragma region Game State Data Management (Game Ownership)
+#pragma region State Data Management
 
 private:
-    // === 게임 상태 데이터 (소유권: 게임 컨텍스트) ===
+    // === 게임 상태 데이터  ===
     FHighFrequencyData HighFrequencyGameState;    // Transform
     FMidFrequencyData MidFrequencyGameState;      // Type, Mask
     FLowFrequencyData LowFrequencyGameState;      // Properties
@@ -104,6 +105,7 @@ public:
 #pragma region Game Logic Interface (Immediate Updates)
 
 public:
+
     // === Physics Type 및 Mask 설정 (Mid Frequency) ===
     void SetPhysicsType(EPhysicsType InType);
     void SetGravityEnabled(bool bEnabled);
@@ -165,10 +167,12 @@ private:
 
 #pragma endregion
 
-
 #pragma region Job-Based Physics Commands (Immediate Actions)
 
 public:
+    // === Transform 설정 (Job 시스템 사용) ===
+    void SetWorldTransform(const FTransform& InWorldTransform) override;
+
     // === 힘/충격 적용 (Job 시스템 사용) ===
     void ApplyForce(const Vector3& Force);
     void ApplyForce(const Vector3& Force, const Vector3& Location);

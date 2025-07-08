@@ -127,3 +127,22 @@ struct FJobApplyImpulse : public FPhysicsJob
         physicsInternal->P_ApplyImpulse(TargetID, Impulse, Location);
     }
 };
+
+// === 트랜스폼 Job ===
+
+//class FJobSetWorldTransform : public FPhysicsJob
+//{
+//private:
+//    FTransform TargetTransform;
+//
+//public:
+//    FJobSetWorldTransform(PhysicsID targetID, const FTransform& InTransform)
+//        : FPhysicsJob(targetID)
+//        , TargetTransform(InTransform)
+//    {}
+//
+//    void Execute(IPhysicsStateInternal* physicsInternal) override
+//    {
+//        physicsInternal->P_SetWorldTransform(TargetID,TargetTransform);
+//    }
+//};
