@@ -5,7 +5,8 @@
 #include "PhysicsDefine.h"
 #include "PhysicsSystem.h"
 #include "PhysicsJob.h"
-
+#include "ConfigReadManager.h"    // FixedTimeStep 로드용
+#include "SceneManager.h"         // LastTickTime 획득용
 #pragma region Constructor and Lifecycle
 
 URigidBodyComponent::URigidBodyComponent()
@@ -13,6 +14,7 @@ URigidBodyComponent::URigidBodyComponent()
     bPhysicsSimulated = true;
     InitializeGameState();
     InitializePhysicsCache();
+    InitializeTimeInterpolation();
 }
 
 URigidBodyComponent::~URigidBodyComponent()
@@ -103,25 +105,21 @@ FLowFrequencyData URigidBodyComponent::GetLowFrequencyData() const
 
 void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& results)
 {
-    //물리 결과 캐시에 저장
+    // 기본 물리 결과 캐시 및 단위 변환
     PhysicsResultCache = results;
-
-    //단위 변환
     PhysicsResultCache.ResultPosition = PhysicsResultCache.ResultPosition * METER_TO_UNIT;
     PhysicsResultCache.Velocity = PhysicsResultCache.Velocity * METER_TO_UNIT;
+
+    //현재 게임 상태 저장
+    FTransform CurrentGameTransform = GetWorldTransform();
+
+    //시간 동기화 보간
+    ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
 
     //게임 데이터에 복사
     HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
     HighFrequencyGameState.Rotation = PhysicsResultCache.ResultRotation;
     HighFrequencyGameState.Scale = PhysicsResultCache.ResultScale;
-
-    FTransform newTransform(
-        PhysicsResultCache.ResultPosition,
-        PhysicsResultCache.ResultRotation,
-        PhysicsResultCache.ResultScale
-    );
-    //트랜스폼 업데이트(보간 필요)
-    SetWorldTransform(newTransform);
 }
 
 FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
@@ -531,6 +529,162 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
         PhysicsSystem->RequestPhysicsJob<FJobAddAngularVelocity>(PhysicsObjectID, InAngularVelocityDelta);
     }
 }
+
+#pragma endregion
+
+#pragma region Time-Weighted Interpolation Implementation
+
+void URigidBodyComponent::InitializeTimeInterpolation()
+{
+    // UConfigReadManager에서 물리 고정 시간스텝 로드
+    UConfigReadManager* ConfigManager = UConfigReadManager::Get();
+    if (ConfigManager)
+    {
+        bool bLoadSuccess = ConfigManager->GetValue("FixedTimeStep", PhysicsFixedTimeStep);
+        if (!bLoadSuccess)
+        {
+            PhysicsFixedTimeStep = 0.016f;  // 기본값 (60Hz)
+            LOG_WARNING("Failed to load FixedTimeStep from config, using default: %.3f", PhysicsFixedTimeStep);
+        }
+    }
+    else
+    {
+        PhysicsFixedTimeStep = 0.016f;
+        LOG_WARNING("ConfigReadManager not available, using default FixedTimeStep: %.3f", PhysicsFixedTimeStep);
+    }
+
+    // 시간 가중치 버퍼를 기본값으로 초기화
+    TimeWeightBuffer.Fill(DEFAULT_BLEND_FACTOR);
+
+    // 이전 상태 초기화
+    ResetPreviousStates();
+}
+
+void URigidBodyComponent::ResetPreviousStates()
+{
+    FTransform currentTransform = GetWorldTransform();
+
+    PreviousPhysicsPosition = currentTransform.Position;
+    PreviousPhysicsRotation = currentTransform.Rotation;
+    PreviousGamePosition = currentTransform.Position;
+    PreviousGameRotation = currentTransform.Rotation;
+}
+
+float URigidBodyComponent::CalculateTimeBasedWeight(float GameDeltaTime, float PhysicsFixedStep) const
+{
+    // 1. 시간 비율 계산 (물리 대비 게임 프레임 속도)
+    float TimeRatio = GameDeltaTime / PhysicsFixedStep;
+
+    // 2. 기본 가중치 계산 (게임이 물리보다 느릴 때 물리 우선)
+    float BaseWeight = Math::Clamp(TimeRatio, MIN_BLEND_FACTOR, MAX_BLEND_FACTOR);
+
+    // 3. 안정성 보정 (급격한 시간 변화 억제)
+    float StabilityFactor = 1.0f;
+    if (TimeRatio < 0.5f || TimeRatio > 2.0f)
+    {
+        // 극단적 시간 비율에서 보수적 가중치 적용
+        StabilityFactor = 0.8f;
+    }
+
+    return BaseWeight * StabilityFactor;
+}
+
+float URigidBodyComponent::CalculateStabilizedWeight() const
+{
+    if (TimeWeightBuffer.IsEmpty())
+    {
+        return DEFAULT_BLEND_FACTOR;
+    }
+
+    // 단순 산술 평균 계산
+    float Sum = 0.0f;
+    size_t Count = 0;
+
+    for (const float& Weight : TimeWeightBuffer)
+    {
+        Sum += Weight;
+        ++Count;
+    }
+
+    return Count > 0 ? (Sum / static_cast<float>(Count)) : DEFAULT_BLEND_FACTOR;
+}
+
+void URigidBodyComponent::ApplyInterporateTransform(
+    const FPhysicsToGameData& PhysicsResult,
+    const FTransform& CurrentGameTransform)
+{
+    // 시간 정보 수집
+    USceneManager* SceneManager = USceneManager::Get();
+    float GameDeltaTime = SceneManager ? SceneManager->GetLastTickTime() : 0.016f;
+
+    // 시간 기반 가중치 계산 (스칼라 연산)
+    float RawTimeWeight = CalculateTimeBasedWeight(GameDeltaTime, PhysicsFixedTimeStep);
+    TimeWeightBuffer.PushForcely(RawTimeWeight);
+    float StabilizedWeight = CalculateStabilizedWeight();
+
+    // 모든 벡터/쿼터니언을 한번에 XMVECTOR로 로드
+    XMVECTOR vCurrentPhysicsPos = XMLoadFloat3(&PhysicsResult.ResultPosition);
+    XMVECTOR vPreviousPhysicsPos = XMLoadFloat3(&PreviousPhysicsPosition);
+    XMVECTOR vCurrentPhysicsRot = XMLoadFloat4(&PhysicsResult.ResultRotation);
+    XMVECTOR vPreviousPhysicsRot = XMLoadFloat4(&PreviousPhysicsRotation);
+    XMVECTOR vCurrentGamePos = XMLoadFloat3(&CurrentGameTransform.Position);
+    XMVECTOR vCurrentGameRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
+
+    // 공통 스칼라 값들을 XMVECTOR로 준비
+    XMVECTOR vTimeScaling = XMVectorReplicate(GameDeltaTime / PhysicsFixedTimeStep);
+    XMVECTOR vWeight = XMVectorReplicate(StabilizedWeight);
+    XMVECTOR vMaxDelta = XMVectorReplicate(1000.0f); // MAX_DELTA_PER_FRAME
+
+    // 위치 델타 계산 및 정규화 
+    XMVECTOR vRawPosDelta = XMVectorSubtract(vCurrentPhysicsPos, vPreviousPhysicsPos);
+    XMVECTOR vScaledPosDelta = XMVectorMultiply(vRawPosDelta, vTimeScaling);
+
+    // 위치 델타 클리핑
+    XMVECTOR vDeltaLength = XMVector3Length(vScaledPosDelta);
+    XMVECTOR vClampedPosDelta = XMVectorSelect(
+        vScaledPosDelta,
+        XMVectorMultiply(XMVector3Normalize(vScaledPosDelta), vMaxDelta),
+        XMVectorGreater(vDeltaLength, vMaxDelta)
+    );
+
+    // 회전 델타 계산 및 정규화 (통합 SIMD 연산)
+    XMVECTOR vPreviousRotInverse = XMQuaternionInverse(vPreviousPhysicsRot);
+    XMVECTOR vRawRotDelta = XMQuaternionMultiply(vCurrentPhysicsRot, vPreviousRotInverse);
+
+    float TimeNormalizedFactor = XMVectorGetX(vTimeScaling);
+    TimeNormalizedFactor = Math::Clamp(TimeNormalizedFactor, 0.0f, 1.0f);
+
+    // 물리 회전 변화를 시간에 맞춰 조정
+    XMVECTOR vTimeNormalizedPhysicsRot = XMQuaternionSlerp(
+        vPreviousPhysicsRot,
+        vCurrentPhysicsRot,
+        TimeNormalizedFactor
+    );
+
+    // 최종 Transform 계산 
+    XMVECTOR vFinalPos = XMVectorAdd(vCurrentGamePos, XMVectorMultiply(vClampedPosDelta, vWeight));
+    XMVECTOR vFinalRot = XMQuaternionSlerp(
+        vCurrentGameRot,
+        vTimeNormalizedPhysicsRot,
+        XMVectorGetX(vWeight)
+    );
+
+    // 결과 저장 (한번에 스토어)
+    Vector3 FinalPosition;
+    Quaternion FinalRotation;
+    XMStoreFloat3(&FinalPosition, vFinalPos);
+    XMStoreFloat4(&FinalRotation, vFinalRot);
+
+    FTransform FinalTransform(FinalPosition, FinalRotation, CurrentGameTransform.Scale);
+    SetWorldTransform(FinalTransform);
+
+    // 이전 상태 업데이트 (SIMD 결과 직접 저장)
+    XMStoreFloat3(&PreviousPhysicsPosition, vCurrentPhysicsPos);
+    XMStoreFloat4(&PreviousPhysicsRotation, vCurrentPhysicsRot);
+    XMStoreFloat3(&PreviousGamePosition, vCurrentGamePos);
+    XMStoreFloat4(&PreviousGameRotation, vCurrentGameRot);
+}
+
 
 #pragma endregion
 

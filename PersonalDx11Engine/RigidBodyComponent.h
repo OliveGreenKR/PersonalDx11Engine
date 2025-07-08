@@ -1,4 +1,3 @@
-// RigidBodyComponent.h
 #pragma once
 #include "Math.h"
 #include <memory>
@@ -7,6 +6,7 @@
 #include "PhysicsObjectInterface.h"
 #include "PhysicsDataStructures.h"
 #include "PhysicsDefine.h"
+#include "FixedCircularQueue.h"
 
 class UGameObject;
 class UPhysicsSystem;
@@ -137,6 +137,34 @@ public:
     EPhysicsType GetPhysicsType() const;
 
 #pragma endregion
+
+#pragma region Time-Weighted Interpolation System
+private:
+    // === 시간 가중치 버퍼링 ===
+    static constexpr size_t TIME_WEIGHT_BUFFER_SIZE = 8;
+    TFixedCircularQueue<float, TIME_WEIGHT_BUFFER_SIZE> TimeWeightBuffer{ 0.7f };
+
+    // === 이전 상태 추적 ===
+    Vector3 PreviousPhysicsPosition = Vector3::Zero();
+    Quaternion PreviousPhysicsRotation = Quaternion::Identity();
+    Vector3 PreviousGamePosition = Vector3::Zero();
+    Quaternion PreviousGameRotation = Quaternion::Identity();
+
+    // === 시간 동기화 설정 ===
+    float PhysicsFixedTimeStep = 0.016f;
+    static constexpr float DEFAULT_BLEND_FACTOR = 0.7f;
+    static constexpr float MIN_BLEND_FACTOR = 0.3f;
+    static constexpr float MAX_BLEND_FACTOR = 1.0f;
+
+    // === 시간 보간 메서드 ===
+    void InitializeTimeInterpolation();
+    void ResetPreviousStates();
+    float CalculateTimeBasedWeight(float GameDeltaTime, float PhysicsFixedStep) const;
+    float CalculateStabilizedWeight() const;
+    void ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResult, const FTransform& CurrentGameTransform);
+
+#pragma endregion
+
 
 #pragma region Job-Based Physics Commands (Immediate Actions)
 

@@ -31,13 +31,14 @@ public:
 
 public:
     template<typename T>
-    void GetValue(const char* key, T& OutValue)
+    bool GetValue(const char* key, T& OutValue)
     {
         if (auto it = ConfigKeys.find(key); it != ConfigKeys.end())
         {
             if (Engine::CastFromString(it->second, OutValue))
             {
                 LOG_INFO("Config Loaded [%s] = %s ", key, it->second.c_str());
+                return true;
             }
             else
             {
@@ -48,7 +49,7 @@ public:
         {
             LOG_WARNING("Cannot find [%s] in Configs", key);
         }
-        return;
+        return false;
     }
 
 
