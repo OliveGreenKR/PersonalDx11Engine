@@ -132,7 +132,9 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
 
 
     //시간 동기화 보간
-    ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
+    //ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
+
+    USceneComponent::SetWorldTransform(PhysicsResultTransform);
 
     if (!Math::IsEqual(CurrentGameTransform.Position, PhysicsResultTransform.Position))
     {
@@ -719,8 +721,6 @@ void URigidBodyComponent::ApplyInterporateTransform(
 
     FTransform FinalTransform(FinalPosition, FinalRotation, CurrentGameTransform.Scale);
     USceneComponent::SetWorldTransform(FinalTransform);
-
-    // 이전 상태 저장은 GetHighFrequencyData에서 처리
 }
 
 #pragma endregion
