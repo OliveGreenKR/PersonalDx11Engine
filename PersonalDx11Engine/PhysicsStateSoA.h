@@ -6,6 +6,7 @@
 #include "PhysicsDefine.h"
 #include "PhysicsObjectInterface.h"
 #include <DirectXMath.h>
+#include "CollisionDefines.h"
 
 using SoAID = uint32_t;
 using SoAIdx = uint32_t;
@@ -49,7 +50,6 @@ public:
     std::vector<EPhysicsType> PhysicsTypes;
     std::vector<FPhysicsMask> PhysicsMasks;
 
-
     // 물리 속성
     std::vector<XMVECTOR> InvRotationalInertias;
     std::vector<float> InvMasses;
@@ -62,6 +62,12 @@ public:
 
     // 물리 객체 약한 참조
     std::vector<std::weak_ptr<IPhysicsObject>> ObjectReferences;
+
+    // 충돌 형상 데이터 (ShapeData 제거)
+    std::vector<ECollisionShapeType> CollisionShapeTypes;
+    std::vector<XMVECTOR> CollisionHalfExtents;        // 형상별 다른 의미
+    std::vector<XMVECTOR> CollisionLocalPosition;
+    std::vector<XMVECTOR> CollisionLocalRotation;
 
     // === 상태 관리 데이터 ===
     std::vector<bool> AllocatedFlags;    // 각 슬롯의 할당 여부

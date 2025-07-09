@@ -2,14 +2,10 @@
 #include "Math.h"
 #include "Transform.h"
 
-// 충돌체 형태 정의
-enum class ECollisionShapeType
-{
-    None,
-    Box,
-    Sphere
-};
-
+enum class ECollisionShapeType;
+/// <summary>
+/// 충돌 형상 정보 게임 인터페이스
+/// </summary>
 class ICollisionShape
 {
 public:

@@ -1372,6 +1372,85 @@ void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
 
 #pragma endregion
 
+#pragma region ICollisionShapeInternal Implementation
+
+ECollisionShapeType UPhysicsSystem::P_GetShapeType(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+    {
+        return ECollisionShapeType::None;
+    }
+
+    SoAIdx index = GetIdx(id);
+    return PhysicsStateSoA.CollisionShapeTypes[index];
+}
+
+void UPhysicsSystem::P_SetShapeType(PhysicsID id, ECollisionShapeType type)
+{
+    if (!IsValidTargetID(id))
+    {
+        return;
+    }
+
+    SoAIdx index = GetIdx(id);
+    PhysicsStateSoA.CollisionShapeTypes[index] = type;
+}
+
+Vector3 UPhysicsSystem::P_GetShapeHalfExtent(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+    {
+        return Vector3::Zero();
+    }
+
+    SoAIdx index = GetIdx(id);
+    Vector3 result;
+    XMStoreFloat3(&result, PhysicsStateSoA.CollisionHalfExtents[index]);
+    return result;
+}
+
+void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, const Vector3& extent)
+{
+    if (!IsValidTargetID(id))
+    {
+        return;
+    }
+
+    SoAIdx index = GetIdx(id);
+    PhysicsStateSoA.CollisionHalfExtents[index] = XMLoadFloat3(&extent);
+}
+
+FTransform UPhysicsSystem::P_GetShapeLocalTransform(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+    {
+        return FTransform();
+    }
+
+    SoAIdx index = GetIdx(id);
+
+    FTransform result;
+    XMStoreFloat3(&result.Position, PhysicsStateSoA.CollisionLocalPosition[index]);
+    XMStoreFloat4(&result.Rotation, PhysicsStateSoA.CollisionLocalRotation[index]);
+    result.Scale = Vector3::One(); // 스케일은 HalfExtent에서 처리
+
+    return result;
+}
+
+void UPhysicsSystem::P_SetShapeLocalTransform(PhysicsID id, const FTransform& transform)
+{
+    if (!IsValidTargetID(id))
+    {
+        return;
+    }
+
+    SoAIdx index = GetIdx(id);
+    PhysicsStateSoA.CollisionLocalPosition[index] = XMLoadFloat3(&transform.Position);
+    PhysicsStateSoA.CollisionLocalRotation[index] = XMLoadFloat4(&transform.Rotation);
+}
+
+#pragma endregion
+
 #pragma region Batching Physis Simulation
 
 // === 배치 연산 구현 ===

@@ -11,8 +11,9 @@
 #include "PhysicsJob.h"
 #include "PhysicsStateInternalInterface.h"
 #include "PhysicsDataStructures.h"
+#include "CollisionShapeInternalInterface.h"
 
-class UPhysicsSystem : public IPhysicsStateInternal
+class UPhysicsSystem : public IPhysicsStateInternal, public ICollisionShapeInternal
 {
 
 private:
@@ -121,6 +122,7 @@ public:
         return instance;
     }
 #pragma endregion
+
 #pragma region IPhysicsStateInternal
 
 public:
@@ -187,6 +189,20 @@ public:
     void P_SetPhysicsActive(PhysicsID targetID, bool bActive) override;
     bool P_IsPhysicsActive(PhysicsID targetID) const override;
 
+#pragma endregion
+
+#pragma region IPhysicsShapeInternal
+    // 형상 타입 관리
+    ECollisionShapeType P_GetShapeType(PhysicsID id) const;
+    void P_SetShapeType(PhysicsID id, ECollisionShapeType type);
+
+    // 형상 크기 (HalfExtent 기반)
+    Vector3 P_GetShapeHalfExtent(PhysicsID id) const;
+    void P_SetShapeHalfExtent(PhysicsID id, const Vector3& extent);
+
+    // 로컬 변환
+    FTransform P_GetShapeLocalTransform(PhysicsID id) const;
+    void P_SetShapeLocalTransform(PhysicsID id, const FTransform& transform);
 #pragma endregion
 
 #pragma region Physics Object Lifecycle

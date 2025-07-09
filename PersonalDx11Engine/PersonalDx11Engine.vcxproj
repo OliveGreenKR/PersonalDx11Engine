@@ -199,6 +199,7 @@
     <ClInclude Include="CollisionProcessor.h" />
     <ClInclude Include="CollisionResponseCalculator.h" />
     <ClInclude Include="CollisionShapeInterface.h" />
+    <ClInclude Include="CollisionShapeInternalInterface.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ConfigReadManager.h" />
     <ClInclude Include="ConsoleManager.h" />

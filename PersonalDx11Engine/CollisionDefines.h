@@ -65,3 +65,11 @@ enum class ECollisionState
 	Stay,
 	Exit,
 };
+
+// 충돌체 형태 정의
+enum class ECollisionShapeType
+{
+	None,
+	Box,
+	Sphere
+};
