@@ -64,10 +64,10 @@ void UGameplayScene01::Initialize()
         Floor->PostInitialized();
         Floor->PostInitializedComponents();
         Floor->SetRestitution(0.0f);
-        Floor->GetComponentByType<URigidBodyComponent>()->SetPhysicsType(EPhysicsType::Static);
 		Floor->SetColor(Vector4(1, 1, 1, 1) * 0.33f);
 		ScalingFloor();
 		Floor->SetPosition(Vector3(0, -YBorder, 0));
+        Floor->GetComponentByType<URigidBodyComponent>()->SetPhysicsType(EPhysicsType::Static);
     }
     auto Primitive = Floor->GetComponentByType<UPrimitiveComponent>();
     if (Primitive)

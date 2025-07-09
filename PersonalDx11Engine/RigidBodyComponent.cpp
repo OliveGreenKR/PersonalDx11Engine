@@ -121,18 +121,30 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
 
     //현재 게임 상태 저장
     FTransform CurrentGameTransform = GetWorldTransform();
+    FTransform PhysicsResultTransform = FTransform(PhysicsResultCache.ResultPosition,
+                                                   PhysicsResultCache.ResultRotation,
+                                                   PhysicsResultCache.ResultScale);
+
+    if (FTransform::IsEqual(CurrentGameTransform, PhysicsResultTransform))
+    {
+        return;
+    }
+
 
     //시간 동기화 보간
     ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
 
-    LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f]  \n to  [[%4.1f %4.1f %4.1f]]" ,
-             CurrentGameTransform.Position.x,
-             CurrentGameTransform.Position.y,
-             CurrentGameTransform.Position.z,
-             PhysicsResultCache.ResultPosition.x,
-             PhysicsResultCache.ResultPosition.y,
-             PhysicsResultCache.ResultPosition.z
-             );
+    if (!Math::IsEqual(CurrentGameTransform.Position, PhysicsResultTransform.Position))
+    {
+        LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f]  \n to  [[%4.1f %4.1f %4.1f]]",
+                 CurrentGameTransform.Position.x,
+                 CurrentGameTransform.Position.y,
+                 CurrentGameTransform.Position.z,
+                 PhysicsResultCache.ResultPosition.x,
+                 PhysicsResultCache.ResultPosition.y,
+                 PhysicsResultCache.ResultPosition.z
+        );
+    }
 
     //물리 트랜스폼 업데이트
     HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
@@ -438,9 +450,6 @@ EPhysicsType URigidBodyComponent::GetPhysicsType() const
 
 void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
 {
-    if (IsStatic())
-        return;
-
     if (FTransform::IsEqual(GetWorldTransform(), InWorldTransform))
     {
         return;
