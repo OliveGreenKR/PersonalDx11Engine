@@ -414,12 +414,12 @@ void UGameplayScene02::SetupInput()
                                  if (EventData.bShift)
                                  {
                                      
-                                     Character->ApplyForce(1e3 * Camera->GetWorldUp() * InForceMagnitude);
+                                     Character->ApplyForce( Camera->GetWorldUp() * InForceMagnitude);
                                      
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(1e3 * Camera->GetWorldForward() * InForceMagnitude);
+                                     Character->ApplyForce( Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -436,12 +436,12 @@ void UGameplayScene02::SetupInput()
                                  if (EventData.bShift)
                                  {
 
-                                     Character->ApplyForce(1e3 * -Camera->GetWorldUp() * InForceMagnitude);
+                                     Character->ApplyForce( -Camera->GetWorldUp() * InForceMagnitude);
 
                                  }
                                  else
                                  {
-                                     Character->ApplyForce(1e3 * -Camera->GetWorldForward() * InForceMagnitude);
+                                     Character->ApplyForce( -Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -454,7 +454,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (!Camera)
                                      return;
-                                 Character->ApplyForce(1e3 * Camera->GetWorldRight() * InForceMagnitude);
+                                 Character->ApplyForce( Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -466,7 +466,7 @@ void UGameplayScene02::SetupInput()
 
                                  if (!Camera)
                                      return;
-                                 Character->ApplyForce(1e3 * -Camera->GetWorldRight() * InForceMagnitude);
+                                 Character->ApplyForce( -Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 
@@ -483,11 +483,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(1e3 * Camera->GetWorldUp() * InForceMagnitude);
+                                     Character2->ApplyForce( Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(1e3 * Camera->GetWorldForward() * InForceMagnitude);
+                                     Character2->ApplyForce( Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -503,11 +503,11 @@ void UGameplayScene02::SetupInput()
 
                                  if (EventData.bShift)
                                  {
-                                     Character2->ApplyForce(1e3 * -Camera->GetWorldUp() * InForceMagnitude);
+                                     Character2->ApplyForce( -Camera->GetWorldUp() * InForceMagnitude);
                                  }
                                  else
                                  {
-                                     Character2->ApplyForce(1e3 * -Camera->GetWorldForward() * InForceMagnitude);
+                                     Character2->ApplyForce( -Camera->GetWorldForward() * InForceMagnitude);
                                  }
                              },
                              "CharacterMove");
@@ -521,7 +521,7 @@ void UGameplayScene02::SetupInput()
                                  if (!Camera)
                                      return;
 
-								 Character2->ApplyForce(1e3 * Camera->GetWorldRight() * InForceMagnitude);                             
+								 Character2->ApplyForce( Camera->GetWorldRight() * InForceMagnitude);                             
                              },
                              "CharacterMove");
 
@@ -534,7 +534,7 @@ void UGameplayScene02::SetupInput()
                                  if (!Camera)
                                      return;
 
-                                 Character2->ApplyForce(1e3 * -Camera->GetWorldRight() * InForceMagnitude);
+                                 Character2->ApplyForce( -Camera->GetWorldRight() * InForceMagnitude);
                              },
                              "CharacterMove");
 

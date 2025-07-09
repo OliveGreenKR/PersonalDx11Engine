@@ -481,8 +481,8 @@ void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Locati
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        Vector3 ConvertedForce = Force * UNIT_TO_METER;
-        Vector3 ConvertedLocation = Location * UNIT_TO_METER;
+        Vector3 ConvertedForce = Force;
+        Vector3 ConvertedLocation = Location;
         PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, ConvertedForce, ConvertedLocation);
     }
 }
@@ -504,8 +504,8 @@ void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Lo
     UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
     if (PhysicsSystem)
     {
-        Vector3 ConvertedImpulse = Impulse * UNIT_TO_METER;
-        Vector3 ConvertedLocation = Location * UNIT_TO_METER;
+        Vector3 ConvertedImpulse = Impulse;
+        Vector3 ConvertedLocation = Location;
         PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, ConvertedImpulse, ConvertedLocation);
     }
 }
