@@ -132,9 +132,8 @@ void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& result
 
 
     //시간 동기화 보간
-    //ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
-
-    USceneComponent::SetWorldTransform(PhysicsResultTransform);
+    ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
+    //USceneComponent::SetWorldTransform(PhysicsResultTransform);
 
     if (!Math::IsEqual(CurrentGameTransform.Position, PhysicsResultTransform.Position))
     {
