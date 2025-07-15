@@ -8,10 +8,23 @@
 struct FCollisionDetectionResult
 {
 	bool bCollided = false;
-	Vector3 Normal = Vector3::Zero();      // 충돌 법선
-	Vector3 Point = Vector3::Zero();       // 충돌 지점
+	XMVECTOR Normal = XMVectorSet(0, 0, 0, 0);     // 충돌 법선
+	XMVECTOR Point = XMVectorSet(0, 0, 0, 0);    // 충돌 지점
 	float PenetrationDepth = 0.0f;       // 침투 깊이
 	float TimeOfImpact = 0.0f;           // 정규화된 충돌 시점 [0,1] == [이전프레임,현재프레임]
+};
+
+//충돌 형상 정보
+struct FCollisionShapeData
+{
+	ECollisionShapeType ShapeType = ECollisionShapeType::Box;
+	XMVECTOR HalfExtent = XMVectorSet(0, 0, 0, 0);
+
+	XMVECTOR CurrentWorldPosition = XMVectorZero();
+	XMVECTOR CurrentWorldRotation = XMQuaternionIdentity();
+
+	XMVECTOR PrevWorldPosition = XMVectorZero();
+	XMVECTOR PrevWorldRotation = XMQuaternionIdentity();
 };
 
 
@@ -47,8 +60,8 @@ struct FAccumulatedConstraint
 
 struct FCollisionResponseResult
 {
-	Vector3 NetImpulse = Vector3::Zero(); // 모든 물리적 효과를 통합한 최종 충격량
-	Vector3 ApplicationPoint = Vector3::Zero();
+	XMVECTOR NetImpulse = XMVectorSet(0, 0, 0, 0); // 모든 물리적 효과를 통합한 최종 충격량
+	XMVECTOR ApplicationPoint = XMVectorSet(0, 0, 0, 0);
 };
 
 // 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 델리게이트 전파
