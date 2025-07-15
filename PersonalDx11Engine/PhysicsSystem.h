@@ -37,8 +37,8 @@ private:
     };
 
     // Job 메모리 관리
-    FArenaMemoryPool JobPool;
-    TCircularQueue<FPhysicsJobRequest> JobQueue;
+    std::unique_ptr<FArenaMemoryPool> JobPool;
+    std::unique_ptr <TCircularQueue<FPhysicsJobRequest>> JobQueue;
 
 public:
     //외부 직업 요청 인터페이스
@@ -67,11 +67,11 @@ private:
 	void AcquireJob(Args&&... args)
 	{
 		FPhysicsJobRequest newJobRequest;
-		newJobRequest.Job = JobPool.Allocate<JobType>(std::forward<Args>(args)...);
+		newJobRequest.Job = JobPool->Allocate<JobType>(std::forward<Args>(args)...);
 
 		if (newJobRequest.Job != nullptr)
 		{
-			JobQueue.Push(newJobRequest);
+			JobQueue->Push(newJobRequest);
 		}
 	}
 
@@ -302,7 +302,7 @@ public:
 
 private:
     // 물리 상태 데이터 관리자
-    FPhysicsStateArrays PhysicsStateSoA;
+    std::unique_ptr<FPhysicsStateArrays> PhysicsStateSoA;
 
     // 물리 시뮬레이션 설정
     int InitialPhysicsObjectCapacity = 512; //최초 관리 객체 메모리 크기

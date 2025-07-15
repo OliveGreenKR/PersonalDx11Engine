@@ -6,9 +6,9 @@
 
 #pragma region Constructors and PhysicsObjects LifeCycle Management
 UPhysicsSystem::UPhysicsSystem()
-    : PhysicsStateSoA(128)
-	, JobPool(1 * 1024 * 1024)  //기본 1MB
-    , JobQueue(512)  // 기본 512개 큐 크기
+    : PhysicsStateSoA(std::make_unique<FPhysicsStateArrays>(128))
+	, JobPool(std::make_unique< FArenaMemoryPool>(1 * 1024 * 1024))  //기본 1MB
+    , JobQueue(std::make_unique<TCircularQueue<FPhysicsJobRequest>>(512))  // 기본 512개 큐 크기
 {
 }
 
@@ -22,8 +22,8 @@ void UPhysicsSystem::Initialize()
     try
     {
         LoadConfigFromIni();
-        PhysicsStateSoA.TryResize(InitialPhysicsObjectCapacity);
-        JobPool.Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
+        PhysicsStateSoA->TryResize(InitialPhysicsObjectCapacity);
+        JobPool->Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
     }
     catch (...)
     {
@@ -39,9 +39,9 @@ void UPhysicsSystem::Initialize()
 void UPhysicsSystem::Release()
 {
     //큐 정리
-    JobQueue.Clear();
+    JobQueue->Clear();
     //풀 정리
-    JobPool.Reset();
+    JobPool->Reset();
     
     //PhysicsStateSoA는 자동정리
 }
@@ -65,7 +65,7 @@ SoAID UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Obj
     }
 
     std::weak_ptr<IPhysicsObject> weakRef = Object;
-    SoAID newID = PhysicsStateSoA.AllocateSlot(weakRef);
+    SoAID newID = PhysicsStateSoA->AllocateSlot(weakRef);
 
     if (newID != FPhysicsStateArrays::INVALID_ID)
     {
@@ -83,7 +83,7 @@ void UPhysicsSystem::UnregisterPhysicsObject(SoAID id)
 {
     if (IsValidTargetID(id))
     {
-        PhysicsStateSoA.DeallocateSlot(id);
+        PhysicsStateSoA->DeallocateSlot(id);
         LOG_INFO("Physics Object Unregistered - ID: {}", id);
     }
     else
@@ -144,13 +144,13 @@ void UPhysicsSystem::PrepareSimulation()
     ProcessJobQueue();
 
     // 3. 비유효 객체 정리
-    PhysicsStateSoA.CleanupExpiredObjectRefs();
+    PhysicsStateSoA->CleanupExpiredObjectRefs();
 
     // 4. JobQueue 클리어
-    JobQueue.Clear();
+    JobQueue->Clear();
 
     // 5. JobPool 클리어
-    JobPool.Reset();
+    JobPool->Reset();
 }
 
 // 단일 서브스텝 시뮬레이션
@@ -205,10 +205,10 @@ void UPhysicsSystem::FinalizeSimulation()
 void UPhysicsSystem::ProcessJobQueue()
 {
     // Job Queue를 순차적으로 처리
-    while (!JobQueue.Empty())
+    while (!JobQueue->Empty())
     {
-        auto request = JobQueue.Front();
-        JobQueue.Pop();
+        auto request = JobQueue->Front();
+        JobQueue->Pop();
 
         if (request.IsValid())
         {
@@ -222,13 +222,13 @@ void UPhysicsSystem::ProcessJobQueue()
 #pragma region Inner Helper
 SoAIdx UPhysicsSystem::GetIdx(const SoAID targetID) const
 {
-    return PhysicsStateSoA.GetIndex(targetID);
+    return PhysicsStateSoA->GetIndex(targetID);
 }
 
 bool UPhysicsSystem::IsValidTargetID(const PhysicsID targetID) const
 {
     SoAID soaID = static_cast<SoAID>(targetID);
-    return PhysicsStateSoA.IsValidSlotID(soaID);
+    return PhysicsStateSoA->IsValidSlotID(soaID);
 }
 #pragma endregion
 
@@ -253,8 +253,8 @@ void UPhysicsSystem::SyncPhysicsToGame()
 void UPhysicsSystem::BatchSyncHighFrequencyData()
 {
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -263,10 +263,10 @@ void UPhysicsSystem::BatchSyncHighFrequencyData()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
                 continue;
 
-            auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock();
+            auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
             if (!physicsObject)
                 continue;
 
@@ -278,11 +278,11 @@ void UPhysicsSystem::BatchSyncHighFrequencyData()
             // Transform 데이터 동기화
             FHighFrequencyData data = physicsObject->GetHighFrequencyData();
 
-            PhysicsStateSoA.WorldPosition[i] = XMVectorSet(
+            PhysicsStateSoA->WorldPosition[i] = XMVectorSet(
                 data.Position.x, data.Position.y, data.Position.z, 1.0f);
-            PhysicsStateSoA.WorldRotationQuat[i] = XMVectorSet(
+            PhysicsStateSoA->WorldRotationQuat[i] = XMVectorSet(
                 data.Rotation.x, data.Rotation.y, data.Rotation.z, data.Rotation.w);
-            PhysicsStateSoA.WorldScale[i] = XMVectorSet(
+            PhysicsStateSoA->WorldScale[i] = XMVectorSet(
                 data.Scale.x, data.Scale.y, data.Scale.z, 1.0f);
         }
     }
@@ -291,8 +291,8 @@ void UPhysicsSystem::BatchSyncHighFrequencyData()
 void UPhysicsSystem::BatchSyncMidFrequencyData()
 {
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -301,10 +301,10 @@ void UPhysicsSystem::BatchSyncMidFrequencyData()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
                 continue;
 
-            auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock();
+            auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
             if (!physicsObject)
                 continue;
 
@@ -316,8 +316,8 @@ void UPhysicsSystem::BatchSyncMidFrequencyData()
             // Type, Mask 데이터 동기화
             FMidFrequencyData data = physicsObject->GetMidFrequencyData();
 
-            PhysicsStateSoA.PhysicsTypes[i] = data.PhysicsType;
-            PhysicsStateSoA.PhysicsMasks[i] = data.PhysicsMask;
+            PhysicsStateSoA->PhysicsTypes[i] = data.PhysicsType;
+            PhysicsStateSoA->PhysicsMasks[i] = data.PhysicsMask;
         }
     }
 }
@@ -325,8 +325,8 @@ void UPhysicsSystem::BatchSyncMidFrequencyData()
 void UPhysicsSystem::BatchSyncLowFrequencyData()
 {
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -335,10 +335,10 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
                 continue;
 
-            auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock();
+            auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
             if (!physicsObject)
                 continue;
 
@@ -350,18 +350,18 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
             // Properties 데이터 동기화
             FLowFrequencyData data = physicsObject->GetLowFrequencyData();
 
-            PhysicsStateSoA.InvMasses[i] = data.InvMass;
-            PhysicsStateSoA.FrictionKinetics[i] = data.FrictionKinetic;
-            PhysicsStateSoA.FrictionStatics[i] = data.FrictionStatic;
-            PhysicsStateSoA.Restitutions[i] = data.Restitution;
-            PhysicsStateSoA.InvRotationalInertias[i] = XMVectorSet(
+            PhysicsStateSoA->InvMasses[i] = data.InvMass;
+            PhysicsStateSoA->FrictionKinetics[i] = data.FrictionKinetic;
+            PhysicsStateSoA->FrictionStatics[i] = data.FrictionStatic;
+            PhysicsStateSoA->Restitutions[i] = data.Restitution;
+            PhysicsStateSoA->InvRotationalInertias[i] = XMVectorSet(
                 data.InvRotationalInertia.x,
                 data.InvRotationalInertia.y,
                 data.InvRotationalInertia.z,
                 0.0f);
-            PhysicsStateSoA.MaxSpeeds[i] = data.MaxSpeed;
-            PhysicsStateSoA.MaxAngularSpeeds[i] = data.MaxAngularSpeed;
-            PhysicsStateSoA.GravityScales[i] = data.GravityScale;
+            PhysicsStateSoA->MaxSpeeds[i] = data.MaxSpeed;
+            PhysicsStateSoA->MaxAngularSpeeds[i] = data.MaxAngularSpeed;
+            PhysicsStateSoA->GravityScales[i] = data.GravityScale;
         }
     }
 }
@@ -369,8 +369,8 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
 void UPhysicsSystem::BatchSyncPhysicsResults()
 {
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -379,10 +379,10 @@ void UPhysicsSystem::BatchSyncPhysicsResults()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i))
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
                 continue;
 
-            auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock();
+            auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
             if (!physicsObject)
                 continue;
 
@@ -390,11 +390,11 @@ void UPhysicsSystem::BatchSyncPhysicsResults()
             FPhysicsToGameData physicsResults;
 
             // SIMD 최적화된 데이터 읽기
-            XMVECTOR velocity = PhysicsStateSoA.Velocities[i];
-            XMVECTOR angularVelocity = PhysicsStateSoA.AngularVelocities[i];
-            XMVECTOR position = PhysicsStateSoA.WorldPosition[i];
-            XMVECTOR rotation = PhysicsStateSoA.WorldRotationQuat[i];
-            XMVECTOR scale = PhysicsStateSoA.WorldScale[i];
+            XMVECTOR velocity = PhysicsStateSoA->Velocities[i];
+            XMVECTOR angularVelocity = PhysicsStateSoA->AngularVelocities[i];
+            XMVECTOR position = PhysicsStateSoA->WorldPosition[i];
+            XMVECTOR rotation = PhysicsStateSoA->WorldRotationQuat[i];
+            XMVECTOR scale = PhysicsStateSoA->WorldScale[i];
 
             XMFLOAT3 velocityFloat, angularVelocityFloat, positionFloat, scaleFloat;
             XMFLOAT4 rotationFloat;
@@ -420,8 +420,8 @@ void UPhysicsSystem::BatchSyncPhysicsResults()
 void UPhysicsSystem::BatchClearAllDirtyFlags()
 {
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -430,10 +430,10 @@ void UPhysicsSystem::BatchClearAllDirtyFlags()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당된 슬롯만 처리 (활성화 여부 무관하게 더티 플래그 정리)
-            if (!PhysicsStateSoA.IsValidSlotIndex(i))
+            if (!PhysicsStateSoA->IsValidSlotIndex(i))
                 continue;
 
-            auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock();
+            auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
             if (!physicsObject)
                 continue;
 
@@ -460,11 +460,11 @@ float UPhysicsSystem::P_GetMass(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         return KINDA_LARGE;
     }
-    float invMass = PhysicsStateSoA.InvMasses[index];
+    float invMass = PhysicsStateSoA->InvMasses[index];
 
     // InvMass가 0이면 무한 질량 (Static)
     return (invMass > KINDA_SMALL) ? (1.0f / invMass) : KINDA_LARGE;
@@ -479,12 +479,12 @@ float UPhysicsSystem::P_GetInvMass(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         return KINDA_SMALL;
     }
 
-    return PhysicsStateSoA.InvMasses[index];
+    return PhysicsStateSoA->InvMasses[index];
 }
 
 Vector3 UPhysicsSystem::P_GetRotationalInertia(PhysicsID targetID) const
@@ -496,11 +496,11 @@ Vector3 UPhysicsSystem::P_GetRotationalInertia(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         return KINDA_LARGE * Vector3::One();
     }
-    XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+    XMVECTOR invInertia = PhysicsStateSoA->InvRotationalInertias[index];
 
     // InvRotationalInertia를 RotationalInertia로 변환
     Vector3 result;
@@ -523,11 +523,11 @@ Vector3 UPhysicsSystem::P_GetInvRotationalInertia(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         return KINDA_SMALL * Vector3::One();
     }
-    XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+    XMVECTOR invInertia = PhysicsStateSoA->InvRotationalInertias[index];
 
     Vector3 result;
     XMFLOAT3 invInertiaFloat;
@@ -549,7 +549,7 @@ float UPhysicsSystem::P_GetRestitution(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.Restitutions[index];
+    return PhysicsStateSoA->Restitutions[index];
 }
 
 float UPhysicsSystem::P_GetFrictionStatic(PhysicsID targetID) const
@@ -561,7 +561,7 @@ float UPhysicsSystem::P_GetFrictionStatic(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.FrictionStatics[index];
+    return PhysicsStateSoA->FrictionStatics[index];
 }
 
 float UPhysicsSystem::P_GetFrictionKinetic(PhysicsID targetID) const
@@ -573,7 +573,7 @@ float UPhysicsSystem::P_GetFrictionKinetic(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.FrictionKinetics[index];
+    return PhysicsStateSoA->FrictionKinetics[index];
 }
 
 float UPhysicsSystem::P_GetGravityScale(PhysicsID targetID) const
@@ -585,7 +585,7 @@ float UPhysicsSystem::P_GetGravityScale(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.GravityScales[index];
+    return PhysicsStateSoA->GravityScales[index];
 }
 
 float UPhysicsSystem::P_GetMaxSpeed(PhysicsID targetID) const
@@ -597,7 +597,7 @@ float UPhysicsSystem::P_GetMaxSpeed(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.MaxSpeeds[index];
+    return PhysicsStateSoA->MaxSpeeds[index];
 }
 
 float UPhysicsSystem::P_GetMaxAngularSpeed(PhysicsID targetID) const
@@ -609,7 +609,7 @@ float UPhysicsSystem::P_GetMaxAngularSpeed(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.MaxAngularSpeeds[index];
+    return PhysicsStateSoA->MaxAngularSpeeds[index];
 }
 
 // === 운동 상태 접근자 ===
@@ -623,7 +623,7 @@ Vector3 UPhysicsSystem::P_GetVelocity(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR velocity = PhysicsStateSoA.Velocities[index];
+    XMVECTOR velocity = PhysicsStateSoA->Velocities[index];
 
     Vector3 result;
     XMFLOAT3 velocityFloat;
@@ -645,7 +645,7 @@ Vector3 UPhysicsSystem::P_GetAngularVelocity(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR angularVelocity = PhysicsStateSoA.AngularVelocities[index];
+    XMVECTOR angularVelocity = PhysicsStateSoA->AngularVelocities[index];
 
     Vector3 result;
     XMFLOAT3 angularVelocityFloat;
@@ -667,7 +667,7 @@ Vector3 UPhysicsSystem::P_GetAccumulatedForce(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR force = PhysicsStateSoA.AccumulatedForces[index];
+    XMVECTOR force = PhysicsStateSoA->AccumulatedForces[index];
 
     Vector3 result;
     XMFLOAT3 forceFloat;
@@ -689,7 +689,7 @@ Vector3 UPhysicsSystem::P_GetAccumulatedTorque(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR torque = PhysicsStateSoA.AccumulatedTorques[index];
+    XMVECTOR torque = PhysicsStateSoA->AccumulatedTorques[index];
 
     Vector3 result;
     XMFLOAT3 torqueFloat;
@@ -717,19 +717,19 @@ FTransform UPhysicsSystem::P_GetWorldTransform(PhysicsID targetID) const
     FTransform result;
 
     // Position
-    XMVECTOR position = PhysicsStateSoA.WorldPosition[index];
+    XMVECTOR position = PhysicsStateSoA->WorldPosition[index];
     XMFLOAT3 positionFloat;
     XMStoreFloat3(&positionFloat, position);
     result.Position = Vector3(positionFloat.x, positionFloat.y, positionFloat.z);
 
     // Rotation
-    XMVECTOR rotation = PhysicsStateSoA.WorldRotationQuat[index];
+    XMVECTOR rotation = PhysicsStateSoA->WorldRotationQuat[index];
     XMFLOAT4 rotationFloat;
     XMStoreFloat4(&rotationFloat, rotation);
     result.Rotation = Quaternion(rotationFloat.x, rotationFloat.y, rotationFloat.z, rotationFloat.w);
 
     // Scale
-    XMVECTOR scale = PhysicsStateSoA.WorldScale[index];
+    XMVECTOR scale = PhysicsStateSoA->WorldScale[index];
     XMFLOAT3 scaleFloat;
     XMStoreFloat3(&scaleFloat, scale);
     result.Scale = Vector3(scaleFloat.x, scaleFloat.y, scaleFloat.z);
@@ -746,7 +746,7 @@ Vector3 UPhysicsSystem::P_GetWorldPosition(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR position = PhysicsStateSoA.WorldPosition[index];
+    XMVECTOR position = PhysicsStateSoA->WorldPosition[index];
 
     Vector3 result;
     XMFLOAT3 positionFloat;
@@ -768,7 +768,7 @@ Quaternion UPhysicsSystem::P_GetWorldRotation(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR rotation = PhysicsStateSoA.WorldRotationQuat[index];
+    XMVECTOR rotation = PhysicsStateSoA->WorldRotationQuat[index];
 
     XMFLOAT4 rotationFloat;
     XMStoreFloat4(&rotationFloat, rotation);
@@ -785,7 +785,7 @@ Vector3 UPhysicsSystem::P_GetWorldScale(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    XMVECTOR scale = PhysicsStateSoA.WorldScale[index];
+    XMVECTOR scale = PhysicsStateSoA->WorldScale[index];
 
     Vector3 result;
     XMFLOAT3 scaleFloat;
@@ -809,7 +809,7 @@ EPhysicsType UPhysicsSystem::P_GetPhysicsType(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.PhysicsTypes[index];
+    return PhysicsStateSoA->PhysicsTypes[index];
 }
 
 FPhysicsMask UPhysicsSystem::P_GetPhysicsMask(PhysicsID targetID) const
@@ -821,7 +821,7 @@ FPhysicsMask UPhysicsSystem::P_GetPhysicsMask(PhysicsID targetID) const
     }
 
     SoAIdx index = GetIdx(targetID);
-    return PhysicsStateSoA.PhysicsMasks[index];
+    return PhysicsStateSoA->PhysicsMasks[index];
 }
 
 // === 활성화 제어 접근자 ===
@@ -853,7 +853,7 @@ void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const Vector3& velocity)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_SetVelocity blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -868,7 +868,7 @@ void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const Vector3& velocity)
         return;
     }
 
-    PhysicsStateSoA.Velocities[index] = velocityVec;
+    PhysicsStateSoA->Velocities[index] = velocityVec;
 }
 
 void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const Vector3& deltaVelocity)
@@ -883,14 +883,14 @@ void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const Vector3& deltaVeloc
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_AddVelocity blocked: PhysicsID %u is Static type", targetID);
         return;
     }
 
     XMVECTOR deltaVec = XMVectorSet(deltaVelocity.x, deltaVelocity.y, deltaVelocity.z, 0.0f);
-    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[index];
+    XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[index];
     XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVec);
 
     // 유효성 검사
@@ -900,7 +900,7 @@ void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const Vector3& deltaVeloc
         return;
     }
 
-    PhysicsStateSoA.Velocities[index] = newVelocity;
+    PhysicsStateSoA->Velocities[index] = newVelocity;
 }
 
 void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const Vector3& angularVelocity)
@@ -915,7 +915,7 @@ void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const Vector3& ang
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_SetAngularVelocity blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -929,7 +929,7 @@ void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const Vector3& ang
         return;
     }
 
-    PhysicsStateSoA.AngularVelocities[index] = angularVelVec;
+    PhysicsStateSoA->AngularVelocities[index] = angularVelVec;
 }
 
 void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& deltaAngularVelocity)
@@ -944,14 +944,14 @@ void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& del
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_AddAngularVelocity blocked: PhysicsID %u is Static type", targetID);
         return;
     }
 
     XMVECTOR deltaVec = XMVectorSet(deltaAngularVelocity.x, deltaAngularVelocity.y, deltaAngularVelocity.z, 0.0f);
-    XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[index];
+    XMVECTOR currentAngularVel = PhysicsStateSoA->AngularVelocities[index];
     XMVECTOR newAngularVel = XMVectorAdd(currentAngularVel, deltaVec);
 
     if (!IsValidAngularVelocity(newAngularVel))
@@ -960,7 +960,7 @@ void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const Vector3& del
         return;
     }
 
-    PhysicsStateSoA.AngularVelocities[index] = newAngularVel;
+    PhysicsStateSoA->AngularVelocities[index] = newAngularVel;
 }
 
 // === 트랜스폼 설정자 (Static 타입 보호) ===
@@ -977,14 +977,14 @@ void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, const Vector3& posit
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_SetWorldPosition blocked: PhysicsID %u is Static type", targetID);
         return;
     }
 
     XMVECTOR positionVec = XMVectorSet(position.x, position.y, position.z, 1.0f);
-    PhysicsStateSoA.WorldPosition[index] = positionVec;
+    PhysicsStateSoA->WorldPosition[index] = positionVec;
 }
 
 void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, const Quaternion& rotation)
@@ -999,7 +999,7 @@ void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, const Quaternion& ro
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_SetWorldRotation blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -1009,7 +1009,7 @@ void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, const Quaternion& ro
     // 쿼터니언 정규화
     rotationVec = XMQuaternionNormalize(rotationVec);
 
-    PhysicsStateSoA.WorldRotationQuat[index] = rotationVec;
+    PhysicsStateSoA->WorldRotationQuat[index] = rotationVec;
 }
 
 void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
@@ -1024,7 +1024,7 @@ void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_SetWorldScale blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -1037,7 +1037,7 @@ void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, const Vector3& scale)
     if (validScale.z <= KINDA_SMALL) validScale.z = KINDA_SMALL;
 
     XMVECTOR scaleVec = XMVectorSet(validScale.x, validScale.y, validScale.z, 1.0f);
-    PhysicsStateSoA.WorldScale[index] = scaleVec;
+    PhysicsStateSoA->WorldScale[index] = scaleVec;
 }
 
 // === 힘/충격 적용 (Static 타입 보호) ===
@@ -1054,7 +1054,7 @@ void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, const Vector3& force, cons
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_ApplyForce blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -1072,8 +1072,8 @@ void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, const Vector3& force, cons
     Vector3 radius = location - centerOfMass;
 
     // 힘을 누적 힘에 추가
-    XMVECTOR currentForce = PhysicsStateSoA.AccumulatedForces[index];
-    PhysicsStateSoA.AccumulatedForces[index] = XMVectorAdd(currentForce, forceVec);
+    XMVECTOR currentForce = PhysicsStateSoA->AccumulatedForces[index];
+    PhysicsStateSoA->AccumulatedForces[index] = XMVectorAdd(currentForce, forceVec);
 
     // 토크 계산 및 추가 (radius × force)
     XMVECTOR radiusVec = XMVectorSet(radius.x, radius.y, radius.z, 0.0f);
@@ -1081,8 +1081,8 @@ void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, const Vector3& force, cons
 
     if (IsValidTorque(torqueVec))
     {
-        XMVECTOR currentTorque = PhysicsStateSoA.AccumulatedTorques[index];
-        PhysicsStateSoA.AccumulatedTorques[index] = XMVectorAdd(currentTorque, torqueVec);
+        XMVECTOR currentTorque = PhysicsStateSoA->AccumulatedTorques[index];
+        PhysicsStateSoA->AccumulatedTorques[index] = XMVectorAdd(currentTorque, torqueVec);
     }
 }
 
@@ -1098,7 +1098,7 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, 
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    if (PhysicsStateSoA.PhysicsTypes[index] == EPhysicsType::Static)
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
     {
         LOG_WARNING("P_ApplyImpulse blocked: PhysicsID %u is Static type", targetID);
         return;
@@ -1112,15 +1112,15 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, 
     }
 
     // 선형 충격 적용
-    float invMass = PhysicsStateSoA.InvMasses[index];
+    float invMass = PhysicsStateSoA->InvMasses[index];
     XMVECTOR deltaVelocity = XMVectorScale(impulseVec, invMass);
 
-    XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[index];
+    XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[index];
     XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
 
     if (IsValidLinearVelocity(newVelocity))
     {
-        PhysicsStateSoA.Velocities[index] = newVelocity;
+        PhysicsStateSoA->Velocities[index] = newVelocity;
     }
 
     // 각속도 충격 적용
@@ -1132,15 +1132,15 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, 
 
     if (IsValidTorque(angularImpulse))
     {
-        XMVECTOR invInertia = PhysicsStateSoA.InvRotationalInertias[index];
+        XMVECTOR invInertia = PhysicsStateSoA->InvRotationalInertias[index];
         XMVECTOR deltaAngularVel = XMVectorMultiply(angularImpulse, invInertia);
 
-        XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[index];
+        XMVECTOR currentAngularVel = PhysicsStateSoA->AngularVelocities[index];
         XMVECTOR newAngularVel = XMVectorAdd(currentAngularVel, deltaAngularVel);
 
         if (IsValidAngularVelocity(newAngularVel))
         {
-            PhysicsStateSoA.AngularVelocities[index] = newAngularVel;
+            PhysicsStateSoA->AngularVelocities[index] = newAngularVel;
         }
     }
 }
@@ -1165,7 +1165,7 @@ void UPhysicsSystem::P_SetMass(PhysicsID targetID, float mass)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.InvMasses[index] = 1.0f / mass;
+    PhysicsStateSoA->InvMasses[index] = 1.0f / mass;
 }
 
 void UPhysicsSystem::P_SetInvMass(PhysicsID targetID, float invMass)
@@ -1185,7 +1185,7 @@ void UPhysicsSystem::P_SetInvMass(PhysicsID targetID, float invMass)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.InvMasses[index] = invMass;
+    PhysicsStateSoA->InvMasses[index] = invMass;
 }
 
 void UPhysicsSystem::P_SetRotationalInertia(PhysicsID targetID, const Vector3& rotationalInertia)
@@ -1206,7 +1206,7 @@ void UPhysicsSystem::P_SetRotationalInertia(PhysicsID targetID, const Vector3& r
     invInertia.z = (rotationalInertia.z > KINDA_SMALL) ? (1.0f / rotationalInertia.z) : 0.0f;
 
     XMVECTOR invInertiaVec = XMVectorSet(invInertia.x, invInertia.y, invInertia.z, 0.0f);
-    PhysicsStateSoA.InvRotationalInertias[index] = invInertiaVec;
+    PhysicsStateSoA->InvRotationalInertias[index] = invInertiaVec;
 }
 
 void UPhysicsSystem::P_SetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia)
@@ -1221,7 +1221,7 @@ void UPhysicsSystem::P_SetInvRotationalInertia(PhysicsID targetID, const Vector3
     SoAIdx index = GetIdx(soaID);
 
     XMVECTOR invInertiaVec = XMVectorSet(invRotationalInertia.x, invRotationalInertia.y, invRotationalInertia.z, 0.0f);
-    PhysicsStateSoA.InvRotationalInertias[index] = invInertiaVec;
+    PhysicsStateSoA->InvRotationalInertias[index] = invInertiaVec;
 }
 
 void UPhysicsSystem::P_SetRestitution(PhysicsID targetID, float restitution)
@@ -1238,7 +1238,7 @@ void UPhysicsSystem::P_SetRestitution(PhysicsID targetID, float restitution)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.Restitutions[index] = clampedRestitution;
+    PhysicsStateSoA->Restitutions[index] = clampedRestitution;
 }
 
 void UPhysicsSystem::P_SetFrictionStatic(PhysicsID targetID, float frictionStatic)
@@ -1254,7 +1254,7 @@ void UPhysicsSystem::P_SetFrictionStatic(PhysicsID targetID, float frictionStati
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.FrictionStatics[index] = clampedFriction;
+    PhysicsStateSoA->FrictionStatics[index] = clampedFriction;
 }
 
 void UPhysicsSystem::P_SetFrictionKinetic(PhysicsID targetID, float frictionKinetic)
@@ -1270,7 +1270,7 @@ void UPhysicsSystem::P_SetFrictionKinetic(PhysicsID targetID, float frictionKine
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.FrictionKinetics[index] = clampedFriction;
+    PhysicsStateSoA->FrictionKinetics[index] = clampedFriction;
 }
 
 void UPhysicsSystem::P_SetGravityScale(PhysicsID targetID, float gravityScale)
@@ -1284,7 +1284,7 @@ void UPhysicsSystem::P_SetGravityScale(PhysicsID targetID, float gravityScale)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.GravityScales[index] = gravityScale;
+    PhysicsStateSoA->GravityScales[index] = gravityScale;
 }
 
 void UPhysicsSystem::P_SetMaxSpeed(PhysicsID targetID, float maxSpeed)
@@ -1298,7 +1298,7 @@ void UPhysicsSystem::P_SetMaxSpeed(PhysicsID targetID, float maxSpeed)
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.MaxSpeeds[index] = maxSpeed;
+    PhysicsStateSoA->MaxSpeeds[index] = maxSpeed;
 }
 
 void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed)
@@ -1312,7 +1312,7 @@ void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSp
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.MaxAngularSpeeds[index] = maxAngularSpeed;
+    PhysicsStateSoA->MaxAngularSpeeds[index] = maxAngularSpeed;
 }
 
 // === 상태 타입 및 마스크 설정자 ===
@@ -1328,7 +1328,7 @@ void UPhysicsSystem::P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsTy
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.PhysicsTypes[index] = physicsType;
+    PhysicsStateSoA->PhysicsTypes[index] = physicsType;
 }
 
 void UPhysicsSystem::P_SetPhysicsMask(PhysicsID targetID, const FPhysicsMask& physicsMask)
@@ -1342,7 +1342,7 @@ void UPhysicsSystem::P_SetPhysicsMask(PhysicsID targetID, const FPhysicsMask& ph
     SoAID soaID = static_cast<SoAID>(targetID);
     SoAIdx index = GetIdx(soaID);
 
-    PhysicsStateSoA.PhysicsMasks[index] = physicsMask;
+    PhysicsStateSoA->PhysicsMasks[index] = physicsMask;
 }
 
 // === 활성화 제어 설정자 ===
@@ -1382,7 +1382,7 @@ ECollisionShapeType UPhysicsSystem::P_GetShapeType(PhysicsID id) const
     }
 
     SoAIdx index = GetIdx(id);
-    return PhysicsStateSoA.CollisionShapeTypes[index];
+    return PhysicsStateSoA->CollisionShapeTypes[index];
 }
 
 void UPhysicsSystem::P_SetShapeType(PhysicsID id, ECollisionShapeType type)
@@ -1393,7 +1393,7 @@ void UPhysicsSystem::P_SetShapeType(PhysicsID id, ECollisionShapeType type)
     }
 
     SoAIdx index = GetIdx(id);
-    PhysicsStateSoA.CollisionShapeTypes[index] = type;
+    PhysicsStateSoA->CollisionShapeTypes[index] = type;
 }
 
 Vector3 UPhysicsSystem::P_GetShapeHalfExtent(PhysicsID id) const
@@ -1405,7 +1405,7 @@ Vector3 UPhysicsSystem::P_GetShapeHalfExtent(PhysicsID id) const
 
     SoAIdx index = GetIdx(id);
     Vector3 result;
-    XMStoreFloat3(&result, PhysicsStateSoA.CollisionHalfExtents[index]);
+    XMStoreFloat3(&result, PhysicsStateSoA->CollisionHalfExtents[index]);
     return result;
 }
 
@@ -1417,7 +1417,7 @@ void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, const Vector3& extent)
     }
 
     SoAIdx index = GetIdx(id);
-    PhysicsStateSoA.CollisionHalfExtents[index] = XMLoadFloat3(&extent);
+    PhysicsStateSoA->CollisionHalfExtents[index] = XMLoadFloat3(&extent);
 }
 
 FTransform UPhysicsSystem::P_GetShapeLocalTransform(PhysicsID id) const
@@ -1430,8 +1430,8 @@ FTransform UPhysicsSystem::P_GetShapeLocalTransform(PhysicsID id) const
     SoAIdx index = GetIdx(id);
 
     FTransform result;
-    XMStoreFloat3(&result.Position, PhysicsStateSoA.CollisionLocalPosition[index]);
-    XMStoreFloat4(&result.Rotation, PhysicsStateSoA.CollisionLocalRotation[index]);
+    XMStoreFloat3(&result.Position, PhysicsStateSoA->CollisionLocalPosition[index]);
+    XMStoreFloat4(&result.Rotation, PhysicsStateSoA->CollisionLocalRotation[index]);
     result.Scale = Vector3::One(); // 스케일은 HalfExtent에서 처리
 
     return result;
@@ -1445,8 +1445,8 @@ void UPhysicsSystem::P_SetShapeLocalTransform(PhysicsID id, const FTransform& tr
     }
 
     SoAIdx index = GetIdx(id);
-    PhysicsStateSoA.CollisionLocalPosition[index] = XMLoadFloat3(&transform.Position);
-    PhysicsStateSoA.CollisionLocalRotation[index] = XMLoadFloat4(&transform.Rotation);
+    PhysicsStateSoA->CollisionLocalPosition[index] = XMLoadFloat3(&transform.Position);
+    PhysicsStateSoA->CollisionLocalRotation[index] = XMLoadFloat4(&transform.Rotation);
 }
 
 #pragma endregion
@@ -1467,8 +1467,8 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
     // 올바른 계산: gravity(가속도) * deltaTime = 속도 변화량
     XMVECTOR gravityVelocityDelta = XMVectorMultiply(gravityVec, deltaTimeVec);
 
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -1476,29 +1476,29 @@ void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // 중력 적용 조건 확인
-            if (PhysicsStateSoA.PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
-                PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
+            if (PhysicsStateSoA->PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
+                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
             {
-                float invMass = PhysicsStateSoA.InvMasses[i];
+                float invMass = PhysicsStateSoA->InvMasses[i];
                 if (invMass <= KINDA_SMALL)  // Static 객체는 무한 질량
                     continue;
 
                 // 중력 스케일 적용
-                float gravityScale = PhysicsStateSoA.GravityScales[i];
+                float gravityScale = PhysicsStateSoA->GravityScales[i];
                 XMVECTOR scaledGravityDelta = XMVectorScale(gravityVelocityDelta, gravityScale);
 
                 // 직접 속도에 변화량 적용 (질량은 이미 중력에 반영되어 있음)
                 // 실제 물리에서는 모든 객체가 같은 중력 가속도를 받음
-                XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
                 XMVECTOR newVelocity = XMVectorAdd(currentVelocity, scaledGravityDelta);
 
                 if (IsValidLinearVelocity(newVelocity))
                 {
-                    PhysicsStateSoA.Velocities[i] = newVelocity;
+                    PhysicsStateSoA->Velocities[i] = newVelocity;
                 }
             }
         }
@@ -1513,8 +1513,8 @@ void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
     XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
 
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -1523,41 +1523,41 @@ void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // 선형 속도 적분 + 속도 제한 (Position += Velocity * deltaTime)
-            XMVECTOR velocity = PhysicsStateSoA.Velocities[i];
+            XMVECTOR velocity = PhysicsStateSoA->Velocities[i];
             if (IsValidLinearVelocity(velocity))
             {
                 // 속도 제한 적용 (적분 전에)
-                float maxSpeed = PhysicsStateSoA.MaxSpeeds[i];
+                float maxSpeed = PhysicsStateSoA->MaxSpeeds[i];
                 if (maxSpeed > -KINDA_SMALL)  // 0.0 포함
                 {
                     ClampLinearVelocity(maxSpeed, velocity);
-                    PhysicsStateSoA.Velocities[i] = velocity;  // 제한된 속도 저장
+                    PhysicsStateSoA->Velocities[i] = velocity;  // 제한된 속도 저장
                 }
 
-                XMVECTOR currentPosition = PhysicsStateSoA.WorldPosition[i];
+                XMVECTOR currentPosition = PhysicsStateSoA->WorldPosition[i];
                 XMVECTOR deltaPosition = XMVectorMultiply(velocity, deltaTimeVec);
                 XMVECTOR newPosition = XMVectorAdd(currentPosition, deltaPosition);
 
-                PhysicsStateSoA.WorldPosition[i] = newPosition;
+                PhysicsStateSoA->WorldPosition[i] = newPosition;
             }
 
             // 각속도 적분 + 각속도 제한 (Rotation += AngularVelocity * deltaTime)
-            XMVECTOR angularVelocity = PhysicsStateSoA.AngularVelocities[i];
+            XMVECTOR angularVelocity = PhysicsStateSoA->AngularVelocities[i];
             if (IsValidAngularVelocity(angularVelocity))
             {
                 // 각속도 제한 적용 (적분 전에)
-                float maxAngularSpeed = PhysicsStateSoA.MaxAngularSpeeds[i];
+                float maxAngularSpeed = PhysicsStateSoA->MaxAngularSpeeds[i];
                 if (maxAngularSpeed > 0.0f)  // 음수는 무제한
                 {
                     ClampAngularVelocity(maxAngularSpeed, angularVelocity);
-                    PhysicsStateSoA.AngularVelocities[i] = angularVelocity;  // 제한된 각속도 저장
+                    PhysicsStateSoA->AngularVelocities[i] = angularVelocity;  // 제한된 각속도 저장
                 }
 
-                XMVECTOR currentRotation = PhysicsStateSoA.WorldRotationQuat[i];
+                XMVECTOR currentRotation = PhysicsStateSoA->WorldRotationQuat[i];
 
                 // 각속도를 쿼터니언 회전으로 변환
                 XMVECTOR angularDisplacement = XMVectorMultiply(angularVelocity, deltaTimeVec);
@@ -1579,7 +1579,7 @@ void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
                     XMVECTOR newRotation = XMQuaternionMultiply(currentRotation, deltaRotation);
                     newRotation = XMQuaternionNormalize(newRotation);
 
-                    PhysicsStateSoA.WorldRotationQuat[i] = newRotation;
+                    PhysicsStateSoA->WorldRotationQuat[i] = newRotation;
                 }
             }
         }
@@ -1591,8 +1591,8 @@ void UPhysicsSystem::BatchResetForces()
     XMVECTOR zeroVector = XMVectorZero();
 
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -1601,11 +1601,11 @@ void UPhysicsSystem::BatchResetForces()
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당된 슬롯만 처리 (활성화 여부 무관하게 힘 초기화)
-            if (!PhysicsStateSoA.IsValidSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
-            PhysicsStateSoA.AccumulatedForces[i] = zeroVector;
-            PhysicsStateSoA.AccumulatedTorques[i] = zeroVector;
+            PhysicsStateSoA->AccumulatedForces[i] = zeroVector;
+            PhysicsStateSoA->AccumulatedTorques[i] = zeroVector;
         }
     }
 }
@@ -1615,8 +1615,8 @@ void UPhysicsSystem::BatchApplyForces(float deltaTime)
     if (deltaTime <= KINDA_SMALL)
         return;
 
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
     XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
@@ -1626,51 +1626,51 @@ void UPhysicsSystem::BatchApplyForces(float deltaTime)
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 유효성 및 시뮬레이션 대상 검증
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) ||
-                PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) ||
+                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
-            float currentInvMass = PhysicsStateSoA.InvMasses[i];
+            float currentInvMass = PhysicsStateSoA->InvMasses[i];
             if (currentInvMass <= KINDA_SMALL)  // 무한 질량 객체 제외
                 continue;
 
 
             // 선형 가속도
-            XMVECTOR currentForce = PhysicsStateSoA.AccumulatedForces[i];
+            XMVECTOR currentForce = PhysicsStateSoA->AccumulatedForces[i];
             XMVECTOR currentInvMassVec = XMVectorReplicate(currentInvMass);
             XMVECTOR currentLinearAcceleration = XMVectorMultiply(currentForce, currentInvMassVec);
             
             // 가속도 적분
             XMVECTOR deltaVelocity = XMVectorMultiply(currentLinearAcceleration, deltaTimeVec);
-            XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+            XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
             XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
 
             // 안전성 검증 후 적용
             if (IsValidLinearVelocity(newVelocity))
             {
-                PhysicsStateSoA.Velocities[i] = newVelocity;
+                PhysicsStateSoA->Velocities[i] = newVelocity;
             }
 
             // 토크 각가속도
-            XMVECTOR currentTorque = PhysicsStateSoA.AccumulatedTorques[i];
-            XMVECTOR currentInvRotationalInertia = PhysicsStateSoA.InvRotationalInertias[i];
+            XMVECTOR currentTorque = PhysicsStateSoA->AccumulatedTorques[i];
+            XMVECTOR currentInvRotationalInertia = PhysicsStateSoA->InvRotationalInertias[i];
             XMVECTOR currentAngularAcceleration = XMVectorMultiply(currentTorque, currentInvRotationalInertia);
 
             // 각속도 전환
             XMVECTOR deltaAngularVelocity = XMVectorMultiply(currentAngularAcceleration, deltaTimeVec);
-            XMVECTOR currentAngularVelocity = PhysicsStateSoA.AngularVelocities[i];
+            XMVECTOR currentAngularVelocity = PhysicsStateSoA->AngularVelocities[i];
             XMVECTOR newAngularVelocity = XMVectorAdd(currentAngularVelocity, deltaAngularVelocity);
 
             // 안전성 검증 후 적용
             if (IsValidAngularVelocity(newAngularVelocity))
             {
-                PhysicsStateSoA.AngularVelocities[i] = newAngularVelocity;
+                PhysicsStateSoA->AngularVelocities[i] = newAngularVelocity;
             }
 
 
             // 힘과 토크 누적 초기화 (다음 프레임을 위한 준비)
-            PhysicsStateSoA.AccumulatedForces[i] = XMVectorZero();
-            PhysicsStateSoA.AccumulatedTorques[i] = XMVectorZero();
+            PhysicsStateSoA->AccumulatedForces[i] = XMVectorZero();
+            PhysicsStateSoA->AccumulatedTorques[i] = XMVectorZero();
         }
     }
 }
@@ -1692,8 +1692,8 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
     XMVECTOR linearDragVec = XMVectorReplicate(linearDragFactor);
     XMVECTOR angularDragVec = XMVectorReplicate(angularDragFactor);
 
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -1701,43 +1701,43 @@ void UPhysicsSystem::BatchApplyDrag(float deltaTime)
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // Dynamic 타입만 드래그 적용
-            if (PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Dynamic)
+            if (PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
             {
                 // 선형 속도 드래그 적용
-                XMVECTOR currentVelocity = PhysicsStateSoA.Velocities[i];
+                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
                 if (IsValidLinearVelocity(currentVelocity))
                 {
                     // 속도가 매우 작으면 완전히 정지시켜 진동 방지
                     float velocityMagnitude = XMVector3Length(currentVelocity).m128_f32[0];
                     if (velocityMagnitude < 0.01f )  
                     {
-                        PhysicsStateSoA.Velocities[i] = XMVectorZero();
+                        PhysicsStateSoA->Velocities[i] = XMVectorZero();
                     }
                     else
                     {
                         XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
-                        PhysicsStateSoA.Velocities[i] = newVelocity;
+                        PhysicsStateSoA->Velocities[i] = newVelocity;
                     }
                 }
 
                 // 각속도 드래그 적용
-                XMVECTOR currentAngularVel = PhysicsStateSoA.AngularVelocities[i];
+                XMVECTOR currentAngularVel = PhysicsStateSoA->AngularVelocities[i];
                 if (IsValidAngularVelocity(currentAngularVel))
                 {
                     // 각속도가 매우 작으면 완전히 정지시켜 진동 방지
                     float angularMagnitude = XMVector3Length(currentAngularVel).m128_f32[0];
                     if (angularMagnitude < 0.1f)  // 약 5.7도/초 이하면 정지
                     {
-                        PhysicsStateSoA.AngularVelocities[i] = XMVectorZero();
+                        PhysicsStateSoA->AngularVelocities[i] = XMVectorZero();
                     }
                     else
                     {
                         XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
-                        PhysicsStateSoA.AngularVelocities[i] = newAngularVel;
+                        PhysicsStateSoA->AngularVelocities[i] = newAngularVel;
                     }
                 }
             }
@@ -1751,8 +1751,8 @@ void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
         return;
 
     // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA.GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA.GetEndIdx();
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
 
     for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
     {
@@ -1761,13 +1761,13 @@ void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
             // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA.IsValidActiveSlotIndex(i) || PhysicsStateSoA.PhysicsTypes[i] == EPhysicsType::Static)
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
                 continue;
 
             // ObjectReferences를 통한 IPhysicsObject::TickPhysics 호출
-            if (i < PhysicsStateSoA.ObjectReferences.size())
+            if (i < PhysicsStateSoA->ObjectReferences.size())
             {
-                if (auto physicsObject = PhysicsStateSoA.ObjectReferences[i].lock())
+                if (auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock())
                 {
                     physicsObject->TickPhysics(deltaTime);
                 }
@@ -1885,7 +1885,7 @@ void UPhysicsSystem::ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InO
 void UPhysicsSystem::PrintDebugInfo()
 {
 #ifdef _DEBUG
-    LOG_NORMAL("Current Active PhysicsObejct : [%03d]", PhysicsStateSoA.GetActiveObjectCount());
+    LOG_NORMAL("Current Active PhysicsObejct : [%03d]", PhysicsStateSoA->GetActiveObjectCount());
 #endif
 }
 #pragma endregion
