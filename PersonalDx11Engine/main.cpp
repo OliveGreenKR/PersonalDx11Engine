@@ -28,7 +28,6 @@
 #include "SceneManager.h"
 #include "GameplayScene01.h"
 #include "GameplayScene02.h"
-#include "TestScene01.h"
 
 #include "ResourceManager.h"
 #include "UIManager.h"
@@ -206,9 +205,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto GameplayScene02 = make_shared<UGameplayScene02>();
 	USceneManager::Get()->RegisterScene(GameplayScene02);
 
-	auto TestScene01 = make_shared<UTestScene01>();
-	USceneManager::Get()->RegisterScene(TestScene01);
-
 	//Defualt Scene Load
 	if (!USceneManager::Get()->ChangeScene(INIT_SCENE_INDEX))
 	{
@@ -329,7 +325,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		Renderer->ProcessRender();
 
 #pragma region SystemUI
-		UUIManager::Get()->RegisterUIElement([DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer, &TestScene01]() {
+		UUIManager::Get()->RegisterUIElement([DeltaTime, &GameplayScene01, &GameplayScene02, &Renderer]() {
 			ImGui::SetNextWindowSize(ImVec2(400, 100));
 			ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH - 410, 0));
 			ImGui::Begin("SystemUI", nullptr,
@@ -346,11 +342,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (ImGui::Button("Scene02"))
 			{
 				USceneManager::Get()->ChangeScene(GameplayScene02->GetName());
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Test01"))
-			{
-				USceneManager::Get()->ChangeScene(TestScene01->GetName());
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("CollisionTree")) {

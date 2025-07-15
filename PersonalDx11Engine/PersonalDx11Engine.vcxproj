@@ -147,7 +147,6 @@
     <ClCompile Include="Contents\GameObject\ElasticBody.cpp" />
     <ClCompile Include="Contents\Scenes\GameplayScene01.cpp" />
     <ClCompile Include="Contents\Scenes\GameplayScene02.cpp" />
-    <ClCompile Include="Contents\Scenes\TestScene01.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D3DContextDebugger.cpp" />
     <ClCompile Include="D3DShader.cpp" />
@@ -207,7 +206,6 @@
     <ClInclude Include="Contents\GameObject\ElasticBody.h" />
     <ClInclude Include="Contents\Scenes\GameplayScene01.h" />
     <ClInclude Include="Contents\Scenes\GameplayScene02.h" />
-    <ClInclude Include="Contents\Scenes\TestScene01.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D3DContextDebugger.h" />
     <ClInclude Include="D3DShader.h" />
