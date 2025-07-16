@@ -19,12 +19,12 @@ void FCollisionDetector::LoadConfigFromIni()
         return;
     }
 
-    configManager->GetValue("CCDTimeStep", CCDTimeStep);
+    //configManager->GetValue("CCDTimeStep", CCDTimeStep);
     configManager->GetValue("MaxCCDIterations", MaxCCDIterations);
     configManager->GetValue("DistanceThreshold", DistanceThreshold);
 
     LOG_INFO("SIMD CollisionDetector configuration loaded:");
-    LOG_INFO("- CCD Time Step: %.4f", CCDTimeStep);
+    //LOG_INFO("- CCD Time Step: %.4f", CCDTimeStep);
     LOG_INFO("- Max CCD Iterations: %d", MaxCCDIterations);
     LOG_INFO("- Distance Threshold: %.6f", DistanceThreshold);
 }

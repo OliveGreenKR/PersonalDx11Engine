@@ -6,7 +6,6 @@ using namespace DirectX;
 
 /// <summary>
 /// SIMD 최적화 충돌 위치 보정 계산 시스템
-/// 순수 계산 함수로 구성된 정적 클래스
 /// 외부 시스템 의존성 없이 독립적 동작
 /// </summary>
 class FCollisionPositionCorrectionCalculator
@@ -25,7 +24,7 @@ public:
     /// <param name="outCorrectionA">[출력] 객체 A 보정 벡터</param>
     /// <param name="outCorrectionB">[출력] 객체 B 보정 벡터</param>
     /// <returns>계산 성공 여부</returns>
-    static bool CalculateMassProportionalSeparation(
+    bool CalculateMassProportionalSeparation(
         float invMassA,
         float invMassB,
         float penetrationDepth,

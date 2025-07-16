@@ -22,7 +22,7 @@ private:
     void LoadConfigFromIni();
 
     // 설정값
-    float CCDTimeStep = 0.02f;         // CCD 시간 스텝
+    //float CCDTimeStep = 0.02f;         // CCD 시간 스텝
     int MaxCCDIterations = 10;         // CCD 최대 반복 횟수
     float DistanceThreshold = 0.001f;  // 접촉 간주 거리 임계값
 
