@@ -458,3 +458,111 @@ FCollisionDetectionResult FCollisionDetector::BoxSphereSimple(
 }
 
 #pragma endregion
+
+#pragma region SIMD Utility Methods
+
+FMAABB FCollisionDetector::CalculateSweptAABB(const FCollisionShapeData& shapeData) const
+{
+    // 이전 위치와 현재 위치에서의 AABB를 계산하고 합치기
+    FMAABB prevAABB = CalculateWorldAABB(shapeData, shapeData.PrevWorldPosition, shapeData.PrevWorldRotation);
+    FMAABB currentAABB = CalculateWorldAABB(shapeData, shapeData.CurrentWorldPosition, shapeData.CurrentWorldRotation);
+
+    return FMAABB::Merge(prevAABB, currentAABB);
+}
+
+FMAABB FCollisionDetector::CalculateWorldAABB(const FCollisionShapeData& shapeData,
+                                              XMVECTOR position, XMVECTOR rotation) const
+{
+    FMAABB aabb;
+
+    switch (shapeData.ShapeType)
+    {
+        case ECollisionShapeType::Sphere:
+        {
+            float radius = XMVectorGetX(shapeData.HalfExtent);
+            XMVECTOR radiusVec = XMVectorReplicate(radius);
+
+            XMVECTOR minVec = XMVectorSubtract(position, radiusVec);
+            XMVECTOR maxVec = XMVectorAdd(position, radiusVec);
+
+            aabb.vMin = minVec;
+            aabb.vMax = maxVec;
+        }
+        break;
+
+        case ECollisionShapeType::Box:
+        {
+            // 회전을 고려한 Box AABB 계산 (SIMD)
+            XMMATRIX worldMatrix = CreateTransformMatrix(position, rotation);
+
+            // 로컬 공간의 8개 코너 (SIMD)
+            XMVECTOR extent = shapeData.HalfExtent;
+            XMVECTOR localCorners[8] = {
+                XMVectorSet(-XMVectorGetX(extent), -XMVectorGetY(extent), -XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(XMVectorGetX(extent), -XMVectorGetY(extent), -XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(-XMVectorGetX(extent),  XMVectorGetY(extent), -XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(XMVectorGetX(extent),  XMVectorGetY(extent), -XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(-XMVectorGetX(extent), -XMVectorGetY(extent),  XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(XMVectorGetX(extent), -XMVectorGetY(extent),  XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(-XMVectorGetX(extent),  XMVectorGetY(extent),  XMVectorGetZ(extent), 1.0f),
+                XMVectorSet(XMVectorGetX(extent),  XMVectorGetY(extent),  XMVectorGetZ(extent), 1.0f)
+            };
+
+            // 첫 번째 코너로 초기화
+            XMVECTOR worldCorner0 = XMVector3TransformCoord(localCorners[0], worldMatrix);
+            XMVECTOR minVec = worldCorner0;
+            XMVECTOR maxVec = worldCorner0;
+
+            // 나머지 코너들로 AABB 확장 (SIMD)
+            for (int i = 1; i < 8; ++i)
+            {
+                XMVECTOR worldCorner = XMVector3TransformCoord(localCorners[i], worldMatrix);
+                minVec = XMVectorMin(minVec, worldCorner);
+                maxVec = XMVectorMax(maxVec, worldCorner);
+            }
+
+            aabb.vMin = minVec;
+            aabb.vMax = maxVec;
+        }
+        break;
+
+        default:
+            // 기본적으로 Box처럼 처리
+        {
+            XMVECTOR extent = shapeData.HalfExtent;
+            XMVECTOR minVec = XMVectorSubtract(position, extent);
+            XMVECTOR maxVec = XMVectorAdd(position, extent);
+
+            aabb.vMin = minVec;
+            aabb.vMax = maxVec;
+        }
+        break;
+    }
+
+    return aabb;
+}
+
+FMAABB FCollisionDetector::CalculateCurrentWorldAABB(const FCollisionShapeData& shapeData) const
+{
+    return CalculateWorldAABB(shapeData, shapeData.CurrentWorldPosition, shapeData.CurrentWorldRotation);
+}
+
+XMMATRIX FCollisionDetector::CreateRotationMatrix(XMVECTOR rotation) const
+{
+    // Quaternion에서 회전 매트릭스 생성
+    return XMMatrixRotationQuaternion(rotation);
+}
+
+XMMATRIX FCollisionDetector::CreateTransformMatrix(XMVECTOR position, XMVECTOR rotation) const
+{
+    // 회전 매트릭스 생성
+    XMMATRIX rotationMatrix = CreateRotationMatrix(rotation);
+
+    // 평행이동 적용
+    XMMATRIX translationMatrix = XMMatrixTranslationFromVector(position);
+
+    // 회전 * 평행이동 순서로 결합
+    return XMMatrixMultiply(rotationMatrix, translationMatrix);
+}
+
+#pragma endregion
