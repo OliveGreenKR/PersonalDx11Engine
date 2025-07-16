@@ -30,24 +30,6 @@ public:
     virtual float P_GetGravityScale(PhysicsID targetID) const = 0;
     virtual float P_GetMaxSpeed(PhysicsID targetID) const = 0;
     virtual float P_GetMaxAngularSpeed(PhysicsID targetID) const = 0;
-
-    // === 기존 Vector3 반환 버전 (일반 함수) ===
-    Vector3 P_GetRotationalInertia(PhysicsID targetID) const
-    {
-        XMVECTOR inertia = P_GetRotationalInertia(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), inertia);
-        return result;
-    }
-
-    Vector3 P_GetInvRotationalInertia(PhysicsID targetID) const
-    {
-        XMVECTOR invInertia = P_GetInvRotationalInertia(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), invInertia);
-        return result;
-    }
-
 #pragma endregion
 
 #pragma region Motion State Access (기존 기능 유지)
@@ -57,39 +39,6 @@ public:
     virtual XMVECTOR P_GetAngularVelocity(PhysicsID targetID) const = 0;
     virtual XMVECTOR P_GetAccumulatedForce(PhysicsID targetID) const = 0;
     virtual XMVECTOR P_GetAccumulatedTorque(PhysicsID targetID) const = 0;
-
-    // === 기존 Vector3 반환 버전 (일반 함수 오버로드) ===
-    Vector3 P_GetVelocity(PhysicsID targetID) const
-    {
-        XMVECTOR velocity = P_GetVelocity(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), velocity);
-        return result;
-    }
-
-    Vector3 P_GetAngularVelocity(PhysicsID targetID) const
-    {
-        XMVECTOR angularVelocity = P_GetAngularVelocity(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), angularVelocity);
-        return result;
-    }
-
-    Vector3 P_GetAccumulatedForce(PhysicsID targetID) const
-    {
-        XMVECTOR force = P_GetAccumulatedForce(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), force);
-        return result;
-    }
-
-    Vector3 P_GetAccumulatedTorque(PhysicsID targetID) const
-    {
-        XMVECTOR torque = P_GetAccumulatedTorque(targetID);
-        Vector3 result;
-        XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&result), torque);
-        return result;
-    }
 
 #pragma endregion
 
