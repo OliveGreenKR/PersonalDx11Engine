@@ -123,14 +123,14 @@ public:
     }
 #pragma endregion
 
-#pragma region IPhysicsStateInternal
+#pragma region IPhysicsStateInternal Implementation
 
 public:
-    // 물리 속성 접근자 (PhysicsID 기반)
+    // === Physical Properties Access ===
     float P_GetMass(PhysicsID targetID) const override;
     float P_GetInvMass(PhysicsID targetID) const override;
-    Vector3 P_GetRotationalInertia(PhysicsID targetID) const override;
-    Vector3 P_GetInvRotationalInertia(PhysicsID targetID) const override;
+    XMVECTOR P_GetRotationalInertia(PhysicsID targetID) const override;
+    XMVECTOR P_GetInvRotationalInertia(PhysicsID targetID) const override;
     float P_GetRestitution(PhysicsID targetID) const override;
     float P_GetFrictionStatic(PhysicsID targetID) const override;
     float P_GetFrictionKinetic(PhysicsID targetID) const override;
@@ -138,42 +138,27 @@ public:
     float P_GetMaxSpeed(PhysicsID targetID) const override;
     float P_GetMaxAngularSpeed(PhysicsID targetID) const override;
 
-    // 운동 상태 접근자 (PhysicsID 기반)
-    Vector3 P_GetVelocity(PhysicsID targetID) const override;
-    Vector3 P_GetAngularVelocity(PhysicsID targetID) const override;
-    Vector3 P_GetAccumulatedForce(PhysicsID targetID) const override;
-    Vector3 P_GetAccumulatedTorque(PhysicsID targetID) const override;
+    // === Motion State Access ===
+    XMVECTOR P_GetVelocity(PhysicsID targetID) const override;
+    XMVECTOR P_GetAngularVelocity(PhysicsID targetID) const override;
+    XMVECTOR P_GetAccumulatedForce(PhysicsID targetID) const override;
+    XMVECTOR P_GetAccumulatedTorque(PhysicsID targetID) const override;
 
-    // 트랜스폼 접근자 (PhysicsID 기반)
-    FTransform P_GetWorldTransform(PhysicsID targetID) const override;
-    Vector3 P_GetWorldPosition(PhysicsID targetID) const override;
-    Quaternion P_GetWorldRotation(PhysicsID targetID) const override;
-    Vector3 P_GetWorldScale(PhysicsID targetID) const override;
+    // === Transform Access ===
+    XMVECTOR P_GetWorldPosition(PhysicsID targetID) const override;
+    XMVECTOR P_GetWorldRotationQuat(PhysicsID targetID) const override;
+    XMVECTOR P_GetWorldScale(PhysicsID targetID) const override;
+    XMMATRIX P_GetWorldTransformMatrix(PhysicsID targetID) const override;
 
-    // 상태 타입 및 마스크 접근자
-    EPhysicsType P_GetPhysicsType(PhysicsID targetID) const override;
-    FPhysicsMask P_GetPhysicsMask(PhysicsID targetID) const override;
+    // === Force and Impulse Application ===
+    void P_ApplyForce(PhysicsID targetID, XMVECTOR force, XMVECTOR location) override;
+    void P_ApplyImpulse(PhysicsID targetID, XMVECTOR impulse, XMVECTOR location) override;
 
-    // 운동 상태 설정자 (PhysicsID 기반)
-    void P_SetVelocity(PhysicsID targetID, const Vector3& velocity) override;
-    void P_AddVelocity(PhysicsID targetID, const Vector3& deltaVelocity) override;
-    void P_SetAngularVelocity(PhysicsID targetID, const Vector3& angularVelocity) override;
-    void P_AddAngularVelocity(PhysicsID targetID, const Vector3& deltaAngularVelocity) override;
-
-    // 트랜스폼 설정자 (PhysicsID 기반)
-    void P_SetWorldPosition(PhysicsID targetID, const Vector3& position) override;
-    void P_SetWorldRotation(PhysicsID targetID, const Quaternion& rotation) override;
-    void P_SetWorldScale(PhysicsID targetID, const Vector3& scale) override;
-
-    // 힘/충격 적용 (PhysicsID 기반)
-    void P_ApplyForce(PhysicsID targetID, const Vector3& force, const Vector3& location) override;
-    void P_ApplyImpulse(PhysicsID targetID, const Vector3& impulse, const Vector3& location) override;
-
-    // 물리 속성 설정자 (PhysicsID 기반)
+    // === Property Setters ===
     void P_SetMass(PhysicsID targetID, float mass) override;
     void P_SetInvMass(PhysicsID targetID, float invMass) override;
-    void P_SetRotationalInertia(PhysicsID targetID, const Vector3& rotationalInertia) override;
-    void P_SetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia) override;
+    void P_SetRotationalInertia(PhysicsID targetID, XMVECTOR rotationalInertia) override;
+    void P_SetInvRotationalInertia(PhysicsID targetID, XMVECTOR invRotationalInertia) override;
     void P_SetRestitution(PhysicsID targetID, float restitution) override;
     void P_SetFrictionStatic(PhysicsID targetID, float frictionStatic) override;
     void P_SetFrictionKinetic(PhysicsID targetID, float frictionKinetic) override;
@@ -181,28 +166,30 @@ public:
     void P_SetMaxSpeed(PhysicsID targetID, float maxSpeed) override;
     void P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed) override;
 
-    // 상태 타입 및 마스크 설정자
+    // === State Type and Control ===
     void P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType) override;
     void P_SetPhysicsMask(PhysicsID targetID, const FPhysicsMask& physicsMask) override;
-
-    // 활성화 제어
     void P_SetPhysicsActive(PhysicsID targetID, bool bActive) override;
     bool P_IsPhysicsActive(PhysicsID targetID) const override;
 
 #pragma endregion
 
-#pragma region IPhysicsShapeInternal
-    // 형상 타입 관리
-    ECollisionShapeType P_GetShapeType(PhysicsID id) const;
-    void P_SetShapeType(PhysicsID id, ECollisionShapeType type);
+#pragma region ICollisionShapeInternal Implementation
 
-    // 형상 크기 (HalfExtent 기반)
-    Vector3 P_GetShapeHalfExtent(PhysicsID id) const;
-    void P_SetShapeHalfExtent(PhysicsID id, const Vector3& extent);
+public:
+    // === Shape Type Management ===
+    ECollisionShapeType P_GetShapeType(PhysicsID id) const override;
+    void P_SetShapeType(PhysicsID id, ECollisionShapeType type) override;
 
-    // 로컬 변환
-    FTransform P_GetShapeLocalTransform(PhysicsID id) const;
-    void P_SetShapeLocalTransform(PhysicsID id, const FTransform& transform);
+    // === Shape Geometry ===
+    XMVECTOR P_GetShapeHalfExtent(PhysicsID id) const override;
+    void P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent) override;
+
+    // === Previous Frame World Transform ===
+    XMVECTOR P_GetPrevWorldPosition(PhysicsID id) const override;
+    XMVECTOR P_GetPrevWorldRotationQuat(PhysicsID id) const override;
+    XMVECTOR P_GetPrevWorldScale(PhysicsID id) const override;
+
 #pragma endregion
 
 #pragma region Physics Object Lifecycle
