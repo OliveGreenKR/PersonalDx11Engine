@@ -58,17 +58,32 @@ struct FAccumulatedConstraint
 	}
 };
 
+// 충돌 반응 결과
 struct FCollisionResponseResult
 {
 	XMVECTOR NetImpulse = XMVectorSet(0, 0, 0, 0); // 모든 물리적 효과를 통합한 최종 충격량
 	XMVECTOR ApplicationPoint = XMVectorSet(0, 0, 0, 0);
 };
 
-// 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 게임 로직 전파용 데이터
-struct FCollisionEventData
+// 물리 시스템 내부용 충돌 이벤트 (PhysicsID 기반)
+struct FPhysicsCollisionEvent
 {
-	std::weak_ptr<class UCollisionComponentBase> OtherComponent;
-	FCollisionDetectionResult CollisionDetectResult;
+	PhysicsID PhysicsIdA = 0;
+	PhysicsID PhysicsIdB = 0;
+
+	XMVECTOR CollisionPoint = XMVectorZero();     // 충돌 지점 (SIMD)
+	XMVECTOR Normal = XMVectorZero();             // 충돌 법선 (SIMD)
+	float PenetrationDepth = 0.0f;               // 침투 깊이
+	float TimeOfImpact = 0.0f;                   // 서브스텝 내 정규화 시점 [0,1]
+
+	// 물리 시뮬레이션 컨텍스트 정보
+	float SubStepDeltaTime = 0.0f;               // 해당 서브스텝의 시간
+
+	bool operator==(const FPhysicsCollisionEvent& Other) const
+	{
+		return (PhysicsIdA == Other.PhysicsIdA && PhysicsIdB == Other.PhysicsIdB) ||
+			(PhysicsIdA == Other.PhysicsIdB && PhysicsIdB == Other.PhysicsIdA);
+	}
 };
 
 enum class ECollisionState

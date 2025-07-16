@@ -5,7 +5,7 @@
 #include "PhysicsSystem.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
-#include "CollisionEventDispatcher.h"
+#include "CollisionEventCalculator.h"
 #include "CollisionPositionalCorrectionCalculator.h"
 #include "Debug.h"
 #include "ConfigReadManager.h"
@@ -29,7 +29,7 @@ void FCollisionProcessor::Initialize()
         // 하위 시스템 초기화
         Detector = std::make_unique<FCollisionDetector>();
         ResponseCalculator = std::make_unique<FCollisionResponseCalculator>();
-        EventDispatcher = std::make_unique<FCollisionEventDispatcher>();
+        EventDispatcher = std::make_unique<FCollisionEventCalculator>();
         PositionCorrectionCalculator = std::make_unique<FCollisionPositionalCorrectionCalculator>();
 
         // 공간 분할 트리 초기화

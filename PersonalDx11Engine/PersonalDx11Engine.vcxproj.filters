@@ -140,7 +140,7 @@
     <ClCompile Include="CollisionResponseCalculator.cpp">
       <Filter>Engine\Physics\Collision\Part\Response</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionEventDispatcher.cpp">
+    <ClCompile Include="CollisionEventCalculator.cpp">
       <Filter>Engine\Physics\Collision\Part\EventDispatch</Filter>
     </ClCompile>
     <ClCompile Include="CollisionPositionalCorrectionCalculator.cpp">
@@ -633,7 +633,7 @@
     <ClInclude Include="CollisionResponseCalculator.h">
       <Filter>Engine\Physics\Collision\Part\Response</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionEventDispatcher.h">
+    <ClInclude Include="CollisionEventCalculator.h">
       <Filter>Engine\Physics\Collision\Part\EventDispatch</Filter>
     </ClInclude>
     <ClInclude Include="CollisionPositionalCorrectionCalculator.h">

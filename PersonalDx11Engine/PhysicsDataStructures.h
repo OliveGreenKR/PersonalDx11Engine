@@ -3,7 +3,7 @@
 #include "Transform.h"
 #include "PhysicsDefine.h"
 
-// PhysicsDataStructures.h에서 해당 부분 수정
+// 게임에서 사용하거나 게임에 연관이 있는 물리 데이터
 
 #pragma region Dirty Flag System
 
