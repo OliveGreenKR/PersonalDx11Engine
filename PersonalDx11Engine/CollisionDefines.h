@@ -64,7 +64,7 @@ struct FCollisionResponseResult
 	XMVECTOR ApplicationPoint = XMVectorSet(0, 0, 0, 0);
 };
 
-// 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 델리게이트 전파
+// 단일 충돌쌍 충돌 이벤트 정보, 충돌 결과 게임 로직 전파용 데이터
 struct FCollisionEventData
 {
 	std::weak_ptr<class UCollisionComponentBase> OtherComponent;

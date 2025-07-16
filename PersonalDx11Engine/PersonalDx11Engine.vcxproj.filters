@@ -75,7 +75,7 @@
       <Filter>Engine\Resources\Shader\Vertex</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataTexture.cpp">
-      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture</Filter>
+      <Filter>Engine\Renderer\RenderData\Texture</Filter>
     </ClCompile>
     <ClCompile Include="RenderStates.cpp">
       <Filter>Engine\Renderer\RenderStates</Filter>
@@ -87,7 +87,7 @@
       <Filter>Engine\Resources\Material</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataSimpleColor.cpp">
-      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
+      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClCompile>
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Engine\Singleton\Resource</Filter>
@@ -325,15 +325,6 @@
     <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton">
       <UniqueIdentifier>{8836804a-b200-48d0-b8a2-e4f70719fa07}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData">
-      <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture">
-      <UniqueIdentifier>{db5477cf-c077-4f53-af93-e27cd6104fd1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor">
-      <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Physics\PhysicsJob">
       <UniqueIdentifier>{39efc586-4967-48e0-a8ce-7ebbd709f69b}</UniqueIdentifier>
     </Filter>
@@ -381,6 +372,15 @@
     </Filter>
     <Filter Include="Engine\DataStructure\FixedCircularQueue">
       <UniqueIdentifier>{0d5b3145-5461-4aff-a9a6-f90b8cbf1cca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData">
+      <UniqueIdentifier>{df8be48c-26f4-45df-84c5-e34ef68e5ca7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData\Texture">
+      <UniqueIdentifier>{db5477cf-c077-4f53-af93-e27cd6104fd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Renderer\RenderData\SimpleColor">
+      <UniqueIdentifier>{452872b7-9553-4614-9c2a-05720baaaab6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -514,7 +514,7 @@
       <Filter>Engine\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataTexture.h">
-      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\Texture</Filter>
+      <Filter>Engine\Renderer\RenderData\Texture</Filter>
     </ClInclude>
     <ClInclude Include="RenderStates.h">
       <Filter>Engine\Renderer\RenderStates</Filter>
@@ -532,7 +532,7 @@
       <Filter>Engine\Debug</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataSimpleColor.h">
-      <Filter>Engine\Physics\Collision\Part\PositionCorreciton\RenderData\SimpleColor</Filter>
+      <Filter>Engine\Renderer\RenderData\SimpleColor</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawerManager.h">
       <Filter>Engine\Singleton\DebugDrawer</Filter>
