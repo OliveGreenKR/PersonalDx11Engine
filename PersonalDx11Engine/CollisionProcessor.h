@@ -159,7 +159,7 @@ private:
     // 충돌 검출 및 해결 시스템
     std::unique_ptr<class FCollisionDetector> Detector;
     std::unique_ptr<class FCollisionResponseCalculator> ResponseCalculator;
-    std::unique_ptr<class FCollisionEventCalculator> EventDispatcher;
+    std::unique_ptr<class FCollisionEventCalculator> EventCalculator;
     std::unique_ptr<class FCollisionPositionalCorrectionCalculator> PositionCorrectionCalculator;
 
     // 설정값

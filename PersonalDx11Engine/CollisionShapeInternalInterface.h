@@ -19,8 +19,12 @@ public:
     virtual Vector3 P_GetShapeHalfExtent(PhysicsID id) const = 0;
     virtual void P_SetShapeHalfExtent(PhysicsID id, const Vector3& extent) = 0;
 
-    // 로컬 변환
-    virtual FTransform P_GetShapeLocalTransform(PhysicsID id) const = 0;
-    virtual void P_SetShapeLocalTransform(PhysicsID id, const FTransform& transform) = 0;
+    // 트랜스폼 반환
+    virtual FTransform P_GetCurrentWorldTransform(PhysicsID id) const = 0;
+    virtual void P_SetCurrentWorldTransform(PhysicsID id, const FTransform& transform) = 0;
+
+    // 이전 트랜스폼 반환
+    virtual FTransform P_GetPrevWorldTransform(PhysicsID id) const = 0;
+    virtual void P_SetPrevWorldTransform(PhysicsID id, const FTransform& transform) = 0;
 
 };
