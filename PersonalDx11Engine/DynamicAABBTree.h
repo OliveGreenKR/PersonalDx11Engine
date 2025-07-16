@@ -117,7 +117,6 @@ public:
 public:
     size_t GetNodeCount() const { return NodeCount; }
     size_t GetLeafCount() const;
-    size_t GetMaxDepth() const;
 
     void PrintTreeStructure(std::ostream& os = std::cout) const;
 

@@ -642,7 +642,7 @@ void FDynamicAABBTree::PrintTreeStructure(std::ostream& os) const
 #pragma region Statistics and Debug Helper Functions
 
 
-void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os, std::string prefix, bool isLeft) const
+void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os, std::string prefix = "", bool isLeft = false) const
 {
     if (!IsValidNodeId(nodeId))
     {
