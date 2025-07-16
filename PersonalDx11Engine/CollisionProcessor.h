@@ -89,6 +89,11 @@ public:
     void UnRegisterAll();
     void LoadConfigFromIni();
 
+private:
+    //생명주기 관리
+    void Initialize();
+    void Release();
+
 #pragma region Physics System Integration
 private:
     // PhysicsSystem 인터페이스 참조
@@ -108,39 +113,6 @@ private:
     // CCD 충돌 검출
     FCollisionDetectionResult DetectCollisionCCD_PhysicsObjects(
         PhysicsID idA, PhysicsID idB, float deltaTime) const;
-#pragma endregion
-
-#pragma region Core Collision Processing
-private:
-    void Initialize();
-    void Release();
-
-    // CCD 임계속도 비교
-    bool ShouldUseCCD(PhysicsID id) const;
-
-    // 새로운 충돌쌍 업데이트
-    void UpdateCollisionPairs(const std::vector<PhysicsID>& activePhysicsIDs);
-
-    // 제약조건 기반 반복적 해결 - 충돌 반응
-    void ApplyCollisionResponseByContraints(const FCollisionPair& CollisionPair,
-                                            const FCollisionDetectionResult& DetectResult, const float DeltaTime);
-
-    // 순수 좌표 기반 위치 보정 적용 
-    void ApplyDirectPositionCorrection(
-        const FCollisionPair& CollisionPair,
-        const FCollisionDetectionResult& DetectionResult,
-        float CorrectionRatio = 0.8f
-    );
-
-    // 위치 보정 속도 편향 계산
-    float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop = 0.01f);
-
-    // AABB 겹침 정도를 통한 침투 깊이 비율 계산
-    float CalculateAABBOverlapRatio(const FCollisionPair& CollisionPair) const;
-    float CalculateAABBOverlapVolume(const FDynamicAABBTree::AABB& BoundsA, const FDynamicAABBTree::AABB& BoundsB) const;
-
-    // 충돌 이벤트 전파 (향후 구현)
-    void BroadcastCollisionEvents(const FCollisionPair& InPair, const FCollisionDetectionResult& DetectionResult);
 #pragma endregion
 
 #pragma region Debug

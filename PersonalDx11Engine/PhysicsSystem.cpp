@@ -949,6 +949,7 @@ XMVECTOR UPhysicsSystem::P_GetPrevWorldScale(PhysicsID id) const
 }
 
 #pragma endregion
+
 #pragma region Batching Physis Simulation
 
 // === 배치 연산 구현 ===
