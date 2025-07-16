@@ -1,198 +1,155 @@
 #pragma once
 #include "Math.h"
-#include "Transform.h"
-#include "DynamicBoundableInterface.h"
+#include "AABB.h"
 #include <vector>
-#include <unordered_map>
 #include <unordered_set>
-#include <memory>
 #include <functional>
 #include <iostream>
 
+/// <summary>
+/// 외부 의존성 없는 순수 데이터 기반 동적 AABB 트리
+/// IDynamicBoundable 인터페이스 의존성 제거
+/// </summary>
 class FDynamicAABBTree
 {
+#pragma region Constants
 public:
-    // 16바이트 정렬을 위한 상수
     static constexpr size_t NULL_NODE = static_cast<size_t>(-1);
-    float AABB_Extension = 0.1f;    // AABB 확장 계수
+    static constexpr float DEFAULT_FAT_MARGIN = 0.1f;
     static constexpr float MIN_MARGIN = 0.01f;
 
-    struct AABB
+#pragma endregion
+
+#pragma region Node Structure
+public:
+    struct Node
     {
-        Vector3 Min;
-        Vector3 Max;
+        // 공간 데이터
+        FMAABB Bounds;                // 실제 AABB
+        FMAABB FatBounds;            // 확장된 AABB
 
-        bool Contains(const AABB& Other) const {
-            // SIMD 최적화를 위해 XMVECTOR 사용
-            XMVECTOR vMin = XMLoadFloat3(&Min);
-            XMVECTOR vMax = XMLoadFloat3(&Max);
-            XMVECTOR vOtherMin = XMLoadFloat3(&Other.Min);
-            XMVECTOR vOtherMax = XMLoadFloat3(&Other.Max);
-
-            // 수치적 안정성을 위한 epsilon 사용
-            XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
-            return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), vOtherMin)
-                && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), vOtherMax);
-        }
-
-        bool Overlaps(const AABB& Other) const {
-            XMVECTOR vMin = XMLoadFloat3(&Min);
-            XMVECTOR vMax = XMLoadFloat3(&Max);
-            XMVECTOR vOtherMin = XMLoadFloat3(&Other.Min);
-            XMVECTOR vOtherMax = XMLoadFloat3(&Other.Max);
-
-            XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
-            return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), vOtherMax)
-                && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), vOtherMin);
-        }
-
-        AABB& Extend(float Margin) {
-            XMVECTOR vMin = XMLoadFloat3(&Min);
-            XMVECTOR vMax = XMLoadFloat3(&Max);
-            XMVECTOR vMargin = XMVectorReplicate(Margin);
-
-            XMStoreFloat3(&Min, XMVectorSubtract(vMin, vMargin));
-            XMStoreFloat3(&Max, XMVectorAdd(vMax, vMargin));
-            return *this;
-        }
-
-        static AABB Create(const Vector3& LocalHalfExtent, const FTransform& WorldTransform)
-        {
-            AABB New;
-
-            // 월드 행렬 가져오기
-            Matrix worldMatrix = WorldTransform.GetModelingMatrix();
-
-            // 월드 행렬의 스케일 및 회전 성분만 추출 (위치 제외)
-            // 각 축 방향의 변환된 벡터 계산
-            XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(LocalHalfExtent.x, 0, 0, 0), worldMatrix);
-            XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, LocalHalfExtent.y, 0, 0), worldMatrix);
-            XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, LocalHalfExtent.z, 0), worldMatrix);
-
-            // 각 축의 절대값 계산
-            xAxis = XMVectorAbs(xAxis);
-            yAxis = XMVectorAbs(yAxis);
-            zAxis = XMVectorAbs(zAxis);
-
-            // 세 축의 합이 AABB의 "반경" 벡터가 됨
-            XMVECTOR radius = XMVectorAdd(XMVectorAdd(xAxis, yAxis), zAxis);
-
-            // 중심점 위치
-            XMVECTOR center = XMLoadFloat3(&WorldTransform.Position);
-
-            // min, max 계산
-            XMVECTOR minV = XMVectorSubtract(center, radius);
-            XMVECTOR maxV = XMVectorAdd(center, radius);
-
-            // 결과 저장
-            XMStoreFloat3(&New.Min, minV);
-            XMStoreFloat3(&New.Max, maxV);
-
-            return New;
-        }
-    };
-
-    struct alignas(16) Node
-    {
-        // 24바이트 정렬 데이터
-        AABB Bounds;                 // 실제 AABB
-        AABB FatBounds;             // 여유 있는 AABB (동적 갱신 최적화용)
-        // 12 바이트
-        Vector3 LastPosition;     // 이전 프레임의 위치
-        Vector3 LastHalfExtent;   // 이전 프레임의 HalfExtent
-
-        // 8바이트 데이터
+        // 트리 구조
         size_t Parent = NULL_NODE;
         size_t Left = NULL_NODE;
         size_t Right = NULL_NODE;
-        IDynamicBoundable* BoundableObject = nullptr;
 
-       
-        // 4바이트 데이터
+        // 트리 속성
         int32_t Height = 0;
 
-        //패딩
-        int32_t Padding[3];      //총 108 + 12 
-
-        bool IsLeaf() const { return Left == NULL_NODE && BoundableObject != nullptr; }
-        bool NeedsUpdate(const Vector3& LocalHalfExtent, const FTransform& WorldTransform) const
-        {
-            // 현재 상태로 AABB 생성
-            AABB CurrentBounds = AABB::Create(LocalHalfExtent, WorldTransform);
-           
-            // 현재 상태의 AABB가 FatBounds를 벗어났는지 검사
-            return !FatBounds.Contains(CurrentBounds);
-        }
-
+        // 메서드
+        bool IsLeaf() const { return Left == NULL_NODE; }
+        bool IsInternal() const { return Left != NULL_NODE; }
     };
 
+#pragma endregion
+
+#pragma region Constructor and Destructor
 public:
-    FDynamicAABBTree(size_t InitialCapacity = 1024);
+    FDynamicAABBTree(size_t initialCapacity = 1024);
     ~FDynamicAABBTree();
 
-    // 핵심 기능
-    size_t Insert(const std::shared_ptr<IDynamicBoundable>& Object);
-    void Remove(size_t NodeId);
+#pragma endregion
+
+#pragma region Core Tree Operations
+public:
+    /// <summary>
+    /// 객체를 트리에 삽입
+    /// </summary>
+    /// <param name="bounds">객체의 AABB</param>
+    /// <returns>노드 ID (실패 시 NULL_NODE)</returns>
+    size_t Insert(const FMAABB& bounds);
+
+    /// <summary>
+    /// 객체를 트리에서 제거
+    /// </summary>
+    /// <param name="nodeId">제거할 노드 ID</param>
+    void Remove(size_t nodeId);
+
+    /// <summary>
+    /// 트리 전체 업데이트 (변경된 객체들 재배치)
+    /// </summary>
     void UpdateTree();
 
-    // 쿼리 기능
-    void QueryOverlap(const AABB& QueryBounds, const std::function<void(size_t)>& Func);
+    /// <summary>
+    /// 트리 정리
+    /// </summary>
+    void Clear();
 
-    const AABB& GetBounds(const size_t NodeId)
-    {
-        assert(NodePool[NodeId].BoundableObject);
-        return NodePool[NodeId].Bounds;
-    }
+#pragma endregion
 
-    const AABB& GetFatBounds(const size_t NodeId)
-    {
-        assert(NodePool[NodeId].BoundableObject);
-        return NodePool[NodeId].FatBounds;
-    }
-    //사용중인 노드 수 반환
-    const size_t GetNodeCount() { return NodeCount; }
-
-    //현재 사용중인 노드인지 검사
-    bool IsValidId(const size_t NodeId) const;
-
-    // 리프 노드 관련 디버깅 유틸리티 함수들
-    size_t GetLeafNodeCount() const;
-    bool IsLeafNode(size_t NodeId) const;
-    std::vector<size_t> GetAllLeafNodeIds() const;
-
-private:
-    // 노드 풀 관리
-    size_t AllocateNode();
-    void FreeNode(size_t NodeId);
-
-    // 트리 유지보수
-    void InsertLeaf(size_t NodeId);
-    void RemoveLeaf(size_t NodeId);
-    void UpdateNodeBounds(size_t NodeId);
-    size_t Rebalance(size_t NodeId);
-
-    // SAH 관련
-    float ComputeCost(const AABB& Bounds) const;
-    float ComputeInheritedCost(size_t NodeId) const;
-
-    //트리 재생성
-    void ReBuildTree();
-    //트리 초기화
-    void ClearTree(const size_t InitialCapacity = 1024);
-
-    //현재상태를 기반으로 AABB 재계산 및 이전 정보 저장
-    void ComputeNodeAABB(size_t NodeId, IDynamicBoundable* Object);
-
+#pragma region Query Operations  
 public:
-	void PrintTreeStructure(std::ostream& os = std::cout) const;
-private:
-    void PrintBinaryTree(size_t root, std::ostream& os, 
-                         std::string prefix = "", 
-                         bool isLeft = false) const;
+    /// <summary>
+    /// AABB와 겹치는 모든 객체 조회 (기존 인터페이스 유지)
+    /// </summary>
+    /// <param name="queryBounds">검색할 AABB</param>
+    /// <param name="callback">각 겹치는 노드에 대해 호출될 함수 (nodeId 전달)</param>
+    void QueryOverlap(const FMAABB& queryBounds, const std::function<void(size_t)>& callback) const;
+
+#pragma endregion
+
+#pragma region Data Access
+public:
+    /// <summary>
+    /// 노드의 현재 AABB 조회 (기존 GetBounds와 동일)
+    /// </summary>
+    /// <param name="nodeId">노드 ID</param>
+    /// <returns>AABB</returns>
+    const FMAABB& GetBounds(size_t nodeId) const;
+
+    /// <summary>
+    /// 노드의 Fat AABB 조회
+    /// </summary>
+    /// <param name="nodeId">노드 ID</param>
+    /// <returns>Fat AABB</returns>
+    const FMAABB& GetFatBounds(size_t nodeId) const;
+
+    /// <summary>
+    /// 노드 ID 유효성 검사 (기존 IsValidId와 동일)
+    /// </summary>
+    /// <param name="nodeId">노드 ID</param>
+    /// <returns>유효 여부</returns>
+    bool IsValidId(size_t nodeId) const;
+
+#pragma endregion
+
+#pragma region Statistics and Debug
+public:
+    size_t GetNodeCount() const { return NodeCount; }
+    size_t GetLeafCount() const;
+    size_t GetMaxDepth() const;
+
+    void PrintTreeStructure(std::ostream& os = std::cout) const;
 
 private:
-    std::vector<Node> NodePool;           // 노드 메모리 풀 - 모든 노드를 보관
-    std::unordered_set<size_t> FreeNodes; // 재사용 가능한 노드 인덱스만 보관
-    size_t RootId = NULL_NODE;            // 루트 노드 인덱스
-    size_t NodeCount = 0;                 // 현재 사용 중인 노드 수
+    void PrintBinaryTree(size_t nodeId, std::ostream& os, std::string prefix, bool isLeft) const;
+
+#pragma endregion
+
+#pragma region Internal Operations
+private:
+    size_t AllocateNode();
+    void FreeNode(size_t nodeId);
+    void InsertLeaf(size_t leafId);
+    void RemoveLeaf(size_t leafId);
+    size_t Rebalance(size_t nodeId);
+    void UpdateNodeBounds(size_t nodeId, const FMAABB& bounds);
+    void CreateFatBounds(size_t nodeId);
+
+    bool IsValidNodeId(size_t nodeId) const;
+    void QueryOverlapRecursive(size_t nodeId, const FMAABB& queryBounds,
+                               const std::function<void(size_t)>& callback) const;
+
+#pragma endregion
+
+#pragma region Member Variables
+private:
+    std::vector<Node> NodePool;
+    std::unordered_set<size_t> FreeNodes;
+
+    size_t RootId = NULL_NODE;
+    size_t NodeCount = 0;
+    float FatMarginRatio = DEFAULT_FAT_MARGIN;
+
+#pragma endregion
 };

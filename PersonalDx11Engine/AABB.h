@@ -1,7 +1,7 @@
 #pragma once
 #include "Math.h"
 //연산을 위해 사용하는 구조체, 내부멤버는 XMVECOTR 16바이트 정렬
-struct alignas(16) FAABB
+struct alignas(16) FMAABB
 {
     XMVECTOR vMin = XMVectorReplicate(FLT_MAX);
     XMVECTOR vMax = XMVectorReplicate(-FLT_MAX);
@@ -12,20 +12,20 @@ struct alignas(16) FAABB
     void SetMin(const Vector3& InVector3) { vMin = XMLoadFloat3(&InVector3); }
 
     //완전히 포함하는지
-    bool IsContaining(const FAABB& Other) const {
+    bool IsContaining(const FMAABB& Other) const {
         // 수치적 안정성을 위한 epsilon 사용
         XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
         return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), Other.vMin)
             && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), Other.vMax);
     }
     //겹치는지 확인
-    bool IsOverlapping(const FAABB& Other) const {
+    bool IsOverlapping(const FMAABB& Other) const {
         XMVECTOR epsilon = XMVectorReplicate(KINDA_SMALL);
         return XMVector3LessOrEqual(XMVectorSubtract(vMin, epsilon), Other.vMax)
             && XMVector3GreaterOrEqual(XMVectorAdd(vMax, epsilon), Other.vMin);
     }
 
-    FAABB& Extend(float Margin) {
+    FMAABB& Extend(float Margin) {
         XMVECTOR vMargin = XMVectorReplicate(Margin);
         vMin = XMVectorSubtract(vMin, vMargin);
         vMax = XMVectorAdd(vMax, vMargin);
@@ -33,7 +33,7 @@ struct alignas(16) FAABB
     }
 
     //점을 포함하도록 확장
-    FAABB& Include(const Vector3& InPoint)
+    FMAABB& Include(const Vector3& InPoint)
     {
         XMVECTOR point = XMLoadFloat3(&InPoint);
         vMin = XMVectorMin(vMin, point);
@@ -41,17 +41,17 @@ struct alignas(16) FAABB
         return *this;
     }
 
-    static FAABB Merge(const FAABB& A, const FAABB& B)
+    static FMAABB Merge(const FMAABB& A, const FMAABB& B)
     {
-        FAABB New;
+        FMAABB New;
         New.vMin = XMVectorMin(A.vMin, B.vMin); // 각 축에서 최소값 선택
         New.vMax = XMVectorMax(A.vMax, B.vMax); // 각 축에서 최대값 선택
         return New;
     }
 
-    static FAABB Create(const Vector3& LocalHalfExtent, const FTransform& WorldTransform)
+    static FMAABB Create(const Vector3& LocalHalfExtent, const FTransform& WorldTransform)
     {
-        FAABB New;
+        FMAABB New;
 
         // 월드 행렬 가져오기
         Matrix worldMatrix = WorldTransform.GetModelingMatrix();

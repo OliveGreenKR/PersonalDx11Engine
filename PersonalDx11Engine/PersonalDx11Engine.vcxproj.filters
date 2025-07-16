@@ -128,9 +128,6 @@
     <ClCompile Include="Contents\GameObject\ElasticBody.cpp">
       <Filter>Contents\GameObjects\ElasticBody</Filter>
     </ClCompile>
-    <ClCompile Include="Contents\Scenes\TestScene01.cpp">
-      <Filter>Contents\Scenes\testScene</Filter>
-    </ClCompile>
     <ClCompile Include="Contents\Scenes\GameplayScene01.cpp">
       <Filter>Contents\Scenes\01</Filter>
     </ClCompile>
@@ -198,9 +195,6 @@
     </Filter>
     <Filter Include="Engine\DataStructure\DynamicAABBTree">
       <UniqueIdentifier>{77e10acf-6d19-4e96-b63a-2345eb71071b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\DataStructure\DynamicAABBTree\test">
-      <UniqueIdentifier>{8be354d4-b7f2-4f6e-8e35-51a3a45c2e43}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Resources">
       <UniqueIdentifier>{a86807fb-7457-4cfd-ae18-567c2022eada}</UniqueIdentifier>
@@ -306,9 +300,6 @@
     </Filter>
     <Filter Include="Contents\GameObjects\ElasticBody">
       <UniqueIdentifier>{888872cb-8e27-40c9-9d75-e730af1aa8b8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Contents\Scenes\testScene">
-      <UniqueIdentifier>{98bf8f30-7307-4caa-91e9-44e816d66e9e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Contents\Scenes\02">
       <UniqueIdentifier>{665f721d-1499-49fa-837d-c2b4cbafd61a}</UniqueIdentifier>
@@ -626,9 +617,6 @@
     </ClInclude>
     <ClInclude Include="Contents\Scenes\GameplayScene02.h">
       <Filter>Contents\Scenes\02</Filter>
-    </ClInclude>
-    <ClInclude Include="Contents\Scenes\TestScene01.h">
-      <Filter>Contents\Scenes\testScene</Filter>
     </ClInclude>
     <ClInclude Include="PhysicsJob.h">
       <Filter>Engine\Physics\PhysicsJob</Filter>
