@@ -50,6 +50,12 @@ public:
     virtual XMVECTOR P_GetWorldScale(PhysicsID targetID) const = 0;
     virtual XMMATRIX P_GetWorldTransformMatrix(PhysicsID targetID) const = 0;
 
+    // === 이전 프레임 월드 트랜스폼 (XMVECTOR 가상 함수) ===
+    virtual XMVECTOR P_GetPrevWorldPosition(PhysicsID id) const = 0;
+    virtual XMVECTOR P_GetPrevWorldRotationQuat(PhysicsID id) const = 0;
+    virtual XMVECTOR P_GetPrevWorldScale(PhysicsID id) const = 0;
+    virtual XMMATRIX P_GetPrevWorldTransformMatrix(PhysicsID targetID) const = 0;
+
 #pragma endregion
 
 #pragma region Force and Impulse Application
@@ -106,6 +112,11 @@ public:
     virtual void P_SetWorldRotation(PhysicsID targetID, XMVECTOR worldRotation) = 0;
     virtual void P_SetWorldScale(PhysicsID targetID, XMVECTOR worldScale) = 0;
 
+    // === 이전 프레임 트랜스폼 설정자 ===
+    virtual void P_SetPrevWorldPosition(PhysicsID targetID, XMVECTOR worldPosition) = 0;
+    virtual void P_SetPrevWorldRotation(PhysicsID targetID, XMVECTOR worldRotation) = 0;
+    virtual void P_SetPrevWorldScale(PhysicsID targetID, XMVECTOR worldScale) = 0;
+
     // === 벡터 속성 설정 (XMVECTOR 가상 함수) ===
     virtual void P_SetRotationalInertia(PhysicsID targetID, XMVECTOR rotationalInertia) = 0;
     virtual void P_SetInvRotationalInertia(PhysicsID targetID, XMVECTOR invRotationalInertia) = 0;
@@ -116,7 +127,6 @@ public:
         XMVECTOR inertiaVec = XMVectorSet(rotationalInertia.x, rotationalInertia.y, rotationalInertia.z, 0.0f);
         P_SetRotationalInertia(targetID, inertiaVec);
     }
-
     void P_SetInvRotationalInertia(PhysicsID targetID, const Vector3& invRotationalInertia)
     {
         XMVECTOR invInertiaVec = XMVectorSet(invRotationalInertia.x, invRotationalInertia.y, invRotationalInertia.z, 0.0f);

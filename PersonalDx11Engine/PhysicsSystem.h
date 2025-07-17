@@ -17,7 +17,7 @@ class UPhysicsSystem : public IPhysicsStateInternal, public ICollisionShapeInter
 {
 
 private:
-    UPhysicsSystem();
+    UPhysicsSystem() = default;
     ~UPhysicsSystem();
 
     // 복사 및 이동 방지
@@ -80,7 +80,51 @@ private:
 
 #pragma endregion
 
-#pragma region Synchronization System (Redesigned)
+#pragma region Event Queue System
+
+private:
+    /// <summary>
+    /// 충돌 이벤트 순환 큐 - 고정 크기로 성능 최적화
+    /// 큐 크기는 InitialCollisionEventQueueSize 설정값으로 결정
+    /// </summary>
+    std::unique_ptr<TCircularQueue<FPhysicsCollisionEvent>> CollisionEventQueue;
+
+public:
+    /// <summary>
+    /// 충돌 이벤트를 큐에 추가 (CollisionProcessor 전용)
+    /// 용량 초과 시 TCircularQueue의 기본 동작 수행 (가장 오래된 이벤트 덮어쓰기)
+    /// </summary>
+    /// <param name="Event">추가할 충돌 이벤트</param>
+    void AddCollisionEvent(const FPhysicsCollisionEvent& Event);
+
+    /// <summary>
+    /// 배치 이벤트 처리 및 게임 로직 전달
+    /// FinalizeSimulation()에서 호출되어 큐의 모든 이벤트를 RigidBodyComponent로 전송
+    /// 처리 후 큐 자동 초기화
+    /// </summary>
+    void ProcessCollisionEvents();
+
+    /// <summary>
+    /// 이벤트 큐 수동 초기화
+    /// 시스템 리셋이나 레벨 전환 시 사용
+    /// </summary>
+    void ClearEventQueue();
+
+    /// <summary>
+    /// 현재 큐에 대기 중인 이벤트 수 반환 (디버깅 용도)
+    /// </summary>
+    /// <returns>대기 중인 이벤트 수</returns>
+    size_t GetEventQueueSize() const;
+
+private:
+    void SendEventToPhysicsObject(PhysicsID TargetPhysicsID, const FPhysicsCollisionEvent& Event);
+
+    // 향후 멀티스레드 확장을 위한 주석 처리된 멤버
+    // std::mutex EventQueueMutex;  // 멀티스레드에서 큐 보호용
+
+#pragma endregion
+
+#pragma region Synchronization System
 
 public:
     /// <summary>
@@ -112,14 +156,9 @@ private:
 #pragma region SubSystem Interface
 public:
     //하부시스템 - 충돌
-    static FCollisionProcessor* GetCollisionSubsystem()
+    FCollisionProcessor* GetCollisionSubsystem()
     {
-        static FCollisionProcessor* instance = []() {
-            FCollisionProcessor* collision = new FCollisionProcessor();
-            collision->Initialize();
-            return collision;
-            }();
-        return instance;
+        return CollisionProcessor ? CollisionProcessor.get() : nullptr;
     }
 #pragma endregion
 
@@ -150,6 +189,11 @@ public:
     XMVECTOR P_GetWorldScale(PhysicsID targetID) const override;
     XMMATRIX P_GetWorldTransformMatrix(PhysicsID targetID) const override;
 
+    XMVECTOR P_GetPrevWorldPosition(PhysicsID targetID) const override;
+    XMVECTOR P_GetPrevWorldRotationQuat(PhysicsID targetID) const override;
+    XMVECTOR P_GetPrevWorldScale(PhysicsID targetID) const override;
+    XMMATRIX P_GetPrevWorldTransformMatrix(PhysicsID targetID) const override;
+
     // === Force and Impulse Application ===
     void P_ApplyForce(PhysicsID targetID, XMVECTOR force, XMVECTOR location) override;
     void P_ApplyImpulse(PhysicsID targetID, XMVECTOR impulse, XMVECTOR location) override;
@@ -165,6 +209,16 @@ public:
     void P_SetGravityScale(PhysicsID targetID, float gravityScale) override;
     void P_SetMaxSpeed(PhysicsID targetID, float maxSpeed) override;
     void P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed) override;
+
+    // === Transform Setter ===
+    void P_SetWorldPosition(PhysicsID targetID, XMVECTOR worldPosition) override;
+    void P_SetWorldRotation(PhysicsID targetID, XMVECTOR worldRotation) override;
+    void P_SetWorldScale(PhysicsID targetID, XMVECTOR worldScale) override;
+
+    // === Prev Transform Setter ===
+    void P_SetPrevWorldPosition(PhysicsID targetID, XMVECTOR worldPosition) override;
+    void P_SetPrevWorldRotation(PhysicsID targetID, XMVECTOR worldRotation) override;
+    void P_SetPrevWorldScale(PhysicsID targetID, XMVECTOR worldScale) override;
 
     // === State Type and Control ===
     void P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType) override;
@@ -184,11 +238,6 @@ public:
     // === Shape Geometry ===
     XMVECTOR P_GetShapeHalfExtent(PhysicsID id) const override;
     void P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent) override;
-
-    // === Previous Frame World Transform ===
-    XMVECTOR P_GetPrevWorldPosition(PhysicsID id) const override;
-    XMVECTOR P_GetPrevWorldRotationQuat(PhysicsID id) const override;
-    XMVECTOR P_GetPrevWorldScale(PhysicsID id) const override;
 
 #pragma endregion
 
@@ -288,10 +337,12 @@ public:
 #pragma region Member Variables
 
 private:
+    std::unique_ptr< FCollisionProcessor> CollisionProcessor;
     // 물리 상태 데이터 관리자
     std::unique_ptr<FPhysicsStateArrays> PhysicsStateSoA;
 
     // 물리 시뮬레이션 설정
+    int InitialCollisionEventQueueSize = 512; //최초 충돌 이벤트 큐 크기
     int InitialPhysicsObjectCapacity = 512; //최초 관리 객체 메모리 크기
     int InitialPhysicsJobPoolSizeMB = 4; // 최초 물리 작업 풀 크기
     float FixedTimeStep = 0.016f;  // 60Hz

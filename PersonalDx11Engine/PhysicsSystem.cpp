@@ -5,12 +5,6 @@
 #include "ConfigReadManager.h"
 
 #pragma region Constructors and PhysicsObjects LifeCycle Management
-UPhysicsSystem::UPhysicsSystem()
-    : PhysicsStateSoA(std::make_unique<FPhysicsStateArrays>(128))
-	, JobPool(std::make_unique< FArenaMemoryPool>(1 * 1024 * 1024))  //기본 1MB
-    , JobQueue(std::make_unique<TCircularQueue<FPhysicsJobRequest>>(512))  // 기본 512개 큐 크기
-{
-}
 
 UPhysicsSystem::~UPhysicsSystem()
 {
@@ -22,8 +16,11 @@ void UPhysicsSystem::Initialize()
     try
     {
         LoadConfigFromIni();
-        PhysicsStateSoA->TryResize(InitialPhysicsObjectCapacity);
-        JobPool->Initialize(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
+        CollisionProcessor = std::make_unique<FCollisionProcessor>();
+        CollisionProcessor->Initialize(this, this);
+        PhysicsStateSoA = std::make_unique<FPhysicsStateArrays>(InitialPhysicsObjectCapacity);
+        JobPool = std::make_unique < FArenaMemoryPool>(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
+        CollisionEventQueue = std::make_unique<TCircularQueue<FPhysicsCollisionEvent>>(InitialCollisionEventQueueSize);
     }
     catch (...)
     {
@@ -44,10 +41,13 @@ void UPhysicsSystem::Release()
     JobPool->Reset();
     
     //PhysicsStateSoA는 자동정리
+    //충돌 프로세서 정리
+    CollisionProcessor->Release();
 }
 
 void UPhysicsSystem::LoadConfigFromIni()
 {
+    UConfigReadManager::Get()->GetValue("InitialCollisionEventQueueSize", InitialCollisionEventQueueSize);
     UConfigReadManager::Get()->GetValue("InitialPhysicsObjectCapacity", InitialPhysicsObjectCapacity);
     UConfigReadManager::Get()->GetValue("InitialPhysicsJobPoolSizeMB", InitialPhysicsJobPoolSizeMB);
     UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
@@ -198,7 +198,10 @@ void UPhysicsSystem::FinalizeSimulation()
     // 시뮬레이션 플래그 해제
     bIsSimulating = false;
 
-    // 물리 → 게임 동기화 
+    // 물리 이벤트 동기화
+    ProcessCollisionEvents();
+
+    // 물리 → 게임 상태값 동기화 
     SyncPhysicsToGame();
 }
 
@@ -220,6 +223,72 @@ void UPhysicsSystem::ProcessJobQueue()
         }
     }
 }
+#pragma endregion
+
+// PhysicsSystem.cpp Event Queue System 구현
+
+#pragma region Event Queue System
+
+void UPhysicsSystem::AddCollisionEvent(const FPhysicsCollisionEvent& Event)
+{
+    if (!CollisionEventQueue)
+    {
+        LOG_ERROR("CollisionEventQueue is not initialized");
+        return;
+    }
+
+    CollisionEventQueue->Push(Event);
+}
+
+void UPhysicsSystem::ProcessCollisionEvents()
+{
+    if (!CollisionEventQueue || CollisionEventQueue->Empty())
+    {
+        return;
+    }
+
+    // FIFO 순서로 직접 처리
+    while (!CollisionEventQueue->Empty())
+    {
+        FPhysicsCollisionEvent Event = CollisionEventQueue->Front();
+        CollisionEventQueue->Pop();
+
+        // 즉시 양방향 전송
+        SendEventToPhysicsObject(Event.PhysicsIdA, Event);
+        SendEventToPhysicsObject(Event.PhysicsIdB, Event);
+    }
+}
+
+void UPhysicsSystem::ClearEventQueue()
+{
+    if (CollisionEventQueue)
+    {
+        CollisionEventQueue->Clear();
+    }
+}
+
+size_t UPhysicsSystem::GetEventQueueSize() const
+{
+    return CollisionEventQueue ? CollisionEventQueue->Size() : 0;
+}
+
+void UPhysicsSystem::SendEventToPhysicsObject(PhysicsID TargetPhysicsID, const FPhysicsCollisionEvent& Event)
+{
+    if (!IsValidTargetID(TargetPhysicsID))
+    {
+        return;
+    }
+
+    SoAIdx Index = GetIdx(static_cast<SoAID>(TargetPhysicsID));
+
+    if (auto PhysicsObject = PhysicsStateSoA->ObjectReferences[Index].lock())
+    {
+        // 단일 이벤트를 벡터로 래핑하여 전송
+        std::vector<FPhysicsCollisionEvent> SingleEventList = { Event };
+        PhysicsObject->ReceiveCollisionEvents(SingleEventList);
+    }
+}
+
 #pragma endregion
 
 #pragma region Inner Helper
@@ -628,6 +697,47 @@ XMMATRIX UPhysicsSystem::P_GetWorldTransformMatrix(PhysicsID targetID) const
     return XMMatrixAffineTransformation(scale, XMVectorZero(), rotation, position);
 }
 
+XMVECTOR UPhysicsSystem::P_GetPrevWorldPosition(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+        return XMVectorZero();
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(id));
+    return PhysicsStateSoA->PrevWorldPosition[index];
+}
+
+XMVECTOR UPhysicsSystem::P_GetPrevWorldRotationQuat(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+        return XMQuaternionIdentity();
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(id));
+    return PhysicsStateSoA->PrevWorldRotationQuat[index];
+}
+
+XMVECTOR UPhysicsSystem::P_GetPrevWorldScale(PhysicsID id) const
+{
+    if (!IsValidTargetID(id))
+        return XMVectorSplatOne();
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(id));
+    return PhysicsStateSoA->PrevWorldScale[index];
+}
+
+XMMATRIX UPhysicsSystem::P_GetPrevWorldTransformMatrix(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+        return XMMatrixIdentity();
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+
+    XMVECTOR position = PhysicsStateSoA->PrevWorldPosition[index];
+    XMVECTOR rotation = PhysicsStateSoA->PrevWorldRotationQuat[index];
+    XMVECTOR scale = PhysicsStateSoA->PrevWorldScale[index];
+
+    return XMMatrixAffineTransformation(scale, XMVectorZero(), rotation, position);
+}
+
 void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, XMVECTOR force, XMVECTOR location)
 {
     if (!IsValidTargetID(targetID))
@@ -837,6 +947,60 @@ void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSp
     PhysicsStateSoA->MaxAngularSpeeds[index] = std::max(0.0f, maxAngularSpeed);
 }
 
+void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, XMVECTOR worldPosition)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->WorldPosition[index] = worldPosition;
+}
+
+void UPhysicsSystem::P_SetWorldRotation(PhysicsID targetID, XMVECTOR worldRotation)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->WorldRotationQuat[index] = worldRotation;
+}
+
+void UPhysicsSystem::P_SetWorldScale(PhysicsID targetID, XMVECTOR worldScale)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->WorldScale[index] = worldScale;
+}
+
+void UPhysicsSystem::P_SetPrevWorldPosition(PhysicsID targetID, XMVECTOR worldPosition)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->PrevWorldPosition[index] = worldPosition;
+}
+
+void UPhysicsSystem::P_SetPrevWorldRotation(PhysicsID targetID, XMVECTOR worldRotation)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->PrevWorldRotationQuat[index] = worldRotation;
+}
+
+void UPhysicsSystem::P_SetPrevWorldScale(PhysicsID targetID, XMVECTOR worldScale)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->PrevWorldScale[index] = worldScale;
+}
+
 void UPhysicsSystem::P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType)
 {
     if (!IsValidTargetID(targetID))
@@ -922,33 +1086,6 @@ void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent)
     // 음수 값 방지 (절댓값 적용)
     XMVECTOR validExtent = XMVectorAbs(extent);
     PhysicsStateSoA->CollisionHalfExtents[index] = validExtent;
-}
-
-XMVECTOR UPhysicsSystem::P_GetPrevWorldPosition(PhysicsID id) const
-{
-    if (!IsValidTargetID(id))
-        return XMVectorZero();
-
-    SoAIdx index = GetIdx(static_cast<SoAID>(id));
-    return PhysicsStateSoA->PrevWorldPosition[index];
-}
-
-XMVECTOR UPhysicsSystem::P_GetPrevWorldRotationQuat(PhysicsID id) const
-{
-    if (!IsValidTargetID(id))
-        return XMQuaternionIdentity();
-
-    SoAIdx index = GetIdx(static_cast<SoAID>(id));
-    return PhysicsStateSoA->PrevWorldRotationQuat[index];
-}
-
-XMVECTOR UPhysicsSystem::P_GetPrevWorldScale(PhysicsID id) const
-{
-    if (!IsValidTargetID(id))
-        return XMVectorSplatOne();
-
-    SoAIdx index = GetIdx(static_cast<SoAID>(id));
-    return PhysicsStateSoA->PrevWorldScale[index];
 }
 
 #pragma endregion

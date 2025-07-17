@@ -37,14 +37,4 @@ public:
         XMVECTOR extentVec = XMVectorSet(extent.x, extent.y, extent.z, 0.0f);
         P_SetShapeHalfExtent(id, extentVec);
     }
-
-    // === 현재 프레임 월드 트랜스폼 (XMVECTOR 가상 함수) ===
-    virtual XMVECTOR P_GetWorldPosition(PhysicsID id) const = 0;
-    virtual XMVECTOR P_GetWorldRotationQuat(PhysicsID id) const = 0;
-    virtual XMVECTOR P_GetWorldScale(PhysicsID id) const = 0;
-
-    // === 이전 프레임 월드 트랜스폼 (XMVECTOR 가상 함수) ===
-    virtual XMVECTOR P_GetPrevWorldPosition(PhysicsID id) const = 0;
-    virtual XMVECTOR P_GetPrevWorldRotationQuat(PhysicsID id) const = 0;
-    virtual XMVECTOR P_GetPrevWorldScale(PhysicsID id) const = 0;
 };
