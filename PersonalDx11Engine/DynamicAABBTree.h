@@ -15,9 +15,6 @@ class FDynamicAABBTree
 #pragma region Constants
 public:
     static constexpr size_t NULL_NODE = static_cast<size_t>(-1);
-    static constexpr float DEFAULT_FAT_MARGIN = 0.1f;
-    static constexpr float MIN_MARGIN = 0.01f;
-
 #pragma endregion
 
 #pragma region Node Structure
@@ -74,6 +71,11 @@ public:
     /// 트리 정리
     /// </summary>
     void Clear();
+
+    void SetFatMarginRatio(float margin)
+    {
+        FatMarginRatio = std::max(margin, 0.01f);
+    }
 
 #pragma endregion
 
@@ -148,7 +150,7 @@ private:
 
     size_t RootId = NULL_NODE;
     size_t NodeCount = 0;
-    float FatMarginRatio = DEFAULT_FAT_MARGIN;
+    float FatMarginRatio = 0.1f;
 
 #pragma endregion
 };

@@ -508,7 +508,7 @@ void FDynamicAABBTree::CreateFatBounds(size_t nodeId)
     node.Bounds.GetMaxV(max);
 
     Vector3 size = max - min;
-    Vector3 margin = size * FatMarginRatio + Vector3::One() * MIN_MARGIN;
+    Vector3 margin = size * FatMarginRatio + Vector3::One() * 0.01f;
 
     // Fat AABB 설정
     node.FatBounds.SetMin(min - margin);

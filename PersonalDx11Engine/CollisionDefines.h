@@ -74,10 +74,7 @@ struct FPhysicsCollisionEvent
 	XMVECTOR CollisionPoint = XMVectorZero();     // 충돌 지점 (SIMD)
 	XMVECTOR Normal = XMVectorZero();             // 충돌 법선 (SIMD)
 	float PenetrationDepth = 0.0f;               // 침투 깊이
-	float TimeOfImpact = 0.0f;                   // 서브스텝 내 정규화 시점 [0,1]
-
-	// 물리 시뮬레이션 컨텍스트 정보
-	float SubStepDeltaTime = 0.0f;               // 해당 서브스텝의 시간
+	float TimeOfImpact = 0.0f;                   // 충돌 시간
 
 	bool operator==(const FPhysicsCollisionEvent& Other) const
 	{

@@ -1,7 +1,7 @@
 #pragma once
 #include "Math.h"
-//연산을 위해 사용하는 구조체, 내부멤버는 XMVECOTR 16바이트 정렬
-struct alignas(16) FMAABB
+//연산을 위해 사용하는 구조체, 내부멤버는 XMVECOTR
+struct FMAABB
 {
     XMVECTOR vMin = XMVectorReplicate(FLT_MAX);
     XMVECTOR vMax = XMVectorReplicate(-FLT_MAX);
