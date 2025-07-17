@@ -93,7 +93,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionDiscrete(
     // 결과 후처리
     if (result.bCollided)
     {
-        result.TimeOfImpact = 1.0f; // 이산 충돌은 현재 프레임에서 발생
+        result.NormalizedToI = 1.0f; // 이산 충돌은 현재 프레임에서 발생
 
         // 법선 벡터 정규화 검증
         float normalLength = XMVector3Length(result.Normal).m128_f32[0];
@@ -129,7 +129,7 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
     float deltaTime)
 {
     FCollisionDetectionResult result;
-    result.TimeOfImpact = deltaTime; // 기본값: 충돌 없음
+    result.NormalizedToI = deltaTime; // 기본값: 충돌 없음
 
     // Broad phase: Swept AABB 겹침 검사
     FMAABB sweptA = CalculateSweptAABB(shapeDataA);
@@ -176,11 +176,11 @@ FCollisionDetectionResult FCollisionDetector::DetectCollisionCCD(
     }
 
     // 최종 충돌 시점 설정
-    result.TimeOfImpact = endTime * deltaTime;
+    result.NormalizedToI = endTime * deltaTime;
 
     if (result.bCollided)
     {
-        LOG("SIMD CCD collision detected at time %.6f", result.TimeOfImpact);
+        LOG("SIMD CCD collision detected at time %.6f", result.NormalizedToI);
     }
 
     return result;

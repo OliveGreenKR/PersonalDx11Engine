@@ -22,10 +22,7 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateCollisionEvent(
     Event.CollisionPoint = DetectResult.Point;
     Event.Normal = DetectResult.Normal;
     Event.PenetrationDepth = DetectResult.PenetrationDepth;
-    Event.TimeOfImpact = DetectResult.TimeOfImpact;
-
-    // 시뮬레이션 컨텍스트 정보
-    Event.SubStepDeltaTime = deltaTime;
+    Event.TimeOfImpact = DetectResult.NormalizedToI * deltaTime;
 
     return Event;
 }
@@ -45,7 +42,6 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateExitEvent(
     Event.Normal = XMVectorZero();
     Event.PenetrationDepth = 0.0f;
     Event.TimeOfImpact = 0.0f;
-    Event.SubStepDeltaTime = 0.0f;
 
     return Event;
 }

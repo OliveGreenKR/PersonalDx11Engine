@@ -11,7 +11,7 @@ struct FCollisionDetectionResult
 	XMVECTOR Normal = XMVectorSet(0, 0, 0, 0);     // 충돌 법선
 	XMVECTOR Point = XMVectorSet(0, 0, 0, 0);    // 충돌 지점
 	float PenetrationDepth = 0.0f;       // 침투 깊이
-	float TimeOfImpact = 0.0f;           // 정규화된 충돌 시점 [0,1] == [이전프레임,현재프레임]
+	float NormalizedToI = 0.0f;           // 정규화된 충돌 시점 [0,1] == [이전프레임,현재프레임]
 };
 
 //충돌 형상 정보
