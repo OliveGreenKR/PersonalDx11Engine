@@ -101,6 +101,11 @@ public:
     virtual void P_SetMaxSpeed(PhysicsID targetID, float maxSpeed) = 0;
     virtual void P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed) = 0;
 
+    // === 트랜스폼 설정자 ===
+    virtual void P_SetWorldPosition(PhysicsID targetID, XMVECTOR worldPosition) = 0;
+    virtual void P_SetWorldRotation(PhysicsID targetID, XMVECTOR worldRotation) = 0;
+    virtual void P_SetWorldScale(PhysicsID targetID, XMVECTOR worldScale) = 0;
+
     // === 벡터 속성 설정 (XMVECTOR 가상 함수) ===
     virtual void P_SetRotationalInertia(PhysicsID targetID, XMVECTOR rotationalInertia) = 0;
     virtual void P_SetInvRotationalInertia(PhysicsID targetID, XMVECTOR invRotationalInertia) = 0;
