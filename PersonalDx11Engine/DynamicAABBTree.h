@@ -71,7 +71,10 @@ public:
     /// 트리 정리
     /// </summary>
     void Clear();
-
+    /// <summary>
+    /// Fat Margin비율 설정. 0.1 -> 110%가 FatBound가됨
+    /// </summary>
+    /// <param name="margin">최소 0.01f</param>
     void SetFatMarginRatio(float margin)
     {
         FatMarginRatio = std::max(margin, 0.01f);
@@ -107,6 +110,13 @@ public:
     const FMAABB& GetFatBounds(size_t nodeId) const;
 
     /// <summary>
+    /// 노드의 AABB 변경. 트리 재구성은 자동으로 발생하지 않음
+    /// </summary>
+    /// <param name="nodeId">노드 ID</param>
+    /// <param name="bounds">변경할 AABB</param>
+    void UpdateNodeBounds(size_t nodeId, const FMAABB& bounds);
+
+    /// <summary>
     /// 노드 ID 유효성 검사 (기존 IsValidId와 동일)
     /// </summary>
     /// <param name="nodeId">노드 ID</param>
@@ -134,7 +144,7 @@ private:
     void InsertLeaf(size_t leafId);
     void RemoveLeaf(size_t leafId);
     size_t Rebalance(size_t nodeId);
-    void UpdateNodeBounds(size_t nodeId, const FMAABB& bounds);
+
     void CreateFatBounds(size_t nodeId);
 
     bool IsValidNodeId(size_t nodeId) const;
