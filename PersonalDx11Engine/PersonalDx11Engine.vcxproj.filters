@@ -441,9 +441,6 @@
     <ClInclude Include="RigidBodyComponent.h">
       <Filter>Engine\Object\Components\ActorComponent\Scene\RigidBody</Filter>
     </ClInclude>
-    <ClInclude Include="DynamicBoundableInterface.h">
-      <Filter>Engine\Interface</Filter>
-    </ClInclude>
     <ClInclude Include="ActorComponent.h">
       <Filter>Engine\Object\Components\ActorComponent</Filter>
     </ClInclude>

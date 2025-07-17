@@ -223,7 +223,6 @@
     <ClInclude Include="test\testSceneComponent.h" />
     <ClInclude Include="UI_DragVector.h" />
     <ClInclude Include="DynamicAABBTree.h" />
-    <ClInclude Include="DynamicBoundableInterface.h" />
     <ClInclude Include="DynamicCircularQueue.h" />
     <ClInclude Include="ArenaMemoryPool.h" />
     <ClInclude Include="FramePoolManager.h" />

@@ -372,67 +372,6 @@ XMVECTOR FCollisionProcessor::GetPrevWorldScale(PhysicsID Id) const
 #pragma endregion
 
 
-FMAABB FCollisionProcessor::CalculateAABBFromShape(XMVECTOR position, XMVECTOR rotation, XMVECTOR halfExtent, ECollisionShapeType shapeType) const
-{
-    FMAABB result;
-
-    switch (shapeType)
-    {
-        case ECollisionShapeType::Sphere:
-        {
-            // 구체의 경우: halfExtent.x를 반지름으로 사용
-            float radius = XMVectorGetX(halfExtent);
-            XMVECTOR radiusVec = XMVectorReplicate(radius);
-
-            result.vMin = (XMVectorSubtract(position, radiusVec));
-            result.vMax = (XMVectorAdd(position, radiusVec));
-            break;
-        }
-        case ECollisionShapeType::Box:
-        {
-            // 박스의 경우: 회전 적용된 AABB 계산
-            XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotation);
-
-            // 회전된 박스의 각 꼭짓점을 고려한 AABB 계산
-            XMVECTOR corners[8];
-            XMVECTOR signs[8] = {
-                XMVectorSet(-1, -1, -1, 0), XMVectorSet(1, -1, -1, 0),
-                XMVectorSet(-1,  1, -1, 0), XMVectorSet(1,  1, -1, 0),
-                XMVectorSet(-1, -1,  1, 0), XMVectorSet(1, -1,  1, 0),
-                XMVectorSet(-1,  1,  1, 0), XMVectorSet(1,  1,  1, 0)
-            };
-
-            XMVECTOR minBounds = XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0);
-            XMVECTOR maxBounds = XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0);
-
-            // 8개 꼭짓점을 모두 변환하여 최소/최대값 계산
-            for (int i = 0; i < 8; ++i)
-            {
-                XMVECTOR localCorner = XMVectorMultiply(halfExtent, signs[i]);
-                XMVECTOR worldCorner = XMVector3Transform(localCorner, rotationMatrix);
-                worldCorner = XMVectorAdd(worldCorner, position);
-
-                minBounds = XMVectorMin(minBounds, worldCorner);
-                maxBounds = XMVectorMax(maxBounds, worldCorner);
-            }
-
-            result.vMin = (minBounds);
-            result.vMax = (maxBounds);
-            break;
-        }
-        default:
-        {
-            LOG_ERROR("CalculateAABBFromShape: Unknown shape type %d", static_cast<int>(shapeType));
-            // 기본값: 위치 중심의 작은 AABB
-            XMVECTOR smallExtent = XMVectorReplicate(0.1f);
-            result.vMin = (XMVectorSubtract(position, smallExtent));
-            result.vMax = (XMVectorAdd(position, smallExtent));
-            break;
-        }
-    }
-
-    return result;
-}
 
 
 #pragma region Collision Processing Pipeline
@@ -757,6 +696,71 @@ float FCollisionProcessor::CalculateAABBOverlapRatio(const FCollisionPair& Pair)
 
     // Sigmoid 함수로 부드러운 포화 (0~1 범위)
     return std::clamp(1.0f - std::exp(-overlapRatio * 3.0f), 0.0f, 1.0f);
+}
+
+#pragma endregion
+
+#pragma region Utility Functions
+FMAABB FCollisionProcessor::CalculateAABBFromShape(XMVECTOR position, XMVECTOR rotation, XMVECTOR halfExtent, ECollisionShapeType shapeType) const
+{
+    FMAABB result;
+
+    switch (shapeType)
+    {
+        case ECollisionShapeType::Sphere:
+        {
+            // 구체의 경우: halfExtent.x를 반지름으로 사용
+            float radius = XMVectorGetX(halfExtent);
+            XMVECTOR radiusVec = XMVectorReplicate(radius);
+
+            result.vMin = (XMVectorSubtract(position, radiusVec));
+            result.vMax = (XMVectorAdd(position, radiusVec));
+            break;
+        }
+        case ECollisionShapeType::Box:
+        {
+            // 박스의 경우: 회전 적용된 AABB 계산
+            XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotation);
+
+            // 회전된 박스의 각 꼭짓점을 고려한 AABB 계산
+            XMVECTOR corners[8];
+            XMVECTOR signs[8] = {
+                XMVectorSet(-1, -1, -1, 0), XMVectorSet(1, -1, -1, 0),
+                XMVectorSet(-1,  1, -1, 0), XMVectorSet(1,  1, -1, 0),
+                XMVectorSet(-1, -1,  1, 0), XMVectorSet(1, -1,  1, 0),
+                XMVectorSet(-1,  1,  1, 0), XMVectorSet(1,  1,  1, 0)
+            };
+
+            XMVECTOR minBounds = XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0);
+            XMVECTOR maxBounds = XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0);
+
+            // 8개 꼭짓점을 모두 변환하여 최소/최대값 계산
+            for (int i = 0; i < 8; ++i)
+            {
+                XMVECTOR localCorner = XMVectorMultiply(halfExtent, signs[i]);
+                XMVECTOR worldCorner = XMVector3Transform(localCorner, rotationMatrix);
+                worldCorner = XMVectorAdd(worldCorner, position);
+
+                minBounds = XMVectorMin(minBounds, worldCorner);
+                maxBounds = XMVectorMax(maxBounds, worldCorner);
+            }
+
+            result.vMin = (minBounds);
+            result.vMax = (maxBounds);
+            break;
+        }
+        default:
+        {
+            LOG_ERROR("CalculateAABBFromShape: Unknown shape type %d", static_cast<int>(shapeType));
+            // 기본값: 위치 중심의 작은 AABB
+            XMVECTOR smallExtent = XMVectorReplicate(0.1f);
+            result.vMin = (XMVectorSubtract(position, smallExtent));
+            result.vMax = (XMVectorAdd(position, smallExtent));
+            break;
+        }
+    }
+
+    return result;
 }
 
 #pragma endregion
