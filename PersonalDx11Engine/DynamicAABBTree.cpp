@@ -488,9 +488,6 @@ void FDynamicAABBTree::UpdateNodeBounds(size_t nodeId, const FMAABB& bounds)
 
     Node& node = NodePool[nodeId];
     node.Bounds = bounds;
-
-    // Fat AABB 재생성
-    CreateFatBounds(nodeId);
 }
 
 void FDynamicAABBTree::CreateFatBounds(size_t nodeId)

@@ -110,7 +110,7 @@ public:
     const FMAABB& GetFatBounds(size_t nodeId) const;
 
     /// <summary>
-    /// 노드의 AABB 변경. 트리 재구성은 자동으로 발생하지 않음
+    /// 노드의 Bound AABB 변경. 트리 재구성은 자동으로 발생하지 않음
     /// </summary>
     /// <param name="nodeId">노드 ID</param>
     /// <param name="bounds">변경할 AABB</param>
