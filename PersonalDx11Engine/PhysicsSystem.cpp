@@ -4,7 +4,7 @@
 #include "Debug.h"
 #include "ConfigReadManager.h"
 
-#pragma region Constructors and PhysicsObjects LifeCycle Management
+#pragma region Constructor and Initialization
 
 UPhysicsSystem::~UPhysicsSystem()
 {
@@ -19,7 +19,7 @@ void UPhysicsSystem::Initialize()
         CollisionProcessor = std::make_unique<FCollisionProcessor>();
         CollisionProcessor->Initialize(this, this, this);
         PhysicsStateSoA = std::make_unique<FPhysicsStateArrays>(InitialPhysicsObjectCapacity);
-        JobPool = std::make_unique < FArenaMemoryPool>(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
+        JobPool = std::make_unique<FArenaMemoryPool>(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
         CollisionEventQueue = std::make_unique<TCircularQueue<FPhysicsCollisionEvent>>(InitialCollisionEventQueueSize);
     }
     catch (...)
@@ -39,7 +39,7 @@ void UPhysicsSystem::Release()
     JobQueue->Clear();
     //풀 정리
     JobPool->Reset();
-    
+
     //PhysicsStateSoA는 자동정리
     //충돌 프로세서 정리
     CollisionProcessor->Release();
@@ -54,7 +54,17 @@ void UPhysicsSystem::LoadConfigFromIni()
     UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
     UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
     UConfigReadManager::Get()->GetValue("MinSubSteps", MinSubSteps);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsVelocity", MaxPhysicsVelocity);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsAngularVelocity", MaxPhysicsAngularVelocity);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsForce", MaxPhysicsForce);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsTorque", MaxPhysicsTorque);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsAcceleration", MaxPhysicsAcceleration);
+    UConfigReadManager::Get()->GetValue("MaxPhysicsAngularAcceleration", MaxPhysicsAngularAcceleration);
 }
+
+#pragma endregion
+
+#pragma region Public Interface
 
 SoAID UPhysicsSystem::RegisterPhysicsObject(std::shared_ptr<IPhysicsObject>& Object)
 {
@@ -125,109 +135,51 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
     FinalizeSimulation();
 }
 
-// 필요한 서브스텝 수 계산
-int UPhysicsSystem::CalculateRequiredSubsteps()
+void UPhysicsSystem::PrintDebugInfo()
 {
-    int steps = static_cast<int>(AccumulatedTime / FixedTimeStep);
-    return std::min(steps, MaxSubSteps);
-}
-
-// 시뮬레이션 시작 전 준비
-void UPhysicsSystem::PrepareSimulation()
-{
-    bIsSimulating = true;
-
-    // 1. 게임 → 물리 동기화 
-    SyncGameToPhysics();
-
-    // 2. 작업 큐 차례대로 실행
-    ProcessJobQueue();
-
-    // 3. 비유효 객체 정리
-    PhysicsStateSoA->CleanupExpiredObjectRefs();
-
-    // 4. JobQueue 클리어
-    JobQueue->Clear();
-
-    // 5. JobPool 클리어
-    JobPool->Reset();
-}
-
-// 단일 서브스텝 시뮬레이션
-float UPhysicsSystem::SimulateSubstep(const float StepTime)
-{
-    //가장 적은 시뮬시간
-    float MinSimulatedTimeRatio = 1.0f;
-    
-    // 1. 충돌 
-    float CollideTimeRatio = GetCollisionSubsystem()->ProcessCollisions(;
-    MinSimulatedTimeRatio = std::min(MinSimulatedTimeRatio, CollideTimeRatio);
-
-    // 시뮬레이션 시간 업데이트
-    // Tick 시간 클램핑 ( 로직 처리에 안정성을 주기위한 최소 틱시간 결정)
-    float SimualtedTime = std::max(MinSubStepTickTime, StepTime * MinSimulatedTimeRatio);
-
-
-    //공통 물리 배치 시뮬레이션
-    // 중력 적용
-    BatchApplyGravity(Gravity, SimualtedTime);
-
-    // 외부 힘 적용
-    BatchApplyForces(SimualtedTime);
-
-    // 드래그 적용
-    BatchApplyDrag(SimualtedTime);
-
-    // 속도 적분 (위치 업데이트)
-    BatchIntegrateVelocity(SimualtedTime);
-
-    //누적힘 리셋
-    BatchResetForces();
-
-    // 물리 Tick
-    BatchPhysicsTick(SimualtedTime);
-
-    // todo 비동기 이벤트 큐 푸시
-    // TODO:
-
-    return SimualtedTime;
-}
-
-void UPhysicsSystem::FinalizeSimulation()
-{
-    // 시뮬레이션 플래그 해제
-    bIsSimulating = false;
-
-    // 물리 이벤트 동기화
-    ProcessCollisionEvents();
-
-    // 물리 → 게임 상태값 동기화 
-    SyncPhysicsToGame();
+#ifdef _DEBUG
+    LOG_NORMAL("Current Active PhysicsObejct : [%03d]", PhysicsStateSoA->GetActiveObjectCount());
+#endif
 }
 
 #pragma endregion
 
-#pragma region JobSystem
-void UPhysicsSystem::ProcessJobQueue()
-{
-    // Job Queue를 순차적으로 처리
-    while (!JobQueue->Empty())
-    {
-        auto request = JobQueue->Front();
-        JobQueue->Pop();
+#pragma region Data Access Layer
 
-        if (request.IsValid())
+SoAIdx UPhysicsSystem::GetIdx(const SoAID targetID) const
+{
+    return PhysicsStateSoA->GetIndex(targetID);
+}
+
+bool UPhysicsSystem::IsValidTargetID(const PhysicsID targetID) const
+{
+    SoAID soaID = static_cast<SoAID>(targetID);
+    return PhysicsStateSoA->IsValidSlotID(soaID);
+}
+
+std::vector<PhysicsID> UPhysicsSystem::GetActivePhysicsIDs() const
+{
+    //TODO: 좀더 효율적인 방식 없나
+    std::vector<PhysicsID> ActiveIDs;
+
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx i = startIdx; i < endIdx; ++i)
+    {
+        if (PhysicsStateSoA->IsValidActiveSlotIndex(i))
         {
-            // Job 실행 - this를 IPhysicsStateInternal*로 전달
-            request.Job->Execute(this);
+            PhysicsID id = PhysicsStateSoA->GetID(i);
+            ActiveIDs.push_back(id);
         }
     }
+
+    return ActiveIDs;
 }
+
 #pragma endregion
 
-// PhysicsSystem.cpp Event Queue System 구현
-
-#pragma region Event Queue System
+#pragma region IPhysicsEventDispatcher Implementation
 
 void UPhysicsSystem::AddCollisionEvent(const FPhysicsCollisionEvent& Event)
 {
@@ -240,7 +192,7 @@ void UPhysicsSystem::AddCollisionEvent(const FPhysicsCollisionEvent& Event)
     CollisionEventQueue->Push(Event);
 }
 
-void UPhysicsSystem::ProcessCollisionEvents()
+void UPhysicsSystem::SendCollisionEvents()
 {
     if (!CollisionEventQueue || CollisionEventQueue->Empty())
     {
@@ -291,20 +243,525 @@ void UPhysicsSystem::SendEventToPhysicsObject(PhysicsID TargetPhysicsID, const F
 
 #pragma endregion
 
-#pragma region Inner Helper
-SoAIdx UPhysicsSystem::GetIdx(const SoAID targetID) const
+#pragma region Job System Management
+
+void UPhysicsSystem::ProcessJobQueue()
 {
-    return PhysicsStateSoA->GetIndex(targetID);
+    // Job Queue를 순차적으로 처리
+    while (!JobQueue->Empty())
+    {
+        auto request = JobQueue->Front();
+        JobQueue->Pop();
+
+        if (request.IsValid())
+        {
+            // Job 실행 - this를 IPhysicsStateInternal*로 전달
+            request.Job->Execute(this);
+        }
+    }
 }
 
-bool UPhysicsSystem::IsValidTargetID(const PhysicsID targetID) const
-{
-    SoAID soaID = static_cast<SoAID>(targetID);
-    return PhysicsStateSoA->IsValidSlotID(soaID);
-}
 #pragma endregion
 
-#pragma region Synchronization System Implementation (SoA Batch Optimized)
+#pragma region Physics Simulation Pipeline
+
+// 필요한 서브스텝 수 계산
+int UPhysicsSystem::CalculateRequiredSubsteps()
+{
+    int steps = static_cast<int>(AccumulatedTime / FixedTimeStep);
+    return std::min(steps, MaxSubSteps);
+}
+
+// 시뮬레이션 시작 전 준비
+void UPhysicsSystem::PrepareSimulation()
+{
+    bIsSimulating = true;
+
+    // 1. 게임 → 물리 동기화 
+    SyncGameToPhysics();
+
+    // 2. 작업 큐 차례대로 실행
+    ProcessJobQueue();
+
+    // 3. 비유효 객체 정리
+    PhysicsStateSoA->CleanupExpiredObjectRefs();
+
+    // 4. JobQueue 클리어
+    JobQueue->Clear();
+
+    // 5. JobPool 클리어
+    JobPool->Reset();
+}
+
+// 단일 서브스텝 시뮬레이션
+float UPhysicsSystem::SimulateSubstep(const float StepTime)
+{
+    //가장 적은 시뮬시간
+    float MinSimulatedTimeRatio = 1.0f;
+
+    // 1. 충돌 
+    float CollideTimeRatio = GetCollisionSubsystem()->ProcessCollisions(;
+    MinSimulatedTimeRatio = std::min(MinSimulatedTimeRatio, CollideTimeRatio);
+
+    // 시뮬레이션 시간 업데이트
+    // Tick 시간 클램핑 ( 로직 처리에 안정성을 주기위한 최소 틱시간 결정)
+    float SimualtedTime = std::max(MinSubStepTickTime, StepTime * MinSimulatedTimeRatio);
+
+
+    //공통 물리 배치 시뮬레이션
+    // 중력 적용
+    BatchApplyGravity(Gravity, SimualtedTime);
+
+    // 외부 힘 적용
+    BatchApplyForces(SimualtedTime);
+
+    // 드래그 적용
+    BatchApplyDrag(SimualtedTime);
+
+    // 속도 적분 (위치 업데이트)
+    BatchIntegrateVelocity(SimualtedTime);
+
+    //누적힘 리셋
+    BatchResetForces();
+
+    // 물리 Tick
+    BatchPhysicsTick(SimualtedTime);
+
+    // todo 비동기 이벤트 큐 푸시
+    // TODO:
+
+    return SimualtedTime;
+}
+
+void UPhysicsSystem::FinalizeSimulation()
+{
+    // 시뮬레이션 플래그 해제
+    bIsSimulating = false;
+
+    // 물리 이벤트 동기화
+    SendCollisionEvents();
+
+    // 물리 → 게임 상태값 동기화 
+    SyncPhysicsToGame();
+}
+
+void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            // ObjectReferences를 통한 IPhysicsObject::TickPhysics 호출
+            if (i < PhysicsStateSoA->ObjectReferences.size())
+            {
+                if (auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock())
+                {
+                    physicsObject->TickPhysics(deltaTime);
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    // 중력은 이미 가속도(m/s²)이므로 deltaTime을 곱해서 속도 변화량으로 변환
+    XMVECTOR gravityVec = XMVectorSet(gravity.x, gravity.y, gravity.z, 0.0f);
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+
+    // 올바른 계산: gravity(가속도) * deltaTime = 속도 변화량
+    XMVECTOR gravityVelocityDelta = XMVectorMultiply(gravityVec, deltaTimeVec);
+
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            // 중력 적용 조건 확인
+            if (PhysicsStateSoA->PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
+                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
+            {
+                float invMass = PhysicsStateSoA->InvMasses[i];
+                if (invMass <= KINDA_SMALL)  // Static 객체는 무한 질량
+                    continue;
+
+                // 중력 스케일 적용
+                float gravityScale = PhysicsStateSoA->GravityScales[i];
+                XMVECTOR scaledGravityDelta = XMVectorScale(gravityVelocityDelta, gravityScale);
+
+                // 직접 속도에 변화량 적용 (질량은 이미 중력에 반영되어 있음)
+                // 실제 물리에서는 모든 객체가 같은 중력 가속도를 받음
+                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
+                XMVECTOR newVelocity = XMVectorAdd(currentVelocity, scaledGravityDelta);
+
+                if (IsValidLinearVelocity(newVelocity))
+                {
+                    PhysicsStateSoA->Velocities[i] = newVelocity;
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당되고 활성화된 슬롯만 처리
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            // 선형 속도 적분 + 속도 제한 (Position += Velocity * deltaTime)
+            XMVECTOR velocity = PhysicsStateSoA->Velocities[i];
+            if (IsValidLinearVelocity(velocity))
+            {
+                // 속도 제한 적용 (적분 전에)
+                float maxSpeed = PhysicsStateSoA->MaxSpeeds[i];
+                if (maxSpeed > -KINDA_SMALL)  // 0.0 포함
+                {
+                    ClampLinearVelocity(maxSpeed, velocity);
+                    PhysicsStateSoA->Velocities[i] = velocity;  // 제한된 속도 저장
+                }
+
+                XMVECTOR currentPosition = PhysicsStateSoA->WorldPosition[i];
+                XMVECTOR deltaPosition = XMVectorMultiply(velocity, deltaTimeVec);
+                XMVECTOR newPosition = XMVectorAdd(currentPosition, deltaPosition);
+
+                PhysicsStateSoA->WorldPosition[i] = newPosition;
+            }
+
+            // 각속도 적분 + 각속도 제한 (Rotation += AngularVelocity * deltaTime)
+            XMVECTOR angularVelocity = PhysicsStateSoA->AngularVelocities[i];
+            if (IsValidAngularVelocity(angularVelocity))
+            {
+                // 각속도 제한 적용 (적분 전에)
+                float maxAngularSpeed = PhysicsStateSoA->MaxAngularSpeeds[i];
+                if (maxAngularSpeed > 0.0f)  // 음수는 무제한
+                {
+                    ClampAngularVelocity(maxAngularSpeed, angularVelocity);
+                    PhysicsStateSoA->AngularVelocities[i] = angularVelocity;  // 제한된 각속도 저장
+                }
+
+                XMVECTOR currentRotation = PhysicsStateSoA->WorldRotationQuat[i];
+
+                // 각속도를 쿼터니언 회전으로 변환
+                XMVECTOR angularDisplacement = XMVectorMultiply(angularVelocity, deltaTimeVec);
+
+                // 각변위의 크기 계산
+                XMVECTOR angularMagnitude = XMVector3Length(angularDisplacement);
+                float angle;
+                XMStoreFloat(&angle, angularMagnitude);
+
+                if (angle > KINDA_SMALL)
+                {
+                    // 회전축 정규화
+                    XMVECTOR axis = XMVectorDivide(angularDisplacement, angularMagnitude);
+
+                    // 각변위를 쿼터니언으로 변환
+                    XMVECTOR deltaRotation = XMQuaternionRotationAxis(axis, angle);
+
+                    // 현재 회전에 적용
+                    XMVECTOR newRotation = XMQuaternionMultiply(currentRotation, deltaRotation);
+                    newRotation = XMQuaternionNormalize(newRotation);
+
+                    PhysicsStateSoA->WorldRotationQuat[i] = newRotation;
+                }
+            }
+        }
+    }
+}
+
+void UPhysicsSystem::BatchResetForces()
+{
+    XMVECTOR zeroVector = XMVectorZero();
+
+    // Loop tiling을 이용한 캐시 최적화 순회
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 할당된 슬롯만 처리 (활성화 여부 무관하게 힘 초기화)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            PhysicsStateSoA->AccumulatedForces[i] = zeroVector;
+            PhysicsStateSoA->AccumulatedTorques[i] = zeroVector;
+        }
+    }
+}
+
+void UPhysicsSystem::BatchApplyForces(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            // 유효성 및 시뮬레이션 대상 검증
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) ||
+                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            float currentInvMass = PhysicsStateSoA->InvMasses[i];
+            if (currentInvMass <= KINDA_SMALL)  // 무한 질량 객체 제외
+                continue;
+
+
+            // 선형 가속도
+            XMVECTOR currentForce = PhysicsStateSoA->AccumulatedForces[i];
+            XMVECTOR currentInvMassVec = XMVectorReplicate(currentInvMass);
+            XMVECTOR currentLinearAcceleration = XMVectorMultiply(currentForce, currentInvMassVec);
+
+            // 가속도 적분
+            XMVECTOR deltaVelocity = XMVectorMultiply(currentLinearAcceleration, deltaTimeVec);
+            XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
+            XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
+
+            // 안전성 검증 후 적용
+            if (IsValidLinearVelocity(newVelocity))
+            {
+                PhysicsStateSoA->Velocities[i] = newVelocity;
+            }
+
+            // 토크 각가속도
+            XMVECTOR currentTorque = PhysicsStateSoA->AccumulatedTorques[i];
+            XMVECTOR currentInvRotationalInertia = PhysicsStateSoA->InvRotationalInertias[i];
+            XMVECTOR currentAngularAcceleration = XMVectorMultiply(currentTorque, currentInvRotationalInertia);
+
+            // 각속도 전환
+            XMVECTOR deltaAngularVelocity = XMVectorMultiply(currentAngularAcceleration, deltaTimeVec);
+            XMVECTOR currentAngularVelocity = PhysicsStateSoA->AngularVelocities[i];
+            XMVECTOR newAngularVelocity = XMVectorAdd(currentAngularVelocity, deltaAngularVelocity);
+
+            // 안전성 검증 후 적용
+            if (IsValidAngularVelocity(newAngularVelocity))
+            {
+                PhysicsStateSoA->AngularVelocities[i] = newAngularVelocity;
+            }
+
+            //// 힘과 토크 누적 초기화 (다음 프레임을 위한 준비)
+            //PhysicsStateSoA->AccumulatedForces[i] = XMVectorZero();
+            //PhysicsStateSoA->AccumulatedTorques[i] = XMVectorZero();
+        }
+    }
+}
+
+void UPhysicsSystem::BatchApplyDrag(float deltaTime)
+{
+    if (deltaTime <= KINDA_SMALL)
+        return;
+
+    // 개선된 드래그 모델 - 더 명확한 효과를 위한 계수 조정
+    const float linearDragCoefficient = 0.85f;
+    const float angularDragCoefficient = 0.80f;   // 각속도는 더 강한 드래그
+
+    // 지수적 감쇠: v_new = v_old * (coefficient ^ deltaTime)
+    // deltaTime이 작을 때도 효과가 보이도록 계수를 낮춤
+    float linearDragFactor = powf(linearDragCoefficient, deltaTime);
+    float angularDragFactor = powf(angularDragCoefficient, deltaTime);
+
+    XMVECTOR linearDragVec = XMVectorReplicate(linearDragFactor);
+    XMVECTOR angularDragVec = XMVectorReplicate(angularDragFactor);
+
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
+    {
+        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
+
+        for (SoAIdx i = batchStart; i < batchEnd; ++i)
+        {
+            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
+                continue;
+
+            // Dynamic 타입만 드래그 적용
+            if (PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
+            {
+                // 선형 속도 드래그 적용
+                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
+                if (IsValidLinearVelocity(currentVelocity))
+                {
+                    // 속도가 매우 작으면 완전히 정지시켜 진동 방지
+                    float velocityMagnitude = XMVector3Length(currentVelocity).m128_f32[0];
+                    if (velocityMagnitude < 0.01f)
+                    {
+                        PhysicsStateSoA->Velocities[i] = XMVectorZero();
+                    }
+                    else
+                    {
+                        XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
+                        PhysicsStateSoA->Velocities[i] = newVelocity;
+                    }
+                }
+
+                // 각속도 드래그 적용
+                XMVECTOR currentAngularVel = PhysicsStateSoA->AngularVelocities[i];
+                if (IsValidAngularVelocity(currentAngularVel))
+                {
+                    // 각속도가 매우 작으면 완전히 정지시켜 진동 방지
+                    float angularMagnitude = XMVector3Length(currentAngularVel).m128_f32[0];
+                    if (angularMagnitude < 0.1f)  // 약 5.7도/초 이하면 정지
+                    {
+                        PhysicsStateSoA->AngularVelocities[i] = XMVectorZero();
+                    }
+                    else
+                    {
+                        XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
+                        PhysicsStateSoA->AngularVelocities[i] = newAngularVel;
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool UPhysicsSystem::IsValidLinearVelocity(const XMVECTOR& InVelocity)
+{
+    // 속도 크기 계산
+    float magnitude = XMVector3Length(InVelocity).m128_f32[0];
+    // 최대 허용 속도 검사 (물리적으로 합리적인 범위)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsVelocity;
+}
+
+bool UPhysicsSystem::IsValidAngularVelocity(const XMVECTOR& InAngularVelocity)
+{
+    // 각속도 크기 계산
+    float magnitude = XMVector3Length(InAngularVelocity).m128_f32[0];
+    // 최대 허용 각속도 검사 (라디안/초)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsAngularVelocity;
+}
+
+bool UPhysicsSystem::IsValidForce(const XMVECTOR& InForce)
+{
+    // 힘의 크기 계산
+    float magnitude = XMVector3Length(InForce).m128_f32[0];
+    // 최대 허용 힘 검사 (뉴턴)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsForce;
+}
+
+bool UPhysicsSystem::IsValidTorque(const XMVECTOR& InTorque)
+{
+    // 토크의 크기 계산
+    float magnitude = XMVector3Length(InTorque).m128_f32[0];
+    // 최대 허용 토크 검사 (뉴턴·미터)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsTorque;
+}
+
+bool UPhysicsSystem::IsValidLinearAcceleration(const XMVECTOR& InAccel)
+{
+    // 가속도 크기 계산
+    float magnitude = XMVector3Length(InAccel).m128_f32[0];
+    // 최대 허용 가속도 검사 (m/s²)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsAcceleration;
+}
+
+bool UPhysicsSystem::IsValidAngularAcceleration(const XMVECTOR& InAngularAccel)
+{
+    // 각가속도 크기 계산
+    float magnitude = XMVector3Length(InAngularAccel).m128_f32[0];
+    // 최대 허용 각가속도 검사 (라디안/초²)
+    return magnitude > KINDA_SMALL && magnitude < MaxPhysicsAngularAcceleration;
+}
+
+void UPhysicsSystem::ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity)
+{
+    if (InMaxSpeed < 0.0f)
+        return;  // 제한 없음
+
+    // 속도 크기 계산
+    float magnitude = XMVector3Length(InOutVelocity).m128_f32[0];
+
+    // 극소값 처리
+    if (magnitude < KINDA_SMALL)
+    {
+        InOutVelocity = XMVectorZero();
+        return;
+    }
+
+    // 최대 속도 초과 시 클램핑
+    if (magnitude > InMaxSpeed)
+    {
+        float scale = InMaxSpeed / magnitude;
+        InOutVelocity = XMVectorScale(InOutVelocity, scale);
+    }
+}
+
+void UPhysicsSystem::ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity)
+{
+    if (InAngularMaxSpeed <= 0.0f)
+        return;  // 제한 없음
+
+    // 각속도 크기 계산
+    float magnitude = XMVector3Length(InOutAngularVelocity).m128_f32[0];
+
+    // 극소값 처리
+    if (magnitude < KINDA_SMALL)
+    {
+        InOutAngularVelocity = XMVectorZero();
+        return;
+    }
+
+    // 최대 각속도 초과 시 클램핑
+    if (magnitude > InAngularMaxSpeed)
+    {
+        float scale = InAngularMaxSpeed / magnitude;
+        InOutAngularVelocity = XMVectorScale(InOutAngularVelocity, scale);
+    }
+}
+
+#pragma endregion
+
+#pragma region Synchronization System
 
 void UPhysicsSystem::SyncGameToPhysics()
 {
@@ -520,6 +977,8 @@ void UPhysicsSystem::BatchClearAllDirtyFlags()
 
 #pragma region IPhysicsStateInternal Implementation
 
+// === Physical Properties Access ===
+
 float UPhysicsSystem::P_GetMass(PhysicsID targetID) const
 {
     if (!IsValidTargetID(targetID))
@@ -620,6 +1079,8 @@ float UPhysicsSystem::P_GetMaxAngularSpeed(PhysicsID targetID) const
     return PhysicsStateSoA->MaxAngularSpeeds[index];
 }
 
+// === Motion State Access ===
+
 XMVECTOR UPhysicsSystem::P_GetVelocity(PhysicsID targetID) const
 {
     if (!IsValidTargetID(targetID))
@@ -655,6 +1116,8 @@ XMVECTOR UPhysicsSystem::P_GetAccumulatedTorque(PhysicsID targetID) const
     SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
     return PhysicsStateSoA->AccumulatedTorques[index];
 }
+
+// === Transform Access ===
 
 XMVECTOR UPhysicsSystem::P_GetWorldPosition(PhysicsID targetID) const
 {
@@ -737,6 +1200,19 @@ XMMATRIX UPhysicsSystem::P_GetPrevWorldTransformMatrix(PhysicsID targetID) const
 
     return XMMatrixAffineTransformation(scale, XMVectorZero(), rotation, position);
 }
+
+// === State Type and Control ===
+
+bool UPhysicsSystem::P_IsPhysicsActive(PhysicsID targetID) const
+{
+    if (!IsValidTargetID(targetID))
+        return false;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    return PhysicsStateSoA->PhysicsMasks[index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
+}
+
+// === Force and Impulse Application ===
 
 void UPhysicsSystem::P_ApplyForce(PhysicsID targetID, XMVECTOR force, XMVECTOR location)
 {
@@ -830,6 +1306,8 @@ void UPhysicsSystem::P_ApplyImpulse(PhysicsID targetID, XMVECTOR impulse, XMVECT
         PhysicsStateSoA->AngularVelocities[index] = newAngularVelocity;
     }
 }
+
+// === Property Setters ===
 
 void UPhysicsSystem::P_SetMass(PhysicsID targetID, float mass)
 {
@@ -947,6 +1425,8 @@ void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSp
     PhysicsStateSoA->MaxAngularSpeeds[index] = std::max(0.0f, maxAngularSpeed);
 }
 
+// === Transform Setters ===
+
 void UPhysicsSystem::P_SetWorldPosition(PhysicsID targetID, XMVECTOR worldPosition)
 {
     if (!IsValidTargetID(targetID))
@@ -1001,6 +1481,8 @@ void UPhysicsSystem::P_SetPrevWorldScale(PhysicsID targetID, XMVECTOR worldScale
     PhysicsStateSoA->PrevWorldScale[index] = worldScale;
 }
 
+// === State Type and Control ===
+
 void UPhysicsSystem::P_SetPhysicsType(PhysicsID targetID, EPhysicsType physicsType)
 {
     if (!IsValidTargetID(targetID))
@@ -1034,15 +1516,6 @@ void UPhysicsSystem::P_SetPhysicsActive(PhysicsID targetID, bool bActive)
     {
         PhysicsStateSoA->PhysicsMasks[index].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
     }
-}
-
-bool UPhysicsSystem::P_IsPhysicsActive(PhysicsID targetID) const
-{
-    if (!IsValidTargetID(targetID))
-        return false;
-
-    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
-    return PhysicsStateSoA->PhysicsMasks[index].HasFlag(FPhysicsMask::MASK_ACTIVATION);
 }
 
 #pragma endregion
@@ -1088,443 +1561,4 @@ void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent)
     PhysicsStateSoA->CollisionHalfExtents[index] = validExtent;
 }
 
-#pragma endregion
-
-#pragma region Batching Physis Simulation
-
-// === 배치 연산 구현 ===
-
-void UPhysicsSystem::BatchApplyGravity(const Vector3& gravity, float deltaTime)
-{
-    if (deltaTime <= KINDA_SMALL)
-        return;
-
-    // 중력은 이미 가속도(m/s²)이므로 deltaTime을 곱해서 속도 변화량으로 변환
-    XMVECTOR gravityVec = XMVectorSet(gravity.x, gravity.y, gravity.z, 0.0f);
-    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
-
-    // 올바른 계산: gravity(가속도) * deltaTime = 속도 변화량
-    XMVECTOR gravityVelocityDelta = XMVectorMultiply(gravityVec, deltaTimeVec);
-
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            // 중력 적용 조건 확인
-            if (PhysicsStateSoA->PhysicsMasks[i].HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED) &&
-                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
-            {
-                float invMass = PhysicsStateSoA->InvMasses[i];
-                if (invMass <= KINDA_SMALL)  // Static 객체는 무한 질량
-                    continue;
-
-                // 중력 스케일 적용
-                float gravityScale = PhysicsStateSoA->GravityScales[i];
-                XMVECTOR scaledGravityDelta = XMVectorScale(gravityVelocityDelta, gravityScale);
-
-                // 직접 속도에 변화량 적용 (질량은 이미 중력에 반영되어 있음)
-                // 실제 물리에서는 모든 객체가 같은 중력 가속도를 받음
-                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
-                XMVECTOR newVelocity = XMVectorAdd(currentVelocity, scaledGravityDelta);
-
-                if (IsValidLinearVelocity(newVelocity))
-                {
-                    PhysicsStateSoA->Velocities[i] = newVelocity;
-                }
-            }
-        }
-    }
-}
-
-void UPhysicsSystem::BatchIntegrateVelocity(float deltaTime)
-{
-    if (deltaTime <= KINDA_SMALL)
-        return;
-
-    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
-
-    // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            // 선형 속도 적분 + 속도 제한 (Position += Velocity * deltaTime)
-            XMVECTOR velocity = PhysicsStateSoA->Velocities[i];
-            if (IsValidLinearVelocity(velocity))
-            {
-                // 속도 제한 적용 (적분 전에)
-                float maxSpeed = PhysicsStateSoA->MaxSpeeds[i];
-                if (maxSpeed > -KINDA_SMALL)  // 0.0 포함
-                {
-                    ClampLinearVelocity(maxSpeed, velocity);
-                    PhysicsStateSoA->Velocities[i] = velocity;  // 제한된 속도 저장
-                }
-
-                XMVECTOR currentPosition = PhysicsStateSoA->WorldPosition[i];
-                XMVECTOR deltaPosition = XMVectorMultiply(velocity, deltaTimeVec);
-                XMVECTOR newPosition = XMVectorAdd(currentPosition, deltaPosition);
-
-                PhysicsStateSoA->WorldPosition[i] = newPosition;
-            }
-
-            // 각속도 적분 + 각속도 제한 (Rotation += AngularVelocity * deltaTime)
-            XMVECTOR angularVelocity = PhysicsStateSoA->AngularVelocities[i];
-            if (IsValidAngularVelocity(angularVelocity))
-            {
-                // 각속도 제한 적용 (적분 전에)
-                float maxAngularSpeed = PhysicsStateSoA->MaxAngularSpeeds[i];
-                if (maxAngularSpeed > 0.0f)  // 음수는 무제한
-                {
-                    ClampAngularVelocity(maxAngularSpeed, angularVelocity);
-                    PhysicsStateSoA->AngularVelocities[i] = angularVelocity;  // 제한된 각속도 저장
-                }
-
-                XMVECTOR currentRotation = PhysicsStateSoA->WorldRotationQuat[i];
-
-                // 각속도를 쿼터니언 회전으로 변환
-                XMVECTOR angularDisplacement = XMVectorMultiply(angularVelocity, deltaTimeVec);
-
-                // 각변위의 크기 계산
-                XMVECTOR angularMagnitude = XMVector3Length(angularDisplacement);
-                float angle;
-                XMStoreFloat(&angle, angularMagnitude);
-
-                if (angle > KINDA_SMALL)
-                {
-                    // 회전축 정규화
-                    XMVECTOR axis = XMVectorDivide(angularDisplacement, angularMagnitude);
-
-                    // 각변위를 쿼터니언으로 변환
-                    XMVECTOR deltaRotation = XMQuaternionRotationAxis(axis, angle);
-
-                    // 현재 회전에 적용
-                    XMVECTOR newRotation = XMQuaternionMultiply(currentRotation, deltaRotation);
-                    newRotation = XMQuaternionNormalize(newRotation);
-
-                    PhysicsStateSoA->WorldRotationQuat[i] = newRotation;
-                }
-            }
-        }
-    }
-}
-
-void UPhysicsSystem::BatchResetForces()
-{
-    XMVECTOR zeroVector = XMVectorZero();
-
-    // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            // 할당된 슬롯만 처리 (활성화 여부 무관하게 힘 초기화)
-            if (!PhysicsStateSoA->IsValidSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            PhysicsStateSoA->AccumulatedForces[i] = zeroVector;
-            PhysicsStateSoA->AccumulatedTorques[i] = zeroVector;
-        }
-    }
-}
-
-void UPhysicsSystem::BatchApplyForces(float deltaTime)
-{
-    if (deltaTime <= KINDA_SMALL)
-        return;
-
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-    XMVECTOR deltaTimeVec = XMVectorReplicate(deltaTime);
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            // 유효성 및 시뮬레이션 대상 검증
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) ||
-                PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            float currentInvMass = PhysicsStateSoA->InvMasses[i];
-            if (currentInvMass <= KINDA_SMALL)  // 무한 질량 객체 제외
-                continue;
-
-
-            // 선형 가속도
-            XMVECTOR currentForce = PhysicsStateSoA->AccumulatedForces[i];
-            XMVECTOR currentInvMassVec = XMVectorReplicate(currentInvMass);
-            XMVECTOR currentLinearAcceleration = XMVectorMultiply(currentForce, currentInvMassVec);
-            
-            // 가속도 적분
-            XMVECTOR deltaVelocity = XMVectorMultiply(currentLinearAcceleration, deltaTimeVec);
-            XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
-            XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
-
-            // 안전성 검증 후 적용
-            if (IsValidLinearVelocity(newVelocity))
-            {
-                PhysicsStateSoA->Velocities[i] = newVelocity;
-            }
-
-            // 토크 각가속도
-            XMVECTOR currentTorque = PhysicsStateSoA->AccumulatedTorques[i];
-            XMVECTOR currentInvRotationalInertia = PhysicsStateSoA->InvRotationalInertias[i];
-            XMVECTOR currentAngularAcceleration = XMVectorMultiply(currentTorque, currentInvRotationalInertia);
-
-            // 각속도 전환
-            XMVECTOR deltaAngularVelocity = XMVectorMultiply(currentAngularAcceleration, deltaTimeVec);
-            XMVECTOR currentAngularVelocity = PhysicsStateSoA->AngularVelocities[i];
-            XMVECTOR newAngularVelocity = XMVectorAdd(currentAngularVelocity, deltaAngularVelocity);
-
-            // 안전성 검증 후 적용
-            if (IsValidAngularVelocity(newAngularVelocity))
-            {
-                PhysicsStateSoA->AngularVelocities[i] = newAngularVelocity;
-            }
-
-
-            // 힘과 토크 누적 초기화 (다음 프레임을 위한 준비)
-            PhysicsStateSoA->AccumulatedForces[i] = XMVectorZero();
-            PhysicsStateSoA->AccumulatedTorques[i] = XMVectorZero();
-        }
-    }
-}
-
-void UPhysicsSystem::BatchApplyDrag(float deltaTime)
-{
-    if (deltaTime <= KINDA_SMALL)
-        return;
-
-    // 개선된 드래그 모델 - 더 명확한 효과를 위한 계수 조정
-    const float linearDragCoefficient = 0.85f;    
-    const float angularDragCoefficient = 0.80f;   // 각속도는 더 강한 드래그
-
-    // 지수적 감쇠: v_new = v_old * (coefficient ^ deltaTime)
-    // deltaTime이 작을 때도 효과가 보이도록 계수를 낮춤
-    float linearDragFactor = powf(linearDragCoefficient, deltaTime);
-    float angularDragFactor = powf(angularDragCoefficient, deltaTime);
-
-    XMVECTOR linearDragVec = XMVectorReplicate(linearDragFactor);
-    XMVECTOR angularDragVec = XMVectorReplicate(angularDragFactor);
-
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            // Dynamic 타입만 드래그 적용
-            if (PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Dynamic)
-            {
-                // 선형 속도 드래그 적용
-                XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[i];
-                if (IsValidLinearVelocity(currentVelocity))
-                {
-                    // 속도가 매우 작으면 완전히 정지시켜 진동 방지
-                    float velocityMagnitude = XMVector3Length(currentVelocity).m128_f32[0];
-                    if (velocityMagnitude < 0.01f )  
-                    {
-                        PhysicsStateSoA->Velocities[i] = XMVectorZero();
-                    }
-                    else
-                    {
-                        XMVECTOR newVelocity = XMVectorMultiply(currentVelocity, linearDragVec);
-                        PhysicsStateSoA->Velocities[i] = newVelocity;
-                    }
-                }
-
-                // 각속도 드래그 적용
-                XMVECTOR currentAngularVel = PhysicsStateSoA->AngularVelocities[i];
-                if (IsValidAngularVelocity(currentAngularVel))
-                {
-                    // 각속도가 매우 작으면 완전히 정지시켜 진동 방지
-                    float angularMagnitude = XMVector3Length(currentAngularVel).m128_f32[0];
-                    if (angularMagnitude < 0.1f)  // 약 5.7도/초 이하면 정지
-                    {
-                        PhysicsStateSoA->AngularVelocities[i] = XMVectorZero();
-                    }
-                    else
-                    {
-                        XMVECTOR newAngularVel = XMVectorMultiply(currentAngularVel, angularDragVec);
-                        PhysicsStateSoA->AngularVelocities[i] = newAngularVel;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
-{
-    if (deltaTime <= KINDA_SMALL)
-        return;
-
-    // Loop tiling을 이용한 캐시 최적화 순회
-    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
-    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
-
-    for (SoAIdx batchStart = startIdx; batchStart < endIdx; batchStart += BatchSize)
-    {
-        SoAIdx batchEnd = std::min(batchStart + BatchSize, endIdx);
-
-        for (SoAIdx i = batchStart; i < batchEnd; ++i)
-        {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i) || PhysicsStateSoA->PhysicsTypes[i] == EPhysicsType::Static)
-                continue;
-
-            // ObjectReferences를 통한 IPhysicsObject::TickPhysics 호출
-            if (i < PhysicsStateSoA->ObjectReferences.size())
-            {
-                if (auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock())
-                {
-                    physicsObject->TickPhysics(deltaTime);
-                }
-            }
-        }
-    }
-}
-#pragma endregion
-
-#pragma region Numeric Stability , Clamp States Helper
-// === 수치 안정성 헬퍼 메서드 구현 ===
-
-bool UPhysicsSystem::IsValidLinearVelocity(const XMVECTOR& InVelocity)
-{
-    // 속도 크기 계산
-    float magnitude = XMVector3Length(InVelocity).m128_f32[0];
-    // 최대 허용 속도 검사 (물리적으로 합리적인 범위)
-    const float MAX_REASONABLE_VELOCITY = 1000.0f ;  // 1000 m/s (음속의 약 3배)
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_VELOCITY;
-}
-
-bool UPhysicsSystem::IsValidAngularVelocity(const XMVECTOR& InAngularVelocity)
-{
-    // 각속도 크기 계산
-    float magnitude = XMVector3Length(InAngularVelocity).m128_f32[0];
-    // 최대 허용 각속도 검사 (라디안/초)
-    const float MAX_REASONABLE_ANGULAR_VELOCITY = 100.0f;  // 약 573도/초
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ANGULAR_VELOCITY;
-}
-
-bool UPhysicsSystem::IsValidForce(const XMVECTOR& InForce)
-{
-    // 힘의 크기 계산
-    float magnitude = XMVector3Length(InForce).m128_f32[0];
-    // 최대 허용 힘 검사 (뉴턴)
-    const float MAX_REASONABLE_FORCE = 1000000.0f ;  // 1MN (메가뉴턴)
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_FORCE;
-}
-
-bool UPhysicsSystem::IsValidTorque(const XMVECTOR& InTorque)
-{
-    // 토크의 크기 계산
-    float magnitude = XMVector3Length(InTorque).m128_f32[0];
-    // 최대 허용 토크 검사 (뉴턴·미터)
-    const float MAX_REASONABLE_TORQUE = 100000.0f ;  // 100kN·m
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_TORQUE;
-}
-
-bool UPhysicsSystem::IsValidLinearAcceleration(const XMVECTOR& InAccel)
-{
-    // 가속도 크기 계산
-    float magnitude = XMVector3Length(InAccel).m128_f32[0];
-    // 최대 허용 가속도 검사 (m/s²)
-    const float MAX_REASONABLE_ACCELERATION = 10000.0f ;  // 약 1000G
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ACCELERATION;
-}
-
-bool UPhysicsSystem::IsValidAngularAcceleration(const XMVECTOR& InAngularAccel)
-{
-    // 각가속도 크기 계산
-    float magnitude = XMVector3Length(InAngularAccel).m128_f32[0];
-    // 최대 허용 각가속도 검사 (라디안/초²)
-    const float MAX_REASONABLE_ANGULAR_ACCELERATION = 1000.0f;  // 약 57,000도/초²
-    return magnitude > KINDA_SMALL && magnitude < MAX_REASONABLE_ANGULAR_ACCELERATION;
-}
-
-void UPhysicsSystem::ClampLinearVelocity(float InMaxSpeed, XMVECTOR& InOutVelocity)
-{
-    if (InMaxSpeed < 0.0f)
-        return;  // 제한 없음
-
-    // 속도 크기 계산
-    float magnitude = XMVector3Length(InOutVelocity).m128_f32[0];
-
-    // 극소값 처리
-    if (magnitude < KINDA_SMALL)
-    {
-        InOutVelocity = XMVectorZero();
-        return;
-    }
-
-    // 최대 속도 초과 시 클램핑
-    if (magnitude > InMaxSpeed)
-    {
-        float scale = InMaxSpeed / magnitude;
-        InOutVelocity = XMVectorScale(InOutVelocity, scale);
-    }
-}
-
-void UPhysicsSystem::ClampAngularVelocity(float InAngularMaxSpeed, XMVECTOR& InOutAngularVelocity)
-{
-    if (InAngularMaxSpeed <= 0.0f)
-        return;  // 제한 없음
-
-    // 각속도 크기 계산
-    float magnitude = XMVector3Length(InOutAngularVelocity).m128_f32[0];
-
-    // 극소값 처리
-    if (magnitude < KINDA_SMALL)
-    {
-        InOutAngularVelocity = XMVectorZero();
-        return;
-    }
-
-    // 최대 각속도 초과 시 클램핑
-    if (magnitude > InAngularMaxSpeed)
-    {
-        float scale = InAngularMaxSpeed / magnitude;
-        InOutAngularVelocity = XMVectorScale(InOutAngularVelocity, scale);
-    }
-}
-#pragma endregion
-
-#pragma region Debug
-void UPhysicsSystem::PrintDebugInfo()
-{
-#ifdef _DEBUG
-    LOG_NORMAL("Current Active PhysicsObejct : [%03d]", PhysicsStateSoA->GetActiveObjectCount());
-#endif
-}
 #pragma endregion
