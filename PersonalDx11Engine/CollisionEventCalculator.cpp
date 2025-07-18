@@ -5,12 +5,10 @@ using namespace DirectX;
 
 #pragma region Core Event Generation
 
-FPhysicsCollisionEvent FCollisionEventCalculator::GenerateCollisionEvent(
-    const FCollisionDetectionResult& DetectResult,
-    bool bPrevCollided,
-    PhysicsID PhysicsIdA,
-    PhysicsID PhysicsIdB,
-    float deltaTime)
+FPhysicsCollisionEvent FCollisionEventCalculator::GenerateCollisionEvent(const FCollisionDetectionResult& DetectResult,
+                                                                         bool bPrevCollided,
+                                                                         PhysicsID PhysicsIdA,
+                                                                         PhysicsID PhysicsIdB)
 {
     FPhysicsCollisionEvent Event;
 
@@ -25,7 +23,7 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateCollisionEvent(
     Event.CollisionPoint = DetectResult.Point;
     Event.Normal = DetectResult.Normal;
     Event.PenetrationDepth = DetectResult.PenetrationDepth;
-    Event.TimeOfImpact = DetectResult.NormalizedToI * deltaTime;
+    Event.NormalizedToI = DetectResult.NormalizedToI;
 
     return Event;
 }
@@ -46,7 +44,7 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateExitEvent(
     Event.CollisionPoint = XMVectorZero();
     Event.Normal = XMVectorZero();
     Event.PenetrationDepth = 0.0f;
-    Event.TimeOfImpact = 0.0f;
+    Event.NormalizedToI = 0.0f;
 
     return Event;
 }

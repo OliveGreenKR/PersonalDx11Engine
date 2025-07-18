@@ -22,14 +22,11 @@ public:
     /// <param name="bPrevCollided">이전 프레임 충돌 여부</param>
     /// <param name="PhysicsIdA">물체 A의 PhysicsID</param>
     /// <param name="PhysicsIdB">물체 B의 PhysicsID</param>
-    /// <param name="deltaTime">서브스텝 시간</param>
     /// <returns>생성된 물리 이벤트</returns>
-    FPhysicsCollisionEvent GenerateCollisionEvent(
-        const FCollisionDetectionResult& DetectResult,
-        bool bPrevCollided,
-        PhysicsID PhysicsIdA,
-        PhysicsID PhysicsIdB,
-        float deltaTime
+    FPhysicsCollisionEvent GenerateCollisionEvent(const FCollisionDetectionResult& DetectResult,
+                                                  bool bPrevCollided,
+                                                  PhysicsID PhysicsIdA,
+                                                  PhysicsID PhysicsIdB
     );
 
     /// <summary>
