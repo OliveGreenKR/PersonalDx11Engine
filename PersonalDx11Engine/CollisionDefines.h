@@ -68,6 +68,7 @@ struct FCollisionResponseResult
 // 물리 시스템 내부용 충돌 이벤트 (PhysicsID 기반)
 struct FPhysicsCollisionEvent
 {
+	ECollisionState CollisionState = ECollisionState::None;
 	PhysicsID PhysicsIdA = 0;
 	PhysicsID PhysicsIdB = 0;
 
@@ -78,8 +79,8 @@ struct FPhysicsCollisionEvent
 
 	bool operator==(const FPhysicsCollisionEvent& Other) const
 	{
-		return (PhysicsIdA == Other.PhysicsIdA && PhysicsIdB == Other.PhysicsIdB) ||
-			(PhysicsIdA == Other.PhysicsIdB && PhysicsIdB == Other.PhysicsIdA);
+		return (PhysicsIdA == Other.PhysicsIdA && PhysicsIdB == Other.PhysicsIdB && CollisionState == Other.CollisionState) ||
+			(PhysicsIdA == Other.PhysicsIdB && PhysicsIdB == Other.PhysicsIdA && CollisionState == Other.CollisionState) ;
 	}
 };
 

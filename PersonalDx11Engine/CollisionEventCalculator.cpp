@@ -14,6 +14,9 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateCollisionEvent(
 {
     FPhysicsCollisionEvent Event;
 
+    //상태 결정
+    Event.CollisionState = DetermineCollisionState(DetectResult.bCollided, bPrevCollided);
+
     // 기본 ID 설정
     Event.PhysicsIdA = PhysicsIdA;
     Event.PhysicsIdB = PhysicsIdB;
@@ -32,6 +35,8 @@ FPhysicsCollisionEvent FCollisionEventCalculator::GenerateExitEvent(
     PhysicsID PhysicsIdB)
 {
     FPhysicsCollisionEvent Event;
+
+    Event.CollisionState = ECollisionState::Exit;
 
     // 기본 ID 설정
     Event.PhysicsIdA = PhysicsIdA;
