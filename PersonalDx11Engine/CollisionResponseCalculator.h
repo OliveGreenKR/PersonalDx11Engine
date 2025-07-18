@@ -5,42 +5,6 @@
 using namespace DirectX;
 
 /// <summary>
-/// 충돌 반응 누적 데이터 (Warm Starting용)
-/// 제약조건 해결 시 이전 프레임의 람다값을 재사용
-/// </summary>
-struct FCollisionAccumulation
-{
-    float NormalLambda = 0.0f;      // 법선 제약조건 누적값
-    float FrictionLambda = 0.0f;    // 접선 제약조건 누적값
-    float TwistLambda = 0.0f;       // 회전 마찰 제약조건 누적값
-
-    // warm starting 감쇠 (프레임간 안정성)
-    void ApplyWarmStartingDamping(float DampingFactor = 0.8f)
-    {
-        NormalLambda *= DampingFactor;
-        FrictionLambda *= DampingFactor;
-        TwistLambda *= DampingFactor;
-    }
-
-    void Reset()
-    {
-        NormalLambda = 0.0f;
-        FrictionLambda = 0.0f;
-        TwistLambda = 0.0f;
-    }
-};
-
-/// <summary>
-/// 충돌 반응 결과 (기존 형태 유지)
-/// 모든 제약조건(법선 + 마찰 + 회전마찰)을 통합한 최종 충격량
-/// </summary>
-struct FCollisionResponseResult
-{
-    XMVECTOR NetImpulse = XMVectorSet(0, 0, 0, 0);         // 모든 물리적 효과를 통합한 최종 충격량
-    XMVECTOR ApplicationPoint = XMVectorSet(0, 0, 0, 0);   // 충격량 적용 지점
-};
-
-/// <summary>
 /// SIMD 최적화 충돌 반응 계산 시스템 (개선된 인터페이스)
 /// Warm Starting과 통합 충격량 계산을 지원
 /// </summary>

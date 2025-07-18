@@ -4,6 +4,8 @@
 #include <memory>
 #include "Transform.h"
 
+using PhysicsID = size_t;
+
 // 충돌 감지 결과
 struct FCollisionDetectionResult
 {
@@ -46,15 +48,31 @@ struct FPhysicsParameters
 };
 
 //제한조건 충돌 검사 람다 누적
-struct FAccumulatedConstraint
+struct FCollisionAccumulation
 {
-	float normalLambda = 0.0f;
-	float frictionLambda = 0.0f;
+	float NormalLambda = 0.0f;
+	float FrictionLambda = 0.0f;
+	float TwistLambda = 0.0f;
 
 	inline void Scale(const float InScale)
 	{
-		normalLambda *= InScale;
-		frictionLambda *= InScale;
+		NormalLambda *= InScale;
+		FrictionLambda *= InScale;
+		TwistLambda *= InScale;
+	}
+
+	inline void ApplyWarmStartingDamping(float DampingFactor = 0.8f)
+	{
+		NormalLambda *= DampingFactor;
+		FrictionLambda *= DampingFactor;
+		TwistLambda *= DampingFactor;
+	}
+
+	inline void Reset()
+	{
+		NormalLambda = 0.0f;
+		FrictionLambda = 0.0f;
+		TwistLambda = 0.0f;
 	}
 };
 
