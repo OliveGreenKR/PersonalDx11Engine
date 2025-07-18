@@ -160,7 +160,7 @@ float UPhysicsSystem::SimulateSubstep(const float StepTime)
     float MinSimulatedTimeRatio = 1.0f;
     
     // 1. 충돌 
-    float CollideTimeRatio = GetCollisionSubsystem()->SimulateCollision(StepTime);
+    float CollideTimeRatio = GetCollisionSubsystem()->ProcessCollisions(;
     MinSimulatedTimeRatio = std::min(MinSimulatedTimeRatio, CollideTimeRatio);
 
     // 시뮬레이션 시간 업데이트

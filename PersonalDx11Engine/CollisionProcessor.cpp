@@ -93,12 +93,18 @@ void FCollisionProcessor::Release()
     PhysicsIdToNodeId.clear();
     NodeIdToPhysicsId.clear();
 
-    // 4. 인터페이스 해제
+    // 4. 임시 저장소 정리
+    CurrentCollidingPairs.clear();
+    CurrentDetectionResults.clear();
+    CurrentParamsA.clear();
+    CurrentParamsB.clear();
+
+    // 5. 인터페이스 해제
     PhysicsStateInterface = nullptr;
     ShapeInterface = nullptr;
     PhysicsEventDispatcher = nullptr;
 
-    // 5. 초기화 상태 해제
+    // 6. 초기화 상태 해제
     bIsInitialized = false;
 
     LOG_INFO("FCollisionProcessor released successfully");
@@ -151,7 +157,7 @@ float FCollisionProcessor::ProcessCollisions(const std::vector<PhysicsID>& Activ
     ApplyCollisionResponse(DeltaTime);
 
     // 9. 충돌 이벤트 생성 (멤버 데이터 기반)
-    RequestCollisonEvents();
+    RequestCollisionEvents();
 
     // 10. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
     return MinTimeOfImpact;
@@ -423,19 +429,6 @@ void FCollisionProcessor::UpdateBroadPhasePairs(const std::vector<PhysicsID>& Ac
     EffectiveCollisionPairs = std::move(NewCollisionPairs);
 }
 
-void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& ExitingPair)
-{
-    if (!EventCalculator)
-        return;
-
-    // Exit 이벤트 생성 (이전 충돌 상태가 true였던 쌍만 처리)
-    if (ExitingPair.bPrevCollided)
-    {
-        auto EventData = EventCalculator->GenerateExitEvent(ExitingPair.PhysicsIdA, ExitingPair.PhysicsIdB);
-        PhysicsEventDispatcher->AddCollisionEvent(EventData);
-    }
-}
-
 #pragma endregion
 
 #pragma region Collision Processing Pipeline
@@ -542,10 +535,11 @@ void FCollisionProcessor::ApplyCollisionResponse(float DeltaTime)
     UpdateCollisionStates();
 }
 
-void FCollisionProcessor::RequestCollisonEvents()
+void FCollisionProcessor::RequestCollisionEvents()
 {
     if (!EventCalculator || !PhysicsEventDispatcher)
         return;
+
 
     // 멤버 저장소 기반으로 충돌 이벤트 생성 및 전송
     for (size_t i = 0; i < CurrentCollidingPairs.size(); ++i)
@@ -555,12 +549,7 @@ void FCollisionProcessor::RequestCollisonEvents()
 
         if (result.bCollided)
         {
-            // 이벤트 생성 (스택에서 일회성 생성)
-            FPhysicsCollisionEvent collisionEvent = EventCalculator->GenerateCollisionEvent(
-                result, pair.bPrevCollided, pair.PhysicsIdA, pair.PhysicsIdB);
-
-            // PhysicsSystem으로 이벤트 전송 요청
-            PhysicsEventDispatcher->AddCollisionEvent(collisionEvent);
+            GenerateAndSendEvent(pair, result);
         }
     }
 }
@@ -758,7 +747,42 @@ void FCollisionProcessor::ProcessSingleConstraintIteration(size_t Index,
 }
 #pragma endregion
 
+#pragma region Event Generation
+void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& ExitingPair)
+{
+    if (!EventCalculator)
+        return;
+
+    // Exit 이벤트 생성 (이전 충돌 상태가 true였던 쌍만 처리)
+    if (ExitingPair.bPrevCollided)
+    {
+        auto EventData = EventCalculator->GenerateExitEvent(ExitingPair.PhysicsIdA, ExitingPair.PhysicsIdB);
+        PhysicsEventDispatcher->AddCollisionEvent(EventData);
+    }
+}
+
+void FCollisionProcessor::GenerateAndSendEvent(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result)
+{
+    auto& pair = ExitingPair;
+    const auto& result = Result;
+
+    // 이벤트 생성 (스택에서 일회성 생성)
+    FPhysicsCollisionEvent collisionEvent = EventCalculator->GenerateCollisionEvent(
+        result, pair.bPrevCollided, pair.PhysicsIdA, pair.PhysicsIdB);
+
+    //이벤트 없음
+    if (collisionEvent.CollisionState == ECollisionState::None)
+    {
+        return;
+    }
+
+    //이벤트 전송 요청
+    PhysicsEventDispatcher->AddCollisionEvent(collisionEvent);
+}
+#pragma endregion
+
 #pragma region Utility Functions
+
 bool FCollisionProcessor::IsInterfaceValid() const
 {
     return PhysicsStateInterface != nullptr &&
@@ -851,7 +875,7 @@ float FCollisionProcessor::CalculateAABBOverlapRatio(const FCollisionPair& Pair)
 float FCollisionProcessor::CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const
 {
     // 슬롭(Slop)을 초과하는 침투만 고려
-    float biasPenetration = std::fmaxf(0.0f, PenetrationDepth - Slop);
+    float biasPenetration = std::max(0.0f, PenetrationDepth - Slop);
 
     if (biasPenetration < KINDA_SMALL) // 아주 작은 값은 무시
     {

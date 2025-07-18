@@ -166,7 +166,6 @@ private:
 private:
     // 충돌 쌍 관리 및 브로드페이즈
     void UpdateBroadPhasePairs(const std::vector<PhysicsID>& ActivePhysicsIDs);
-    void GenerateAndSendExitEvent(const FCollisionPair& ExitingPair);
 
 private:
     // 공간 분할 시스템 (PhysicsID 기반)
@@ -194,7 +193,7 @@ private:
     void ApplyCollisionResponse(float DeltaTime);
 
     // 충돌 이벤트 생성
-    void RequestCollisonEvents();
+    void RequestCollisionEvents();
 
 private:
     // Process 단계에서 수집된 임시 데이터 (멤버 기반 저장소 패턴)
@@ -225,11 +224,11 @@ private:
 #pragma endregion
 
 #pragma region Event Generation
-
 private:
-    // 이벤트 생성 (멤버 데이터 기반)
-    void GenerateCollisionEvents();
-    void GenerateExitEvents();
+    // 충돌 종료 이벤트 생성 및 전송
+    void GenerateAndSendExitEvent(const FCollisionPair& ExitingPair);
+    // 충돌 이벤트 생성 및 전송
+    void GenerateAndSendEvent(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result);
 
 #pragma endregion
 

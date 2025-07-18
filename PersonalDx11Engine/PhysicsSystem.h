@@ -294,6 +294,7 @@ private:
     void FinalizeSimulation();
 
     SoAIdx GetIdx(const SoAID targetID) const;
+
     bool IsValidTargetID(const SoAID targetID) const;
 
     //물리 틱 전파
