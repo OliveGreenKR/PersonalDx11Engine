@@ -194,7 +194,7 @@ private:
     void ApplyCollisionResponse(float DeltaTime);
 
     // 충돌 이벤트 생성
-    void ApplyCollisionEvents();
+    void RequestCollisonEvents();
 
 private:
     // Process 단계에서 수집된 임시 데이터 (멤버 기반 저장소 패턴)
@@ -267,7 +267,9 @@ private:
 
 private:
     bool IsValidPhysicsID(PhysicsID Id) const { return Id != 0; }
-    bool IsInterfaceValid() const { return PhysicsStateInterface != nullptr && ShapeInterface != nullptr; }
+    bool IsInterfaceValid() const { return PhysicsStateInterface != nullptr 
+        && ShapeInterface != nullptr 
+        && PhysicsEventDispatcher != nullptr; }
 
     // 형상에 따른 AABB 생성
     FMAABB CalculateAABBFromShape(XMVECTOR Pos, XMVECTOR Rot, XMVECTOR HalfExtent, ECollisionShapeType ShapeType) const;

@@ -61,6 +61,11 @@ struct FCollisionAccumulation
 		TwistLambda *= InScale;
 	}
 
+	static bool IsEqual(const FCollisionAccumulation& AccumA, const FCollisionAccumulation& AccumB ,const float Epsilon = KINDA_SMALL)
+	{
+		return std::fabs(AccumA.NormalLambda - AccumB.NormalLambda) < Epsilon; 
+	}
+
 	inline void ApplyWarmStartingDamping(float DampingFactor = 0.8f)
 	{
 		NormalLambda *= DampingFactor;

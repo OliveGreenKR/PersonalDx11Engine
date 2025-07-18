@@ -217,6 +217,7 @@
     <ClInclude Include="CollisionPositionCorrectionCalculator.h" />
     <ClInclude Include="FixedCircularQueue.h" />
     <ClInclude Include="PhysicsDataStructures.h" />
+    <ClInclude Include="PhysicsEventDispatcherInterface.h" />
     <ClInclude Include="PhysicsStateSoA.h" />
     <ClInclude Include="test\testDynamicAABBTree.h" />
     <ClInclude Include="test\testPhysicsStateArray.h" />

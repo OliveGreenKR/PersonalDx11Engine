@@ -669,6 +669,9 @@
     <ClInclude Include="CollisionShapeInternalInterface.h">
       <Filter>Engine\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsEventDispatcherInterface.h">
+      <Filter>Engine\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderMy00.hlsl">

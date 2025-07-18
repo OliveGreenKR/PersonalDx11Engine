@@ -151,7 +151,7 @@ float FCollisionProcessor::ProcessCollisions(const std::vector<PhysicsID>& Activ
     ApplyCollisionResponse(DeltaTime);
 
     // 9. 충돌 이벤트 생성 (멤버 데이터 기반)
-    ApplyCollisionEvents();
+    RequestCollisonEvents();
 
     // 10. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
     return MinTimeOfImpact;
@@ -170,6 +170,23 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
         if (std::find(ActivePhysicsIDs.begin(), ActivePhysicsIDs.end(), physicsId) == ActivePhysicsIDs.end())
         {
             ToRemove.push_back(physicsId);
+        }
+    }
+
+    // 1-1. 제거될 PhysicsID가 포함된 충돌 쌍 중 이전에 충돌했던 것들에 대해 Exit 이벤트 생성
+    if (!ToRemove.empty())
+    {
+        for (const auto& existingPair : EffectiveCollisionPairs)
+        {
+            // 제거될 PhysicsID가 포함된 쌍인지 확인
+            bool containsRemovedId = std::find(ToRemove.begin(), ToRemove.end(), existingPair.PhysicsIdA) != ToRemove.end() ||
+                std::find(ToRemove.begin(), ToRemove.end(), existingPair.PhysicsIdB) != ToRemove.end();
+
+            // 이전에 충돌 중이었던 쌍이면 Exit 이벤트 생성
+            if (containsRemovedId && existingPair.bPrevCollided)
+            {
+                GenerateAndSendExitEvent(existingPair);
+            }
         }
     }
 
@@ -230,7 +247,6 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
     // 6. 트리 구조 최적화 (Fat Bounds 벗어난 노드들 자동 재배치)
     CollisionTree->UpdateTree();
 }
-
 #pragma endregion
 
 #pragma region Data Access Layer
@@ -361,6 +377,135 @@ void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& Exiting
     {
         auto EventData = EventCalculator->GenerateExitEvent(ExitingPair.PhysicsIdA, ExitingPair.PhysicsIdB);
         PhysicsEventDispatcher->AddCollisionEvent(EventData);
+    }
+}
+
+#pragma endregion
+
+#pragma region Collision Processing Pipeline
+
+float FCollisionProcessor::PerformNarrowphaseDetection(float DeltaTime)
+{
+    if (!Detector || EffectiveCollisionPairs.empty())
+    {
+        return 1.0f; // 충돌 없음, 전체 시간 소모
+    }
+
+    float minTimeOfImpact = 1.0f; // 정규화된 시간 (충돌 없음 기본값)
+
+    // 브로드페이즈 충돌 쌍들에 대해 정밀 충돌 검출
+    for (const auto& pair : EffectiveCollisionPairs)
+    {
+        // 형상 데이터 구성 (스택에서 일회성 생성)
+        FCollisionShapeData shapeDataA, shapeDataB;
+        GetCollisionShapeData(pair.PhysicsIdA, shapeDataA);
+        GetCollisionShapeData(pair.PhysicsIdB, shapeDataB);
+
+        // 물리 매개변수 구성 (스택에서 일회성 생성)
+        FPhysicsParameters paramsA, paramsB;
+        GetPhysicsParams(pair.PhysicsIdA, paramsA);
+        GetPhysicsParams(pair.PhysicsIdB, paramsB);
+
+        // CCD 판단
+        bool useCCD = ShouldUseCCD(pair.PhysicsIdA) || ShouldUseCCD(pair.PhysicsIdB);
+
+        FCollisionDetectionResult detectionResult;
+        if (useCCD)
+        {
+            // 연속 충돌 검출
+            detectionResult = Detector->DetectCollisionCCD(shapeDataA, shapeDataB, DeltaTime);
+        }
+        else
+        {
+            // 이산 충돌 검출
+            detectionResult = Detector->DetectCollisionDiscrete(shapeDataA, shapeDataB);
+        }
+
+        // 충돌이 발생한 경우만 멤버 저장소에 수집
+        if (detectionResult.bCollided)
+        {
+            // 최소 충돌 시간 업데이트
+            minTimeOfImpact = std::min(minTimeOfImpact, detectionResult.NormalizedToI);
+
+            // 결과를 멤버 저장소에 저장 (복사 최소화)
+            CurrentCollidingPairs.push_back(pair);
+            CurrentDetectionResults.push_back(detectionResult);
+            CurrentParamsA.push_back(std::move(paramsA));
+            CurrentParamsB.push_back(std::move(paramsB));
+        }
+    }
+
+    return minTimeOfImpact;
+}
+
+void FCollisionProcessor::FilterCollisionsByToI(float TargetTime)
+{
+    if (CurrentCollidingPairs.empty() || CurrentDetectionResults.empty())
+        return;
+
+    // TargetTime 이내에 발생하는 충돌들만 필터링
+    size_t writeIndex = 0;
+
+    for (size_t readIndex = 0; readIndex < CurrentCollidingPairs.size(); ++readIndex)
+    {
+        const auto& result = CurrentDetectionResults[readIndex];
+
+        if (result.NormalizedToI <= TargetTime)
+        {
+            // 조건을 만족하는 경우, 앞쪽으로 이동 (in-place 필터링)
+            if (writeIndex != readIndex)
+            {
+                CurrentCollidingPairs[writeIndex] = CurrentCollidingPairs[readIndex];
+                CurrentDetectionResults[writeIndex] = CurrentDetectionResults[readIndex];
+                CurrentParamsA[writeIndex] = std::move(CurrentParamsA[readIndex]);
+                CurrentParamsB[writeIndex] = std::move(CurrentParamsB[readIndex]);
+            }
+            ++writeIndex;
+        }
+    }
+
+    // 벡터 크기 조정 (필터링된 크기로)
+    CurrentCollidingPairs.resize(writeIndex);
+    CurrentDetectionResults.resize(writeIndex);
+    CurrentParamsA.resize(writeIndex);
+    CurrentParamsB.resize(writeIndex);
+}
+
+void FCollisionProcessor::ApplyCollisionResponse(float DeltaTime)
+{
+    if (CurrentCollidingPairs.empty() || CurrentDetectionResults.empty())
+        return;
+
+    // 1. 직접 위치 보정 적용 (멤버 데이터 기반)
+    ApplyDirectPositionCorrections();
+
+    // 2. 반복적 제약 조건 해결 (멤버 데이터 기반)
+    ApplyIterativeConstraintSolver();
+
+    // 3. 충돌 상태 업데이트 (멤버 데이터 기반)
+    UpdateCollisionStates();
+}
+
+void FCollisionProcessor::RequestCollisonEvents()
+{
+    if (!EventCalculator || !PhysicsEventDispatcher)
+        return;
+
+    // 멤버 저장소 기반으로 충돌 이벤트 생성 및 전송
+    for (size_t i = 0; i < CurrentCollidingPairs.size(); ++i)
+    {
+        const auto& pair = CurrentCollidingPairs[i];
+        const auto& result = CurrentDetectionResults[i];
+
+        if (result.bCollided)
+        {
+            // 이벤트 생성 (스택에서 일회성 생성)
+            FPhysicsCollisionEvent collisionEvent = EventCalculator->GenerateCollisionEvent(
+                result, pair.bPrevCollided, pair.PhysicsIdA, pair.PhysicsIdB);
+
+            // PhysicsSystem으로 이벤트 전송 요청
+            PhysicsEventDispatcher->AddCollisionEvent(collisionEvent);
+        }
     }
 }
 
