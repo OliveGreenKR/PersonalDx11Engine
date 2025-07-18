@@ -1,6 +1,7 @@
 #include "CollisionProcessor.h"
 #include "PhysicsStateInternalInterface.h"
 #include "CollisionShapeInternalInterface.h"
+#include "PhysicsEventDispatcherInterface.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventCalculator.h"
@@ -8,8 +9,6 @@
 #include "DynamicAABBTree.h"
 #include "ConfigReadManager.h"
 #include "Debug.h"
-#include "PhysicsSystem.h"
-
 #pragma region Constructor and Initialization
 
 FCollisionProcessor::~FCollisionProcessor()
@@ -361,7 +360,7 @@ void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& Exiting
     if (ExitingPair.bPrevCollided)
     {
         auto EventData = EventCalculator->GenerateExitEvent(ExitingPair.PhysicsIdA, ExitingPair.PhysicsIdB);
-        UPhysicsSystem::Get()->AddCollisionEvent(EventData);
+        PhysicsEventDispatcher->AddCollisionEvent(EventData);
     }
 }
 
