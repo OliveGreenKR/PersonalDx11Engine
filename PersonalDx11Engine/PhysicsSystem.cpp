@@ -17,7 +17,7 @@ void UPhysicsSystem::Initialize()
     {
         LoadConfigFromIni();
         CollisionProcessor = std::make_unique<FCollisionProcessor>();
-        CollisionProcessor->Initialize(this, this);
+        CollisionProcessor->Initialize(this, this, _placeholder_);
         PhysicsStateSoA = std::make_unique<FPhysicsStateArrays>(InitialPhysicsObjectCapacity);
         JobPool = std::make_unique < FArenaMemoryPool>(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
         CollisionEventQueue = std::make_unique<TCircularQueue<FPhysicsCollisionEvent>>(InitialCollisionEventQueueSize);

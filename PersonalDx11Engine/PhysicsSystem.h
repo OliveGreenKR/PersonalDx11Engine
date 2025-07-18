@@ -12,8 +12,8 @@
 #include "PhysicsStateInternalInterface.h"
 #include "PhysicsDataStructures.h"
 #include "CollisionShapeInternalInterface.h"
-
-class UPhysicsSystem : public IPhysicsStateInternal, public ICollisionShapeInternal
+#include "PhysicsEventDispatcherInterface.h"
+class UPhysicsSystem : public IPhysicsStateInternal, public ICollisionShapeInternal, public IPhysicsEventDispatcher
 {
 
 private:
@@ -80,8 +80,18 @@ private:
 
 #pragma endregion
 
-#pragma region Event Queue System
+#pragma region IPhysiscEventDispatcher Implemnts
+public:
+	/// <summary>
+    /// 충돌 이벤트를 큐에 추가 (CollisionProcessor 전용)
+    /// 용량 초과 시 TCircularQueue의 기본 동작 수행 (가장 오래된 이벤트 덮어쓰기)
+    /// </summary>
+    /// <param name="Event">추가할 충돌 이벤트</param>
+	void AddCollisionEvent(const FPhysicsCollisionEvent& Event) override;
 
+#pragma endregion
+
+#pragma region Event Queue System
 private:
     /// <summary>
     /// 충돌 이벤트 순환 큐 - 고정 크기로 성능 최적화
@@ -90,13 +100,6 @@ private:
     std::unique_ptr<TCircularQueue<FPhysicsCollisionEvent>> CollisionEventQueue;
 
 public:
-    /// <summary>
-    /// 충돌 이벤트를 큐에 추가 (CollisionProcessor 전용)
-    /// 용량 초과 시 TCircularQueue의 기본 동작 수행 (가장 오래된 이벤트 덮어쓰기)
-    /// </summary>
-    /// <param name="Event">추가할 충돌 이벤트</param>
-    void AddCollisionEvent(const FPhysicsCollisionEvent& Event);
-
     /// <summary>
     /// 배치 이벤트 처리 및 게임 로직 전달
     /// FinalizeSimulation()에서 호출되어 큐의 모든 이벤트를 RigidBodyComponent로 전송
@@ -119,7 +122,7 @@ public:
 private:
     void SendEventToPhysicsObject(PhysicsID TargetPhysicsID, const FPhysicsCollisionEvent& Event);
 
-    // 향후 멀티스레드 확장을 위한 주석 처리된 멤버
+    // TODO : 향후 멀티스레드 확장
     // std::mutex EventQueueMutex;  // 멀티스레드에서 큐 보호용
 
 #pragma endregion

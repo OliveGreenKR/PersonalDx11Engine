@@ -8,6 +8,7 @@
 #include "DynamicAABBTree.h"
 #include "ConfigReadManager.h"
 #include "Debug.h"
+#include "PhysicsSystem.h"
 
 #pragma region Constructor and Initialization
 
@@ -16,10 +17,10 @@ FCollisionProcessor::~FCollisionProcessor()
     Release();
 }
 
-bool FCollisionProcessor::Initialize(IPhysicsStateInternal* PhysicsStateInterface, ICollisionShapeInternal* ShapeInterface)
+bool FCollisionProcessor::Initialize(IPhysicsStateInternal* PhysicsStateInterface, ICollisionShapeInternal* ShapeInterface, IPhysicsEventDispatcher* EventDispathcer)
 {
     // 1. 입력 검증
-    if (!PhysicsStateInterface || !ShapeInterface)
+    if (!PhysicsStateInterface || !ShapeInterface || !EventDispathcer)
     {
         LOG_ERROR("FCollisionProcessor::Initialize - Invalid interface pointers");
         return false;
@@ -36,6 +37,7 @@ bool FCollisionProcessor::Initialize(IPhysicsStateInternal* PhysicsStateInterfac
         // 3. 인터페이스 저장
         this->PhysicsStateInterface = PhysicsStateInterface;
         this->ShapeInterface = ShapeInterface;
+        this->PhysicsEventDispatcher = EventDispathcer;
 
         // 4. 설정 로드
         LoadConfigFromIni();
@@ -51,7 +53,7 @@ bool FCollisionProcessor::Initialize(IPhysicsStateInternal* PhysicsStateInterfac
         CollisionTree->SetFatMarginRatio(std::max(0.1f, FatBoundsExtentRatio));
 
         // 7. 컨테이너 메모리 예약 (캐시 효율성)
-        ActiveCollisionPairs.reserve(InitialCollisionCapacity);
+        EffectiveCollisionPairs.reserve(InitialCollisionCapacity);
         PhysicsIdToNodeId.reserve(InitialCollisionCapacity);
         NodeIdToPhysicsId.reserve(InitialCollisionCapacity);
 
@@ -88,13 +90,14 @@ void FCollisionProcessor::Release()
     CollisionTree.reset();
 
     // 3. 컨테이너 정리
-    ActiveCollisionPairs.clear();
+    EffectiveCollisionPairs.clear();
     PhysicsIdToNodeId.clear();
     NodeIdToPhysicsId.clear();
 
     // 4. 인터페이스 해제
     PhysicsStateInterface = nullptr;
     ShapeInterface = nullptr;
+    PhysicsEventDispatcher = nullptr;
 
     // 5. 초기화 상태 해제
     bIsInitialized = false;
@@ -115,31 +118,43 @@ float FCollisionProcessor::ProcessCollisions(const std::vector<PhysicsID>& Activ
         return 1.0f; // 전체 시간 소모
     }
 
-    // 2. 공간 분할 트리 업데이트 (활성 PhysicsID 기반)
+    // 2. 현재 델타 타임 저장 (멤버 기반 접근용)
+    CurrentDeltaTime = DeltaTime;
+
+    // 3. 임시 저장소 초기화 및 메모리 예약 (동적 할당 최소화)
+    CurrentCollidingPairs.clear();
+    CurrentDetectionResults.clear();
+    CurrentParamsA.clear();
+    CurrentParamsB.clear();
+
+    // 이전 프레임 크기 기반 예약 (성능 최적화)
+    size_t expectedPairCount =
+        std::max(static_cast<size_t>(64), static_cast<size_t>(EffectiveCollisionPairs.size() * 1.2f)); // 20% 여유분
+    CurrentCollidingPairs.reserve(expectedPairCount);
+    CurrentDetectionResults.reserve(expectedPairCount);
+    CurrentParamsA.reserve(expectedPairCount);
+    CurrentParamsB.reserve(expectedPairCount);
+
+    // 4. 공간 분할 트리 업데이트 (활성 PhysicsID 기반)
     UpdateSpatialPartitioning(ActivePhysicsIDs);
 
-    // 3. 브로드페이즈 충돌 쌍 업데이트
-    UpdateCollisionPairs(ActivePhysicsIDs);
+    // 5. 브로드페이즈 충돌 쌍 업데이트
+    UpdateBroadPhasePairs(ActivePhysicsIDs);
 
-    // 4. 실제 충돌 처리 파이프라인 실행
-    std::vector<FCollisionPair> CollidingPairs;
-    std::vector<FCollisionDetectionResult> DetectionResults;
+    // 6. 정밀 충돌 감지 및 최소 ToI 계산 (데이터 수집)
+    float MinTimeOfImpact = PerformNarrowphaseDetection(DeltaTime);
 
-    // 5. 정밀 충돌 감지 및 최소 ToI 계산
-    float MinTimeOfImpact = PerformNarrowphaseDetection(ActivePhysicsIDs, DeltaTime,
-                                                        CollidingPairs, DetectionResults);
-
-    // 6. 성능 최적화: 최소 충돌 시간 +2% 까지의 충돌들 일괄 처리
+    // 7. 성능 최적화: 최소 충돌 시간 +2% 까지의 충돌들 일괄 처리
     float TargetTime = MinTimeOfImpact + 0.02f; // 2% 여유분
-    FilterCollisionsByTime(CollidingPairs, DetectionResults, TargetTime);
+    FilterCollisionsByToI(TargetTime);
 
-    // 7. 충돌 반응 처리 (제약 조건 + 위치 보정)
-    ProcessCollisionResponse(CollidingPairs, DetectionResults, DeltaTime);
+    // 8. 충돌 반응 처리 (통합된 Apply 함수 호출)
+    ApplyCollisionResponse(DeltaTime);
 
-    // 8. 충돌 이벤트 생성 (PhysicsSystem에 전달용)
-    GenerateCollisionEvents(CollidingPairs, DetectionResults);
+    // 9. 충돌 이벤트 생성 (멤버 데이터 기반)
+    ApplyCollisionEvents();
 
-    // 9. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
+    // 10. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
     return MinTimeOfImpact;
 }
 
@@ -185,9 +200,9 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
         if (!IsValidPhysicsID(physicsId))
             continue;
 
-        // 현재 월드 변환 정보 획득 (인터페이스를 통해)
-        XMVECTOR currentPos = GetCurrentWorldPosition(physicsId);
-        XMVECTOR currentRot = GetCurrentWorldRotation(physicsId);
+        // 현재 월드 변환 정보 획득 (인터페이스 직접 호출)
+        XMVECTOR currentPos = PhysicsStateInterface->P_GetWorldPosition(physicsId);
+        XMVECTOR currentRot = PhysicsStateInterface->P_GetWorldRotationQuat(physicsId);
         XMVECTOR shapeExtent = ShapeInterface->P_GetShapeHalfExtent(physicsId);
         ECollisionShapeType shapeType = ShapeInterface->P_GetShapeType(physicsId);
 
@@ -197,7 +212,7 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
         auto nodeIt = PhysicsIdToNodeId.find(physicsId);
         if (nodeIt != PhysicsIdToNodeId.end())
         {
-            // 4. 기존 등록된 경우: 노드 AABB 업데이트 (Bouds만 업데이트)
+            // 4. 기존 등록된 경우: 노드 AABB 업데이트 (Bounds만 업데이트)
             size_t nodeId = nodeIt->second;
             CollisionTree->UpdateNodeBounds(nodeId, currentAABB);
         }
@@ -217,60 +232,6 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
     CollisionTree->UpdateTree();
 }
 
-void FCollisionProcessor::LoadConfigFromIni()
-{
-    UConfigReadManager* ConfigManager = UConfigReadManager::Get();
-    if (!ConfigManager)
-    {
-        LOG_WARNING("ConfigReadManager not available - using default collision settings");
-        return;
-    }
-
-    // 설정값 로드 (실패 시 기본값 유지)
-    ConfigManager->GetValue("CCDVelocityThreshold", CCDVelocityThreshold);
-    ConfigManager->GetValue("InitialCollisionCapacity", InitialCollisionCapacity);
-    ConfigManager->GetValue("MaxConstraintIterations", MaxConstraintIterations);
-    ConfigManager->GetValue("FatBoundsExtentRatio", FatBoundsExtentRatio);
-    ConfigManager->GetValue("PositionCorrectionBias", PositionCorrectionBias);
-    ConfigManager->GetValue("WarmStartingDamping", WarmStartingDamping);
-    ConfigManager->GetValue("MinConstraintLambda", MinConstraintLambda);
-
-    // 설정값 유효성 검증
-    CCDVelocityThreshold = std::max(0.1f, CCDVelocityThreshold);
-    InitialCollisionCapacity = std::max(32u, InitialCollisionCapacity);
-    MaxConstraintIterations = std::clamp(MaxConstraintIterations, 1u, 20u);
-    FatBoundsExtentRatio = std::clamp(FatBoundsExtentRatio, 0.01f, 1.0f);
-    PositionCorrectionBias = std::clamp(PositionCorrectionBias, 0.0f, 1.0f);
-    WarmStartingDamping = std::clamp(WarmStartingDamping, 0.0f, 1.0f);
-    MinConstraintLambda = std::max(0.1f, MinConstraintLambda);
-
-    LOG_INFO("Collision settings loaded - CCD Threshold: %.2f, Capacity: %u, Iterations: %u",
-             CCDVelocityThreshold, InitialCollisionCapacity, MaxConstraintIterations);
-}
-
-void FCollisionProcessor::UnRegisterAll()
-{
-    if (!CollisionTree)
-        return;
-
-    // 1. AABB 트리 완전 정리
-    CollisionTree->Clear();
-
-    // 2. 모든 컨테이너 정리
-    ActiveCollisionPairs.clear();
-    PhysicsIdToNodeId.clear();
-    NodeIdToPhysicsId.clear();
-
-    LOG_INFO("All collision registrations cleared");
-}
-
-bool FCollisionProcessor::IsInitialized() const
-{
-    return bIsInitialized && IsInterfaceValid() &&
-        Detector && ResponseCalculator && EventCalculator &&
-        PositionCorrectionCalculator && CollisionTree;
-}
-
 #pragma endregion
 
 #pragma region Data Access Layer
@@ -283,17 +244,17 @@ void FCollisionProcessor::GetCollisionShapeData(PhysicsID Id, FCollisionShapeDat
         return;
     }
 
-    // 형상 타입 및 기하학적 정보
+    // 형상 타입 및 기하학적 정보 (인터페이스 직접 호출)
     OutData.ShapeType = ShapeInterface->P_GetShapeType(Id);
     OutData.HalfExtent = ShapeInterface->P_GetShapeHalfExtent(Id);
 
-    // 현재 프레임 월드 변환
-    OutData.CurrentWorldPosition = GetCurrentWorldPosition(Id);
-    OutData.CurrentWorldRotation = GetCurrentWorldRotation(Id);
+    // 현재 프레임 월드 변환 (인터페이스 직접 호출)
+    OutData.CurrentWorldPosition = PhysicsStateInterface->P_GetWorldPosition(Id);
+    OutData.CurrentWorldRotation = PhysicsStateInterface->P_GetWorldRotationQuat(Id);
 
-    // 이전 프레임 월드 변환 (CCD용)
-    OutData.PrevWorldPosition = GetPrevWorldPosition(Id);
-    OutData.PrevWorldRotation = GetPrevWorldRotation(Id);
+    // 이전 프레임 월드 변환 (CCD용, 인터페이스 직접 호출)
+    OutData.PrevWorldPosition = PhysicsStateInterface->P_GetPrevWorldPosition(Id);
+    OutData.PrevWorldRotation = PhysicsStateInterface->P_GetPrevWorldRotationQuat(Id);
 }
 
 void FCollisionProcessor::GetPhysicsParams(PhysicsID Id, FPhysicsParameters& OutParams) const
@@ -305,82 +266,31 @@ void FCollisionProcessor::GetPhysicsParams(PhysicsID Id, FPhysicsParameters& Out
         return;
     }
 
-    // 질량 정보
+    // 질량 정보 (인터페이스 직접 호출)
     OutParams.InvMass = PhysicsStateInterface->P_GetInvMass(Id);
     OutParams.InvRotationalInertia = PhysicsStateInterface->P_GetInvRotationalInertia(Id);
 
-    // 운동 상태
+    // 운동 상태 (인터페이스 직접 호출)
     OutParams.Position = PhysicsStateInterface->P_GetWorldPosition(Id);
     OutParams.Velocity = PhysicsStateInterface->P_GetVelocity(Id);
     OutParams.AngularVelocity = PhysicsStateInterface->P_GetAngularVelocity(Id);
     OutParams.Rotation = PhysicsStateInterface->P_GetWorldRotationQuat(Id);
 
-    // 물리적 속성
+    // 물리적 속성 (인터페이스 직접 호출)
     OutParams.Restitution = PhysicsStateInterface->P_GetRestitution(Id);
     OutParams.FrictionStatic = PhysicsStateInterface->P_GetFrictionStatic(Id);
     OutParams.FrictionKinetic = PhysicsStateInterface->P_GetFrictionKinetic(Id);
 }
 
-XMVECTOR FCollisionProcessor::GetCurrentWorldPosition(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMVectorZero();
-
-    return PhysicsStateInterface->P_GetWorldPosition(Id);
-}
-
-XMVECTOR FCollisionProcessor::GetCurrentWorldRotation(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMQuaternionIdentity();
-
-    return PhysicsStateInterface->P_GetWorldRotationQuat(Id);
-}
-
-XMVECTOR FCollisionProcessor::GetCurrentWorldScale(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMVectorSplatOne(); // (1,1,1,1)
-
-    return PhysicsStateInterface->P_GetWorldScale(Id);
-}
-
-XMVECTOR FCollisionProcessor::GetPrevWorldPosition(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMVectorZero();
-
-    return ShapeInterface->P_GetPrevWorldPosition(Id);
-}
-
-XMVECTOR FCollisionProcessor::GetPrevWorldRotation(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMQuaternionIdentity();
-
-    return ShapeInterface->P_GetPrevWorldRotationQuat(Id);
-}
-
-XMVECTOR FCollisionProcessor::GetPrevWorldScale(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return XMVectorSplatOne(); // (1,1,1,1)
-
-    return ShapeInterface->P_GetPrevWorldScale(Id);
-}
-
 #pragma endregion
 
+#pragma region Effective Collision Pairs Management
 
-
-
-#pragma region Collision Processing Pipeline
-
-void FCollisionProcessor::UpdateCollisionPairs(const std::vector<PhysicsID>& ActivePhysicsIDs)
+void FCollisionProcessor::UpdateBroadPhasePairs(const std::vector<PhysicsID>& ActivePhysicsIDs)
 {
     if (!CollisionTree || ActivePhysicsIDs.empty())
     {
-        ActiveCollisionPairs.clear();
+        EffectiveCollisionPairs.clear();
         return;
     }
 
@@ -415,12 +325,12 @@ void FCollisionProcessor::UpdateCollisionPairs(const std::vector<PhysicsID>& Act
             // 중복 충돌 쌍 방지 (작은 ID가 A가 되도록)
             FCollisionPair newPair(physicsId, otherPhysicsId);
 
-            // 기존 쌍의 상태 정보 복사
-            auto existingPair = ActiveCollisionPairs.find(newPair);
-            if (existingPair != ActiveCollisionPairs.end())
+            // 기존 쌍의 상태 정보 복사 (Warm Starting 지원)
+            auto existingPair = EffectiveCollisionPairs.find(newPair);
+            if (existingPair != EffectiveCollisionPairs.end())
             {
                 newPair.bPrevCollided = existingPair->bPrevCollided;
-                newPair.PrevConstraints = existingPair->PrevConstraints;
+                newPair.ConstraintsAccumulation = existingPair->ConstraintsAccumulation;
             }
 
             NewCollisionPairs.insert(newPair);
@@ -428,279 +338,49 @@ void FCollisionProcessor::UpdateCollisionPairs(const std::vector<PhysicsID>& Act
     }
 
     // Exit 이벤트 생성: 기존 충돌 쌍 중 새로운 쌍에 없는 것들
-    for (const auto& existingPair : ActiveCollisionPairs)
+    for (const auto& existingPair : EffectiveCollisionPairs)
     {
         if (existingPair.bPrevCollided &&
             NewCollisionPairs.find(existingPair) == NewCollisionPairs.end())
         {
             // Exit 이벤트 생성
-            GenerateCollisionExitEvent(existingPair);
+            GenerateAndSendExitEvent(existingPair);
         }
     }
 
-    //새로운 쌍들로 교체
-    ActiveCollisionPairs = std::move(NewCollisionPairs);
+    // 새로운 쌍들로 교체
+    EffectiveCollisionPairs = std::move(NewCollisionPairs);
 }
 
-float FCollisionProcessor::PerformNarrowphaseDetection(const std::vector<PhysicsID>& ActivePhysicsIDs,
-                                                       float DeltaTime,
-                                                       std::vector<FCollisionPair>& OutCollidingPairs,
-                                                       std::vector<FCollisionDetectionResult>& OutDetectionResults)
+void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& ExitingPair)
 {
-    OutCollidingPairs.clear();
-    OutDetectionResults.clear();
-
-    float minTimeOfImpact = 1.0f; // 정규화된 시간 (충돌 없음 기본값)
-
-    // 브로드페이즈 충돌 쌍들에 대해 정밀 충돌 검출
-    for (const auto& pair : ActiveCollisionPairs)
-    {
-        // 형상 데이터 구성
-        FCollisionShapeData shapeDataA, shapeDataB;
-        GetCollisionShapeData(pair.PhysicsIdA, shapeDataA);
-        GetCollisionShapeData(pair.PhysicsIdB, shapeDataB);
-
-        // CCD 판단
-        bool useCCD = ShouldUseCCD(pair.PhysicsIdA) || ShouldUseCCD(pair.PhysicsIdB);
-
-        FCollisionDetectionResult detectionResult;
-        if (useCCD)
-        {
-            // 연속 충돌 검출
-            detectionResult = Detector->DetectCollisionCCD(shapeDataA, shapeDataB, DeltaTime);
-        }
-        else
-        {
-            // 이산 충돌 검출
-            detectionResult = Detector->DetectCollisionDiscrete(shapeDataA, shapeDataB);
-        }
-
-        // 충돌이 발생한 경우만 수집
-        if (detectionResult.bCollided)
-        {
-            // 최소 충돌 시간 업데이트
-            minTimeOfImpact = std::min(minTimeOfImpact, detectionResult.NormalizedToI);
-
-            // 결과 저장
-            OutCollidingPairs.push_back(pair);
-            OutDetectionResults.push_back(detectionResult);
-        }
-    }
-
-    return minTimeOfImpact;
-}
-
-void FCollisionProcessor::FilterCollisionsByTime(std::vector<FCollisionPair>& CollidingPairs,
-                                                 std::vector<FCollisionDetectionResult>& DetectionResults,
-                                                 float TargetTime)
-{
-    if (CollidingPairs.empty() || DetectionResults.empty())
+    if (!EventCalculator)
         return;
 
-    std::vector<FCollisionPair> filteredPairs;
-    std::vector<FCollisionDetectionResult> filteredResults;
-
-    // TargetTime 이내에 발생하는 충돌들만 필터링
-    for (size_t i = 0; i < CollidingPairs.size(); ++i)
+    // Exit 이벤트 생성 (이전 충돌 상태가 true였던 쌍만 처리)
+    if (ExitingPair.bPrevCollided)
     {
-        const auto& result = DetectionResults[i];
-        if (result.NormalizedToI <= TargetTime)
-        {
-            filteredPairs.push_back(CollidingPairs[i]);
-            filteredResults.push_back(result);
-        }
+        auto EventData = EventCalculator->GenerateExitEvent(ExitingPair.PhysicsIdA, ExitingPair.PhysicsIdB);
+        UPhysicsSystem::Get()->AddCollisionEvent(EventData);
     }
-
-    // 원본 벡터 교체
-    CollidingPairs = std::move(filteredPairs);
-    DetectionResults = std::move(filteredResults);
-}
-
-void FCollisionProcessor::ProcessCollisionResponse(const std::vector<FCollisionPair>& CollidingPairs,
-                                                   const std::vector<FCollisionDetectionResult>& DetectionResults,
-                                                   float DeltaTime)
-{
-    if (CollidingPairs.empty() || DetectionResults.empty())
-        return;
-
-    // 1. 직접 위치 보정 (겹침 비율 기반)
-    ApplyDirectPositionCorrections(CollidingPairs, DetectionResults);
-
-    // 2. 반복적 제약 조건 해결
-    ApplyIterativeConstraintSolver(CollidingPairs, DetectionResults, DeltaTime);
-
-    // 3. 충돌 상태 업데이트
-    UpdateCollisionStates(CollidingPairs, DetectionResults);
-}
-
-void FCollisionProcessor::GenerateCollisionEvents(const std::vector<FCollisionPair>& CollidingPairs,
-                                                  const std::vector<FCollisionDetectionResult>& DetectionResults)
-{
-    for (size_t i = 0; i < CollidingPairs.size(); ++i)
-    {
-        const auto& pair = CollidingPairs[i];
-        const auto& result = DetectionResults[i];
-
-        if (result.bCollided)
-        {
-            GenerateCollisionEvent(pair, result);
-        }
-    }
-}
-
-void FCollisionProcessor::ApplyDirectPositionCorrections(const std::vector<FCollisionPair>& CollidingPairs,
-                                                         const std::vector<FCollisionDetectionResult>& DetectionResults)
-{
-    for (size_t i = 0; i < CollidingPairs.size(); ++i)
-    {
-        const auto& pair = CollidingPairs[i];
-        const auto& result = DetectionResults[i];
-
-        // AABB 겹침 비율 계산
-        float overlapRatio = CalculateAABBOverlapRatio(pair);
-
-        // 겹침 정도에 따른 위치 보정
-        if (overlapRatio > 0.7f)
-        {
-            ApplyDirectPositionCorrection(pair, result, 0.45f);
-        }
-        else if (overlapRatio > 0.4f)
-        {
-            ApplyDirectPositionCorrection(pair, result, 0.2f);
-        }
-    }
-}
-
-void FCollisionProcessor::ApplyIterativeConstraintSolver(const std::vector<FCollisionPair>& CollidingPairs,
-                                                         const std::vector<FCollisionDetectionResult>& DetectionResults,
-                                                         float EffectiveDeltaTime)
-{
-    int ConvergedCount = 0;
-
-    // 반복적 제약 조건 해결 (Projected Gauss-Seidel)
-    for (std::uint32_t iteration = 0; iteration < MaxConstraintIterations; ++iteration)
-    {
-        for (size_t i = 0; i < CollidingPairs.size(); ++i)
-        {
-            auto& pair = const_cast<FCollisionPair&>(CollidingPairs[i]);
-            const auto& result = DetectionResults[i];
-
-            if (pair.bConverged)
-            {
-                continue;
-            }
-
-            // 제약 조건 기반 충돌 반응 적용
-            ApplyCollisionResponseByConstraints(pair, result, EffectiveDeltaTime);
-
-            if (pair.bConverged)
-            {
-                ConvergedCount++;
-            }
-        }
-
-        // 모든 쌍이 수렴했으면 조기 종료
-        if (ConvergedCount == CollidingPairs.size())
-        {
-            break;
-        }
-    }
-}
-
-void FCollisionProcessor::UpdateCollisionStates(const std::vector<FCollisionPair>& CollidingPairs,
-                                                const std::vector<FCollisionDetectionResult>& DetectionResults)
-{
-    for (size_t i = 0; i < CollidingPairs.size(); ++i)
-    {
-        auto& pair = const_cast<FCollisionPair&>(CollidingPairs[i]);
-        const auto& result = DetectionResults[i];
-
-        // 이전 충돌 상태 업데이트
-        pair.bPrevCollided = result.bCollided;
-
-        // 수렴 상태 리셋 (다음 프레임을 위해)
-        pair.bConverged = false;
-
-        // ActiveCollisionPairs에서도 업데이트
-        auto activeIt = ActiveCollisionPairs.find(pair);
-        if (activeIt != ActiveCollisionPairs.end())
-        {
-            const_cast<FCollisionPair&>(*activeIt).bPrevCollided = result.bCollided;
-            const_cast<FCollisionPair&>(*activeIt).PrevConstraints = pair.PrevConstraints;
-            const_cast<FCollisionPair&>(*activeIt).bConverged = false;
-        }
-    }
-}
-
-bool FCollisionProcessor::ShouldUseCCD(PhysicsID Id) const
-{
-    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
-        return false;
-
-    XMVECTOR velocity = PhysicsStateInterface->P_GetVelocity(Id);
-    float speed = XMVectorGetX(XMVector3Length(velocity));
-
-    return speed > CCDVelocityThreshold;
-}
-
-float FCollisionProcessor::CalculateAABBOverlapRatio(const FCollisionPair& Pair) const
-{
-    // 노드 ID 찾기
-    auto nodeAIt = PhysicsIdToNodeId.find(Pair.PhysicsIdA);
-    auto nodeBIt = PhysicsIdToNodeId.find(Pair.PhysicsIdB);
-
-    if (nodeAIt == PhysicsIdToNodeId.end() || nodeBIt == PhysicsIdToNodeId.end())
-        return 0.0f;
-
-    if (!CollisionTree->IsValidId(nodeAIt->second) || !CollisionTree->IsValidId(nodeBIt->second))
-        return 0.0f;
-
-    const FMAABB& boundsA = CollisionTree->GetBounds(nodeAIt->second);
-    const FMAABB& boundsB = CollisionTree->GetBounds(nodeBIt->second);
-
-    // AABB가 겹치지 않으면 0 반환
-    if (!boundsA.IsOverlapping(boundsB))
-        return 0.0f;
-
-    // 겹침 볼륨 계산
-    Vector3 minA, maxA, minB, maxB;
-    boundsA.GetMinV(minA);
-    boundsA.GetMaxV(maxA);
-    boundsB.GetMinV(minB);
-    boundsB.GetMaxV(maxB);
-
-    // 겹침 영역 계산
-    Vector3 overlapMin = Vector3::Max(minA, minB);
-    Vector3 overlapMax = Vector3::Min(maxA, maxB);
-    Vector3 overlapSize = overlapMax - overlapMin;
-
-    // 겹침이 없으면 0 반환
-    if (overlapSize.x <= 0.0f || overlapSize.y <= 0.0f || overlapSize.z <= 0.0f)
-        return 0.0f;
-
-    float overlapVolume = overlapSize.x * overlapSize.y * overlapSize.z;
-
-    // 더 작은 객체의 볼륨을 기준으로 비율 계산
-    Vector3 sizeA = maxA - minA;
-    Vector3 sizeB = maxB - minB;
-    float volumeA = sizeA.x * sizeA.y * sizeA.z;
-    float volumeB = sizeB.x * sizeB.y * sizeB.z;
-    float referenceVolume = std::min(volumeA, volumeB);
-
-    // 최소 볼륨 보장
-    constexpr float MinVolume = 0.001f; // 1cm³
-    referenceVolume = std::max(referenceVolume, MinVolume);
-
-    // 겹침 비율 계산 및 정규화
-    float overlapRatio = overlapVolume / referenceVolume;
-
-    // Sigmoid 함수로 부드러운 포화 (0~1 범위)
-    return std::clamp(1.0f - std::exp(-overlapRatio * 3.0f), 0.0f, 1.0f);
 }
 
 #pragma endregion
 
 #pragma region Utility Functions
+float FCollisionProcessor::CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const
+{
+    // 슬롭(Slop)을 초과하는 침투만 고려
+    float biasPenetration = std::fmaxf(0.0f, PenetrationDepth - Slop);
+
+    if (biasPenetration > KINDA_SMALL) // 아주 작은 값은 무시
+    {
+        // Baumgarte 안정화 항: (위치 오류 * 보정 계수) / DeltaTime  
+        // 위치 보정을 나타낼 속도 편향
+        return (biasPenetration * BiasFactor) / DeltaTime;
+    }
+    return 0.0f;
+}
 FMAABB FCollisionProcessor::CalculateAABBFromShape(XMVECTOR position, XMVECTOR rotation, XMVECTOR halfExtent, ECollisionShapeType shapeType) const
 {
     FMAABB result;

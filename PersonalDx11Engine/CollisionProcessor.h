@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math.h"
+#include "AABB.h"
 #include "CollisionDefines.h"
 #include <memory>
 #include <vector>
@@ -15,6 +16,7 @@ class FCollisionResponseCalculator;
 class FCollisionEventCalculator;
 class FCollisionPositionCorrectionCalculator;
 class FDynamicAABBTree;
+class IPhysicsEventDispatcher;
 
 using PhysicsID = std::uint32_t;
 
@@ -31,7 +33,7 @@ struct FCollisionPair
     mutable bool bConverged = false;
 
     // Warm Starting용 제약 누적값
-    mutable FAccumulatedConstraint PrevConstraints;
+    mutable FCollisionAccumulation ConstraintsAccumulation;
 
     FCollisionPair() = default;
     FCollisionPair(PhysicsID IdA, PhysicsID IdB)
@@ -61,7 +63,6 @@ struct FCollisionPairHash
 
 #pragma endregion
 
-#pragma region FCollisionProcessor Class
 
 /**
  * PhysicsSystem 전용 충돌 처리 엔진
@@ -71,6 +72,7 @@ struct FCollisionPairHash
  * 2. 인터페이스 기반 데이터 접근 - 의존성 주입 패턴
  * 3. 상태 없는 프레임 처리 - 외부 활성 ID 목록 기반
  * 4. SimulateSubStep 전용 설계 - 정확한 시간 계산
+ * 5. 매개변수 최적화 - 멤버 기반 임시 저장소 패턴
  */
 class FCollisionProcessor
 {
@@ -97,9 +99,6 @@ public:
     /// </summary>
     void LoadConfigFromIni();
 
-    /// <summary>
-    /// 모든 충돌 쌍 및 공간 분할 트리 초기화
-    /// </summary>
     /// <summary>
     /// 모든 충돌 쌍 및 공간 분할 트리 초기화
     /// </summary>
@@ -131,7 +130,7 @@ public:
     /// <param name="PhysicsStateInterface">물리 상태 인터페이스</param>
     /// <param name="ShapeInterface">충돌 형상 인터페이스</param>
     /// <returns>초기화 성공 여부</returns>
-    bool Initialize(IPhysicsStateInternal* PhysicsStateInterface, ICollisionShapeInternal* ShapeInterface);
+    bool Initialize(IPhysicsStateInternal* PhysicsStateInterface, ICollisionShapeInternal* ShapeInterface, IPhysicsEventDispatcher* EventDispathcer);
 
     /// <summary>
     /// 시스템 해제 및 메모리 정리
@@ -146,6 +145,7 @@ private:
     // 인터페이스 기반 의존성 주입 (Initialize에서 설정)
     IPhysicsStateInternal* PhysicsStateInterface = nullptr;
     ICollisionShapeInternal* ShapeInterface = nullptr;
+    IPhysicsEventDispatcher* PhysicsEventDispatcher = nullptr;
 
     // 초기화 상태 추적
     bool bIsInitialized = false;
@@ -159,75 +159,82 @@ private:
     void GetCollisionShapeData(PhysicsID Id, FCollisionShapeData& OutData) const;
     void GetPhysicsParams(PhysicsID Id, FPhysicsParameters& OutParams) const;
 
-    // 월드 변환 조회 (SIMD 형식)
-    XMVECTOR GetCurrentWorldPosition(PhysicsID Id) const;
-    XMVECTOR GetCurrentWorldRotation(PhysicsID Id) const;  // Quaternion
-    XMVECTOR GetCurrentWorldScale(PhysicsID Id) const;
-    XMVECTOR GetPrevWorldPosition(PhysicsID Id) const;
-    XMVECTOR GetPrevWorldRotation(PhysicsID Id) const;
-    XMVECTOR GetPrevWorldScale(PhysicsID Id) const;
+#pragma endregion
+
+#pragma region Effective Collision Pairs Management
+
+private:
+    // 충돌 쌍 관리 및 브로드페이즈
+    void UpdateBroadPhasePairs(const std::vector<PhysicsID>& ActivePhysicsIDs);
+    void GenerateAndSendExitEvent(const FCollisionPair& ExitingPair);
+
+private:
+    // 공간 분할 시스템 (PhysicsID 기반)
+    std::unique_ptr<FDynamicAABBTree> CollisionTree;
+
+    // 활성 충돌 쌍 관리 (PhysicsID 기반, bPrevCollided로 이전 상태 추적)
+    std::unordered_set<FCollisionPair, FCollisionPairHash> EffectiveCollisionPairs;
+
+    // PhysicsID ↔ NodeID 매핑 (DynamicAABBTree와의 연결)
+    std::unordered_map<PhysicsID, size_t> PhysicsIdToNodeId;
+    std::unordered_map<size_t, PhysicsID> NodeIdToPhysicsId;
 
 #pragma endregion
 
 #pragma region Collision Processing Pipeline
 
 private:
-    // 충돌 쌍 관리 및 브로드페이즈
-    void UpdateCollisionPairs(const std::vector<PhysicsID>& ActivePhysicsIDs);
+    // 정밀 충돌 감지 단계
+    float PerformNarrowphaseDetection(float DeltaTime);
 
-    // 정밀 충돌 감지 단계, 최소 충돌 감지 시간 반환
-    float PerformNarrowphaseDetection(const std::vector<PhysicsID>& ActivePhysicsIDs,
-                                      float DeltaTime,
-                                      std::vector<FCollisionPair>& OutCollidingPairs,
-                                      std::vector<FCollisionDetectionResult>& OutDetectionResults);
+    // 충돌 시간 기반 필터링 (CCD 최적화)
+    void FilterCollisionsByToI(float TargetTime);
 
-    // 시간 기반 충돌 필터링 (CCD 최적화)
-    void FilterCollisionsByTime(std::vector<FCollisionPair>& CollidingPairs,
-                                std::vector<FCollisionDetectionResult>& DetectionResults,
-                                float TargetTime);
+    // 충돌 반응 처리 (통합된 Apply 함수들)
+    void ApplyCollisionResponse(float DeltaTime);
 
-    // 충돌 반응 및 해결 단계  
-    void ProcessCollisionResponse(const std::vector<FCollisionPair>& CollidingPairs,
-                                   const std::vector<FCollisionDetectionResult>& DetectionResults,
-                                   float DeltaTime);
+    // 충돌 이벤트 생성
+    void ApplyCollisionEvents();
 
-    // 이벤트 생성 단계
-    void GenerateCollisionEvents(const std::vector<FCollisionPair>& CollidingPairs,
-                                 const std::vector<FCollisionDetectionResult>& DetectionResults);
+private:
+    // Process 단계에서 수집된 임시 데이터 (멤버 기반 저장소 패턴)
+    std::vector<FCollisionPair> CurrentCollidingPairs;
+    std::vector<FCollisionDetectionResult> CurrentDetectionResults;
+    std::vector<FPhysicsParameters> CurrentParamsA;
+    std::vector<FPhysicsParameters> CurrentParamsB;
+    float CurrentDeltaTime = 0.0f;
 
-    // 충돌 반응 처리 헬퍼들
-    void ApplyDirectPositionCorrections(const std::vector<FCollisionPair>& CollidingPairs,
-                                        const std::vector<FCollisionDetectionResult>& DetectionResults);
-    void ApplyIterativeConstraintSolver(const std::vector<FCollisionPair>& CollidingPairs,
-                                        const std::vector<FCollisionDetectionResult>& DetectionResults,
-                                        float EffectiveDeltaTime);
-    void UpdateCollisionStates(const std::vector<FCollisionPair>& CollidingPairs,
-                               const std::vector<FCollisionDetectionResult>& DetectionResults);
+#pragma endregion
 
-    // CCD 판단 및 개별 쌍 처리
+#pragma region Collision Response Implementation
+
+private:
+    // 직접 위치 보정 적용 (멤버 데이터 기반)
+    void ApplyDirectPositionCorrections();
+
+    // 반복적 제약 조건 해결 (멤버 데이터 기반)
+    void ApplyIterativeConstraintSolver();
+
+    // 충돌 상태 업데이트 (멤버 데이터 기반)
+    void UpdateCollisionStates();
+
+    // 개별 처리 헬퍼들 (인덱스 기반)
+    void ProcessSinglePositionCorrection(size_t Index, float CorrectionRatio);
+    void ProcessSingleConstraintIteration(size_t Index, uint32_t Iteration);
+
+    // CCD 및 유틸리티
     bool ShouldUseCCD(PhysicsID Id) const;
-    void ApplyCollisionResponseByConstraints(
-        const FCollisionPair& Pair,
-        const FCollisionDetectionResult& Result,
-        float DeltaTime
-    );
-    void ApplyDirectPositionCorrection(
-        const FCollisionPair& Pair,
-        const FCollisionDetectionResult& Result,
-        float CorrectionRatio
-    );
-
-    // 유틸리티
     float CalculateAABBOverlapRatio(const FCollisionPair& Pair) const;
+    float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const;
 
 #pragma endregion
 
 #pragma region Event Generation
 
 private:
-    // 개별 충돌 이벤트 생성 헬퍼
-    void GenerateCollisionEvent(const FCollisionPair& Pair, const FCollisionDetectionResult& Result);
-    void GenerateCollisionExitEvent(const FCollisionPair& Pair);
+    // 이벤트 생성 (멤버 데이터 기반)
+    void GenerateCollisionEvents();
+    void GenerateExitEvents();
 
 #pragma endregion
 
@@ -240,24 +247,9 @@ private:
     std::unique_ptr<FCollisionEventCalculator> EventCalculator;
     std::unique_ptr<FCollisionPositionCorrectionCalculator> PositionCorrectionCalculator;
 
-    // 공간 분할 시스템 (PhysicsID 기반)
-    std::unique_ptr<FDynamicAABBTree> CollisionTree;
-
 #pragma endregion
 
-#pragma region Collision Pair Management
-
-private:
-    // 활성 충돌 쌍 관리 (PhysicsID 기반, bPrevCollided로 이전 상태 추적)
-    std::unordered_set<FCollisionPair, FCollisionPairHash> ActiveCollisionPairs;
-
-    // PhysicsID ↔ NodeID 매핑 (DynamicAABBTree와의 연결)
-    std::unordered_map<PhysicsID, size_t> PhysicsIdToNodeId;
-    std::unordered_map<size_t, PhysicsID> NodeIdToPhysicsId;
-
-#pragma endregion
-
-#pragma region Configuration
+#pragma region Configuration Members
 
 private:
     // 설정값들 (INI 파일에서 로드)
@@ -277,25 +269,9 @@ private:
     bool IsValidPhysicsID(PhysicsID Id) const { return Id != 0; }
     bool IsInterfaceValid() const { return PhysicsStateInterface != nullptr && ShapeInterface != nullptr; }
 
-    /// <summary>
-    /// 위치 편향 속도 계산 (침투 보정용 Baumgarte 안정화)
-    /// </summary>
-    /// <param name="PenetrationDepth">침투 깊이</param>
-    /// <param name="BiasFactor">편향 계수</param>
-    /// <param name="DeltaTime">시뮬레이션 시간</param>
-    /// <param name="Slop">허용 침투량</param>
-    /// <returns>편향 속도</returns>
-    float CalculatePositionBiasVelocity(
-        float PenetrationDepth,
-        float BiasFactor,
-        float DeltaTime,
-        float Slop
-    ) const;
-    //형상에 따른 AABB 생성
+    // 형상에 따른 AABB 생성
     FMAABB CalculateAABBFromShape(XMVECTOR Pos, XMVECTOR Rot, XMVECTOR HalfExtent, ECollisionShapeType ShapeType) const;
 
 #pragma endregion
 
 };
-
-#pragma endregion
