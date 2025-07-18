@@ -247,6 +247,62 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
     // 6. 트리 구조 최적화 (Fat Bounds 벗어난 노드들 자동 재배치)
     CollisionTree->UpdateTree();
 }
+
+void FCollisionProcessor::LoadConfigFromIni()
+{
+    UConfigReadManager* ConfigManager = UConfigReadManager::Get();
+    if (!ConfigManager)
+    {
+        LOG_WARNING("ConfigReadManager not available - using default collision settings");
+        return;
+    }
+
+    // 설정값 로드 (실패 시 기본값 유지)
+    ConfigManager->GetValue("CCDVelocityThreshold", CCDVelocityThreshold);
+    ConfigManager->GetValue("InitialCollisionCapacity", InitialCollisionCapacity);
+    ConfigManager->GetValue("MaxConstraintIterations", MaxConstraintIterations);
+    ConfigManager->GetValue("FatBoundsExtentRatio", FatBoundsExtentRatio);
+    ConfigManager->GetValue("PositionCorrectionBias", PositionCorrectionBias);
+    ConfigManager->GetValue("WarmStartingDamping", WarmStartingDamping);
+    ConfigManager->GetValue("MinConstraintLambda", MinConstraintLambda);
+
+    // 설정값 유효성 검증
+    CCDVelocityThreshold = std::max(0.1f, CCDVelocityThreshold);
+    InitialCollisionCapacity = std::max(32u, InitialCollisionCapacity);
+    MaxConstraintIterations = std::clamp(MaxConstraintIterations, 1u, 20u);
+    FatBoundsExtentRatio = std::clamp(FatBoundsExtentRatio, 0.01f, 1.0f);
+    PositionCorrectionBias = std::clamp(PositionCorrectionBias, 0.0f, 1.0f);
+    WarmStartingDamping = std::clamp(WarmStartingDamping, 0.0f, 1.0f);
+    MinConstraintLambda = std::max(0.1f, MinConstraintLambda);
+
+    LOG_INFO("Collision settings loaded - CCD Threshold: %.2f, Capacity: %u, Iterations: %u",
+             CCDVelocityThreshold, InitialCollisionCapacity, MaxConstraintIterations);
+}
+
+void FCollisionProcessor::UnRegisterAll()
+{
+    if (!CollisionTree)
+        return;
+
+    // 1. AABB 트리 완전 정리
+    CollisionTree->Clear();
+
+    // 2. 모든 컨테이너 정리
+    EffectiveCollisionPairs.clear();
+    PhysicsIdToNodeId.clear();
+    NodeIdToPhysicsId.clear();
+
+    LOG_INFO("All collision registrations cleared");
+}
+
+bool FCollisionProcessor::IsInitialized() const
+{
+    return bIsInitialized && IsInterfaceValid() &&
+        Detector && ResponseCalculator && EventCalculator &&
+        PositionCorrectionCalculator && CollisionTree;
+}
+
+
 #pragma endregion
 
 #pragma region Data Access Layer
@@ -511,20 +567,302 @@ void FCollisionProcessor::RequestCollisonEvents()
 
 #pragma endregion
 
+#pragma region Collision Response Implementation
+
+void FCollisionProcessor::ApplyDirectPositionCorrections()
+{
+    if (CurrentCollidingPairs.empty() || !PositionCorrectionCalculator)
+        return;
+
+    // 멤버 저장소 기반으로 각 충돌 쌍에 대해 위치 보정 적용
+    for (size_t i = 0; i < CurrentCollidingPairs.size(); ++i)
+    {
+        const auto& pair = CurrentCollidingPairs[i];
+        const auto& result = CurrentDetectionResults[i];
+        const auto& paramsA = CurrentParamsA[i];
+        const auto& paramsB = CurrentParamsB[i];
+
+        // AABB 겹침 비율 계산으로 보정 강도 결정
+        float overlapRatio = CalculateAABBOverlapRatio(pair);
+        float correctionRatio = 0.0f;
+
+        // 겹침 정도에 따른 차등 보정
+        if (overlapRatio > 0.7f)
+        {
+            correctionRatio = 0.45f; // 심각한 겹침
+        }
+        else if (overlapRatio > 0.4f)
+        {
+            correctionRatio = 0.2f;  // 중간 겹침
+        }
+        else
+        {
+            continue; // 경미한 겹침은 제약 조건으로만 해결
+        }
+
+        // 개별 위치 보정 처리 (인덱스 + 참조 기반)
+        ProcessSinglePositionCorrection(i, paramsA, paramsB, correctionRatio);
+    }
+}
+
+void FCollisionProcessor::ApplyIterativeConstraintSolver()
+{
+    if (CurrentCollidingPairs.empty() || !ResponseCalculator)
+        return;
+
+    int convergedCount = 0;
+    const size_t totalPairs = CurrentCollidingPairs.size();
+
+    // 반복적 제약 조건 해결 (Projected Gauss-Seidel)
+    for (uint32_t iteration = 0; iteration < MaxConstraintIterations; ++iteration)
+    {
+        convergedCount = 0;
+
+        for (size_t i = 0; i < totalPairs; ++i)
+        {
+            auto& pair = CurrentCollidingPairs[i]; 
+
+            if (pair.bConverged)
+            {
+                convergedCount++;
+                continue;
+            }
+
+            // 개별 제약 조건 반복 처리 (인덱스 + 참조 기반)
+            ProcessSingleConstraintIteration(i, CurrentParamsA[i], CurrentParamsB[i], iteration);
+
+            // 수렴 여부는 ProcessSingleConstraintIteration에서 판단하여 pair.bConverged 설정
+            if (pair.bConverged)
+            {
+                convergedCount++;
+            }
+        }
+
+        // 모든 쌍이 수렴했으면 조기 종료
+        if (convergedCount == static_cast<int>(totalPairs))
+        {
+            LOG_INFO("Collision constraints converged early at iteration %u", iteration + 1);
+            break;
+        }
+    }
+
+    // 수렴하지 못한 쌍에 대한 경고
+    if (convergedCount < static_cast<int>(totalPairs))
+    {
+        LOG_WARNING("Collision constraints did not fully converge: %d/%zu pairs",
+                    convergedCount, totalPairs);
+    }
+}
+
+void FCollisionProcessor::UpdateCollisionStates()
+{
+    if (CurrentCollidingPairs.empty())
+        return;
+
+    // 멤버 저장소 기반으로 충돌 상태 업데이트
+    for (size_t i = 0; i < CurrentCollidingPairs.size(); ++i)
+    {
+        auto& pair = CurrentCollidingPairs[i]; // non-const로 상태 수정
+        const auto& result = CurrentDetectionResults[i];
+
+        // 이전 충돌 상태 업데이트
+        pair.bPrevCollided = result.bCollided;
+
+        // 수렴 상태 리셋 (다음 프레임을 위해)
+        pair.bConverged = false;
+
+        // EffectiveCollisionPairs에서도 동기화 업데이트 (mutable 멤버 직접 수정)
+        auto activeIt = EffectiveCollisionPairs.find(pair);
+        if (activeIt != EffectiveCollisionPairs.end())
+        {
+            // mutable 멤버들을 직접 수정 (erase + insert 불필요)
+            activeIt->bPrevCollided = result.bCollided;
+            activeIt->ConstraintsAccumulation = pair.ConstraintsAccumulation;
+            activeIt->bConverged = false;
+        }
+    }
+}
+
+void FCollisionProcessor::ProcessSinglePositionCorrection(size_t Index,
+                                                          const FPhysicsParameters& ParamsA,
+                                                          const FPhysicsParameters& ParamsB,
+                                                          float CorrectionRatio)
+{
+    if (Index >= CurrentDetectionResults.size() || !PositionCorrectionCalculator)
+        return;
+
+    const auto& pair = CurrentCollidingPairs[Index];
+    const auto& result = CurrentDetectionResults[Index];
+
+    // 질량 비례 분리 계산
+    XMVECTOR correctionA, correctionB;
+    PositionCorrectionCalculator->CalculateMassProportionalSeparation(
+        ParamsA.InvMass, ParamsB.InvMass,
+        result.PenetrationDepth,
+        result.Normal,
+        0.01f, // 최소 분리 거리
+        correctionA, correctionB
+    );
+
+    // 현재 위치 획득 및 보정 적용
+    XMVECTOR posA = PhysicsStateInterface->P_GetWorldPosition(pair.PhysicsIdA);
+    XMVECTOR posB = PhysicsStateInterface->P_GetWorldPosition(pair.PhysicsIdB);
+
+    XMVECTOR newPosA = XMVectorAdd(posA, XMVectorScale(correctionA, CorrectionRatio));
+    XMVECTOR newPosB = XMVectorAdd(posB, XMVectorScale(correctionB, CorrectionRatio));
+
+    // 물리 상태 인터페이스를 통해 위치 업데이트
+    PhysicsStateInterface->P_SetWorldPosition(pair.PhysicsIdA, newPosA);
+    PhysicsStateInterface->P_SetWorldPosition(pair.PhysicsIdB, newPosB);
+}
+
+void FCollisionProcessor::ProcessSingleConstraintIteration(size_t Index,
+                                                           FPhysicsParameters& ParamsA,
+                                                           FPhysicsParameters& ParamsB,
+                                                           uint32_t Iteration)
+{
+    if (Index >= CurrentDetectionResults.size() || !ResponseCalculator)
+        return;
+
+    auto& pair = CurrentCollidingPairs[Index];
+    const auto& result = CurrentDetectionResults[Index];
+
+    // 이전 제약 누적값 저장 (수렴 판단용)
+    FCollisionAccumulation prevAccumulation = pair.ConstraintsAccumulation;
+
+    // 위치 편향 속도 계산 (침투 보정용)
+    float biasSpeed = CalculatePositionBiasVelocity(
+        result.PenetrationDepth,
+        PositionCorrectionBias,
+        CurrentDeltaTime,
+        0.01f // Slop
+    );
+
+    // 충돌 반응 계산 (제약 조건 기반)
+    FCollisionResponseResult responseResult = ResponseCalculator->CalculateCollisionResponse(
+        result,
+        ParamsA, ParamsB,
+        pair.ConstraintsAccumulation, // 입출력 매개변수
+        biasSpeed
+    );
+
+    // 충돌 반응 적용 (임펄스 기반)
+    PhysicsStateInterface->P_ApplyImpulse(pair.PhysicsIdA, responseResult.NetImpulse, responseResult.ApplicationPoint);
+    PhysicsStateInterface->P_ApplyImpulse(pair.PhysicsIdB, XMVectorNegate(responseResult.NetImpulse), responseResult.ApplicationPoint);
+
+    // 수렴 확인 (제약 누적값 변화량 기준)
+    if (FCollisionAccumulation::IsEqual(prevAccumulation, pair.ConstraintsAccumulation, MinConstraintLambda))
+    {
+        pair.bConverged = true;
+    }
+}
+#pragma endregion
+
 #pragma region Utility Functions
+bool FCollisionProcessor::IsInterfaceValid() const
+{
+    return PhysicsStateInterface != nullptr &&
+        ShapeInterface != nullptr &&
+        PhysicsEventDispatcher != nullptr;
+}
+
+bool FCollisionProcessor::ShouldUseCCD(PhysicsID Id) const
+{
+    if (!IsValidPhysicsID(Id) || !IsInterfaceValid())
+        return false;
+
+    XMVECTOR velocity = PhysicsStateInterface->P_GetVelocity(Id);
+    float speed = XMVectorGetX(XMVector3Length(velocity));
+
+    return speed > CCDVelocityThreshold;
+}
+
+float FCollisionProcessor::CalculateAABBOverlapRatio(const FCollisionPair& Pair) const
+{
+    // 노드 ID 찾기
+    auto nodeAIt = PhysicsIdToNodeId.find(Pair.PhysicsIdA);
+    auto nodeBIt = PhysicsIdToNodeId.find(Pair.PhysicsIdB);
+
+    if (nodeAIt == PhysicsIdToNodeId.end() || nodeBIt == PhysicsIdToNodeId.end())
+        return 0.0f;
+
+    if (!CollisionTree->IsValidId(nodeAIt->second) || !CollisionTree->IsValidId(nodeBIt->second))
+        return 0.0f;
+
+    const FMAABB& boundsA = CollisionTree->GetBounds(nodeAIt->second);
+    const FMAABB& boundsB = CollisionTree->GetBounds(nodeBIt->second);
+
+    // 효율적인 XMVECTOR 기반 겹침 검사
+    XMVECTOR minA = boundsA.vMin;
+    XMVECTOR maxA = boundsA.vMax;
+    XMVECTOR minB = boundsB.vMin;
+    XMVECTOR maxB = boundsB.vMax;
+
+    // 겹침 검사: minA > maxB 또는 minB > maxA 이면 겹치지 않음
+    XMVECTOR overlapCheck1 = XMVectorGreater(minA, maxB);
+    XMVECTOR overlapCheck2 = XMVectorGreater(minB, maxA);
+    XMVECTOR noOverlap = XMVectorOrInt(overlapCheck1, overlapCheck2);
+
+    // 각 축별로 겹침 여부 확인 (XMVector3AnyTrue 대신 컴포넌트 직접 확인)
+    if (XMVectorGetX(noOverlap) || XMVectorGetY(noOverlap) || XMVectorGetZ(noOverlap))
+    {
+        return 0.0f; // AABB가 겹치지 않음
+    }
+
+    // 겹침 영역 계산
+    XMVECTOR overlapMin = XMVectorMax(minA, minB);
+    XMVECTOR overlapMax = XMVectorMin(maxA, maxB);
+    XMVECTOR overlapSize = XMVectorSubtract(overlapMax, overlapMin);
+
+    // 각 축의 겹침 크기 확인
+    float overlapX = XMVectorGetX(overlapSize);
+    float overlapY = XMVectorGetY(overlapSize);
+    float overlapZ = XMVectorGetZ(overlapSize);
+
+    if (overlapX <= 0.0f || overlapY <= 0.0f || overlapZ <= 0.0f)
+    {
+        return 0.0f;
+    }
+
+    // 겹침 볼륨 계산
+    float overlapVolume = overlapX * overlapY * overlapZ;
+
+    // 각 AABB의 볼륨 계산
+    XMVECTOR sizeA = XMVectorSubtract(maxA, minA);
+    XMVECTOR sizeB = XMVectorSubtract(maxB, minB);
+
+    float volumeA = XMVectorGetX(sizeA) * XMVectorGetY(sizeA) * XMVectorGetZ(sizeA);
+    float volumeB = XMVectorGetX(sizeB) * XMVectorGetY(sizeB) * XMVectorGetZ(sizeB);
+
+    // 기준 볼륨 결정 (두 객체 볼륨 중 작은 값)
+    float referenceVolume = std::min(volumeA, volumeB);
+
+    // 0으로 나누는 것을 방지하기 위한 최소 볼륨 보장
+    constexpr float MinVolume = 0.001f; // 1cm³
+    referenceVolume = std::max(referenceVolume, MinVolume);
+
+    // 겹침 비율 계산
+    float overlapRatio = overlapVolume / referenceVolume;
+
+    // 부드러운 포화(0~1 범위)를 위한 시그모이드 함수 적용
+    return std::clamp(1.0f - std::exp(-overlapRatio * 3.0f), 0.0f, 1.0f);
+}
+
 float FCollisionProcessor::CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const
 {
     // 슬롭(Slop)을 초과하는 침투만 고려
     float biasPenetration = std::fmaxf(0.0f, PenetrationDepth - Slop);
 
-    if (biasPenetration > KINDA_SMALL) // 아주 작은 값은 무시
+    if (biasPenetration < KINDA_SMALL) // 아주 작은 값은 무시
     {
-        // Baumgarte 안정화 항: (위치 오류 * 보정 계수) / DeltaTime  
-        // 위치 보정을 나타낼 속도 편향
-        return (biasPenetration * BiasFactor) / DeltaTime;
+        return 0.0f;
     }
-    return 0.0f;
+    
+    // Baumgarte 안정화 항: (위치 오류 * 보정 계수) / DeltaTime  
+    // 위치 보정을 나타낼 속도 편향
+    return (biasPenetration * BiasFactor) / DeltaTime;
 }
+
 FMAABB FCollisionProcessor::CalculateAABBFromShape(XMVECTOR position, XMVECTOR rotation, XMVECTOR halfExtent, ECollisionShapeType shapeType) const
 {
     FMAABB result;

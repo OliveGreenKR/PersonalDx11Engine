@@ -219,13 +219,8 @@ private:
     void UpdateCollisionStates();
 
     // 개별 처리 헬퍼들 (인덱스 기반)
-    void ProcessSinglePositionCorrection(size_t Index, float CorrectionRatio);
-    void ProcessSingleConstraintIteration(size_t Index, uint32_t Iteration);
-
-    // CCD 및 유틸리티
-    bool ShouldUseCCD(PhysicsID Id) const;
-    float CalculateAABBOverlapRatio(const FCollisionPair& Pair) const;
-    float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const;
+    void ProcessSinglePositionCorrection(size_t Index, const FPhysicsParameters& ParamsA, const FPhysicsParameters& ParamsB, float CorrectionRatio);
+    void ProcessSingleConstraintIteration(size_t Index, FPhysicsParameters& ParamsA, FPhysicsParameters& ParamsB, uint32_t Iteration);
 
 #pragma endregion
 
@@ -267,9 +262,12 @@ private:
 
 private:
     bool IsValidPhysicsID(PhysicsID Id) const { return Id != 0; }
-    bool IsInterfaceValid() const { return PhysicsStateInterface != nullptr 
-        && ShapeInterface != nullptr 
-        && PhysicsEventDispatcher != nullptr; }
+    bool IsInterfaceValid() const;
+
+    // CCD 및 유틸리티
+    bool ShouldUseCCD(PhysicsID Id) const;
+    float CalculateAABBOverlapRatio(const FCollisionPair& Pair) const;
+    float CalculatePositionBiasVelocity(float PenetrationDepth, float BiasFactor, float DeltaTime, float Slop) const;
 
     // 형상에 따른 AABB 생성
     FMAABB CalculateAABBFromShape(XMVECTOR Pos, XMVECTOR Rot, XMVECTOR HalfExtent, ECollisionShapeType ShapeType) const;
