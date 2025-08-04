@@ -192,22 +192,52 @@ void UPhysicsSystem::AddCollisionEvent(const FPhysicsCollisionEvent& Event)
     CollisionEventQueue->Push(Event);
 }
 
-void UPhysicsSystem::SendCollisionEvents()
+void UPhysicsSystem::SyncPhysicsEvents()
 {
     if (!CollisionEventQueue || CollisionEventQueue->Empty())
     {
         return;
     }
 
-    // FIFO 순서로 직접 처리
+    // 1. 모든 이벤트 수집
+    std::vector<FPhysicsCollisionEvent> AllEvents;
+    AllEvents.reserve(CollisionEventQueue->Size());
+
     while (!CollisionEventQueue->Empty())
     {
-        FPhysicsCollisionEvent Event = CollisionEventQueue->Front();
+        AllEvents.emplace_back(CollisionEventQueue->Front());
         CollisionEventQueue->Pop();
+    }
 
-        // 즉시 양방향 전송
-        SendEventToPhysicsObject(Event.PhysicsIdA, Event);
-        SendEventToPhysicsObject(Event.PhysicsIdB, Event);
+    // 2. PhysicsID별 그룹화
+    std::unordered_map<PhysicsID, std::vector<FPhysicsCollisionEvent>> GroupedEvents;
+    for (const auto& event : AllEvents)
+    {
+        GroupedEvents[event.PhysicsIdA].emplace_back(event);
+        GroupedEvents[event.PhysicsIdB].emplace_back(event);
+    }
+
+    // 3. 배치 전송
+    for (auto& [physicsId, events] : GroupedEvents)
+    {
+        BatchSynchCollisionEvents(physicsId, events);
+    }
+}
+
+void UPhysicsSystem::BatchSynchCollisionEvents(PhysicsID TargetPhysicsID,
+                                               std::vector<FPhysicsCollisionEvent>& Events)
+{
+    if (!IsValidTargetID(TargetPhysicsID) || Events.empty())
+    {
+        return;
+    }
+
+    SoAIdx Index = GetIdx(static_cast<SoAID>(TargetPhysicsID));
+
+    if (auto PhysicsObject = PhysicsStateSoA->ObjectReferences[Index].lock())
+    {
+        // 배치로 전송 (함수 호출 오버헤드 최소화)
+        PhysicsObject->ReceiveCollisionEvents(Events);
     }
 }
 
@@ -224,22 +254,6 @@ size_t UPhysicsSystem::GetEventQueueSize() const
     return CollisionEventQueue ? CollisionEventQueue->Size() : 0;
 }
 
-void UPhysicsSystem::SendEventToPhysicsObject(PhysicsID TargetPhysicsID, const FPhysicsCollisionEvent& Event)
-{
-    if (!IsValidTargetID(TargetPhysicsID))
-    {
-        return;
-    }
-
-    SoAIdx Index = GetIdx(static_cast<SoAID>(TargetPhysicsID));
-
-    if (auto PhysicsObject = PhysicsStateSoA->ObjectReferences[Index].lock())
-    {
-        // 단일 이벤트를 벡터로 래핑하여 전송
-        std::vector<FPhysicsCollisionEvent> SingleEventList = { Event };
-        PhysicsObject->ReceiveCollisionEvents(SingleEventList);
-    }
-}
 
 #pragma endregion
 
@@ -300,7 +314,8 @@ float UPhysicsSystem::SimulateSubstep(const float StepTime)
     float MinSimulatedTimeRatio = 1.0f;
 
     // 1. 충돌 
-    float CollideTimeRatio = GetCollisionSubsystem()->ProcessCollisions(;
+    std::vector<PhysicsID> ActiveIDs = GetActivePhysicsIDs();
+    float CollideTimeRatio = GetCollisionSubsystem()->ProcessCollisions(ActiveIDs, StepTime);
     MinSimulatedTimeRatio = std::min(MinSimulatedTimeRatio, CollideTimeRatio);
 
     // 시뮬레이션 시간 업데이트
@@ -338,11 +353,11 @@ void UPhysicsSystem::FinalizeSimulation()
     // 시뮬레이션 플래그 해제
     bIsSimulating = false;
 
-    // 물리 이벤트 동기화
-    SendCollisionEvents();
-
     // 물리 → 게임 상태값 동기화 
     SyncPhysicsToGame();
+
+    // 물리 이벤트 동기화
+    SyncPhysicsEvents();
 }
 
 void UPhysicsSystem::BatchPhysicsTick(float deltaTime)

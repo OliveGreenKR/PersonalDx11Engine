@@ -191,7 +191,7 @@ void FCollisionProcessor::UpdateSpatialPartitioning(const std::vector<PhysicsID>
             // 이전에 충돌 중이었던 쌍이면 Exit 이벤트 생성
             if (containsRemovedId && existingPair.bPrevCollided)
             {
-                GenerateAndSendExitEvent(existingPair);
+                GenerateAndSendExitEventToPhyscis(existingPair);
             }
         }
     }
@@ -421,7 +421,7 @@ void FCollisionProcessor::UpdateBroadPhasePairs(const std::vector<PhysicsID>& Ac
             NewCollisionPairs.find(existingPair) == NewCollisionPairs.end())
         {
             // Exit 이벤트 생성
-            GenerateAndSendExitEvent(existingPair);
+            GenerateAndSendExitEventToPhyscis(existingPair);
         }
     }
 
@@ -549,7 +549,7 @@ void FCollisionProcessor::RequestCollisionEvents()
 
         if (result.bCollided)
         {
-            GenerateAndSendEvent(pair, result);
+            GenerateAndSendEventToPhysics(pair, result);
         }
     }
 }
@@ -748,7 +748,7 @@ void FCollisionProcessor::ProcessSingleConstraintIteration(size_t Index,
 #pragma endregion
 
 #pragma region Event Generation
-void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& ExitingPair)
+void FCollisionProcessor::GenerateAndSendExitEventToPhyscis(const FCollisionPair& ExitingPair)
 {
     if (!EventCalculator)
         return;
@@ -761,7 +761,7 @@ void FCollisionProcessor::GenerateAndSendExitEvent(const FCollisionPair& Exiting
     }
 }
 
-void FCollisionProcessor::GenerateAndSendEvent(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result)
+void FCollisionProcessor::GenerateAndSendEventToPhysics(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result)
 {
     auto& pair = ExitingPair;
     const auto& result = Result;

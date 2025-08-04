@@ -226,9 +226,9 @@ private:
 #pragma region Event Generation
 private:
     // 충돌 종료 이벤트 생성 및 전송
-    void GenerateAndSendExitEvent(const FCollisionPair& ExitingPair);
+    void GenerateAndSendExitEventToPhyscis(const FCollisionPair& ExitingPair);
     // 충돌 이벤트 생성 및 전송
-    void GenerateAndSendEvent(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result);
+    void GenerateAndSendEventToPhysics(const FCollisionPair& ExitingPair, const FCollisionDetectionResult& Result);
 
 #pragma endregion
 

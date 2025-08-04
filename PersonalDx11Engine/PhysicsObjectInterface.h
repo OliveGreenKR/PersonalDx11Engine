@@ -116,4 +116,8 @@ public:
     virtual FPhysicsMask GetPhysicsMask() const = 0;
 
 #pragma endregion
+
+#pragma region Phycis Events
+    virtual void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& singleEventList) = 0;
+#pragma endregion
 };
