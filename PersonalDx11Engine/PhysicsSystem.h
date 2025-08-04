@@ -150,8 +150,7 @@ private:
     std::unique_ptr<TCircularQueue<FPhysicsCollisionEvent>> CollisionEventQueue;
 
     /// <summary>
-    /// 배치 이벤트 처리 및 게임 로직에 이벤트 전달
-    /// FinalizeSimulation()에서 호출되어 큐의 모든 이벤트를 RigidBodyComponent로 전송
+    /// 충돌 이벤트 동기화
     /// </summary>
     void SyncPhysicsEvents();
 
@@ -166,10 +165,11 @@ private:
     size_t GetEventQueueSize() const;
 
     /// <summary>
-    /// 개별 PhysicsObject에 단일 이벤트 전송
-    /// FIFO 순서 보장을 위한 즉시 전송 방식
+    /// PhysicsID별 원본 물리 이벤트 그룹화
+    /// 큐의 모든 이벤트를 PhysicsID별로 분류
     /// </summary>
-    void BatchSynchCollisionEvents(PhysicsID TargetPhysicsID, std::vector<FPhysicsCollisionEvent>& Event);
+    /// <param name="EventGroups">PhysicsID별로 그룹화된 원본 물리 이벤트 맵</param>
+    void GetGroupPhysicsEventsByID(std::unordered_map<PhysicsID, OUT std::vector<FPhysicsCollisionEvent>>& EventGroups);
 
 #pragma endregion
 

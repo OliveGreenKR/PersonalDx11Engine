@@ -199,45 +199,57 @@ void UPhysicsSystem::SyncPhysicsEvents()
         return;
     }
 
-    // 1. 모든 이벤트 수집
-    std::vector<FPhysicsCollisionEvent> AllEvents;
-    AllEvents.reserve(CollisionEventQueue->Size());
+    // 1. PhysicsID별 원본 물리 이벤트 그룹화
+    std::unordered_map<PhysicsID, std::vector<FPhysicsCollisionEvent>> EventGroups;
+    GetGroupPhysicsEventsByID(EventGroups);
 
-    while (!CollisionEventQueue->Empty())
+    // 2. BatchSyncPhysicsResults와 동일한 패턴: 한 번의 SoA 순회
+    const SoAIdx startIdx = PhysicsStateSoA->GetStartIdx();
+    const SoAIdx endIdx = PhysicsStateSoA->GetEndIdx();
+
+    for (SoAIdx i = startIdx; i < endIdx; ++i)
     {
-        AllEvents.emplace_back(CollisionEventQueue->Front());
-        CollisionEventQueue->Pop();
+        // 할당되고 활성화된 슬롯만 처리
+        if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
+            continue;
+
+        PhysicsID currentPhysicsID = PhysicsStateSoA->GetID(i);
+
+        // 해당 PhysicsID에 이벤트가 있는지 확인
+        auto eventIt = EventGroups.find(currentPhysicsID);
+        if (eventIt == EventGroups.end())
+            continue;
+
+        // IPhysicsObject에 원본 물리 이벤트 배치 전송
+        if (auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock())
+        {
+            physicsObject->ReceiveCollisionEvents(eventIt->second);
+        }
     }
 
-    // 2. PhysicsID별 그룹화
-    std::unordered_map<PhysicsID, std::vector<FPhysicsCollisionEvent>> GroupedEvents;
-    for (const auto& event : AllEvents)
-    {
-        GroupedEvents[event.PhysicsIdA].emplace_back(event);
-        GroupedEvents[event.PhysicsIdB].emplace_back(event);
-    }
-
-    // 3. 배치 전송
-    for (auto& [physicsId, events] : GroupedEvents)
-    {
-        BatchSynchCollisionEvents(physicsId, events);
-    }
+    // 3. 이벤트 큐 정리
+    ClearEventQueue();
 }
 
-void UPhysicsSystem::BatchSynchCollisionEvents(PhysicsID TargetPhysicsID,
-                                               std::vector<FPhysicsCollisionEvent>& Events)
+void UPhysicsSystem::GetGroupPhysicsEventsByID(std::unordered_map<PhysicsID, std::vector<FPhysicsCollisionEvent>>& EventGroups)
 {
-    if (!IsValidTargetID(TargetPhysicsID) || Events.empty())
-    {
-        return;
-    }
+    // 큐 크기 기반 메모리 예약으로 동적 할당 최소화
+    EventGroups.reserve(CollisionEventQueue->Size() / 2); // 평균적으로 한 객체당 2개 이벤트 가정
 
-    SoAIdx Index = GetIdx(static_cast<SoAID>(TargetPhysicsID));
-
-    if (auto PhysicsObject = PhysicsStateSoA->ObjectReferences[Index].lock())
+    // FIFO 순서로 이벤트 처리 및 그룹화
+    while (!CollisionEventQueue->Empty())
     {
-        // 배치로 전송 (함수 호출 오버헤드 최소화)
-        PhysicsObject->ReceiveCollisionEvents(Events);
+        FPhysicsCollisionEvent physicsEvent = CollisionEventQueue->Front();
+        CollisionEventQueue->Pop();
+
+        // A에게 전송할 이벤트 (PhysicsIdB가 상대방)
+        EventGroups[physicsEvent.PhysicsIdA].emplace_back(physicsEvent);
+
+        // B에게 전송할 이벤트 (PhysicsIdA가 상대방)
+        FPhysicsCollisionEvent reverseEvent = physicsEvent;
+        reverseEvent.PhysicsIdA = physicsEvent.PhysicsIdB;
+        reverseEvent.PhysicsIdB = physicsEvent.PhysicsIdA;
+        EventGroups[physicsEvent.PhysicsIdB].emplace_back(reverseEvent);
     }
 }
 

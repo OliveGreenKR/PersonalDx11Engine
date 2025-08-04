@@ -118,6 +118,6 @@ public:
 #pragma endregion
 
 #pragma region Phycis Events
-    virtual void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& singleEventList) = 0;
+    virtual void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& Events) = 0;
 #pragma endregion
 };
