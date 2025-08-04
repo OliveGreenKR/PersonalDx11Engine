@@ -107,6 +107,37 @@ struct FPhysicsCollisionEvent
 	}
 };
 
+/// <summary>
+/// 게임 로직에서 사용하는 충돌 이벤트 데이터
+/// 물리 시스템의 FPhysicsCollisionEvent를 게임 좌표계로 변환한 결과
+/// Vector3 좌표계 및 게임 단위 시스템 적용
+/// </summary>
+struct FCollisionEvent
+{
+	ECollisionState CollisionState = ECollisionState::None;
+
+	/// <summary>
+	/// 현재 미구현 추후 게임 시스템 객체 매니저를 추가해 로직 단위에서 PhyscisId를 통한 빠른 검색이 가능하도록 구현 예정
+	/// </summary>
+	[[deprecated("Do not use this member. It will be removed in future versions.")]]
+	class UCollisionComponentBase* Other = nullptr;
+
+	Vector3 CollisionPoint = Vector3::Zero();
+	Vector3 Normal = Vector3::Zero();
+	float PenetrationDepth = 0.0f;
+
+	/// <summary>
+	/// 충돌 이벤트 비교 연산자
+	/// 동일한 충돌인지 판단하기 위한 비교
+	/// </summary>
+	bool operator==(const FCollisionEvent& OtherEvent) const
+	{
+		return OtherEvent.Other == Other &&
+			OtherEvent.Normal == Normal &&
+			OtherEvent.CollisionPoint == CollisionPoint;
+	}
+};
+
 enum class ECollisionState
 {
 	None,

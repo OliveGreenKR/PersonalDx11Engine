@@ -56,7 +56,7 @@ public:
 
 #pragma endregion
 
-#pragma region State Data Management
+#pragma region Game Logic State Members
 
 private:
     // === 게임 상태 데이터  ===
@@ -74,11 +74,16 @@ private:
     PhysicsID PhysicsObjectID = 0;
     bool bIsRegisteredToPhysicsSystem = false;
 
+    class UCollisionComponentBase* OwnComponent = nullptr;
+
 #pragma endregion
 
 #pragma region IPhysicsObject Implementation
-
 public:
+    // === 충돌 컴포넌트 캐싱
+    // todo : CollisoinComp가 OnParentChanged에서 찾아서 등록하도록하기
+    void SetCollisionComoenet(class UCollisionComponentBase* ownComp);
+
     // === 게임 상태 데이터 제공 (Game → Physics) ===
     FHighFrequencyData GetHighFrequencyData() override;  // Get당시 명시적 일괄 업데이트중
     FMidFrequencyData GetMidFrequencyData() override;    
@@ -86,6 +91,11 @@ public:
 
     // === 물리 결과 수신 (Physics → Game) ===
     void ReceivePhysicsResults(const FPhysicsToGameData& results) override;
+
+    /// <summary>
+    /// 물리 시스템으로부터 원본 물리 충돌 이벤트를 배치로 수신
+    /// </summary>
+    void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& PhysicsEvents) override;
 
     // === 더티 플래그 관리 ===
     FPhysicsDataDirtyFlags GetDirtyFlags() const override;
@@ -99,6 +109,11 @@ public:
     // === 물리 시스템 통합 ===
     PhysicsID GetPhysicsID() const override;
     FPhysicsMask GetPhysicsMask() const override;
+
+private:
+    FCollisionEvent ConvertPhysicsToGameEvent(const FPhysicsCollisionEvent& PhysicsEvent);
+
+    void DispatchToOwnCollisionComponents(const FCollisionEvent& GameEvent);
 
 #pragma endregion
 
