@@ -519,8 +519,6 @@ void FPhysicsStateArrays::ResizeAllStatesVectors(uint32_t NewSize)
         // 형상 관련 벡터들 크기 조정 (새로 추가)
         CollisionShapeTypes.resize(NewSize);
         CollisionHalfExtents.resize(NewSize);
-        CollisionLocalPosition.resize(NewSize);
-        CollisionLocalRotation.resize(NewSize);
 
         // 물리 객체 참조 벡터 크기 조정
         ObjectReferences.resize(NewSize);
@@ -632,8 +630,6 @@ void FPhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
     // 형상 관련 데이터 이동 (새로 추가)
     CollisionShapeTypes[ToIndex] = CollisionShapeTypes[FromIndex];
     CollisionHalfExtents[ToIndex] = CollisionHalfExtents[FromIndex];
-    CollisionLocalPosition[ToIndex] = CollisionLocalPosition[FromIndex];
-    CollisionLocalRotation[ToIndex] = CollisionLocalRotation[FromIndex];
 
     // 객체 참조 이동
     ObjectReferences[ToIndex] = std::move(ObjectReferences[FromIndex]);
@@ -683,8 +679,6 @@ void FPhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
     // 형상 정보 교환
     std::swap(CollisionShapeTypes[Index1], CollisionShapeTypes[Index2]);
     std::swap(CollisionHalfExtents[Index1], CollisionHalfExtents[Index2]);
-    std::swap(CollisionLocalPosition[Index1], CollisionLocalPosition[Index2]);
-    std::swap(CollisionLocalRotation[Index1], CollisionLocalRotation[Index2]);
 
     // 객체 참조 교환
     std::swap(ObjectReferences[Index1], ObjectReferences[Index2]);
