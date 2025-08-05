@@ -17,6 +17,7 @@ class FCollisionDetector
 #pragma region Configuration
 public:
     FCollisionDetector();
+	~FCollisionDetector() = default;
 
 private:
     void LoadConfigFromIni();

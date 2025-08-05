@@ -1,5 +1,6 @@
 #pragma once
 #include "Math.h"
+#include "Transform.h"
 //연산을 위해 사용하는 구조체, 내부멤버는 XMVECOTR
 struct FMAABB
 {

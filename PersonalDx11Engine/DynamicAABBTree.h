@@ -133,7 +133,7 @@ public:
     void PrintTreeStructure(std::ostream& os = std::cout) const;
 
 private:
-    void PrintBinaryTree(size_t nodeId, std::ostream& os, std::string prefix, bool isLeft) const;
+    void PrintBinaryTree(size_t nodeId, std::ostream& os, std::string prefix = "", bool isLeft = false) const;
 
 #pragma endregion
 

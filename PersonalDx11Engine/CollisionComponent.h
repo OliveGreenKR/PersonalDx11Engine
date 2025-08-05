@@ -7,83 +7,69 @@
 #include "SceneComponent.h"
 #include "CollisionShapeInterface.h"
 
-class URigidBodyComponent;
-class UGameObject;
-class IPhysicsStateInternal;
-
-using PhysicsID = std::uint32_t;
-
-// 충돌 응답에 필요한 속성을 관리하는 최상위 충돌체 클래스, 직접 사용하지 마시오
 class UCollisionComponentBase : public USceneComponent, public ICollisionShape
 {
-	friend class FCollisionProcessor;
+#pragma region Constructor and Lifecycle
+
 public:
 	UCollisionComponentBase();
-
 	virtual ~UCollisionComponentBase();
+
+#pragma endregion
+
+#pragma region ICollisionShape Implementation
+
 public:
-	// Inherited via Interfaces
 	Vector3 GetScaledHalfExtent() const override;
-	bool IsStatic() const override;
-	const FTransform& GetWorldTransform() const override;
 	Vector3 GetHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 
 	virtual Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const = 0;
 	virtual Vector3 CalculateInvInertiaTensor(float InvMass) const = 0;
-
 	virtual ECollisionShapeType GetType() const override { return ECollisionShapeType::None; }
 
-	void SetDebugVisualize(const bool InBool) { bIsDebugVisualize = InBool; }
-	
-protected:  
-	virtual void PostInitialized() override;
-	virtual void PostTreeInitialized() override;
-	virtual void Tick(const float DeltaTime) override;
+#pragma endregion
 
-	virtual void RequestDebugRender(const float DeltaTime) = 0;
+#pragma region Collision Events
 
 public:
-	// 초기화
-	void BindRigidBody(const std::shared_ptr<URigidBodyComponent>& InRigidBody);
+	TDelegate<const FCollisionEvent&> OnCollisionEnter;
+	TDelegate<const FCollisionEvent&> OnCollisionStay;
+	TDelegate<const FCollisionEvent&> OnCollisionExit;
 
-public:
-	//Getter
-	URigidBodyComponent* GetRigidBody() const { return RigidBody.lock().get(); }
-	PhysicsID GetPhysicsID() const;
-	const FTransform& GetPreviousWorldTransform() const { return PrevWorldTransform; }
-
-private:
-	virtual void Activate() override;
-	virtual void DeActivate() override;
-	void ActivateColiision();
-	void DeActivateCollision();
-public:
-	// 충돌 이벤트 델리게이트
-	TDelegate<const FCollisionEventData&> OnCollisionEnter;
-	TDelegate<const FCollisionEventData&> OnCollisionStay;
-	TDelegate<const FCollisionEventData&> OnCollisionExit;
-
-	// 충돌 이벤트 publish
-	void OnCollisionEnterEvent(const FCollisionEventData& CollisionInfo) {
+	void OnCollisionEnterEvent(const FCollisionEvent& CollisionInfo) {
 		OnCollisionEnter.Broadcast(CollisionInfo);
 	}
 
-	void OnCollisionStayEvent(const FCollisionEventData& CollisionInfo) {
+	void OnCollisionStayEvent(const FCollisionEvent& CollisionInfo) {
 		OnCollisionStay.Broadcast(CollisionInfo);
 	}
 
-	void OnCollisionExitEvent(const FCollisionEventData& CollisionInfo) {
+	void OnCollisionExitEvent(const FCollisionEvent& CollisionInfo) {
 		OnCollisionExit.Broadcast(CollisionInfo);
 	}
 
+#pragma endregion
+
+#pragma region SceneComponent Overrides
+
+protected:
+	virtual void PostInitialized() override;
+	virtual void PostTreeInitialized() override;
+	virtual void Tick(const float DeltaTime) override;
+	virtual void RequestDebugRender(const float DeltaTime) = 0;
+
+public:
+	void SetDebugVisualize(const bool InBool) { bIsDebugVisualize = InBool; }
 	virtual const char* GetComponentClassName() const override { return "UCollisionionBase"; }
 
+#pragma endregion
+
+#pragma region Data Members
+
 private:
-	std::weak_ptr<URigidBodyComponent> RigidBody;
-
-	// CCD를 위한 이전 프레임 월드 트랜스폼
-	FTransform PrevWorldTransform = FTransform();
-
 	bool bIsDebugVisualize = false;
+
+#pragma endregion
+
 };

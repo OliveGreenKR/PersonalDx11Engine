@@ -92,9 +92,9 @@ private:
 	bool bIsActive = false;
 
 #pragma region EventTriggered
-	virtual void OnCollisionBegin(const struct FCollisionEventData& InCollision);
-	virtual void OnCollisionStay(const struct FCollisionEventData& InCollision) {}
-	virtual void OnCollisionEnd(const struct FCollisionEventData& InCollision);
+	virtual void OnCollisionBegin(const struct FCollisionEvent & InCollision);
+	virtual void OnCollisionStay(const struct FCollisionEvent& InCollision) {}
+	virtual void OnCollisionEnd(const struct FCollisionEvent & InCollision);
 #pragma endregion
 #pragma region Coord Movement
 public:

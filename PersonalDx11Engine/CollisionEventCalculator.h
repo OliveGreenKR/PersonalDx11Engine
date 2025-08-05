@@ -3,7 +3,6 @@
 #include "CollisionDefines.h"
 
 using namespace DirectX;
-using PhysicsID = std::uint32_t;
 
 /// <summary>
 /// 순수 충돌 이벤트 생성 시스템
@@ -12,6 +11,8 @@ using PhysicsID = std::uint32_t;
 /// </summary>
 class FCollisionEventCalculator
 {
+	FCollisionEventCalculator() = default;
+	~FCollisionEventCalculator() = default;
 #pragma region Core Event Generation
 public:
     /// <summary>

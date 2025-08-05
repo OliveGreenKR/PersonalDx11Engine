@@ -261,7 +261,7 @@ private:
     void FinalizeSimulation();
 
     /// <summary>
-    /// 물리 Tick 전파
+    /// 물리 Tick 전파 -  현재 미구현
     /// </summary>
     void BatchPhysicsTick(const float DeltaTime);
 
@@ -393,6 +393,14 @@ public:
     void P_SetGravityScale(PhysicsID targetID, float gravityScale) override;
     void P_SetMaxSpeed(PhysicsID targetID, float maxSpeed) override;
     void P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSpeed) override;
+
+    // === Velocity Setters ===
+    void P_SetVelocity(PhysicsID targetID, const XMVECTOR& velocity) override;
+    void P_AddVelocity(PhysicsID targetID, const XMVECTOR& deltaVelocity) override;
+
+    void P_SetAngularVelocity(PhysicsID targetID, const XMVECTOR& Angularvelocity) override;
+    void P_AddAngularVelocity(PhysicsID targetID, const XMVECTOR& deltaAngularVelocity) override;
+
 
     // === Transform Setters ===
     void P_SetWorldPosition(PhysicsID targetID, XMVECTOR worldPosition) override;

@@ -134,16 +134,14 @@ void UGameObject::DeActivate()
 	bIsActive = false;
 }
 
-void UGameObject::OnCollisionBegin(const FCollisionEventData& InCollision)
+void UGameObject::OnCollisionBegin(const FCollisionEvent& InCollision)
 {
-	if (!InCollision.CollisionDetectResult.bCollided)
-		return;
+	return;
 }
 
-void UGameObject::OnCollisionEnd(const FCollisionEventData& InCollision)
+void UGameObject::OnCollisionEnd(const FCollisionEvent& InCollision)
 {
-	if (InCollision.CollisionDetectResult.bCollided)
-		return;
+	return;
 }
 //좌표기반 움직임만
 void UGameObject::StartMove(const Vector3& InDirection)

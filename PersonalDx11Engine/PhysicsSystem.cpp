@@ -396,7 +396,7 @@ void UPhysicsSystem::BatchPhysicsTick(float deltaTime)
             {
                 if (auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock())
                 {
-                    physicsObject->TickPhysics(deltaTime);
+                    //physicsObject->TickPhysics(deltaTime);
                 }
             }
         }
@@ -1450,6 +1450,26 @@ void UPhysicsSystem::P_SetMaxAngularSpeed(PhysicsID targetID, float maxAngularSp
 
     SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
     PhysicsStateSoA->MaxAngularSpeeds[index] = std::max(0.0f, maxAngularSpeed);
+}
+
+void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const XMVECTOR& velocity)
+{
+    if (!IsValidTargetID(targetID))
+        return;
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+    PhysicsStateSoA->Velocities[index] = velocity;
+}
+
+void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const XMVECTOR& deltaVelocity)
+{
+}
+
+void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const XMVECTOR& Angularvelocity)
+{
+}
+
+void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const XMVECTOR& deltaAngularVelocity)
+{
 }
 
 // === Transform Setters ===

@@ -5,8 +5,11 @@
 #include "PhysicsDefine.h"
 #include "PhysicsSystem.h"
 #include "PhysicsJob.h"
-#include "ConfigReadManager.h"    // FixedTimeStep 로드용
-#include "SceneManager.h"         // LastTickTime 획득용
+#include "ConfigReadManager.h"
+#include "SceneManager.h"
+#include "CollisionComponent.h"
+#include "TypeCast.h"
+
 #pragma region Constructor and Lifecycle
 
 URigidBodyComponent::URigidBodyComponent()
@@ -19,7 +22,6 @@ URigidBodyComponent::URigidBodyComponent()
 
 URigidBodyComponent::~URigidBodyComponent()
 {
-    // 물리 시스템에서 안전하게 해제
     if (bIsRegisteredToPhysicsSystem)
     {
         UnRegisterPhysicsSystem();
@@ -30,20 +32,26 @@ void URigidBodyComponent::PostInitialized()
 {
     USceneComponent::PostInitialized();
 
-    // 현재 SceneComponent Transform을 게임 상태로 설정
     FTransform currentTransform = USceneComponent::GetWorldTransform();
     HighFrequencyGameState = FHighFrequencyData(currentTransform);
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
 
-    //월드 트랜스폼 변경시 이벤트 등록
-    OnWorldTransformChangedDelegate.Bind(this, &URigidBodyComponent::OnWorldTransformChanged, "OnTransformChagned_Rigid");
+    OnWorldTransformChangedDelegate.Bind(this, [this](const FTransform& transform) {
+        OnWorldTransformChanged(transform);
+                                         }, "OnTransformChanged_Rigid");
 }
 
 void URigidBodyComponent::PostTreeInitialized()
 {
     USceneComponent::PostTreeInitialized();
 
-    // 물리 시스템 등록 (아직 등록되지 않은 경우)
+    // CollisionComponent 자동 탐지 및 설정
+    auto collisionComp = FindChildByType<UCollisionComponentBase>();
+    if (collisionComp.lock())
+    {
+        SetCollisionComp(collisionComp.lock().get());
+    }
+
     if (!bIsRegisteredToPhysicsSystem)
     {
         RegisterPhysicsSystem();
@@ -54,21 +62,17 @@ void URigidBodyComponent::Activate()
 {
     USceneComponent::Activate();
 
-    // 물리 시스템 등록 (아직 등록되지 않은 경우)
     if (!bIsRegisteredToPhysicsSystem)
     {
         RegisterPhysicsSystem();
     }
 
-    // 물리 활성화 상태 업데이트
     SetPhysicsActive(true);
 }
 
 void URigidBodyComponent::DeActivate()
 {
     USceneComponent::DeActivate();
-
-    // 물리 비활성화 상태 업데이트
     SetPhysicsActive(false);
 }
 
@@ -82,86 +86,7 @@ void URigidBodyComponent::Tick(const float DeltaTime)
 
 #pragma endregion
 
-#pragma region IPhysicsObject Implementation
-
-FHighFrequencyData URigidBodyComponent::GetHighFrequencyData()
-{
-    // 1. 현재 상태를 이전 상태로 백업
-    FTransform CurrentTransform = GetWorldTransform();
-    PreviousPosition = CurrentTransform.Position;
-    PreviousRotation = CurrentTransform.Rotation;
-
-    // 2. HighFrequencyData 명시적 업데이트
-    HighFrequencyGameState = FHighFrequencyData(CurrentTransform);
-
-    // 3. 물리 시스템에 전송
-    FHighFrequencyData ToTransfer = HighFrequencyGameState;
-    ToTransfer.Position *= UNIT_TO_METER;
-    return ToTransfer;
-}
-
-FMidFrequencyData URigidBodyComponent::GetMidFrequencyData()
-{
-    return MidFrequencyGameState;
-}
-
-FLowFrequencyData URigidBodyComponent::GetLowFrequencyData()
-{
-    FLowFrequencyData result = LowFrequencyGameState;
-    result.MaxSpeed = result.MaxSpeed * UNIT_TO_METER;
-    return result;
-}
-
-void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& results)
-{
-    // 기본 물리 결과 캐시 및 단위 변환
-    PhysicsResultCache = results;
-    PhysicsResultCache.ResultPosition = PhysicsResultCache.ResultPosition * METER_TO_UNIT;
-    PhysicsResultCache.Velocity = PhysicsResultCache.Velocity * METER_TO_UNIT;
-
-    //현재 게임 상태 저장
-    FTransform CurrentGameTransform = GetWorldTransform();
-    FTransform PhysicsResultTransform = FTransform(PhysicsResultCache.ResultPosition,
-                                                   PhysicsResultCache.ResultRotation,
-                                                   PhysicsResultCache.ResultScale);
-
-    if (FTransform::IsEqual(CurrentGameTransform, PhysicsResultTransform))
-    {
-        return;
-    }
-
-
-    //시간 동기화 보간
-    ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
-    //USceneComponent::SetWorldTransform(PhysicsResultTransform);
-
-    if (!Math::IsEqual(CurrentGameTransform.Position, PhysicsResultTransform.Position))
-    {
-        LOG_INFO("Interpolate From [%4.1f %4.1f %4.1f]  \n to  [[%4.1f %4.1f %4.1f]]",
-                 CurrentGameTransform.Position.x,
-                 CurrentGameTransform.Position.y,
-                 CurrentGameTransform.Position.z,
-                 PhysicsResultCache.ResultPosition.x,
-                 PhysicsResultCache.ResultPosition.y,
-                 PhysicsResultCache.ResultPosition.z
-        );
-    }
-
-    //물리 트랜스폼 업데이트
-    HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
-    HighFrequencyGameState.Rotation = PhysicsResultCache.ResultRotation;
-    HighFrequencyGameState.Scale = PhysicsResultCache.ResultScale;
-}
-
-FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
-{
-    return DirtyFlags;
-}
-
-void URigidBodyComponent::MarkDataClean(const FPhysicsDataDirtyFlags& flags)
-{
-    DirtyFlags.ClearFlag(flags.GetRawFlags());
-}
+#pragma region IPhysicsObject Implementation - Physics System Lifecycle
 
 void URigidBodyComponent::RegisterPhysicsSystem()
 {
@@ -175,7 +100,6 @@ void URigidBodyComponent::RegisterPhysicsSystem()
         return;
     }
 
-    // IPhysicsObject로 등록
     std::shared_ptr<IPhysicsObject> PhysicsObjectPtr = Engine::Cast<IPhysicsObject>(
         Engine::Cast<URigidBodyComponent>(shared_from_this()));
     PhysicsObjectID = PhysicsSystem->RegisterPhysicsObject(PhysicsObjectPtr);
@@ -207,12 +131,6 @@ void URigidBodyComponent::UnRegisterPhysicsSystem()
     bIsRegisteredToPhysicsSystem = false;
 }
 
-void URigidBodyComponent::TickPhysics(const float DeltaTime)
-{
-    // 게임플레이 로직과 물리 시스템 간 상호작용 처리
-    // 직접적인 물리 계산은 PhysicsSystem에서 배치 처리됨
-}
-
 PhysicsID URigidBodyComponent::GetPhysicsID() const
 {
     return PhysicsObjectID;
@@ -225,506 +143,143 @@ FPhysicsMask URigidBodyComponent::GetPhysicsMask() const
 
 #pragma endregion
 
-#pragma region Game Logic Interface (Immediate Updates)
+#pragma region IPhysicsObject Implementation - Data Providers
 
-void URigidBodyComponent::SetPhysicsType(EPhysicsType InType)
+FHighFrequencyData URigidBodyComponent::GetHighFrequencyData()
 {
-    if (MidFrequencyGameState.PhysicsType != InType)
-    {
-        MidFrequencyGameState.PhysicsType = InType;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
-    }
+    FTransform CurrentTransform = GetWorldTransform();
+    PreviousPosition = CurrentTransform.Position;
+    PreviousRotation = CurrentTransform.Rotation;
+
+    HighFrequencyGameState = FHighFrequencyData(CurrentTransform);
+
+    FHighFrequencyData ToTransfer = HighFrequencyGameState;
+    ToTransfer.Position *= UNIT_TO_METER;
+    return ToTransfer;
 }
 
-void URigidBodyComponent::SetGravityEnabled(bool bEnabled)
+FMidFrequencyData URigidBodyComponent::GetMidFrequencyData()
 {
-    FPhysicsMask currentMask = MidFrequencyGameState.PhysicsMask;
-
-    if (bEnabled)
-    {
-        currentMask.SetFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
-    }
-    else
-    {
-        currentMask.ClearFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
-    }
-
-    if (currentMask != MidFrequencyGameState.PhysicsMask)
-    {
-        MidFrequencyGameState.PhysicsMask = currentMask;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
-    }
+    return MidFrequencyGameState;
 }
 
-void URigidBodyComponent::SetPhysicsActive(bool bActive)
+FLowFrequencyData URigidBodyComponent::GetLowFrequencyData()
 {
-    FPhysicsMask currentMask = MidFrequencyGameState.PhysicsMask;
-
-    if (bActive)
-    {
-        currentMask.SetFlag(FPhysicsMask::MASK_ACTIVATION);
-    }
-    else
-    {
-        currentMask.ClearFlag(FPhysicsMask::MASK_ACTIVATION);
-    }
-
-    if (currentMask != MidFrequencyGameState.PhysicsMask)
-    {
-        MidFrequencyGameState.PhysicsMask = currentMask;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetMass(float InMass)
-{
-    if (InMass <= KINDA_SMALL)
-    {
-        LOG_WARNING("Invalid mass value: %f", InMass);
-        return;
-    }
-
-    float newInvMass = 1.0f / InMass;
-    if (abs(LowFrequencyGameState.InvMass - newInvMass) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.InvMass = newInvMass;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetFrictionKinetic(float InFriction)
-{
-    float clampedFriction = Math::Max(InFriction, 0.0f);
-    if (abs(LowFrequencyGameState.FrictionKinetic - clampedFriction) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.FrictionKinetic = clampedFriction;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetFrictionStatic(float InFriction)
-{
-    float clampedFriction = Math::Max(InFriction, 0.0f);
-    if (abs(LowFrequencyGameState.FrictionStatic - clampedFriction) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.FrictionStatic = clampedFriction;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetRestitution(float InRestitution)
-{
-    float clampedRestitution = Math::Clamp(InRestitution, 0.0f, 1.0f);
-    if (abs(LowFrequencyGameState.Restitution - clampedRestitution) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.Restitution = clampedRestitution;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetInvRotationalInertia(const Vector3& InValue)
-{
-    if ((LowFrequencyGameState.InvRotationalInertia - InValue).LengthSquared() > KINDA_SMALL * KINDA_SMALL)
-    {
-        LowFrequencyGameState.InvRotationalInertia = InValue;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetMaxSpeed(float InSpeed)
-{
-    if (abs(LowFrequencyGameState.MaxSpeed - InSpeed) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.MaxSpeed = InSpeed;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetMaxAngularSpeed(float InSpeed)
-{
-    if (abs(LowFrequencyGameState.MaxAngularSpeed - InSpeed) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.MaxAngularSpeed = InSpeed;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-void URigidBodyComponent::SetGravityScale(float InScale)
-{
-    if (abs(LowFrequencyGameState.GravityScale - InScale) > KINDA_SMALL)
-    {
-        LowFrequencyGameState.GravityScale = InScale;
-        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-    }
-}
-
-#pragma endregion
-
-#pragma region Physics State Queries (Cached Values)
-
-Vector3 URigidBodyComponent::GetVelocity() const
-{
-    return PhysicsResultCache.Velocity;
-}
-
-Vector3 URigidBodyComponent::GetAngularVelocity() const
-{
-    return PhysicsResultCache.AngularVelocity;
-}
-
-float URigidBodyComponent::GetMass() const
-{
-    float invMass = GetInvMass();
-    return invMass > KINDA_SMALL ? (1.0f / invMass) : KINDA_LARGE;
-}
-
-float URigidBodyComponent::GetInvMass() const
-{
-    return IsStatic() ? 0.0f : LowFrequencyGameState.InvMass;
-}
-
-Vector3 URigidBodyComponent::GetRotationalInertia() const
-{
-    Vector3 invInertia = LowFrequencyGameState.InvRotationalInertia;
-    Vector3 result;
-
-    result.x = (abs(invInertia.x) > KINDA_SMALL) ? (1.0f / invInertia.x) : KINDA_LARGE;
-    result.y = (abs(invInertia.y) > KINDA_SMALL) ? (1.0f / invInertia.y) : KINDA_LARGE;
-    result.z = (abs(invInertia.z) > KINDA_SMALL) ? (1.0f / invInertia.z) : KINDA_LARGE;
-
+    FLowFrequencyData result = LowFrequencyGameState;
+    result.MaxSpeed = result.MaxSpeed * UNIT_TO_METER;
     return result;
 }
 
-Vector3 URigidBodyComponent::GetInvRotationalInertia() const
-{
-    return LowFrequencyGameState.InvRotationalInertia;
-}
+#pragma endregion
 
-float URigidBodyComponent::GetRestitution() const
-{
-    return LowFrequencyGameState.Restitution;
-}
+#pragma region IPhysicsObject Implementation - Physics Results Reception
 
-float URigidBodyComponent::GetFrictionKinetic() const
+void URigidBodyComponent::ReceivePhysicsResults(const FPhysicsToGameData& results)
 {
-    return LowFrequencyGameState.FrictionKinetic;
-}
+    PhysicsResultCache = results;
+    PhysicsResultCache.ResultPosition = PhysicsResultCache.ResultPosition * METER_TO_UNIT;
+    PhysicsResultCache.Velocity = PhysicsResultCache.Velocity * METER_TO_UNIT;
 
-float URigidBodyComponent::GetFrictionStatic() const
-{
-    return LowFrequencyGameState.FrictionStatic;
-}
+    FTransform CurrentGameTransform = GetWorldTransform();
+    FTransform PhysicsResultTransform = FTransform(PhysicsResultCache.ResultPosition,
+                                                   PhysicsResultCache.ResultRotation,
+                                                   PhysicsResultCache.ResultScale);
 
-float URigidBodyComponent::GetSpeed() const
-{
-    return PhysicsResultCache.Velocity.Length();
-}
+    if (FTransform::IsEqual(CurrentGameTransform, PhysicsResultTransform))
+    {
+        return;
+    }
 
-bool URigidBodyComponent::IsGravityEnabled() const
-{
-    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
-}
+    ApplyInterporateTransform(PhysicsResultCache, CurrentGameTransform);
 
-bool URigidBodyComponent::IsPhysicsActive() const
-{
-    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
-}
-
-bool URigidBodyComponent::IsStatic() const
-{
-    return MidFrequencyGameState.PhysicsType == EPhysicsType::Static;
-}
-
-bool URigidBodyComponent::IsDynamic() const
-{
-    return MidFrequencyGameState.PhysicsType == EPhysicsType::Dynamic;
-}
-
-EPhysicsType URigidBodyComponent::GetPhysicsType() const
-{
-    return MidFrequencyGameState.PhysicsType;
+    HighFrequencyGameState.Position = PhysicsResultCache.ResultPosition;
+    HighFrequencyGameState.Rotation = PhysicsResultCache.ResultRotation;
+    HighFrequencyGameState.Scale = PhysicsResultCache.ResultScale;
 }
 
 #pragma endregion
 
-#pragma region Job-Based Physics Commands (Immediate Actions)
+#pragma region IPhysicsObject Implementation - Dirty Flag Management
 
-void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
+FPhysicsDataDirtyFlags URigidBodyComponent::GetDirtyFlags() const
 {
-    if (FTransform::IsEqual(GetWorldTransform(), InWorldTransform))
-    {
-        return;
-    }
-
-    //게임 트랜스폼 업데이트
-    USceneComponent::SetWorldTransform(InWorldTransform);
-
-    //물리 트랜스폼 플래그 설정
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+    return DirtyFlags;
 }
 
-void URigidBodyComponent::ApplyForce(const Vector3& Force)
+void URigidBodyComponent::MarkDataClean(const FPhysicsDataDirtyFlags& flags)
 {
-    ApplyForce(Force , GetCenterOfMass());
+    DirtyFlags.ClearFlag(flags.GetRawFlags());
 }
 
-void URigidBodyComponent::ApplyForce(const Vector3& Force, const Vector3& Location)
+#pragma endregion
+
+#pragma region Event Receiving System
+
+void URigidBodyComponent::ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& PhysicsEvents)
 {
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    for (const auto& PhysicsEvent : PhysicsEvents)
     {
-        LOG_WARNING("URigidBodyComponent::ApplyForce - Component not registered to physics system");
-        return;
-    }
-
-    if (!IsActive() || IsStatic())
-        return;
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        Vector3 ConvertedForce = Force;
-        Vector3 ConvertedLocation = Location;
-        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, ConvertedForce, ConvertedLocation);
+        FCollisionEvent GameEvent = ConvertPhysicsToGameEvent(PhysicsEvent);
+        DispatchToOwnCollisionComponents(GameEvent);
     }
 }
 
-void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse)
+FCollisionEvent URigidBodyComponent::ConvertPhysicsToGameEvent(const FPhysicsCollisionEvent& PhysicsEvent)
 {
-    ApplyImpulse(Impulse, GetCenterOfMass());
+    FCollisionEvent GameEvent;
+
+    GameEvent.CollisionState = PhysicsEvent.CollisionState;
+    GameEvent.Other = nullptr;
+
+    GameEvent.CollisionPoint = Vector3(
+        XMVectorGetX(PhysicsEvent.CollisionPoint) * METER_TO_UNIT,
+        XMVectorGetY(PhysicsEvent.CollisionPoint) * METER_TO_UNIT,
+        XMVectorGetZ(PhysicsEvent.CollisionPoint) * METER_TO_UNIT
+    );
+
+    GameEvent.Normal = Vector3(
+        XMVectorGetX(PhysicsEvent.Normal),
+        XMVectorGetY(PhysicsEvent.Normal),
+        XMVectorGetZ(PhysicsEvent.Normal)
+    );
+
+    GameEvent.PenetrationDepth = PhysicsEvent.PenetrationDepth * METER_TO_UNIT;
+
+    return GameEvent;
 }
 
-void URigidBodyComponent::ApplyImpulse(const Vector3& Impulse, const Vector3& Location)
+void URigidBodyComponent::DispatchToOwnCollisionComponents(const FCollisionEvent& GameEvent)
 {
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::ApplyImpulse - Component not registered to physics system");
+    if (!OwnComponent)
         return;
-    }
-    if (!IsActive() || IsStatic())
-        return;
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        Vector3 ConvertedImpulse = Impulse;
-        Vector3 ConvertedLocation = Location;
-        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, ConvertedImpulse, ConvertedLocation);
-    }
-}
 
-void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    switch (GameEvent.CollisionState)
     {
-        LOG_WARNING("URigidBodyComponent::SetVelocity - Component not registered to physics system");
-        return;
-    }
-    if (!IsActive() || IsStatic())
-        return;
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        Vector3 ConvertedVelocity = InVelocity * UNIT_TO_METER;
-        PhysicsSystem->RequestPhysicsJob<FJobSetVelocity>(PhysicsObjectID, ConvertedVelocity);
-    }
-}
-
-void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::AddVelocity - Component not registered to physics system");
-        return;
-    }
-    if (!IsActive() || IsStatic())
-        return;
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        Vector3 ConvertedVelocityDelta = InVelocityDelta * UNIT_TO_METER;
-        PhysicsSystem->RequestPhysicsJob<FJobAddVelocity>(PhysicsObjectID, ConvertedVelocityDelta);
+        case ECollisionState::Enter:
+            OwnComponent->OnCollisionEnterEvent(GameEvent);
+            break;
+        case ECollisionState::Stay:
+            OwnComponent->OnCollisionStayEvent(GameEvent);
+            break;
+        case ECollisionState::Exit:
+            OwnComponent->OnCollisionExitEvent(GameEvent);
+            break;
     }
 }
 
-void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
+void URigidBodyComponent::SetCollisionComp(UCollisionComponentBase* InCollisionComp)
 {
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::SetAngularVelocity - Component not registered to physics system");
-        return;
-    }
+    OwnComponent = InCollisionComp;
 
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
+    if (OwnComponent)
     {
-        PhysicsSystem->RequestPhysicsJob<FJobSetAngularVelocity>(PhysicsObjectID, InAngularVelocity);
-    }
-}
-
-void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDelta)
-{
-    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
-    {
-        LOG_WARNING("URigidBodyComponent::AddAngularVelocity - Component not registered to physics system");
-        return;
-    }
-
-    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
-    if (PhysicsSystem)
-    {
-        PhysicsSystem->RequestPhysicsJob<FJobAddAngularVelocity>(PhysicsObjectID, InAngularVelocityDelta);
+        LOG_INFO("CollisionComponent set for RigidBodyComponent with PhysicsID: %u", PhysicsObjectID);
     }
 }
 
 #pragma endregion
 
-#pragma region Time-Weighted Interpolation Implementation
-
-void URigidBodyComponent::InitializeTimeInterpolation()
-{
-    // UConfigReadManager에서 물리 고정 시간스텝 로드
-    UConfigReadManager* ConfigManager = UConfigReadManager::Get();
-    if (ConfigManager)
-    {
-        bool bLoadSuccess = ConfigManager->GetValue("FixedTimeStep", PhysicsFixedTimeStep);
-        if (!bLoadSuccess)
-        {
-            PhysicsFixedTimeStep = 0.016f;  // 기본값 (60Hz)
-            LOG_WARNING("Failed to load FixedTimeStep from config, using default: %.3f", PhysicsFixedTimeStep);
-        }
-    }
-    else
-    {
-        PhysicsFixedTimeStep = 0.016f;
-        LOG_WARNING("ConfigReadManager not available, using default FixedTimeStep: %.3f", PhysicsFixedTimeStep);
-    }
-
-    // 시간 가중치 버퍼를 기본값으로 초기화
-    TimeWeightBuffer.Fill(DEFAULT_BLEND_FACTOR);
-
-    // 이전 상태 초기화
-    ResetPreviousStates();
-}
-
-void URigidBodyComponent::ResetPreviousStates()
-{
-    FTransform currentTransform = GetWorldTransform();
-
-    PreviousPosition = currentTransform.Position;
-    PreviousRotation = currentTransform.Rotation;
-}
-
-float URigidBodyComponent::CalculateTimeBasedWeight(float GameDeltaTime, float PhysicsFixedStep) const
-{
-    // 1. 시간 비율 계산 (물리 대비 게임 프레임 속도)
-    float TimeRatio = GameDeltaTime / PhysicsFixedStep;
-
-    // 2. 기본 가중치 계산 (게임이 물리보다 느릴 때 물리 우선)
-    float BaseWeight = Math::Clamp(TimeRatio, MIN_BLEND_FACTOR, MAX_BLEND_FACTOR);
-
-    // 3. 안정성 보정 (급격한 시간 변화 억제)
-    float StabilityFactor = 1.0f;
-    if (TimeRatio < 0.5f || TimeRatio > 2.0f)
-    {
-        // 극단적 시간 비율에서 보수적 가중치 적용
-        StabilityFactor = 0.8f;
-    }
-
-    return BaseWeight * StabilityFactor;
-}
-
-float URigidBodyComponent::CalculateStabilizedWeight() const
-{
-    if (TimeWeightBuffer.IsEmpty())
-    {
-        return DEFAULT_BLEND_FACTOR;
-    }
-
-    // 단순 산술 평균 계산
-    float Sum = 0.0f;
-    size_t Count = 0;
-
-    for (const float& Weight : TimeWeightBuffer)
-    {
-        Sum += Weight;
-        ++Count;
-    }
-
-    return Count > 0 ? (Sum / static_cast<float>(Count)) : DEFAULT_BLEND_FACTOR;
-}
-
-void URigidBodyComponent::ApplyInterporateTransform(
-    const FPhysicsToGameData& PhysicsResult,
-    const FTransform& CurrentGameTransform)
-{
-    // 시간 정보 수집
-    USceneManager* SceneManager = USceneManager::Get();
-    float GameDeltaTime = SceneManager ? SceneManager->GetLastTickTime() : 0.016f;
-
-    // 시간 기반 가중치 계산 (스칼라 연산)
-    float RawTimeWeight = CalculateTimeBasedWeight(GameDeltaTime, PhysicsFixedTimeStep);
-    TimeWeightBuffer.PushForcely(RawTimeWeight);
-    float StabilizedWeight = CalculateStabilizedWeight();
-
-    // 모든 벡터/쿼터니언을 한번에 XMVECTOR로 로드
-    XMVECTOR vCurrentPhysicsPos = XMLoadFloat3(&PhysicsResult.ResultPosition);
-    XMVECTOR vPreviousPos = XMLoadFloat3(&PreviousPosition);           
-    XMVECTOR vCurrentPhysicsRot = XMLoadFloat4(&PhysicsResult.ResultRotation);
-    XMVECTOR vPreviousRot = XMLoadFloat4(&PreviousRotation);          
-    XMVECTOR vCurrentGamePos = XMLoadFloat3(&CurrentGameTransform.Position);
-    XMVECTOR vCurrentGameRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
-
-    // 공통 스칼라 값들을 XMVECTOR로 준비
-    XMVECTOR vTimeScaling = XMVectorReplicate(GameDeltaTime / PhysicsFixedTimeStep);
-    XMVECTOR vWeight = XMVectorReplicate(StabilizedWeight);
-    XMVECTOR vMaxDelta = XMVectorReplicate(1000.0f); // MAX_DELTA_PER_FRAME
-
-    // 위치 델타 계산 및 정규화 
-    XMVECTOR vRawPosDelta = XMVectorSubtract(vCurrentPhysicsPos, vPreviousPos);
-    XMVECTOR vScaledPosDelta = XMVectorMultiply(vRawPosDelta, vTimeScaling);
-
-    // 위치 델타 클리핑
-    XMVECTOR vDeltaLength = XMVector3Length(vScaledPosDelta);
-    XMVECTOR vClampedPosDelta = XMVectorSelect(
-        vScaledPosDelta,
-        XMVectorMultiply(XMVector3Normalize(vScaledPosDelta), vMaxDelta),
-        XMVectorGreater(vDeltaLength, vMaxDelta)
-    );
-
-    // 회전 델타 계산 및 정규화 (통합 SIMD 연산)
-    XMVECTOR vPreviousRotInverse = XMQuaternionInverse(vPreviousRot);
-    XMVECTOR vRawRotDelta = XMQuaternionMultiply(vCurrentPhysicsRot, vPreviousRotInverse);
-
-    float TimeNormalizedFactor = XMVectorGetX(vTimeScaling);
-    TimeNormalizedFactor = Math::Clamp(TimeNormalizedFactor, 0.0f, 1.0f);
-
-    // 물리 회전 변화를 시간에 맞춰 조정
-    XMVECTOR vTimeNormalizedPhysicsRot = XMQuaternionSlerp(
-        vPreviousRot,
-        vCurrentPhysicsRot,
-        TimeNormalizedFactor
-    );
-
-    // 최종 Transform 계산 
-    XMVECTOR vFinalPos = XMVectorAdd(vCurrentGamePos, XMVectorMultiply(vClampedPosDelta, vWeight));
-    XMVECTOR vFinalRot = XMQuaternionSlerp(
-        vCurrentGameRot,
-        vTimeNormalizedPhysicsRot,
-        XMVectorGetX(vWeight)
-    );
-
-    // 결과 저장 (한번에 스토어)
-    Vector3 FinalPosition;
-    Quaternion FinalRotation;
-    XMStoreFloat3(&FinalPosition, vFinalPos);
-    XMStoreFloat4(&FinalRotation, vFinalRot);
-
-    FTransform FinalTransform(FinalPosition, FinalRotation, CurrentGameTransform.Scale);
-    USceneComponent::SetWorldTransform(FinalTransform);
-}
-
-#pragma endregion
-
-#pragma region Internal Helpers
+#pragma region Utility Methods
 
 void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
 {
@@ -735,11 +290,6 @@ void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform
 void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
 {
     DirtyFlags |= flags;
-}
-
-void URigidBodyComponent::SetPhysicsID(PhysicsID InID)
-{
-    PhysicsObjectID = InID;
 }
 
 void URigidBodyComponent::InitializeGameState()
@@ -768,10 +318,83 @@ void URigidBodyComponent::InitializePhysicsCache()
     PhysicsResultCache.ResultScale = Vector3::One();
 }
 
-Vector3 URigidBodyComponent::GetCenterOfMass() const
+void URigidBodyComponent::InitializeTimeInterpolation()
 {
-    // 현재는 Transform의 Position을 질량 중심으로 사용
-    // 향후 복잡한 형태의 경우 별도 계산 가능
-    return HighFrequencyGameState.Position;
+    bEnableTimeInterpolation = true;
+    InterpolationAlpha = 0.0f;
+    LastTickTime = 0.0f;
+}
+
+#pragma endregion
+
+#pragma region Time Interpolation System
+
+void URigidBodyComponent::SetTimeInterpolationEnabled(bool bEnabled)
+{
+    bEnableTimeInterpolation = bEnabled;
+}
+
+bool URigidBodyComponent::IsTimeInterpolationEnabled() const
+{
+    return bEnableTimeInterpolation;
+}
+
+void URigidBodyComponent::ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResults, const FTransform& CurrentGameTransform)
+{
+    if (!bEnableTimeInterpolation)
+    {
+        SetWorldTransform(FTransform(PhysicsResults.ResultPosition,
+                                     PhysicsResults.ResultRotation,
+                                     PhysicsResults.ResultScale));
+        return;
+    }
+
+    // SIMD를 위한 XMVECTOR 로드
+    XMVECTOR CurrentPos = XMLoadFloat3(&CurrentGameTransform.Position);
+    XMVECTOR PreviousPos = XMLoadFloat3(&PreviousPosition);
+    XMVECTOR PhysicsResultPos = XMLoadFloat3(&PhysicsResults.ResultPosition);
+
+    XMVECTOR CurrentRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
+    XMVECTOR PreviousRot = XMLoadFloat4(&PreviousRotation);
+    XMVECTOR PhysicsResultRot = XMLoadFloat4(&PhysicsResults.ResultRotation);
+
+    float PhysicsWeight = 0.7f;
+    XMVECTOR PhysicsWeightVec = XMVectorSet(PhysicsWeight, PhysicsWeight, PhysicsWeight, PhysicsWeight);
+
+    // Vector3 변화량 분리 (SIMD 연산)
+    XMVECTOR GameLogicDelta = XMVectorSubtract(CurrentPos, PreviousPos);
+    XMVECTOR PhysicsDelta = XMVectorSubtract(PhysicsResultPos, PreviousPos);
+
+    // 최종 Position 계산 (SIMD 연산)
+    XMVECTOR PhysicsDeltaWeighted = XMVectorMultiply(PhysicsDelta, PhysicsWeightVec);
+    XMVECTOR FinalPositionVec = XMVectorAdd(PreviousPos, GameLogicDelta);
+    FinalPositionVec = XMVectorAdd(FinalPositionVec, PhysicsDeltaWeighted);
+
+    // 회전 보간 (SIMD 연산)
+    XMVECTOR FinalRotationVec = XMQuaternionSlerp(CurrentRot, PhysicsResultRot, PhysicsWeight);
+
+    // 스케일은 게임 로직 우선 (SIMD로 로드해서 반환)
+    XMVECTOR FinalScaleVec = XMLoadFloat3(&CurrentGameTransform.Scale);
+
+    // 최종 FTransform 생성 (Store 연산)
+    FTransform FinalTransform;
+    XMStoreFloat3(&FinalTransform.Position, FinalPositionVec);
+    XMStoreFloat4(&FinalTransform.Rotation, FinalRotationVec);
+    XMStoreFloat3(&FinalTransform.Scale, FinalScaleVec);
+
+    SetWorldTransform(FinalTransform);
+    // 디버그 로그 (임시)
+    float PositionDifference = (CurrentGameTransform.Position - PhysicsResults.ResultPosition).Length();
+    if (PositionDifference > 1.0f)
+    {
+        LOG_INFO("Delta-based Transform: Game [%s] \n Physics[%s] \n Final[%s]",
+                 Debug::ToString(CurrentGameTransform.Position),
+                 Debug::ToString(CurrentGameTransform.Position),
+                 Debug::ToString(FinalTransform.Position));
+    }
 }
 #pragma endregion
+
+
+
+

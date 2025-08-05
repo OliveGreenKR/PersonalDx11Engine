@@ -2,11 +2,12 @@
 #include "PhysicsStateInternalInterface.h"
 #include "CollisionShapeInternalInterface.h"
 #include "PhysicsEventDispatcherInterface.h"
+#include "DynamicAABBTree.h"
 #include "CollisionDetector.h"
 #include "CollisionResponseCalculator.h"
 #include "CollisionEventCalculator.h"
 #include "CollisionPositionCorrectionCalculator.h"
-#include "DynamicAABBTree.h"
+
 #include "ConfigReadManager.h"
 #include "Debug.h"
 #pragma region Constructor and Initialization
@@ -113,6 +114,11 @@ void FCollisionProcessor::Release()
 #pragma endregion
 
 #pragma region Public Interface (PhysicsSystem 전용)
+
+void FCollisionProcessor::PrintTreeStructure() const
+{
+    CollisionTree->PrintTreeStructure();
+}
 
 float FCollisionProcessor::ProcessCollisions(const std::vector<PhysicsID>& ActivePhysicsIDs, float DeltaTime)
 {

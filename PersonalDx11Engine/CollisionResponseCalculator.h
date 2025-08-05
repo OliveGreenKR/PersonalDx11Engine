@@ -13,6 +13,7 @@ class FCollisionResponseCalculator
 #pragma region Configuration
 public:
     FCollisionResponseCalculator();
+    ~FCollisionResponseCalculator() = default;
 
 private:
     void LoadConfigFromIni();

@@ -118,11 +118,11 @@ void UGameplayScene02::Initialize()
     Character2->SetGravity(false);
 
     auto Colli = Character->GetRootComp()->FindComponentByType<UCollisionComponentBase>();
-    Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEventData& InEvent) {
+    Colli.lock()->OnCollisionEnter.BindSystem([](const FCollisionEvent& InEvent) {
         LOG("CollisionEnter"); }, "OnCollisionEnter_P1");
-    Colli.lock()->OnCollisionStay.BindSystem([](const FCollisionEventData& InEvent) {
+    Colli.lock()->OnCollisionStay.BindSystem([](const FCollisionEvent& InEvent) {
         LOG("CollisionStay"); }, "OnCollisionEnter_P1");
-    Colli.lock()->OnCollisionExit.BindSystem([](const FCollisionEventData& InEvent) {
+    Colli.lock()->OnCollisionExit.BindSystem([](const FCollisionEvent& InEvent) {
         LOG("CollisionExit"); }, "OnCollisionEnter_P1");
     Colli.lock()->SetLocalScale(Vector3::One() * 1.05f);
 

@@ -3,6 +3,7 @@
 #include "Math.h"
 #include "PhysicsDataStructures.h"
 #include "PhysicsDefine.h"
+#include "CollisionDefines.h"
 
 using PhysicsID = uint32_t;
 
@@ -90,13 +91,13 @@ public:
     /// </summary>
     virtual void UnRegisterPhysicsSystem() = 0;
 
-    /// <summary>
-    /// 물리 틱 처리
-    /// 게임플레이 로직과 물리 시스템 간 상호작용 처리
-    /// 주의: 직접적인 물리 계산은 PhysicsSystem에서 배치 처리됨
-    /// </summary>
-    /// <param name="DeltaTime">프레임 시간</param>
-    virtual void TickPhysics(const float DeltaTime) = 0;
+    ///// <summary>
+    ///// 물리 틱 처리
+    ///// 게임플레이 로직과 물리 시스템 간 상호작용 처리
+    ///// 주의: 직접적인 물리 계산은 PhysicsSystem에서 배치 처리됨
+    ///// </summary>
+    ///// <param name="DeltaTime">프레임 시간</param>
+    //virtual void TickPhysics(const float DeltaTime) = 0;
 
 #pragma endregion
 

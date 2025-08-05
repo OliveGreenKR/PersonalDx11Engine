@@ -59,15 +59,6 @@ void UElasticBody::Tick(const float DeltaTime)
 void UElasticBody::PostInitialized()
 {
 	UGameObject::PostInitialized();
-
-	if (Rigid.lock())
-	{
-		//collsion body 추가 및 초기화
-		if (Collision.get())
-		{
-			Collision->BindRigidBody(Rigid.lock());
-		}
-	}
 }
 
 void UElasticBody::PostInitializedComponents()

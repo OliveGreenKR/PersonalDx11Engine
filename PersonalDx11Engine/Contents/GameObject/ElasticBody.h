@@ -24,9 +24,9 @@ public:
     virtual void PostInitializedComponents() override;
 
     // 충돌 이벤트 핸들러
-    //void OnCollisionBegin(const FCollisionEventData& InCollision);
-    //void OnCollisionStay(const FCollisionEventData& InCollision);
-    //void OnCollisionEnd(const FCollisionEventData& InCollision);
+    //void OnCollisionBegin(const FCollisionEvent& InCollision);
+    //void OnCollisionStay(const FCollisionEvent& InCollision);
+    //void OnCollisionEnd(const FCollisionEvent& InCollision);
 
     // Getters  
     const Vector3 GetVelocity() const;

@@ -345,7 +345,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("CollisionTree")) {
-				UPhysicsSystem::GetCollisionSubsystem()->PrintTreeStructure();
+				UPhysicsSystem::Get()->GetCollisionSubsystem()->PrintTreeStructure();
 			}
 			ImGui::SameLine();
 			ImGui::Text("FPS : %d", (int)std::max(0.0f,1.0f / DeltaTime));

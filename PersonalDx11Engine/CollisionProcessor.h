@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
+
 // Forward Declarations
 class IPhysicsStateInternal;
 class ICollisionShapeInternal;
@@ -76,6 +77,10 @@ struct FCollisionPairHash
  */
 class FCollisionProcessor
 {
+#pragma region Debug
+public:
+    void PrintTreeStructure() const;
+#pragma endregion
 
 #pragma region Public Interface (PhysicsSystem 전용)
 
@@ -236,10 +241,10 @@ private:
 
 private:
     // 완성된 하부 시스템들 (SIMD 최적화 완료)
-    std::unique_ptr<FCollisionDetector> Detector;
-    std::unique_ptr<FCollisionResponseCalculator> ResponseCalculator;
-    std::unique_ptr<FCollisionEventCalculator> EventCalculator;
-    std::unique_ptr<FCollisionPositionCorrectionCalculator> PositionCorrectionCalculator;
+    std::unique_ptr<class FCollisionDetector> Detector = nullptr;
+    std::unique_ptr<class FCollisionResponseCalculator> ResponseCalculator = nullptr;
+    std::unique_ptr<class FCollisionEventCalculator> EventCalculator = nullptr;
+    std::unique_ptr<class FCollisionPositionCorrectionCalculator> PositionCorrectionCalculator = nullptr;
 
 #pragma endregion
 

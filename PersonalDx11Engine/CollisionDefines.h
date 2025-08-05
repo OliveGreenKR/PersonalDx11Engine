@@ -3,8 +3,27 @@
 #include "Math.h"
 #include <memory>
 #include "Transform.h"
+#include <DirectXMath.h>
+using PhysicsID = std::uint32_t;
 
-using PhysicsID = size_t;
+#pragma warning(disable: 4996)
+
+enum class ECollisionState
+{
+	None,
+	Enter,
+	Stay,
+	Exit,
+};
+
+// 충돌체 형태 정의
+enum class ECollisionShapeType
+{
+	None,
+	Box,
+	Sphere
+};
+
 
 // 충돌 감지 결과
 struct FCollisionDetectionResult
@@ -138,18 +157,3 @@ struct FCollisionEvent
 	}
 };
 
-enum class ECollisionState
-{
-	None,
-	Enter,
-	Stay,
-	Exit,
-};
-
-// 충돌체 형태 정의
-enum class ECollisionShapeType
-{
-	None,
-	Box,
-	Sphere
-};

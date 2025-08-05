@@ -7,35 +7,37 @@
 #include "PhysicsDataStructures.h"
 #include "PhysicsDefine.h"
 #include "FixedCircularQueue.h"
+#include "CollisionDefines.h"
 
 class UGameObject;
 class UPhysicsSystem;
+class UCollisionComponentBase;
+
+using PhysicsID = std::uint32_t;
 
 /// <summary>
-/// RigidBodyComponent: 새로운 하이브리드 물리 시스템의 핵심 컴포넌트
+/// RigidBodyComponent: 물리 시스템의 핵심 컴포넌트
 /// 
 /// 역할:
 /// - 게임 상태 데이터 소유 및 관리 (Transform, Properties, Type/Mask)
 /// - 물리 결과 캐시 및 게임 로직 접근 제공
 /// - 더티 플래그 기반 효율적 동기화 지원
-/// - Job 시스템을 통한 즉시 물리 명령 전송
+/// - CollisionComponent 관리 및 형상 정보 위임
+/// - 충돌 이벤트 수신 및 전달
 /// 
 /// 새로운 설계 특징:
-/// - 변경 빈도별 데이터 분리 관리
-/// - 배치 동기화 시스템 지원
-/// - 게임 상태 즉시 반영 (물리 결과는 동기화 시점에 반영)
-/// - Job과 동기화의 하이브리드 사용
-/// 
-/// 데이터 소유권:
-/// - 게임 컨텍스트: Transform, Properties, Type, Mask (즉시 변경 가능)
-/// - 물리 결과 캐시: Velocity, AngularVelocity 등 (동기화로 수신)
+/// - CollisionComponent 의존성 관리
+/// - 형상 정보 위임 처리
+/// - 물리 상태와 형상 정보 분리
 /// </summary>
 class URigidBodyComponent : public USceneComponent, public IPhysicsObject
 {
 #pragma region Unit Conversion
+
 private:
-    constexpr static float UNIT_TO_METER = 0.01f; 
-    constexpr static float METER_TO_UNIT = 100.0f; 
+    constexpr static float UNIT_TO_METER = 0.01f;
+    constexpr static float METER_TO_UNIT = 100.0f;
+
 #pragma endregion
 
 #pragma region Constructor and Lifecycle
@@ -48,7 +50,6 @@ public:
     virtual void PostTreeInitialized() override;
     virtual void Tick(const float DeltaTime) override;
 
-    // ActorComponent 활성화와 물리 시뮬레이션 자동 연동
     virtual void Activate() override;
     virtual void DeActivate() override;
 
@@ -56,180 +57,142 @@ public:
 
 #pragma endregion
 
-#pragma region Game Logic State Members
+#pragma region State Data Management
 
 private:
-    // === 게임 상태 데이터  ===
-    FHighFrequencyData HighFrequencyGameState;    // Transform
-    FMidFrequencyData MidFrequencyGameState;      // Type, Mask
-    FLowFrequencyData LowFrequencyGameState;      // Properties
+    FHighFrequencyData HighFrequencyGameState;
+    FMidFrequencyData MidFrequencyGameState;
+    FLowFrequencyData LowFrequencyGameState;
 
-    // === 물리 결과 캐시 (소유권: 물리 시스템에서 수신) ===
     FPhysicsToGameData PhysicsResultCache;
-
-    // === 더티 플래그 시스템 ===
     FPhysicsDataDirtyFlags DirtyFlags = FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_ALL);
 
-    // === 물리 시스템 연동 ===
     PhysicsID PhysicsObjectID = 0;
     bool bIsRegisteredToPhysicsSystem = false;
 
-    class UCollisionComponentBase* OwnComponent = nullptr;
+    Vector3 PreviousPosition = Vector3::Zero();
+    Quaternion PreviousRotation = Quaternion::Identity();
+
+    bool bEnableTimeInterpolation = true;
+    float InterpolationAlpha = 0.0f;
+    float LastTickTime = 0.0f;
 
 #pragma endregion
 
 #pragma region IPhysicsObject Implementation
-public:
-    // === 충돌 컴포넌트 캐싱
-    // todo : CollisoinComp가 OnParentChanged에서 찾아서 등록하도록하기
-    void SetCollisionComoenet(class UCollisionComponentBase* ownComp);
 
-    // === 게임 상태 데이터 제공 (Game → Physics) ===
-    FHighFrequencyData GetHighFrequencyData() override;  // Get당시 명시적 일괄 업데이트중
-    FMidFrequencyData GetMidFrequencyData() override;    
+public:
+    FHighFrequencyData GetHighFrequencyData() override;
+    FMidFrequencyData GetMidFrequencyData() override;
     FLowFrequencyData GetLowFrequencyData() override;
 
-    // === 물리 결과 수신 (Physics → Game) ===
     void ReceivePhysicsResults(const FPhysicsToGameData& results) override;
 
-    /// <summary>
-    /// 물리 시스템으로부터 원본 물리 충돌 이벤트를 배치로 수신
-    /// </summary>
-    void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& PhysicsEvents) override;
-
-    // === 더티 플래그 관리 ===
     FPhysicsDataDirtyFlags GetDirtyFlags() const override;
     void MarkDataClean(const FPhysicsDataDirtyFlags& flags) override;
 
-    // === 물리 시스템 생명주기 ===
     void RegisterPhysicsSystem() override;
     void UnRegisterPhysicsSystem() override;
-    void TickPhysics(const float DeltaTime) override;
 
-    // === 물리 시스템 통합 ===
     PhysicsID GetPhysicsID() const override;
     FPhysicsMask GetPhysicsMask() const override;
 
-private:
-    FCollisionEvent ConvertPhysicsToGameEvent(const FPhysicsCollisionEvent& PhysicsEvent);
-
-    void DispatchToOwnCollisionComponents(const FCollisionEvent& GameEvent);
-
 #pragma endregion
 
-#pragma region Game Logic Interface (Immediate Updates)
+#pragma region Game Logic Interface
 
 public:
-
-    // === Physics Type 및 Mask 설정 (Mid Frequency) ===
     void SetPhysicsType(EPhysicsType InType);
     void SetGravityEnabled(bool bEnabled);
     void SetPhysicsActive(bool bActive);
 
-    // === Physics Properties 설정 (Low Frequency) ===
     void SetMass(float InMass);
-    void SetFrictionKinetic(float InFriction);
-    void SetFrictionStatic(float InFriction);
+    void SetInvRotationalInertia(const Vector3& InInvInertia);
     void SetRestitution(float InRestitution);
-    void SetInvRotationalInertia(const Vector3& InValue);
-    void SetMaxSpeed(float InSpeed);
-    void SetMaxAngularSpeed(float InSpeed);
-    void SetGravityScale(float InScale);
+    void SetFrictionStatic(float InFriction);
+    void SetFrictionKinetic(float InFriction);
+    void SetMaxSpeed(float InMaxSpeed);
+    void SetMaxAngularSpeed(float InMaxAngularSpeed);
+    void SetGravityScale(float InGravityScale);
 
-    // === 물리 상태 조회 (캐시된 값) ===
-    Vector3 GetVelocity() const;
-    Vector3 GetAngularVelocity() const;
     float GetMass() const;
     float GetInvMass() const;
     Vector3 GetRotationalInertia() const;
     Vector3 GetInvRotationalInertia() const;
     float GetRestitution() const;
-    float GetFrictionKinetic() const;
     float GetFrictionStatic() const;
+    float GetFrictionKinetic() const;
+    float GetMaxSpeed() const;
+    float GetMaxAngularSpeed() const;
+    float GetGravityScale() const;
     float GetSpeed() const;
-    bool IsGravityEnabled() const;
-    bool IsPhysicsActive() const;
+
+    EPhysicsType GetPhysicsType() const;
     bool IsStatic() const;
     bool IsDynamic() const;
-    EPhysicsType GetPhysicsType() const;
+    bool IsGravityEnabled() const;
+    bool IsPhysicsActive() const;
 
-#pragma endregion
+    Vector3 GetVelocity() const;
+    Vector3 GetAngularVelocity() const;
 
-#pragma region Time-Weighted Interpolation System
-private:
-    // === 시간 가중치 버퍼링 ===
-    static constexpr size_t TIME_WEIGHT_BUFFER_SIZE = 8;
-    TFixedCircularQueue<float, TIME_WEIGHT_BUFFER_SIZE> TimeWeightBuffer{ 0.7f };
-
-    // === 이전 상태 추적 ===
-    Vector3 PreviousPosition = Vector3::Zero();
-    Quaternion PreviousRotation = Quaternion::Identity();
-
-    // === 시간 동기화 설정 ===
-    float PhysicsFixedTimeStep = 0.016f;
-    static constexpr float DEFAULT_BLEND_FACTOR = 0.7f;
-    static constexpr float MIN_BLEND_FACTOR = 0.3f;
-    static constexpr float MAX_BLEND_FACTOR = 1.0f;
-
-    // === 시간 보간 메서드 ===
-    void InitializeTimeInterpolation();
-    void ResetPreviousStates();
-    float CalculateTimeBasedWeight(float GameDeltaTime, float PhysicsFixedStep) const;
-    float CalculateStabilizedWeight() const;
-    void ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResult, const FTransform& CurrentGameTransform);
-
-#pragma endregion
-
-#pragma region Job-Based Physics Commands (Immediate Actions)
-
-public:
-    // === Transform 설정 (Job 시스템 사용) ===
-    void SetWorldTransform(const FTransform& InWorldTransform) override;
-
-    // === 힘/충격 적용 (Job 시스템 사용) ===
-    void ApplyForce(const Vector3& Force);
-    void ApplyForce(const Vector3& Force, const Vector3& Location);
-    void ApplyImpulse(const Vector3& Impulse);
-    void ApplyImpulse(const Vector3& Impulse, const Vector3& Location);
-
-    // === 즉시 속도 변경 (Job 시스템 사용) ===
     void SetVelocity(const Vector3& InVelocity);
     void AddVelocity(const Vector3& InVelocityDelta);
     void SetAngularVelocity(const Vector3& InAngularVelocity);
     void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
 
+    void SetWorldTransform(const FTransform& InWorldTransform) override;
+
+    void ApplyForce(const Vector3& InForce);
+    void ApplyForce(const Vector3& InForce, const Vector3& InLocation);
+    void ApplyImpulse(const Vector3& InImpulse);
+    void ApplyImpulse(const Vector3& InImpulse, const Vector3& InLocation);
+
 #pragma endregion
 
-#pragma region Internal Helpers
+#pragma region Event Receiving System & CollisionComponent Management
+
+public:
+    /// <summary>
+    /// 물리 시스템으로부터 원본 물리 충돌 이벤트를 배치로 수신
+    /// </summary>
+    void ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& PhysicsEvents) override;
+
+    /// <summary>
+    /// CollisionComponent 설정 및 관리
+    /// </summary>
+    void SetCollisionComp(UCollisionComponentBase* InCollisionComp);
+    UCollisionComponentBase* GetCollisionComp() const { return OwnComponent; }
+    bool HasCollisionComp() const { return OwnComponent != nullptr; }
 
 private:
-    //월드 트랜스폼 변경시 실행
-    void OnWorldTransformChanged(const FTransform& NewTransform);
+    FCollisionEvent ConvertPhysicsToGameEvent(const FPhysicsCollisionEvent& PhysicsEvent);
+    void DispatchToOwnCollisionComponents(const FCollisionEvent& GameEvent);
 
-    /// <summary>
-    /// 더티 플래그 설정 및 물리 시스템 업데이트 알림
-    /// </summary>
-    void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
+    UCollisionComponentBase* OwnComponent = nullptr;
 
-    /// <summary>
-    /// 물리 시스템 ID 설정 (등록 시 자동 호출)
-    /// </summary>
-    void SetPhysicsID(PhysicsID InID);
+#pragma endregion
 
-    /// <summary>
-    /// 게임 상태 기본값으로 초기화
-    /// </summary>
+#pragma region Time Interpolation
+
+public:
+    void SetTimeInterpolationEnabled(bool bEnabled);
+    bool IsTimeInterpolationEnabled() const;
+
+private:
+    void InitializeTimeInterpolation();
+    void UpdateTimeInterpolation(float CurrentTime);
+    void ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResults, const FTransform& CurrentGameTransform);
+
+#pragma endregion
+
+#pragma region Utility Methods
+
+private:
     void InitializeGameState();
-
-    /// <summary>
-    /// 물리 결과 캐시 기본값으로 초기화
-    /// </summary>
     void InitializePhysicsCache();
-
-    /// <summary>
-    /// 질량 중심 계산
-    /// </summary>
-    Vector3 GetCenterOfMass() const;
+    void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
+    void OnWorldTransformChanged(const FTransform& transform);
 
 #pragma endregion
 
