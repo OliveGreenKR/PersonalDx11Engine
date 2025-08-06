@@ -2,7 +2,7 @@
 #include "Math.h"
 #include "Transform.h"
 #include "PhysicsDefine.h"
-
+#include "CollisionDefines.h"
 // 게임에서 사용하거나 게임에 연관이 있는 물리 데이터
 
 #pragma region Dirty Flag System

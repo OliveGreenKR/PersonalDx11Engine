@@ -449,7 +449,6 @@ private:
     float FixedTimeStep = 0.016f;                 // 60Hz
     float MinSubStepTickTime = 0.004f;            // 15Hz
     int MaxSubSteps = 5;                          // 최대 서브스텝 수
-    int MinSubSteps = 3;                          // 최소 서브스텝 수
     std::uint8_t BatchSize = 64;                  // 배치 연산 크기
 
     float MaxPhysicsVelocity = 1000.0f;            // 1000m/s 음속의 약 3배 

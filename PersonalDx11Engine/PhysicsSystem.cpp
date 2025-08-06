@@ -54,7 +54,6 @@ void UPhysicsSystem::LoadConfigFromIni()
     UConfigReadManager::Get()->GetValue("FixedTimeStep", FixedTimeStep);
     UConfigReadManager::Get()->GetValue("MinSubStepTickTime", MinSubStepTickTime);
     UConfigReadManager::Get()->GetValue("MaxSubSteps", MaxSubSteps);
-    UConfigReadManager::Get()->GetValue("MinSubSteps", MinSubSteps);
     UConfigReadManager::Get()->GetValue("MaxPhysicsVelocity", MaxPhysicsVelocity);
     UConfigReadManager::Get()->GetValue("MaxPhysicsAngularVelocity", MaxPhysicsAngularVelocity);
     UConfigReadManager::Get()->GetValue("MaxPhysicsForce", MaxPhysicsForce);
@@ -125,7 +124,7 @@ void UPhysicsSystem::TickPhysics(const float DeltaTime)
         TimeStep -= SimulatedTime;
 
         // 시간 전부 사용- 서브스텝 종료
-        if (TimeStep < KINDA_SMALL && i >MinSubSteps)
+        if (TimeStep < KINDA_SMALL)
         {
             break;
         }
@@ -919,6 +918,12 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
             PhysicsStateSoA->MaxSpeeds[i] = data.MaxSpeed;
             PhysicsStateSoA->MaxAngularSpeeds[i] = data.MaxAngularSpeed;
             PhysicsStateSoA->GravityScales[i] = data.GravityScale;
+			PhysicsStateSoA->CollisionShapeTypes[i] = data.CollisionShapeType;
+            PhysicsStateSoA->CollisionWorldHalfExtents[i] = XMVectorSet(
+                data.CollisionWorldHalfExtent.x,
+                data.CollisionWorldHalfExtent.y,
+                data.CollisionWorldHalfExtent.z,
+				0.0f);
         }
     }
 }
