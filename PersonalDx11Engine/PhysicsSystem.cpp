@@ -1594,7 +1594,7 @@ XMVECTOR UPhysicsSystem::P_GetShapeHalfExtent(PhysicsID id) const
         return XMVectorZero();
 
     SoAIdx index = GetIdx(static_cast<SoAID>(id));
-    return PhysicsStateSoA->CollisionHalfExtents[index];
+    return PhysicsStateSoA->CollisionWorldHalfExtents[index];
 }
 
 void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent)
@@ -1606,7 +1606,7 @@ void UPhysicsSystem::P_SetShapeHalfExtent(PhysicsID id, XMVECTOR extent)
 
     // 음수 값 방지 (절댓값 적용)
     XMVECTOR validExtent = XMVectorAbs(extent);
-    PhysicsStateSoA->CollisionHalfExtents[index] = validExtent;
+    PhysicsStateSoA->CollisionWorldHalfExtents[index] = validExtent;
 }
 
 #pragma endregion

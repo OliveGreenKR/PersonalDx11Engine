@@ -17,9 +17,9 @@ UCollisionComponentBase::~UCollisionComponentBase()
 
 #pragma region ICollisionShape Implementation
 
-Vector3 UCollisionComponentBase::GetHalfExtent() const
+Vector3 UCollisionComponentBase::GetLocalHalfExtent() const
 {
-	return Vector3(0.5f, 0.5f, 0.5f);
+	return GetLocalTransform().Scale * 0.5f;	
 }
 
 Vector3 UCollisionComponentBase::GetScaledHalfExtent() const

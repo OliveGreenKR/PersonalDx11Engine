@@ -20,7 +20,6 @@ public:
     static constexpr uint8_t FLAG_HIGH_FREQ = 1 << 0;  // Transform 데이터
     static constexpr uint8_t FLAG_MID_FREQ = 1 << 1;  // Type, Mask 데이터
     static constexpr uint8_t FLAG_LOW_FREQ = 1 << 2;  // Properties 데이터
-
     // 그룹 플래그 (편의성)
     static constexpr uint8_t FLAG_ALL = FLAG_HIGH_FREQ | FLAG_MID_FREQ | FLAG_LOW_FREQ;
 
@@ -222,9 +221,10 @@ struct FMidFrequencyData
 
 /// <summary>
 /// 낮은 변경 빈도 데이터 - 초기화 또는 특수 상황에서만 변경
-/// 물리 속성 데이터
+/// 물리 속성 데이터, 형상 대이터 추가
 /// </summary>
 struct FLowFrequencyData {
+    // === 기존 물리 속성 ===
     float InvMass = 1.0f;
     Vector3 InvRotationalInertia = Vector3::One();
     float FrictionKinetic = 0.3f;
@@ -233,6 +233,10 @@ struct FLowFrequencyData {
     float MaxSpeed = 600.0f;
     float MaxAngularSpeed = XM_PIDIV2;
     float GravityScale = 1.0f;
+
+    // === 충돌 형상 데이터 ===
+    ECollisionShapeType CollisionShapeType = ECollisionShapeType::None;
+    Vector3 CollisionWorldHalfExtent = Vector3::Zero();
 
     FLowFrequencyData() = default;
 
@@ -247,6 +251,10 @@ struct FLowFrequencyData {
         result.z = (InvRotationalInertia.z > KINDA_SMALL) ? (1.0f / InvRotationalInertia.z) : KINDA_LARGE;
         return result;
     }
+
+    bool IsValidShape() const {
+        return CollisionShapeType != ECollisionShapeType::None && CollisionWorldHalfExtent != Vector3::Zero();
+	}
 };
 
 #pragma endregion

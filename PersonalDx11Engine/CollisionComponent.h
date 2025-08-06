@@ -21,7 +21,7 @@ public:
 
 public:
 	Vector3 GetScaledHalfExtent() const override;
-	Vector3 GetHalfExtent() const override;
+	Vector3 GetLocalHalfExtent() const override;
 	void SetHalfExtent(const Vector3& InHalfExtent) override;
 
 	virtual Vector3 GetWorldSupportPoint(const Vector3& WorldDirection) const = 0;

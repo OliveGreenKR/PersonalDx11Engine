@@ -18,7 +18,7 @@ public:
     virtual Vector3 CalculateInvInertiaTensor(float InvMass) const = 0;
 
     virtual Vector3 GetScaledHalfExtent() const = 0;
-    virtual Vector3 GetHalfExtent() const = 0;
+    virtual Vector3 GetLocalHalfExtent() const = 0;
     virtual void SetHalfExtent(const Vector3& InVector) = 0;
 
     virtual ECollisionShapeType GetType() const = 0;

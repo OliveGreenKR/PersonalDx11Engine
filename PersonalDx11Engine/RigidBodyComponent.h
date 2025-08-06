@@ -191,6 +191,7 @@ private:
     void InitializePhysicsCache();
     void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
     void OnWorldTransformChanged(const FTransform& transform);
+	void OnCollisionComponentChanged(const FTransform& transform);
 
 #pragma endregion
 

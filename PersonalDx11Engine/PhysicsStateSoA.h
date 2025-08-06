@@ -65,7 +65,7 @@ public:
 
     // 충돌 형상 데이터 (ShapeData 제거)
     std::vector<ECollisionShapeType> CollisionShapeTypes;
-    std::vector<XMVECTOR> CollisionHalfExtents;        // 형상별 다른 의미
+    std::vector<XMVECTOR> CollisionWorldHalfExtents;        // 형상별 다른 의미
 
     // 이전 프레임 트랜스폼 정보
     std::vector<XMVECTOR> PrevWorldPosition;

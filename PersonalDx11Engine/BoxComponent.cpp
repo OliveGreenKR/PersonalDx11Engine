@@ -19,7 +19,7 @@ Vector3 UBoxComponent::GetWorldSupportPoint(const Vector3& WorldDirection) const
     XMVECTOR LocalDir = XMVector3Transform(Dir, InvModeling);
 
     // 부호에 따라 지원점 계산
-    Vector3 HalfExtent = GetHalfExtent();
+    Vector3 HalfExtent = GetLocalHalfExtent();
     XMVECTOR SupportExtent = XMLoadFloat3(&HalfExtent);
     XMVECTOR SignMask = XMVectorGreaterOrEqual(LocalDir, XMVectorZero());
     XMVECTOR LocalSupport = XMVectorSelect(XMVectorNegate(SupportExtent), SupportExtent, SignMask);

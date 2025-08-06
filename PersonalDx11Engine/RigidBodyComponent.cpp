@@ -165,7 +165,23 @@ FMidFrequencyData URigidBodyComponent::GetMidFrequencyData()
 FLowFrequencyData URigidBodyComponent::GetLowFrequencyData()
 {
     FLowFrequencyData result = LowFrequencyGameState;
+
+    // CollisionComponent 존재 여부에 따른 형상 데이터 설정
+    if (OwnComponent && OwnComponent->IsActive()) {
+        result.CollisionShapeType = OwnComponent->GetType();
+        // 월드 크기 반영된 형상 크기를 물리 시스템 단위로 변환
+        result.CollisionWorldHalfExtent = OwnComponent->GetScaledHalfExtent() * UNIT_TO_METER;
+    }
+    else {
+        // CollisionComponent가 없거나 비활성화된 경우
+        // CollisionComponent가 없거나 비활성화된 경우
+        result.CollisionShapeType = ECollisionShapeType::None;
+        result.CollisionWorldHalfExtent = Vector3::Zero();
+    }
+
+    // 물리 시스템용 단위 변환
     result.MaxSpeed = result.MaxSpeed * UNIT_TO_METER;
+
     return result;
 }
 
@@ -268,11 +284,34 @@ void URigidBodyComponent::DispatchToOwnCollisionComponents(const FCollisionEvent
 
 void URigidBodyComponent::SetCollisionComp(UCollisionComponentBase* InCollisionComp)
 {
-    OwnComponent = InCollisionComp;
+	constexpr const char* OnCollisionChangedName = "OnTransformChanged_Rigid";
 
-    if (OwnComponent)
+    if (OwnComponent != InCollisionComp)
     {
-        LOG_INFO("CollisionComponent set for RigidBodyComponent with PhysicsID: %u", PhysicsObjectID);
+        if(OwnComponent)
+        {
+            // 기존 CollisionComponent가 있다면 이벤트 언바인딩
+			OwnComponent->OnWorldTransformChangedDelegate.Unbind(this, OnCollisionChangedName);
+        }
+
+        OwnComponent = InCollisionComp;
+        if (OwnComponent)
+        {
+            // 새로운 CollisionComponent가 있다면 이벤트 바인딩
+            OwnComponent->OnWorldTransformChangedDelegate.Bind(this, &URigidBodyComponent::OnCollisionComponentChanged, OnCollisionChangedName);
+		}
+
+        // CollisionComponent 변경 시 형상 데이터 변경으로 인한 DirtyFlag 설정
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+
+        if (OwnComponent)
+        {
+            LOG_INFO("CollisionComponent set for RigidBodyComponent with PhysicsID: %u", PhysicsObjectID);
+        }
+        else
+        {
+            LOG_INFO("CollisionComponent removed from RigidBodyComponent with PhysicsID: %u", PhysicsObjectID);
+        }
     }
 }
 
@@ -750,6 +789,11 @@ void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform
 {
     // 더티 플래그 설정
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+}
+
+void URigidBodyComponent::OnCollisionComponentChanged(const FTransform& transform)
+{
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
 }
 
 void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
