@@ -12,6 +12,9 @@ class FCollisionPositionCorrectionCalculator
 {
 #pragma region Mass Proportional Separation
 public:
+	FCollisionPositionCorrectionCalculator() = default; 
+	~FCollisionPositionCorrectionCalculator() = default;
+public:
     /// <summary>
     /// 질량 비례 분리 계산 (SIMD 최적화)
     /// 두 객체의 역질량 비율에 따라 침투 해결을 위한 이동량 계산

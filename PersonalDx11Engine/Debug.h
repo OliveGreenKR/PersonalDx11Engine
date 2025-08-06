@@ -18,7 +18,7 @@ namespace Debug
 {
 	static const char* ToString(const FTransform& InTransform)
 	{
-		char buffer[128];
+		static char buffer[128];
 
 		snprintf(buffer, sizeof(buffer),
 				 "Position : %.2f  %.2f  %.2f\n"
@@ -32,7 +32,7 @@ namespace Debug
 
 	static const char* ToString(const Vector3& InVector , const char* Name = "")
 	{
-		char buffer[128];
+		static char buffer[128];
 		if (Name)
 		{
 			snprintf(buffer, sizeof(buffer),

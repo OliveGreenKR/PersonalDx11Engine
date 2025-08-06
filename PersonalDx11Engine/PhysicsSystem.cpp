@@ -20,6 +20,7 @@ void UPhysicsSystem::Initialize()
         CollisionProcessor->Initialize(this, this, this);
         PhysicsStateSoA = std::make_unique<FPhysicsStateArrays>(InitialPhysicsObjectCapacity);
         JobPool = std::make_unique<FArenaMemoryPool>(InitialPhysicsJobPoolSizeMB * 1024 * 1024);
+		JobQueue = std::make_unique<TCircularQueue<FPhysicsJobRequest>>(InitialPhysicsObjectCapacity);
         CollisionEventQueue = std::make_unique<TCircularQueue<FPhysicsCollisionEvent>>(InitialCollisionEventQueueSize);
     }
     catch (...)

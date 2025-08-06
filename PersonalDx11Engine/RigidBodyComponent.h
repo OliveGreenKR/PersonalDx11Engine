@@ -162,8 +162,8 @@ public:
     /// CollisionComponent 설정 및 관리
     /// </summary>
     void SetCollisionComp(UCollisionComponentBase* InCollisionComp);
-    UCollisionComponentBase* GetCollisionComp() const { return OwnComponent; }
-    bool HasCollisionComp() const { return OwnComponent != nullptr; }
+    UCollisionComponentBase* GetCollisionComp() const;
+    bool HasCollisionComp() const;
 
 private:
     FCollisionEvent ConvertPhysicsToGameEvent(const FPhysicsCollisionEvent& PhysicsEvent);
@@ -180,8 +180,6 @@ public:
     bool IsTimeInterpolationEnabled() const;
 
 private:
-    void InitializeTimeInterpolation();
-    void UpdateTimeInterpolation(float CurrentTime);
     void ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResults, const FTransform& CurrentGameTransform);
 
 #pragma endregion

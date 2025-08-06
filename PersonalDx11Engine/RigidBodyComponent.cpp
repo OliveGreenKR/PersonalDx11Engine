@@ -17,7 +17,6 @@ URigidBodyComponent::URigidBodyComponent()
     bPhysicsSimulated = true;
     InitializeGameState();
     InitializePhysicsCache();
-    InitializeTimeInterpolation();
 }
 
 URigidBodyComponent::~URigidBodyComponent()
@@ -213,7 +212,7 @@ void URigidBodyComponent::MarkDataClean(const FPhysicsDataDirtyFlags& flags)
 
 #pragma endregion
 
-#pragma region Event Receiving System
+#pragma region Event Receiving System & CollisionComponent Management
 
 void URigidBodyComponent::ReceiveCollisionEvents(std::vector<FPhysicsCollisionEvent>& PhysicsEvents)
 {
@@ -277,21 +276,450 @@ void URigidBodyComponent::SetCollisionComp(UCollisionComponentBase* InCollisionC
     }
 }
 
+UCollisionComponentBase* URigidBodyComponent::GetCollisionComp() const
+{
+    return OwnComponent;
+}
+
+bool URigidBodyComponent::HasCollisionComp() const
+{
+    return OwnComponent != nullptr;
+}
+
+#pragma endregion
+
+#pragma region Time Interpolation System
+
+void URigidBodyComponent::SetTimeInterpolationEnabled(bool bEnabled)
+{
+    bEnableTimeInterpolation = bEnabled;
+}
+
+bool URigidBodyComponent::IsTimeInterpolationEnabled() const
+{
+    return bEnableTimeInterpolation;
+}
+
+
+void URigidBodyComponent::ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResults, const FTransform& CurrentGameTransform)
+{
+    if (!bEnableTimeInterpolation)
+    {
+        // 보간 비활성화 시 물리 결과 직접 적용
+        SetWorldTransform(FTransform(PhysicsResults.ResultPosition,
+                                     PhysicsResults.ResultRotation,
+                                     PhysicsResults.ResultScale));
+        return;
+    }
+
+    // SIMD 최적화된 변화량 계산
+    XMVECTOR CurrentPos = XMLoadFloat3(&CurrentGameTransform.Position);
+    XMVECTOR PreviousPos = XMLoadFloat3(&PreviousPosition);
+    XMVECTOR PhysicsPos = XMLoadFloat3(&PhysicsResults.ResultPosition);
+
+    XMVECTOR CurrentRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
+    XMVECTOR PreviousRot = XMLoadFloat4(&PreviousRotation);
+    XMVECTOR PhysicsRot = XMLoadFloat4(&PhysicsResults.ResultRotation);
+
+    // 변화량 분리 (Previous 기준으로 SIMD 계산)
+    XMVECTOR GameLogicDelta = XMVectorSubtract(CurrentPos, PreviousPos);
+    XMVECTOR PhysicsDelta = XMVectorSubtract(PhysicsPos, PreviousPos);
+
+    // 회전 변화량 계산 (SIMD 최적화)
+    XMVECTOR PreviousRotInv = XMQuaternionInverse(PreviousRot);
+    XMVECTOR GameLogicRotDelta = XMQuaternionMultiply(CurrentRot, PreviousRotInv);
+    XMVECTOR PhysicsRotDelta = XMQuaternionMultiply(PhysicsRot, PreviousRotInv);
+
+    // 단순 가중치 계산 (기본값: 물리 70%)
+    float PhysicsWeight = 0.7f;
+    XMVECTOR WeightVector = XMVectorReplicate(PhysicsWeight);
+
+    // 최종 위치 계산 (SIMD)
+    // 게임 로직 변화는 100% 반영, 물리 변화는 가중치 적용
+    XMVECTOR WeightedPhysicsDelta = XMVectorMultiply(PhysicsDelta, WeightVector);
+    XMVECTOR FinalPosVector = XMVectorAdd(XMVectorAdd(PreviousPos, GameLogicDelta), WeightedPhysicsDelta);
+
+    // 회전은 DirectXMath의 최적화된 Slerp 사용
+    XMVECTOR FinalRotVector = XMQuaternionSlerp(CurrentRot, PhysicsRot, PhysicsWeight);
+    FinalRotVector = XMQuaternionNormalize(FinalRotVector);
+
+    // 결과 저장
+    Vector3 FinalPosition;
+    Quaternion FinalRotation;
+    XMStoreFloat3(&FinalPosition, FinalPosVector);
+    XMStoreFloat4(&FinalRotation, FinalRotVector);
+
+    // 스케일은 게임 로직 우선
+    Vector3 FinalScale = CurrentGameTransform.Scale;
+
+    FTransform FinalTransform = FTransform(FinalPosition, FinalRotation, FinalScale);
+    SetWorldTransform(FinalTransform);
+
+    // 디버그 로그 (임시) - SIMD 계산된 차이값 활용
+    XMVECTOR DifferenceVector = XMVectorSubtract(CurrentPos, PhysicsPos);
+    float PositionDifference = XMVectorGetX(XMVector3Length(DifferenceVector));
+    if (PositionDifference > 1.0f)
+    {
+        LOG_INFO("SIMD Transform: Game[%s] \n Physics[%s] \n Final[%s]",
+                 Debug::ToString(CurrentGameTransform.Position),
+                 Debug::ToString(PhysicsResults.ResultPosition),
+                 Debug::ToString(FinalPosition));
+    }
+}
+#pragma endregion
+
+#pragma region Game Logic Interface - Physics Type and State Management
+
+void URigidBodyComponent::SetPhysicsType(EPhysicsType InType)
+{
+    if (MidFrequencyGameState.PhysicsType != InType)
+    {
+        MidFrequencyGameState.PhysicsType = InType;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetGravityEnabled(bool bEnabled)
+{
+    bool CurrentGravityState = MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+    if (CurrentGravityState != bEnabled)
+    {
+        if (bEnabled)
+        {
+            MidFrequencyGameState.PhysicsMask.SetFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+        }
+        else
+        {
+            MidFrequencyGameState.PhysicsMask.ClearFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+        }
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetPhysicsActive(bool bActive)
+{
+    bool CurrentActiveState = MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
+    if (CurrentActiveState != bActive)
+    {
+        if (bActive)
+        {
+            MidFrequencyGameState.PhysicsMask.SetFlag(FPhysicsMask::MASK_ACTIVATION);
+        }
+        else
+        {
+            MidFrequencyGameState.PhysicsMask.ClearFlag(FPhysicsMask::MASK_ACTIVATION);
+        }
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_MID_FREQ));
+    }
+}
+
+EPhysicsType URigidBodyComponent::GetPhysicsType() const
+{
+    return MidFrequencyGameState.PhysicsType;
+}
+
+bool URigidBodyComponent::IsStatic() const
+{
+    return MidFrequencyGameState.PhysicsType == EPhysicsType::Static;
+}
+
+bool URigidBodyComponent::IsDynamic() const
+{
+    return MidFrequencyGameState.PhysicsType == EPhysicsType::Dynamic;
+}
+
+bool URigidBodyComponent::IsGravityEnabled() const
+{
+    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_GRAVITY_AFFECTED);
+}
+
+bool URigidBodyComponent::IsPhysicsActive() const
+{
+    return MidFrequencyGameState.PhysicsMask.HasFlag(FPhysicsMask::MASK_ACTIVATION);
+}
+
+#pragma endregion
+
+#pragma region Game Logic Interface - Physics Properties Management
+
+void URigidBodyComponent::SetMass(float InMass)
+{
+    float NewInvMass = (InMass > 0.0f) ? (1.0f / InMass) : 0.0f;
+    if (LowFrequencyGameState.InvMass != NewInvMass)
+    {
+        LowFrequencyGameState.InvMass = NewInvMass;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetInvRotationalInertia(const Vector3& InInvInertia)
+{
+    if (LowFrequencyGameState.InvRotationalInertia != InInvInertia)
+    {
+        LowFrequencyGameState.InvRotationalInertia = InInvInertia;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetRestitution(float InRestitution)
+{
+    if (LowFrequencyGameState.Restitution != InRestitution)
+    {
+        LowFrequencyGameState.Restitution = InRestitution;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetFrictionStatic(float InFriction)
+{
+    if (LowFrequencyGameState.FrictionStatic != InFriction)
+    {
+        LowFrequencyGameState.FrictionStatic = InFriction;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetFrictionKinetic(float InFriction)
+{
+    if (LowFrequencyGameState.FrictionKinetic != InFriction)
+    {
+        LowFrequencyGameState.FrictionKinetic = InFriction;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetMaxSpeed(float InMaxSpeed)
+{
+    if (LowFrequencyGameState.MaxSpeed != InMaxSpeed)
+    {
+        LowFrequencyGameState.MaxSpeed = InMaxSpeed;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetMaxAngularSpeed(float InMaxAngularSpeed)
+{
+    if (LowFrequencyGameState.MaxAngularSpeed != InMaxAngularSpeed)
+    {
+        LowFrequencyGameState.MaxAngularSpeed = InMaxAngularSpeed;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+void URigidBodyComponent::SetGravityScale(float InGravityScale)
+{
+    if (LowFrequencyGameState.GravityScale != InGravityScale)
+    {
+        LowFrequencyGameState.GravityScale = InGravityScale;
+        MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+    }
+}
+
+// Properties 조회 함수들
+float URigidBodyComponent::GetMass() const
+{
+    return LowFrequencyGameState.GetMass();
+}
+
+float URigidBodyComponent::GetInvMass() const
+{
+    return LowFrequencyGameState.InvMass;
+}
+
+Vector3 URigidBodyComponent::GetRotationalInertia() const
+{
+    return LowFrequencyGameState.GetRotationalInertia();
+}
+
+Vector3 URigidBodyComponent::GetInvRotationalInertia() const
+{
+    return LowFrequencyGameState.InvRotationalInertia;
+}
+
+float URigidBodyComponent::GetRestitution() const
+{
+    return LowFrequencyGameState.Restitution;
+}
+
+float URigidBodyComponent::GetFrictionStatic() const
+{
+    return LowFrequencyGameState.FrictionStatic;
+}
+
+float URigidBodyComponent::GetFrictionKinetic() const
+{
+    return LowFrequencyGameState.FrictionKinetic;
+}
+
+float URigidBodyComponent::GetMaxSpeed() const
+{
+    return LowFrequencyGameState.MaxSpeed;
+}
+
+float URigidBodyComponent::GetMaxAngularSpeed() const
+{
+    return LowFrequencyGameState.MaxAngularSpeed;
+}
+
+float URigidBodyComponent::GetGravityScale() const
+{
+    return LowFrequencyGameState.GravityScale;
+}
+
+float URigidBodyComponent::GetSpeed() const
+{
+    return PhysicsResultCache.Velocity.Length();
+}
+
+#pragma endregion
+
+#pragma region Game Logic Interface - Physics State Queries
+
+Vector3 URigidBodyComponent::GetVelocity() const
+{
+    return PhysicsResultCache.Velocity;
+}
+
+Vector3 URigidBodyComponent::GetAngularVelocity() const
+{
+    return PhysicsResultCache.AngularVelocity;
+}
+
+#pragma endregion
+
+#pragma region Game Logic Interface - Immediate Physics Commands
+
+void URigidBodyComponent::SetVelocity(const Vector3& InVelocity)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::SetVelocity - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        Vector3 ConvertedVelocity = InVelocity * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobSetVelocity>(PhysicsObjectID, ConvertedVelocity);
+    }
+}
+
+void URigidBodyComponent::AddVelocity(const Vector3& InVelocityDelta)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::AddVelocity - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        Vector3 ConvertedVelocityDelta = InVelocityDelta * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobAddVelocity>(PhysicsObjectID, ConvertedVelocityDelta);
+    }
+}
+
+void URigidBodyComponent::SetAngularVelocity(const Vector3& InAngularVelocity)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::SetAngularVelocity - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        PhysicsSystem->RequestPhysicsJob<FJobSetAngularVelocity>(PhysicsObjectID, InAngularVelocity);
+    }
+}
+
+void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDelta)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::AddAngularVelocity - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        PhysicsSystem->RequestPhysicsJob<FJobAddAngularVelocity>(PhysicsObjectID, InAngularVelocityDelta);
+    }
+}
+
+void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
+{
+    USceneComponent::SetWorldTransform(InWorldTransform);
+    // OnWorldTransformChanged 델리게이트를 통해 자동으로 더티 플래그 설정됨
+}
+
+void URigidBodyComponent::ApplyForce(const Vector3& InForce)
+{
+    // 질량 중심점에 힘 적용
+    Vector3 CenterOfMass = GetWorldTransform().Position; // 간단화: Transform 위치를 질량 중심으로 사용
+    ApplyForce(InForce, CenterOfMass);
+}
+
+void URigidBodyComponent::ApplyForce(const Vector3& InForce, const Vector3& InLocation)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::ApplyForce - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        Vector3 ConvertedForce = InForce;
+        Vector3 ConvertedLocation = InLocation * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobApplyForce>(PhysicsObjectID, ConvertedForce, ConvertedLocation);
+    }
+}
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& InImpulse)
+{
+    // 질량 중심점에 충격 적용
+    Vector3 CenterOfMass = GetWorldTransform().Position; // 간단화: Transform 위치를 질량 중심으로 사용
+    ApplyImpulse(InImpulse, CenterOfMass);
+}
+
+void URigidBodyComponent::ApplyImpulse(const Vector3& InImpulse, const Vector3& InLocation)
+{
+    if (!bIsRegisteredToPhysicsSystem || PhysicsObjectID == 0)
+    {
+        LOG_WARNING("URigidBodyComponent::ApplyImpulse - Component not registered to physics system");
+        return;
+    }
+    if (!IsActive() || IsStatic())
+        return;
+
+    UPhysicsSystem* PhysicsSystem = UPhysicsSystem::Get();
+    if (PhysicsSystem)
+    {
+        Vector3 ConvertedImpulse = InImpulse;
+        Vector3 ConvertedLocation = InLocation * UNIT_TO_METER;
+        PhysicsSystem->RequestPhysicsJob<FJobApplyImpulse>(PhysicsObjectID, ConvertedImpulse, ConvertedLocation);
+    }
+}
+
 #pragma endregion
 
 #pragma region Utility Methods
-
-void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
-{
-    // 더티 플래그 설정
-    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
-}
-
-void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
-{
-    DirtyFlags |= flags;
-}
-
 void URigidBodyComponent::InitializeGameState()
 {
     // High Frequency 초기화 (Transform)
@@ -318,83 +746,14 @@ void URigidBodyComponent::InitializePhysicsCache()
     PhysicsResultCache.ResultScale = Vector3::One();
 }
 
-void URigidBodyComponent::InitializeTimeInterpolation()
+void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
 {
-    bEnableTimeInterpolation = true;
-    InterpolationAlpha = 0.0f;
-    LastTickTime = 0.0f;
+    // 더티 플래그 설정
+    MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
 }
 
-#pragma endregion
-
-#pragma region Time Interpolation System
-
-void URigidBodyComponent::SetTimeInterpolationEnabled(bool bEnabled)
+void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
 {
-    bEnableTimeInterpolation = bEnabled;
-}
-
-bool URigidBodyComponent::IsTimeInterpolationEnabled() const
-{
-    return bEnableTimeInterpolation;
-}
-
-void URigidBodyComponent::ApplyInterporateTransform(const FPhysicsToGameData& PhysicsResults, const FTransform& CurrentGameTransform)
-{
-    if (!bEnableTimeInterpolation)
-    {
-        SetWorldTransform(FTransform(PhysicsResults.ResultPosition,
-                                     PhysicsResults.ResultRotation,
-                                     PhysicsResults.ResultScale));
-        return;
-    }
-
-    // SIMD를 위한 XMVECTOR 로드
-    XMVECTOR CurrentPos = XMLoadFloat3(&CurrentGameTransform.Position);
-    XMVECTOR PreviousPos = XMLoadFloat3(&PreviousPosition);
-    XMVECTOR PhysicsResultPos = XMLoadFloat3(&PhysicsResults.ResultPosition);
-
-    XMVECTOR CurrentRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
-    XMVECTOR PreviousRot = XMLoadFloat4(&PreviousRotation);
-    XMVECTOR PhysicsResultRot = XMLoadFloat4(&PhysicsResults.ResultRotation);
-
-    float PhysicsWeight = 0.7f;
-    XMVECTOR PhysicsWeightVec = XMVectorSet(PhysicsWeight, PhysicsWeight, PhysicsWeight, PhysicsWeight);
-
-    // Vector3 변화량 분리 (SIMD 연산)
-    XMVECTOR GameLogicDelta = XMVectorSubtract(CurrentPos, PreviousPos);
-    XMVECTOR PhysicsDelta = XMVectorSubtract(PhysicsResultPos, PreviousPos);
-
-    // 최종 Position 계산 (SIMD 연산)
-    XMVECTOR PhysicsDeltaWeighted = XMVectorMultiply(PhysicsDelta, PhysicsWeightVec);
-    XMVECTOR FinalPositionVec = XMVectorAdd(PreviousPos, GameLogicDelta);
-    FinalPositionVec = XMVectorAdd(FinalPositionVec, PhysicsDeltaWeighted);
-
-    // 회전 보간 (SIMD 연산)
-    XMVECTOR FinalRotationVec = XMQuaternionSlerp(CurrentRot, PhysicsResultRot, PhysicsWeight);
-
-    // 스케일은 게임 로직 우선 (SIMD로 로드해서 반환)
-    XMVECTOR FinalScaleVec = XMLoadFloat3(&CurrentGameTransform.Scale);
-
-    // 최종 FTransform 생성 (Store 연산)
-    FTransform FinalTransform;
-    XMStoreFloat3(&FinalTransform.Position, FinalPositionVec);
-    XMStoreFloat4(&FinalTransform.Rotation, FinalRotationVec);
-    XMStoreFloat3(&FinalTransform.Scale, FinalScaleVec);
-
-    SetWorldTransform(FinalTransform);
-    // 디버그 로그 (임시)
-    float PositionDifference = (CurrentGameTransform.Position - PhysicsResults.ResultPosition).Length();
-    if (PositionDifference > 1.0f)
-    {
-        LOG_INFO("Delta-based Transform: Game [%s] \n Physics[%s] \n Final[%s]",
-                 Debug::ToString(CurrentGameTransform.Position),
-                 Debug::ToString(CurrentGameTransform.Position),
-                 Debug::ToString(FinalTransform.Position));
-    }
+    DirtyFlags |= flags;
 }
 #pragma endregion
-
-
-
-

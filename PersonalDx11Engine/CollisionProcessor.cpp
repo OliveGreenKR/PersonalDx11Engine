@@ -2,11 +2,6 @@
 #include "PhysicsStateInternalInterface.h"
 #include "CollisionShapeInternalInterface.h"
 #include "PhysicsEventDispatcherInterface.h"
-#include "DynamicAABBTree.h"
-#include "CollisionDetector.h"
-#include "CollisionResponseCalculator.h"
-#include "CollisionEventCalculator.h"
-#include "CollisionPositionCorrectionCalculator.h"
 
 #include "ConfigReadManager.h"
 #include "Debug.h"
@@ -915,7 +910,6 @@ FMAABB FCollisionProcessor::CalculateAABBFromShape(XMVECTOR position, XMVECTOR r
             XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(rotation);
 
             // 회전된 박스의 각 꼭짓점을 고려한 AABB 계산
-            XMVECTOR corners[8];
             XMVECTOR signs[8] = {
                 XMVectorSet(-1, -1, -1, 0), XMVectorSet(1, -1, -1, 0),
                 XMVectorSet(-1,  1, -1, 0), XMVectorSet(1,  1, -1, 0),

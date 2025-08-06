@@ -7,6 +7,11 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include "CollisionDetector.h"
+#include "CollisionResponseCalculator.h"
+#include "CollisionEventCalculator.h"
+#include "CollisionPositionCorrectionCalculator.h"
+#include "DynamicAABBTree.h"
 
 
 // Forward Declarations

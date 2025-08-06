@@ -11,6 +11,7 @@ using namespace DirectX;
 /// </summary>
 class FCollisionEventCalculator
 {
+public:
 	FCollisionEventCalculator() = default;
 	~FCollisionEventCalculator() = default;
 #pragma region Core Event Generation
