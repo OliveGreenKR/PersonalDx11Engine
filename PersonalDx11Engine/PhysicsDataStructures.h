@@ -166,18 +166,41 @@ struct FHighFrequencyData
     Quaternion Rotation     = Quaternion::Identity();
     Vector3 Scale           = Vector3::One();
 
+    Vector3 PrevPosition = Vector3::Zero();
+    Quaternion PrevRotation = Quaternion::Identity();
+
     FHighFrequencyData() = default;
 
     explicit FHighFrequencyData(const FTransform& InTransform)
         : Position(InTransform.Position)
         , Rotation(InTransform.Rotation)
         , Scale(InTransform.Scale)
+        , PrevPosition(InTransform.Position)  // 초기화 시 현재값으로 설정
+        , PrevRotation(InTransform.Rotation)  // 초기화 시 현재값으로 설정
     {
     }
 
     FTransform GetTransform() const
     {
         return FTransform(Position, Rotation, Scale);
+    }
+
+    FTransform GetPrevTransform() const
+    {
+        return FTransform(PrevPosition, PrevRotation, Scale); 
+    }
+
+    void SetTransform(const FTransform& InTransform)
+    {
+        Position = InTransform.Position;
+        Rotation = InTransform.Rotation;
+        Scale = InTransform.Scale;
+    }
+
+    void SetPrevTransform(const FTransform& InTransform)
+    {
+        PrevPosition = InTransform.Position;
+        PrevRotation = InTransform.Rotation;
     }
 
     bool operator==(const FHighFrequencyData& Other) const

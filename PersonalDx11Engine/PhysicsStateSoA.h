@@ -69,7 +69,7 @@ public:
 
     // 이전 프레임 트랜스폼 정보
     std::vector<XMVECTOR> PrevWorldPosition;
-    std::vector<XMVECTOR> PrevWorldScale;
+    std::vector<XMVECTOR> PrevWorldScale;                   //현재는 사용안함
     std::vector<XMVECTOR> PrevWorldRotationQuat;
 
     // === 상태 관리 데이터 ===

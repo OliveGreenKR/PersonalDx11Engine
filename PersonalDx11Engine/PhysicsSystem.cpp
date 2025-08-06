@@ -834,12 +834,23 @@ void UPhysicsSystem::BatchSyncHighFrequencyData()
             // Transform 데이터 동기화
             FHighFrequencyData data = physicsObject->GetHighFrequencyData();
 
+            // === 현재 프레임 Transform 동기화 ===
             PhysicsStateSoA->WorldPosition[i] = XMVectorSet(
                 data.Position.x, data.Position.y, data.Position.z, 1.0f);
             PhysicsStateSoA->WorldRotationQuat[i] = XMVectorSet(
                 data.Rotation.x, data.Rotation.y, data.Rotation.z, data.Rotation.w);
             PhysicsStateSoA->WorldScale[i] = XMVectorSet(
                 data.Scale.x, data.Scale.y, data.Scale.z, 1.0f);
+
+            // === 이전 프레임 Transform 동기화 (CCD용) ===
+            PhysicsStateSoA->PrevWorldPosition[i] = XMVectorSet(
+                data.PrevPosition.x, data.PrevPosition.y, data.PrevPosition.z, 1.0f);
+            PhysicsStateSoA->PrevWorldRotationQuat[i] = XMVectorSet(
+                data.PrevRotation.x, data.PrevRotation.y, data.PrevRotation.z, data.PrevRotation.w);
+
+            //// PrevWorldScale은 사용하지 않음
+            //PhysicsStateSoA->PrevWorldScale[i] = XMVectorSet(
+            //    data.Scale.x, data.Scale.y, data.Scale.z, 1.0f);
         }
     }
 }
