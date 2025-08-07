@@ -529,11 +529,11 @@ void FCollisionProcessor::ApplyCollisionResponse(float DeltaTime)
     if (CurrentCollidingPairs.empty() || CurrentDetectionResults.empty())
         return;
 
-    // 1. 직접 위치 보정 적용 (멤버 데이터 기반)
-    ApplyDirectPositionCorrections();
-
     // 2. 반복적 제약 조건 해결 (멤버 데이터 기반)
     ApplyIterativeConstraintSolver();
+
+    // 1. 직접 위치 보정 적용 (멤버 데이터 기반)
+    ApplyDirectPositionCorrections();
 }
 
 void FCollisionProcessor::RequestCollisionEvents()
@@ -577,11 +577,11 @@ void FCollisionProcessor::ApplyDirectPositionCorrections()
         float correctionRatio = 0.0f;
 
         // 겹침 정도에 따른 차등 보정
-        if (overlapRatio > 0.7f)
+        if (overlapRatio > 0.4f)
         {
             correctionRatio = 0.45f; // 심각한 겹침
         }
-        else if (overlapRatio > 0.4f)
+        else if (overlapRatio > 0.1f)
         {
             correctionRatio = 0.2f;  // 중간 겹침
         }
