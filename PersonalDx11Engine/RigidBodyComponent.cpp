@@ -17,6 +17,7 @@ URigidBodyComponent::URigidBodyComponent()
     bPhysicsSimulated = true;
     InitializeGameState();
     InitializePhysicsCache();
+	BackupCurrentTransformToPrevious();
 }
 
 URigidBodyComponent::~URigidBodyComponent()
@@ -147,13 +148,17 @@ FPhysicsMask URigidBodyComponent::GetPhysicsMask() const
 FHighFrequencyData URigidBodyComponent::GetHighFrequencyData()
 {
     FTransform CurrentTransform = GetWorldTransform();
-    PreviousPosition = CurrentTransform.Position;
-    PreviousRotation = CurrentTransform.Rotation;
 
-    HighFrequencyGameState = FHighFrequencyData(CurrentTransform);
+    // 내부 상태 업데이트 (게임 좌표계)
+    HighFrequencyGameState.SetPrevTransform(PreviousTransform);
+    HighFrequencyGameState.SetTransform(CurrentTransform);
 
+    // 내부 상태 복사 후 물리 시스템용 단위 변환
     FHighFrequencyData ToTransfer = HighFrequencyGameState;
     ToTransfer.Position *= UNIT_TO_METER;
+    ToTransfer.PrevPosition *= UNIT_TO_METER;
+    // 회전과 스케일은 단위 변환 불필요
+
     return ToTransfer;
 }
 
@@ -353,11 +358,11 @@ void URigidBodyComponent::ApplyInterporateTransform(const FPhysicsToGameData& Ph
 
     // SIMD 최적화된 변화량 계산
     XMVECTOR CurrentPos = XMLoadFloat3(&CurrentGameTransform.Position);
-    XMVECTOR PreviousPos = XMLoadFloat3(&PreviousPosition);
+    XMVECTOR PreviousPos = XMLoadFloat3(&PreviousTransform.Position);
     XMVECTOR PhysicsPos = XMLoadFloat3(&PhysicsResults.ResultPosition);
 
     XMVECTOR CurrentRot = XMLoadFloat4(&CurrentGameTransform.Rotation);
-    XMVECTOR PreviousRot = XMLoadFloat4(&PreviousRotation);
+    XMVECTOR PreviousRot = XMLoadFloat4(&PreviousTransform.Rotation);
     XMVECTOR PhysicsRot = XMLoadFloat4(&PhysicsResults.ResultRotation);
 
     // 변화량 분리 (Previous 기준으로 SIMD 계산)
@@ -698,12 +703,6 @@ void URigidBodyComponent::AddAngularVelocity(const Vector3& InAngularVelocityDel
     }
 }
 
-void URigidBodyComponent::SetWorldTransform(const FTransform& InWorldTransform)
-{
-    USceneComponent::SetWorldTransform(InWorldTransform);
-    // OnWorldTransformChanged 델리게이트를 통해 자동으로 더티 플래그 설정됨
-}
-
 void URigidBodyComponent::ApplyForce(const Vector3& InForce)
 {
     // 질량 중심점에 힘 적용
@@ -785,19 +784,28 @@ void URigidBodyComponent::InitializePhysicsCache()
     PhysicsResultCache.ResultScale = Vector3::One();
 }
 
+void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
+{
+    DirtyFlags |= flags;
+}
+inline void URigidBodyComponent::BackupCurrentTransformToPrevious()
+{
+    // 현재 Transform을 Previous로 백업
+    PreviousTransform = GetWorldTransform();
+}
+#pragma endregion
+
+#pragma region EventHandlers
 void URigidBodyComponent::OnWorldTransformChanged(const FTransform& NewTransform)
 {
     // 더티 플래그 설정
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_HIGH_FREQ));
+    // 이전 트랜스폼 백업
+	BackupCurrentTransformToPrevious();
 }
 
 void URigidBodyComponent::OnCollisionComponentChanged(const FTransform& transform)
 {
     MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
-}
-
-void URigidBodyComponent::MarkDataDirty(const FPhysicsDataDirtyFlags& flags)
-{
-    DirtyFlags |= flags;
 }
 #pragma endregion

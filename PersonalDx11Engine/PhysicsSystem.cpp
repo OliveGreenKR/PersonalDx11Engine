@@ -1474,19 +1474,84 @@ void UPhysicsSystem::P_SetVelocity(PhysicsID targetID, const XMVECTOR& velocity)
     if (!IsValidTargetID(targetID))
         return;
     SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
-    PhysicsStateSoA->Velocities[index] = velocity;
+
+    // Static 타입 체크
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
+
+    if (IsValidLinearVelocity(velocity))
+    {
+        PhysicsStateSoA->Velocities[index] = velocity;
+    }
 }
 
 void UPhysicsSystem::P_AddVelocity(PhysicsID targetID, const XMVECTOR& deltaVelocity)
 {
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+
+    // Static 타입 체크
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_AddVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
+
+    XMVECTOR currentVelocity = PhysicsStateSoA->Velocities[index];
+    XMVECTOR newVelocity = XMVectorAdd(currentVelocity, deltaVelocity);
+
+    if (IsValidLinearVelocity(newVelocity))
+    {
+        PhysicsStateSoA->Velocities[index] = newVelocity;
+    }
 }
 
-void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const XMVECTOR& Angularvelocity)
+void UPhysicsSystem::P_SetAngularVelocity(PhysicsID targetID, const XMVECTOR& angularVelocity)
 {
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+
+    // Static 타입 체크
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_SetAngularVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
+
+    if (IsValidAngularVelocity(angularVelocity))
+    {
+        PhysicsStateSoA->AngularVelocities[index] = angularVelocity;
+    }
 }
 
 void UPhysicsSystem::P_AddAngularVelocity(PhysicsID targetID, const XMVECTOR& deltaAngularVelocity)
 {
+    if (!IsValidTargetID(targetID))
+        return;
+
+    SoAIdx index = GetIdx(static_cast<SoAID>(targetID));
+
+    // Static 타입 체크
+    if (PhysicsStateSoA->PhysicsTypes[index] == EPhysicsType::Static)
+    {
+        LOG_WARNING("P_AddAngularVelocity blocked: PhysicsID %u is Static type", targetID);
+        return;
+    }
+
+    XMVECTOR currentAngularVelocity = PhysicsStateSoA->AngularVelocities[index];
+    XMVECTOR newAngularVelocity = XMVectorAdd(currentAngularVelocity, deltaAngularVelocity);
+
+    if (IsValidAngularVelocity(newAngularVelocity))
+    {
+        PhysicsStateSoA->AngularVelocities[index] = newAngularVelocity;
+    }
 }
 
 // === Transform Setters ===

@@ -57,7 +57,7 @@ public:
 
 #pragma endregion
 
-#pragma region State Data Management
+#pragma region State Data Members
 
 private:
     FHighFrequencyData HighFrequencyGameState;
@@ -70,8 +70,8 @@ private:
     PhysicsID PhysicsObjectID = 0;
     bool bIsRegisteredToPhysicsSystem = false;
 
-    Vector3 PreviousPosition = Vector3::Zero();
-    Quaternion PreviousRotation = Quaternion::Identity();
+    FTransform PreviousTransform = FTransform();
+    bool bPreviousTransformInitialized = false;         
 
     bool bEnableTimeInterpolation = true;
     float InterpolationAlpha = 0.0f;
@@ -141,8 +141,6 @@ public:
     void SetAngularVelocity(const Vector3& InAngularVelocity);
     void AddAngularVelocity(const Vector3& InAngularVelocityDelta);
 
-    void SetWorldTransform(const FTransform& InWorldTransform) override;
-
     void ApplyForce(const Vector3& InForce);
     void ApplyForce(const Vector3& InForce, const Vector3& InLocation);
     void ApplyImpulse(const Vector3& InImpulse);
@@ -185,11 +183,14 @@ private:
 #pragma endregion
 
 #pragma region Utility Methods
-
 private:
     void InitializeGameState();
-    void InitializePhysicsCache();
-    void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
+	void InitializePhysicsCache();
+	void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
+    void BackupCurrentTransformToPrevious();
+#pragma endregion
+#pragma region EventHandlers
+private:
     void OnWorldTransformChanged(const FTransform& transform);
 	void OnCollisionComponentChanged(const FTransform& transform);
 
