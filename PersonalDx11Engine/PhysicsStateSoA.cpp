@@ -456,7 +456,7 @@ void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
 {
     if (Index >= Size())
     {
-        LOG_ERROR("InitializeSlot: Index %u out of bounds (%zu)", Index, Size());
+        LOG_ERROR("InitializeSlot: Index %u exceeds size %zu", Index, Size());
         return;
     }
 
@@ -468,8 +468,13 @@ void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
 
     // 트랜스폼 정보 초기화
     WorldPosition[Index] = XMVectorZero();
-    WorldScale[Index] = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);  // 기본 스케일 1
+    WorldScale[Index] = XMVectorSplatOne();
     WorldRotationQuat[Index] = XMQuaternionIdentity();
+
+    // === 이전 프레임 트랜스폼 정보 초기화 (CCD용) ===
+    PrevWorldPosition[Index] = XMVectorZero();
+    PrevWorldScale[Index] = XMVectorSplatOne();
+    PrevWorldRotationQuat[Index] = XMQuaternionIdentity();
 
     // 물리 속성 초기화
     InvRotationalInertias[Index] = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);  // 기본 관성
@@ -484,6 +489,10 @@ void FPhysicsStateArrays::InitializeSlot(SoAIdx Index)
     GravityScales[Index] = 1.0f;                   // 기본 중력 스케일
     PhysicsTypes[Index] = EPhysicsType::Dynamic;   // 기본 동적 타입
     PhysicsMasks[Index] = FPhysicsMask(FPhysicsMask::GROUP_BASIC_SIMULATION); // 플래그 초기화 (중력,활성화)
+
+    // === 충돌 형상 정보 초기화 ===
+    CollisionShapeTypes[Index] = ECollisionShapeType::None;  // 안전한 기본 형상
+    CollisionWorldHalfExtents[Index] = XMVectorZero();       // 충돌 범위 없음
 }
 
 // 모든 SoA 벡터들을 동시에 크기 조정
@@ -502,6 +511,11 @@ void FPhysicsStateArrays::ResizeAllStatesVectors(uint32_t NewSize)
         WorldScale.resize(NewSize);
         WorldRotationQuat.resize(NewSize);
 
+        // === 이전 프레임 트랜스폼 정보 벡터들 크기 조정 ===
+        PrevWorldPosition.resize(NewSize);
+        PrevWorldScale.resize(NewSize);
+        PrevWorldRotationQuat.resize(NewSize);
+
         // 물리 속성 벡터들 크기 조정
         InvRotationalInertias.resize(NewSize);
         InvMasses.resize(NewSize);
@@ -516,7 +530,7 @@ void FPhysicsStateArrays::ResizeAllStatesVectors(uint32_t NewSize)
         PhysicsTypes.resize(NewSize);
         PhysicsMasks.resize(NewSize);
 
-        // 형상 관련 벡터들 크기 조정 (새로 추가)
+        // === 충돌 형상 관련 벡터들 크기 조정 ===
         CollisionShapeTypes.resize(NewSize);
         CollisionWorldHalfExtents.resize(NewSize);
 
@@ -546,7 +560,7 @@ void FPhysicsStateArrays::PerformCompaction()
     uint32_t ValidObjectCount = 0;
 
     LOG_INFO("Starting compaction: %u allocated, %u deallocated",
-                  AllocatedCount, DeallocatedCount);
+             AllocatedCount, DeallocatedCount);
 
     // 1단계: 유효한 객체들을 앞쪽으로 압축
     for (uint32_t ReadIndex = FIRST_VALID_INDEX; ReadIndex <= AllocatedCount; ++ReadIndex)
@@ -557,15 +571,12 @@ void FPhysicsStateArrays::PerformCompaction()
             // 자기 자리가 아니면 이동 필요
             if (ReadIndex != WriteIndex)
             {
-                // 데이터 이동
+                // === mvoe : 데이터 이동 + 소스 무효화 ===
                 MoveSlotData(ReadIndex, WriteIndex);
 
                 // 매핑 업데이트
                 UpdateMappingAfterMove(ReadIndex, WriteIndex);
 
-                // 이전 위치 정리
-                AllocatedFlags[ReadIndex] = false;
-                PhysicsMasks[ReadIndex].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
             }
 
             WriteIndex++;
@@ -577,14 +588,14 @@ void FPhysicsStateArrays::PerformCompaction()
     AllocatedCount = ValidObjectCount;
     DeallocatedCount = 0;
 
-    // 4단계: 재사용 ID 정리
+    // 3단계: 재사용 ID 정리
     RemoveInvalidIDs(ReusableIDs);
 
     // 재사용 아이디 초기화
     ReusableIDs.clear();
 
     LOG_INFO("Compaction completed: %u valid objects compacted, FreeIDs cleared",
-                  ValidObjectCount);
+             ValidObjectCount);
 }
 
 // 슬롯 데이터를 한 위치에서 다른 위치로 이동
@@ -602,6 +613,8 @@ void FPhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
         return;  // 같은 위치로 이동 불필요
     }
 
+    // === 1단계: 데이터 이동 ===
+
     // 운동 상태 이동
     Velocities[ToIndex] = Velocities[FromIndex];
     AngularVelocities[ToIndex] = AngularVelocities[FromIndex];
@@ -612,6 +625,11 @@ void FPhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
     WorldPosition[ToIndex] = WorldPosition[FromIndex];
     WorldScale[ToIndex] = WorldScale[FromIndex];
     WorldRotationQuat[ToIndex] = WorldRotationQuat[FromIndex];
+
+    // === 이전 프레임 트랜스폼 정보 이동 ===
+    PrevWorldPosition[ToIndex] = PrevWorldPosition[FromIndex];
+    PrevWorldScale[ToIndex] = PrevWorldScale[FromIndex];
+    PrevWorldRotationQuat[ToIndex] = PrevWorldRotationQuat[FromIndex];
 
     // 물리 속성 이동
     InvRotationalInertias[ToIndex] = InvRotationalInertias[FromIndex];
@@ -627,22 +645,26 @@ void FPhysicsStateArrays::MoveSlotData(SoAIdx FromIndex, SoAIdx ToIndex)
     PhysicsTypes[ToIndex] = PhysicsTypes[FromIndex];
     PhysicsMasks[ToIndex] = PhysicsMasks[FromIndex];
 
-    // 형상 관련 데이터 이동 (새로 추가)
+    // === 충돌 형상 관련 데이터 이동 ===
     CollisionShapeTypes[ToIndex] = CollisionShapeTypes[FromIndex];
     CollisionWorldHalfExtents[ToIndex] = CollisionWorldHalfExtents[FromIndex];
 
-    // 객체 참조 이동
+    // 객체 참조 이동 
     ObjectReferences[ToIndex] = std::move(ObjectReferences[FromIndex]);
     AllocatedFlags[ToIndex] = AllocatedFlags[FromIndex];
-}
 
+    // === 2단계: 소스 슬롯 무효화 ===
+    AllocatedFlags[FromIndex] = false;
+    PhysicsMasks[FromIndex].ClearFlag(FPhysicsMask::MASK_ACTIVATION);
+    // ObjectReferences[FromIndex]는 이미 std::move로 무효화됨
+}
 // 두 슬롯의 데이터를 교환
 void FPhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
 {
     if (Index1 >= Size() || Index2 >= Size())
     {
         LOG_ERROR("SwapSlotData: Invalid indices %u, %u, Size=%zu",
-                      Index1, Index2, Size());
+                  Index1, Index2, Size());
         return;
     }
 
@@ -662,6 +684,11 @@ void FPhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
     std::swap(WorldScale[Index1], WorldScale[Index2]);
     std::swap(WorldRotationQuat[Index1], WorldRotationQuat[Index2]);
 
+    // === 이전 프레임 트랜스폼 정보 교환 ===
+    std::swap(PrevWorldPosition[Index1], PrevWorldPosition[Index2]);
+    std::swap(PrevWorldScale[Index1], PrevWorldScale[Index2]);
+    std::swap(PrevWorldRotationQuat[Index1], PrevWorldRotationQuat[Index2]);
+
     // 물리 속성 교환
     std::swap(InvRotationalInertias[Index1], InvRotationalInertias[Index2]);
     std::swap(InvMasses[Index1], InvMasses[Index2]);
@@ -676,15 +703,16 @@ void FPhysicsStateArrays::SwapSlotData(SoAIdx Index1, SoAIdx Index2)
     std::swap(PhysicsTypes[Index1], PhysicsTypes[Index2]);
     std::swap(PhysicsMasks[Index1], PhysicsMasks[Index2]);
 
-    // 형상 정보 교환
+    // === 충돌 형상 정보 교환 ===
     std::swap(CollisionShapeTypes[Index1], CollisionShapeTypes[Index2]);
     std::swap(CollisionWorldHalfExtents[Index1], CollisionWorldHalfExtents[Index2]);
 
     // 객체 참조 교환
     std::swap(ObjectReferences[Index1], ObjectReferences[Index2]);
-    bool tempAllocated = AllocatedFlags[Index1];
+    // 슬롯 데이터
+    bool temp = AllocatedFlags[Index1];
     AllocatedFlags[Index1] = AllocatedFlags[Index2];
-    AllocatedFlags[Index2] = tempAllocated;
+    AllocatedFlags[Index2] = temp;
 }
 
 // === 매핑 관리 함수들 구현 ===
