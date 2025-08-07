@@ -67,7 +67,7 @@ public:
     std::vector<ECollisionShapeType> CollisionShapeTypes;
     std::vector<XMVECTOR> CollisionWorldHalfExtents;        // 형상별 다른 의미
 
-    // 이전 프레임 트랜스폼 정보
+    // 이전 프레임 트랜스폼 정보 
     std::vector<XMVECTOR> PrevWorldPosition;
     std::vector<XMVECTOR> PrevWorldScale;                   //현재는 사용안함
     std::vector<XMVECTOR> PrevWorldRotationQuat;
@@ -206,6 +206,7 @@ private:
     void RemoveInvalidIDs(std::vector<SoAID>& ToRemove);
 
 #ifdef _DEBUG
+public:
     //Debug
     void ValidateMappingIntegrity() const;
 #endif

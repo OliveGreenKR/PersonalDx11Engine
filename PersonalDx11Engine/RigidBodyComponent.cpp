@@ -404,10 +404,10 @@ void URigidBodyComponent::ApplyInterporateTransform(const FPhysicsToGameData& Ph
     float PositionDifference = XMVectorGetX(XMVector3Length(DifferenceVector));
     if (PositionDifference > 1.0f)
     {
-        LOG_INFO("SIMD Transform: Game[%s] \n Physics[%s] \n Final[%s]",
-                 Debug::ToString(CurrentGameTransform.Position),
-                 Debug::ToString(PhysicsResults.ResultPosition),
-                 Debug::ToString(FinalPosition));
+        //LOG_INFO("Sync Transform: Game[%s] \n Physics[%s] \n Final[%s]",
+        //         Debug::ToString(CurrentGameTransform.Position),
+        //         Debug::ToString(PhysicsResults.ResultPosition),
+        //         Debug::ToString(FinalPosition));
     }
 }
 #pragma endregion

@@ -639,7 +639,7 @@ void FDynamicAABBTree::PrintTreeStructure(std::ostream& os) const
 #pragma region Statistics and Debug Helper Functions
 
 
-void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os, 
+void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os,
                                        std::string prefix, bool isLeft) const
 {
     if (!IsValidNodeId(nodeId))
@@ -648,7 +648,7 @@ void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os,
     }
 
     os << prefix;
-    os << (isLeft ? "├── " : "└── ");
+    os << (isLeft ? "+-- " : "\\-- ");
 
     const Node& node = NodePool[nodeId];
 
@@ -657,7 +657,6 @@ void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os,
     {
         os << "*"; // 리프 표시
     }
-
     os << nodeId;
 
     if (node.Parent != NULL_NODE)
@@ -671,19 +670,17 @@ void FDynamicAABBTree::PrintBinaryTree(size_t nodeId, std::ostream& os,
     node.Bounds.GetMaxV(max);
     os << " AABB[(" << min.x << "," << min.y << "," << min.z << ") - ("
         << max.x << "," << max.y << "," << max.z << ")]";
-
     os << " H:" << node.Height;
     os << std::endl;
 
     // 자식 노드에 대한 새 접두사 계산
-    std::string newPrefix = prefix + (isLeft ? "│   " : "    ");
+    std::string newPrefix = prefix + (isLeft ? "|   " : "    ");
 
     // 왼쪽, 오른쪽 자식 출력
     if (IsValidNodeId(node.Left))
     {
         PrintBinaryTree(node.Left, os, newPrefix, true);
     }
-
     if (IsValidNodeId(node.Right))
     {
         PrintBinaryTree(node.Right, os, newPrefix, false);
