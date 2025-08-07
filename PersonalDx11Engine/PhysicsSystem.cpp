@@ -818,8 +818,8 @@ void UPhysicsSystem::BatchSyncHighFrequencyData()
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
+            // 할당된 모든 슬롯 검사 (활성화 여부 무관 - 재활성화 대비)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i))
                 continue;
 
             auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
@@ -867,8 +867,8 @@ void UPhysicsSystem::BatchSyncMidFrequencyData()
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
+            // 할당된 모든 슬롯 검사 (활성화 여부 무관 - 재활성화 대비)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i))
                 continue;
 
             auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
@@ -901,8 +901,8 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
+            // 할당된 모든 슬롯 검사 (활성화 여부 무관 - 재활성화 대비)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i))
                 continue;
 
             auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
@@ -929,12 +929,12 @@ void UPhysicsSystem::BatchSyncLowFrequencyData()
             PhysicsStateSoA->MaxSpeeds[i] = data.MaxSpeed;
             PhysicsStateSoA->MaxAngularSpeeds[i] = data.MaxAngularSpeed;
             PhysicsStateSoA->GravityScales[i] = data.GravityScale;
-			PhysicsStateSoA->CollisionShapeTypes[i] = data.CollisionShapeType;
+            PhysicsStateSoA->CollisionShapeTypes[i] = data.CollisionShapeType;
             PhysicsStateSoA->CollisionWorldHalfExtents[i] = XMVectorSet(
                 data.CollisionWorldHalfExtent.x,
                 data.CollisionWorldHalfExtent.y,
                 data.CollisionWorldHalfExtent.z,
-				0.0f);
+                0.0f);
         }
     }
 }
@@ -951,8 +951,8 @@ void UPhysicsSystem::BatchSyncPhysicsResults()
 
         for (SoAIdx i = batchStart; i < batchEnd; ++i)
         {
-            // 할당되고 활성화된 슬롯만 처리
-            if (!PhysicsStateSoA->IsValidActiveSlotIndex(i))
+            // 할당된 모든 슬롯 검사 (활성화 여부 무관 - 캐시 일관성 유지)
+            if (!PhysicsStateSoA->IsValidSlotIndex(i))
                 continue;
 
             auto physicsObject = PhysicsStateSoA->ObjectReferences[i].lock();
@@ -969,22 +969,14 @@ void UPhysicsSystem::BatchSyncPhysicsResults()
             XMVECTOR rotation = PhysicsStateSoA->WorldRotationQuat[i];
             XMVECTOR scale = PhysicsStateSoA->WorldScale[i];
 
-            XMFLOAT3 velocityFloat, angularVelocityFloat, positionFloat, scaleFloat;
-            XMFLOAT4 rotationFloat;
+            // 변환 결과 저장
+            XMStoreFloat3(&physicsResults.Velocity, velocity);
+            XMStoreFloat3(&physicsResults.AngularVelocity, angularVelocity);
+            XMStoreFloat3(&physicsResults.ResultPosition, position);
+            XMStoreFloat4(&physicsResults.ResultRotation, rotation);
+            XMStoreFloat3(&physicsResults.ResultScale, scale);
 
-            XMStoreFloat3(&velocityFloat, velocity);
-            XMStoreFloat3(&angularVelocityFloat, angularVelocity);
-            XMStoreFloat3(&positionFloat, position);
-            XMStoreFloat4(&rotationFloat, rotation);
-            XMStoreFloat3(&scaleFloat, scale);
-
-            physicsResults.Velocity = Vector3(velocityFloat.x, velocityFloat.y, velocityFloat.z);
-            physicsResults.AngularVelocity = Vector3(angularVelocityFloat.x, angularVelocityFloat.y, angularVelocityFloat.z);
-            physicsResults.ResultPosition = Vector3(positionFloat.x, positionFloat.y, positionFloat.z);
-            physicsResults.ResultRotation = Quaternion(rotationFloat.x, rotationFloat.y, rotationFloat.z, rotationFloat.w);
-            physicsResults.ResultScale = Vector3(scaleFloat.x, scaleFloat.y, scaleFloat.z);
-
-            // 게임 객체로 결과 전송
+            // 물리 결과를 게임 객체에 전송
             physicsObject->ReceivePhysicsResults(physicsResults);
         }
     }

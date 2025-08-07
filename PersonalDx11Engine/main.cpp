@@ -120,7 +120,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 콘솔 생성
 	UConsoleManager::Get()->
-		Initialize(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.left , appRect.bottom);
+		Initialize(CONSOLE_WIDTH, CONSOLE_HEIGHT, appRect.right , appRect.top);
 
 #pragma region temp Testing code Execution
 	//TestDynamicAABBTree::RunAllTestsIterate(std::cout, 100, 500, 500, 500);

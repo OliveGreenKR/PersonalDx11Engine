@@ -160,7 +160,10 @@ float FCollisionProcessor::ProcessCollisions(const std::vector<PhysicsID>& Activ
     // 9. 충돌 이벤트 생성 (멤버 데이터 기반)
     RequestCollisionEvents();
 
-    // 10. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
+    // 10. 충돌 상태 업데이트 (멤버 데이터 기반)
+    UpdateCollisionStates();
+
+    // 11. 정규화된 시뮬레이션 시간 반환 (0.0~1.0)
     return MinTimeOfImpact;
 }
 
@@ -531,9 +534,6 @@ void FCollisionProcessor::ApplyCollisionResponse(float DeltaTime)
 
     // 2. 반복적 제약 조건 해결 (멤버 데이터 기반)
     ApplyIterativeConstraintSolver();
-
-    // 3. 충돌 상태 업데이트 (멤버 데이터 기반)
-    UpdateCollisionStates();
 }
 
 void FCollisionProcessor::RequestCollisionEvents()
@@ -725,7 +725,7 @@ void FCollisionProcessor::ProcessSingleConstraintIteration(size_t Index,
         result.PenetrationDepth,
         PositionCorrectionBias,
         CurrentDeltaTime,
-        0.01f // Slop
+        0.001f // Slop
     );
 
     // 충돌 반응 계산 (제약 조건 기반)
@@ -739,6 +739,9 @@ void FCollisionProcessor::ProcessSingleConstraintIteration(size_t Index,
     // 충돌 반응 적용 (임펄스 기반)
     PhysicsStateInterface->P_ApplyImpulse(pair.PhysicsIdA, responseResult.NetImpulse, responseResult.ApplicationPoint);
     PhysicsStateInterface->P_ApplyImpulse(pair.PhysicsIdB, XMVectorNegate(responseResult.NetImpulse), responseResult.ApplicationPoint);
+
+    LOG_INFO("Collision response applied for pair (%u, %u) - Iteration %u : %.5f",
+			 pair.PhysicsIdA, pair.PhysicsIdB, Iteration + 1, XMVector3Length(responseResult.NetImpulse));
 
     // 수렴 확인 (제약 누적값 변화량 기준)
     if (FCollisionAccumulation::IsEqual(prevAccumulation, pair.ConstraintsAccumulation, MinConstraintLambda))
