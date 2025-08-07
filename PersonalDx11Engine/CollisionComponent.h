@@ -15,6 +15,19 @@ public:
 	UCollisionComponentBase();
 	virtual ~UCollisionComponentBase();
 
+protected:
+	virtual void PostInitialized() override;
+	virtual void PostTreeInitialized() override;
+	virtual void Tick(const float DeltaTime) override;
+	virtual void RequestDebugRender(const float DeltaTime) = 0;
+
+	virtual void Activate() override;
+	virtual void DeActivate() override;
+
+public:
+	void SetDebugVisualize(const bool InBool) { bIsDebugVisualize = InBool; }
+	virtual const char* GetComponentClassName() const override { return "UCollisionionBase"; }
+
 #pragma endregion
 
 #pragma region ICollisionShape Implementation
@@ -33,35 +46,34 @@ public:
 #pragma region Collision Events
 
 public:
-	TDelegate<const FCollisionEvent&> OnCollisionEnter;
-	TDelegate<const FCollisionEvent&> OnCollisionStay;
-	TDelegate<const FCollisionEvent&> OnCollisionExit;
+	TDelegate<const FCollisionEvent&> OnCollisionEnterDelegate;
+	TDelegate<const FCollisionEvent&> OnCollisionStayDelegate;
+	TDelegate<const FCollisionEvent&> OnCollisionExitDelegate;
 
 	void OnCollisionEnterEvent(const FCollisionEvent& CollisionInfo) {
-		OnCollisionEnter.Broadcast(CollisionInfo);
+		OnCollisionEnterDelegate.Broadcast(CollisionInfo);
 	}
 
 	void OnCollisionStayEvent(const FCollisionEvent& CollisionInfo) {
-		OnCollisionStay.Broadcast(CollisionInfo);
+		OnCollisionStayDelegate.Broadcast(CollisionInfo);
 	}
 
 	void OnCollisionExitEvent(const FCollisionEvent& CollisionInfo) {
-		OnCollisionExit.Broadcast(CollisionInfo);
+		OnCollisionExitDelegate.Broadcast(CollisionInfo);
 	}
 
+#pragma endregion
+#pragma region Activation State and Notification
+public:
+	TDelegate<bool> OnActivationChangedDelegate;
+
+private:
+	void NotifyActivationChanged(bool bIsActive);
 #pragma endregion
 
 #pragma region SceneComponent Overrides
 
-protected:
-	virtual void PostInitialized() override;
-	virtual void PostTreeInitialized() override;
-	virtual void Tick(const float DeltaTime) override;
-	virtual void RequestDebugRender(const float DeltaTime) = 0;
 
-public:
-	void SetDebugVisualize(const bool InBool) { bIsDebugVisualize = InBool; }
-	virtual const char* GetComponentClassName() const override { return "UCollisionionBase"; }
 
 #pragma endregion
 

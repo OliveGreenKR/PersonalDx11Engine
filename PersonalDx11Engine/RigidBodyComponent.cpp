@@ -67,13 +67,13 @@ void URigidBodyComponent::Activate()
         RegisterPhysicsSystem();
     }
 
-    SetPhysicsActive(true);
+    UpdatePhysicsActivation(); 
 }
 
 void URigidBodyComponent::DeActivate()
 {
     USceneComponent::DeActivate();
-    SetPhysicsActive(false);
+    UpdatePhysicsActivation(); 
 }
 
 void URigidBodyComponent::Tick(const float DeltaTime)
@@ -289,14 +289,16 @@ void URigidBodyComponent::DispatchToOwnCollisionComponents(const FCollisionEvent
 
 void URigidBodyComponent::SetCollisionComp(UCollisionComponentBase* InCollisionComp)
 {
-	constexpr const char* OnCollisionChangedName = "OnTransformChanged_Rigid";
+    constexpr const char* OnCollisionChangedName = "OnTransformChanged_Rigid";
+    constexpr const char* OnActivationChangedName = "OnActivationChanged_Rigid";
 
     if (OwnComponent != InCollisionComp)
     {
-        if(OwnComponent)
+        if (OwnComponent)
         {
             // 기존 CollisionComponent가 있다면 이벤트 언바인딩
-			OwnComponent->OnWorldTransformChangedDelegate.Unbind(this, OnCollisionChangedName);
+            OwnComponent->OnWorldTransformChangedDelegate.Unbind(this, OnCollisionChangedName);
+            OwnComponent->OnActivationChangedDelegate.Unbind(this, OnActivationChangedName);
         }
 
         OwnComponent = InCollisionComp;
@@ -304,10 +306,16 @@ void URigidBodyComponent::SetCollisionComp(UCollisionComponentBase* InCollisionC
         {
             // 새로운 CollisionComponent가 있다면 이벤트 바인딩
             OwnComponent->OnWorldTransformChangedDelegate.Bind(this, &URigidBodyComponent::OnCollisionComponentChanged, OnCollisionChangedName);
-		}
+
+            // 새로 추가: 활성화 상태 변화 이벤트 바인딩
+            OwnComponent->OnActivationChangedDelegate.Bind(this, &URigidBodyComponent::OnCollisionComponentActivationChanged, OnActivationChangedName);
+        }
 
         // CollisionComponent 변경 시 형상 데이터 변경으로 인한 DirtyFlag 설정
         MarkDataDirty(FPhysicsDataDirtyFlags(FPhysicsDataDirtyFlags::FLAG_LOW_FREQ));
+
+        // 새로 추가: CollisionComponent 변경 시 물리 활성화 상태 업데이트
+        UpdatePhysicsActivation();
 
         if (OwnComponent)
         {
@@ -328,6 +336,44 @@ UCollisionComponentBase* URigidBodyComponent::GetCollisionComp() const
 bool URigidBodyComponent::HasCollisionComp() const
 {
     return OwnComponent != nullptr;
+}
+
+#pragma endregion
+
+#pragma region Physics Activation Synchronization
+
+void URigidBodyComponent::OnCollisionComponentActivationChanged(bool bCollisionActive)
+{
+    LOG_INFO("RigidBodyComponent received CollisionComponent activation change: %s (PhysicsID: %u)",
+             bCollisionActive ? "ACTIVE" : "INACTIVE", PhysicsObjectID);
+
+    UpdatePhysicsActivation();
+}
+
+bool URigidBodyComponent::ShouldBePhysicsActive() const
+{
+    // 종합 활성화 조건:
+    // 1. 자신이 활성화되어 있어야 함
+    // 2. CollisionComponent가 존재해야 함
+    // 3. CollisionComponent가 활성화되어 있어야 함
+    return IsActive() &&
+        HasCollisionComp() &&
+        GetCollisionComp()->IsActive();
+}
+
+void URigidBodyComponent::UpdatePhysicsActivation()
+{
+    bool bShouldBeActive = ShouldBePhysicsActive();
+
+    LOG_INFO("UpdatePhysicsActivation for PhysicsID %u: Should be %s (Self: %s, HasCollision: %s, CollisionActive: %s)",
+             PhysicsObjectID,
+             bShouldBeActive ? "ACTIVE" : "INACTIVE",
+             IsActive() ? "YES" : "NO",
+             HasCollisionComp() ? "YES" : "NO",
+             (HasCollisionComp() && GetCollisionComp()->IsActive()) ? "YES" : "NO");
+
+    // 기존 SetPhysicsActive() 함수 사용하여 MASK_ACTIVATION 설정
+    SetPhysicsActive(bShouldBeActive);
 }
 
 #pragma endregion

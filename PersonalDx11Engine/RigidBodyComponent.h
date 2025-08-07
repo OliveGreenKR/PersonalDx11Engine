@@ -171,6 +171,30 @@ private:
 
 #pragma endregion
 
+#pragma region Physics Activation Synchronization
+
+public:
+    /// <summary>
+    /// CollisionComponent 활성화 상태 변화 이벤트 핸들러
+    /// CollisionComponent의 OnActivationChangedDelegate에서 호출됨
+    /// </summary>
+    void OnCollisionComponentActivationChanged(bool bCollisionActive);
+
+private:
+    /// <summary>
+    /// 종합 물리 활성화 조건 확인
+    /// 자신의 활성화 상태와 CollisionComponent 활성화 상태를 종합 판단
+    /// </summary>
+    bool ShouldBePhysicsActive() const;
+
+    /// <summary>
+    /// 물리 활성화 상태 업데이트
+    /// 기존 SetPhysicsActive() 함수를 사용하여 MASK_ACTIVATION 설정
+    /// </summary>
+    void UpdatePhysicsActivation();
+
+#pragma endregion
+
 #pragma region Time Interpolation
 
 public:
@@ -189,6 +213,7 @@ private:
 	void MarkDataDirty(const FPhysicsDataDirtyFlags& flags);
     void BackupCurrentTransformToPrevious();
 #pragma endregion
+
 #pragma region EventHandlers
 private:
     void OnWorldTransformChanged(const FTransform& transform);

@@ -39,8 +39,8 @@ void UGameObject::PostInitializedComponents()
 
 	if( auto CollisionComp = RootComponent.get()->FindChildByType<UCollisionComponentBase>().lock())
 	{
-		CollisionComp->OnCollisionEnter.Bind(this, &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
-		CollisionComp->OnCollisionExit.Bind(this, &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
+		CollisionComp->OnCollisionEnterDelegate.Bind(this, &UGameObject::OnCollisionBegin, "OnCollisionBegin_GameObject");
+		CollisionComp->OnCollisionExitDelegate.Bind(this, &UGameObject::OnCollisionEnd, "OnCollisionEnd_GameObject");
 	}
 
 	SetActive(true); //최초 자동 활성화
